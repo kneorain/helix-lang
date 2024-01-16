@@ -1,0 +1,27 @@
+
+
+{
+  "name": "helix-language",
+  "displayName": "Helix Language",
+  "description": "Syntax highlighting for Helix",
+  "version": "0.0.1",
+  "publisher": "dhruvan-kartik",
+  "engines": {
+    "vscode": "^1.0.0"
+  },
+  "categories": ["Programming Languages"],
+  "contributes": {
+    "languages": [{
+      "id": "helix",
+      "aliases": ["Helix", "hlx"],
+      "extensions": [".hlx"],
+      "configuration": "./language-configuration.json"
+    }],
+    "grammars": [{
+      "language": "helix",
+      "scopeName": "source.helix",
+      "path": "./syntaxes/helix.tmLanguage.json"
+    }]
+  }
+}
+
