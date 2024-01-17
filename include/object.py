@@ -1,5 +1,8 @@
 from typing import Annotated, Any, Iterable, Self
 from weakref import ref
+import inspect, os, re
+
+terminal_width: int = os.get_terminal_size().columns
 
 
 def compare_with_type(__value: object, __type: type) -> bool:
@@ -7,6 +10,7 @@ def compare_with_type(__value: object, __type: type) -> bool:
         return type(__value) in __primitive__[__type]
     return type(__value) is __type
 
+char = Annotated[str, "char"]
 
 class object(object):
     __additional_types__: list[type] = []
@@ -18,10 +22,61 @@ class object(object):
         if type(__value) is type(self.__value__):
             return True
         return False
+    
+def panic(__error: ref[Exception], *mark: tuple[Any]) -> exit:
+    name: str = __error.__class__.__name__
+    message: str = str(__error)
+    
+    line_no: str = inspect.currentframe().f_back.f_lineno
+    file: str = inspect.currentframe().f_back.f_code.co_filename
+    lines: list[str] = open(file, "r").readlines()[((line_no-4) if line_no-4 > 0 else 0):line_no]
+    
+    chars = {
+        "dash": "─",
+        "b-left": "╰",
+        "b-right": "╯",
+        "straight": "│",
+        "t-left": "╭",
+        "t-right": "╮",
+    }
 
-char = Annotated[str, "char"]
+    """ example error message:
+    ╭─ TypeError ────────────────────────────────────────╮
+    │  99 | a = string("hello");                         │
+    │ 100 |                                              │
+    │ 101 | print(a);                                    │
+    │ 102 | a.__set__(1221)                              │
+    │ ~~~~~           ^^^^                               │
+    │                                                    │
+    │ ── Hex(02.E1) ──────────────────────────────────── │
+    │ type mismatch for 'int', cannot auto cast          │
+    │ to 'string'.                                       │
+    ╰─── "D:\development\helix\include\object.py:102" ───╯
+    """
+    
+    def s_u(line: str) -> str:
+        return re.sub(r"\u001b\[\d+m", "", line)
+        
+    
+    def process_lines(line: str, index: int) -> str:
+        color: str = "\u001b[31m"
+        # called fro each element in lines
+        line = f"{color}{chars['straight']}\u001b[0m {(line_no+index):3} | {line}".rstrip("\n")
+        # add spaces to the end of the line until it reaches the terminal width
+        if len(s_u(line)) < terminal_width:
+            line = line[:terminal_width-1] + "..."
 
-
+        line = line[:terminal_width-1] + (" " * (terminal_width - (len(s_u(line[:terminal_width-1]))+1))) + f"{chars['straight']}"
+        return line
+    
+    print(f"\u001b[31m{chars['t-left']}\u001b[0m\u001b[31m{chars['dash'] * (terminal_width-2)}\u001b[0m\u001b[31m{chars['t-right']}\u001b[0m")
+    [print(process_lines(line, index)) for index, line in enumerate(lines)]
+    
+    
+    
+    exit(1)
+    
+    
 class string(object):
     __value__: Any = None # type: ignore
 
@@ -213,9 +268,16 @@ class string(object):
     def __set__(self, value: Any) -> None:
         if not compare_with_type(value, str):
             # try to cast value to string
-            raise TypeError(f"<Hex(02.E1)>: type mismatch for '{type(value).__name__}', cannot auto cast to '{type(self).__name__}'")
-        
+            pass
         self.__value__ = value
+
+panic(TypeError(f"<Hex(02.E1)>: type mismatch for"))
+
+
+
+
+
+
 
 class i8(object):
     __value__: Any = None # type: ignore
@@ -404,11 +466,12 @@ class i8(object):
     
 __primitive__: dict[type, tuple[type, ...]] = {
     int: (int, float),
-    str: (str, bytes, string),
+    str: (str, string),
 }
     
 a = string("Hello, World!")
-a.__set__(i8(127)) # <- a = 777
+
+a.__set__(1221)
 
 # a: string = "Hello, World!"
 
