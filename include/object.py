@@ -24,14 +24,23 @@ class object(object):
         return False
     
 def panic(__error: ref[Exception], *mark: tuple[Any]) -> exit:
+    lines_to_print: int = 5
+    mark = [str(item) for item in mark]
+    
     name: str = __error.__class__.__name__
     message: str = str(__error)
-    
-    line_no: str = inspect.currentframe().f_back.f_lineno
+
+    line_no: int = inspect.currentframe().f_back.f_back.f_lineno
     file: str = inspect.currentframe().f_back.f_code.co_filename
-    lines: list[str] = open(file, "r").readlines()[((line_no-4) if line_no-4 > 0 else 0):line_no]
+    lines: list[str] = open(file, "r").readlines()[((line_no-lines_to_print) if line_no-lines_to_print > 0 else 0):line_no]
     
-    chars = {
+    red      = "\u001b[31m"
+    bold_red = "\u001b[31;1m"
+    reset    = "\u001b[0m"
+    gray     = "\u001b[90m"
+    yellow   = "\u001b[33m"
+    green    = "\u001b[32m"
+    chars    = {
         "dash": "─",
         "b-left": "╰",
         "b-right": "╯",
@@ -40,7 +49,7 @@ def panic(__error: ref[Exception], *mark: tuple[Any]) -> exit:
         "t-right": "╮",
     }
 
-    """ example error message:
+    r""" example error message:
     ╭─ TypeError ────────────────────────────────────────╮
     │  99 | a = string("hello");                         │
     │ 100 |                                              │
@@ -52,26 +61,113 @@ def panic(__error: ref[Exception], *mark: tuple[Any]) -> exit:
     │ type mismatch for 'int', cannot auto cast          │
     │ to 'string'.                                       │
     ╰─── "D:\development\helix\include\object.py:102" ───╯
+    
+    ╭─ TypeError ────────────────────────────────────────╮
+    │  99 | a = string("hello");                         │
+    │ 100 |                                              │
+    │ 101 | print(a);                                    │
+    │ 102 | a.__set__(1221)                              │
+    │ ~~~~~~~~~~~~~~~~~~~~~                              │
+    │                                                    │
+    │ ── Hex(02.E1) ──────────────────────────────────── │
+    │ type mismatch for 'int', cannot auto cast          │
+    │ to 'string'.                                       │
+    ╰─── "D:\development\helix\include\object.py:102" ───╯
     """
     
-    def s_u(line: str) -> str:
-        return re.sub(r"\u001b\[\d+m", "", line)
+    def mark_all(line: str, mark_line: int) -> list[str]:
+        # mark_line = "│ ~~~~~"
+        # line = "│ 102 | a.__set__(1221)                              │"
+        # output = ["│ 102 | a.__set__(1221)                              │",
+        #           "│ ~~~~~           ^^^^                               │"]
+        output: list[str] = []
+        output_line = ""
+        line = line.rstrip()
         
+        mark_line += ' ' * ((len(s_u(line)) - len(s_u(mark_line))))
+        mark_line = list(mark_line)
+        marked: bool = False
+    
+        if mark:
+            for item in mark:
+                len_of_item: int = len(item)
+                for index, char in enumerate(s_u(line)):
+                    if line[index:index+len_of_item] == item:
+                        output_line = line[:index] + f"{red}{item}{reset}" + line[index+len_of_item:]
+                        mark_line[(index-2):(index+len_of_item)] = f"{red}^{reset}" * len_of_item
+                        marked = True
+        if not marked:
+            mark_line = list("".join(mark_line[:-2]).rstrip() + ' ')
+            mark_line += [f"{red}~{reset}"] * (len(lines[-1]) - 1)
+        
+        output.append(output_line)
+        output.append("".join(mark_line) + f" {red}{chars['straight']}{reset}")
+        
+        return "".join(output)
+    
+    def s_u(line: str|list) -> str:
+        # \u001b\[\d+m wiht also match \u001b[91;1m
+        if isinstance(line, list):
+            return list(re.sub(r"\u001b\[\d+(m|\;\d+m)", "", "".join(line)))
+        return re.sub(r"\u001b\[\d+(m|\;\d+m)", "", line)
     
     def process_lines(line: str, index: int) -> str:
-        color: str = "\u001b[31m"
         # called fro each element in lines
-        line = f"{color}{chars['straight']}\u001b[0m {(line_no+index):3} | {line}".rstrip("\n")
+        if line_no+index == line_no+(lines_to_print-1):
+            line = f"{red}{chars['straight']}{bold_red} {str(line_no+index).center(len(str(line_no+(lines_to_print-1))))} | {reset}{line}".rstrip()
+        else:
+            line = f"{red}{chars['straight']}{gray} {str(line_no+index).center(len(str(line_no+(lines_to_print-1))))} | {reset}{line}".rstrip()
         # add spaces to the end of the line until it reaches the terminal width
-        if len(s_u(line)) < terminal_width:
-            line = line[:terminal_width-1] + "..."
+        if len(s_u(line)) > terminal_width:
+            line = line[:terminal_width+10] + "..."
 
-        line = line[:terminal_width-1] + (" " * (terminal_width - (len(s_u(line[:terminal_width-1]))+1))) + f"{chars['straight']}"
+        line = line + (" " * (terminal_width - (len(s_u(line))+1))) + f"{red}{chars['straight']}{reset}"
         return line
     
-    print(f"\u001b[31m{chars['t-left']}\u001b[0m\u001b[31m{chars['dash'] * (terminal_width-2)}\u001b[0m\u001b[31m{chars['t-right']}\u001b[0m")
-    [print(process_lines(line, index)) for index, line in enumerate(lines)]
+    top_section: list[str] = f"{red}{chars['t-left']}{chars['dash']}{reset} {bold_red}{name} {red}{chars['dash'] * (terminal_width-2-len(name)-3)}{reset}{red}{chars['t-right']}{reset}"
     
+    print(top_section)
+    
+    mid_section = [process_lines(line, index) for index, line in enumerate(lines)]
+    
+    print("\n".join(mid_section[:-1]))
+    print(mark_all(mid_section[-1], f"{red}│ {gray}{'~'*len(str(line_no).center(len(str(line_no+(lines_to_print-1)))))}{reset}"))
+    print(f"{red}{chars['straight']}{' '*(terminal_width-2)}{chars['straight']}{reset}")
+    
+    # hex codes look like this: <Hex(x...)>
+    hex_code = re.search(r"<Hex\((\d+)\.(\w+)\)>", message)
+    _hex_code = hex_code
+    if hex_code:
+        hex_code = f"{hex_code.group(1)}.{hex_code.group(2)}"
+        message = message.replace(f"<Hex({hex_code})>: ", f"")
+        hex_code = f"{red}{chars['straight']} {chars['dash']*2} {bold_red}{hex_code}{red} {chars['dash']*(terminal_width-4-len(hex_code)-4)} {chars['straight']}{reset}"
+        print(hex_code)
+    
+    def process_message(message: str) -> list[str]:
+        # wrap message into lines that fit the terminal width
+        # also add | to the start and end of each line
+        output: list[str] = []
+        import textwrap
+        if hex_code:
+            message += f"\nIf this is your first time seeing this error, and you are not sure how to fix it, type \'helix doc {_hex_code.group(1)}.{_hex_code.group(2)}\'."
+        for line in message.split("\n"):
+            for line2 in textwrap.wrap(line, terminal_width-4):
+                output.append(f"{red}{chars['straight']}{reset} {line2.ljust(terminal_width-4)} {red}{chars['straight']}{reset}")
+        return [out.replace(f"\'helix doc {_hex_code.group(1)}.{_hex_code.group(2)}\'", f"{yellow}\'helix doc {_hex_code.group(1)}.{_hex_code.group(2)}\'{reset}") for out in output]
+    print("\n".join(process_message(message)))
+
+    
+    len_of_file: int = len(file)
+    len_of_halfs = int(((terminal_width-4)/2 - len_of_file/2))
+    
+    if (len_of_halfs) < 2:
+        import os
+        file = '.' + os.sep + os.path.relpath(file)
+        len_of_file: int = len(file)
+        len_of_halfs = int(((terminal_width-4)/2 - len_of_file/2))
+    
+    # check if terminal width is even
+    print(f"{red}{chars['b-left']}{chars['dash']*len_of_halfs} {file} {' ' if terminal_width//2 == 0 else ''}{chars['dash']*len_of_halfs}{chars['b-right']}{reset}")
     
     
     exit(1)
@@ -268,16 +364,8 @@ class string(object):
     def __set__(self, value: Any) -> None:
         if not compare_with_type(value, str):
             # try to cast value to string
-            pass
+            panic(TypeError(f"<Hex(02.E1)>: type mismatch for '{type(value).__name__}', cannot auto cast to '{type(self).__name__}'"), value)
         self.__value__ = value
-
-panic(TypeError(f"<Hex(02.E1)>: type mismatch for"))
-
-
-
-
-
-
 
 class i8(object):
     __value__: Any = None # type: ignore
