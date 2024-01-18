@@ -203,7 +203,7 @@ def panic(__error: ref[Exception], *mark: tuple[Any]) -> exit:
         len_of_halfs = int(((terminal_width-4)/2 - len_of_file/2))
     
     # check if terminal width is even
-    print(f"{red}{chars['b-left']}{chars['dash']*len_of_halfs} {green}{file}{gray}:{green}{line_no}{red} {'' if terminal_width % 2 != 0 else ' '}{chars['dash']*len_of_halfs}{chars['b-right']}{reset}")
+    print(f"{red}{chars['b-left']}{chars['dash']*len_of_halfs} {green}{file}{gray}:{green}{line_no}{red} {' ' if terminal_width % 2 != 0 else ''}{chars['dash']*len_of_halfs}{chars['b-right']}{reset}")
     exit(1)
     
     
