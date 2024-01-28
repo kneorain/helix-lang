@@ -1,7 +1,41 @@
 from src.token.tokenize_line import tokenize_line
 from src.token.remove_comments import remove_comments
 from src.token.normalize_tokens import normalize_tokens
-from src.global_vars import CACHE
+from src.global_vars import CACHE, LINE_BREAK, SUB_LINE_BREAK
+import re
+from difflib import SequenceMatcher
+def APPROXIMATE_LINE(LINE_1: str, LINE_2: str) -> int:
+    """
+    \n Compares two strings and returns the similarity percentage.
+    \n Input: compare - The string to compare.
+    \n        compare_to - The string to compare to.
+    \n Output: The similarity percentage. (0.0 - 1.0)
+    """
+
+    return SequenceMatcher(None, LINE_1, LINE_2).ratio()
+
+def find_line_number(line: str, file: str) -> int:
+    """
+    \n Finds the line number of a line in a file.
+    \n Input: line - The line to find.
+    \n        file - The file to find the line in.
+    \n Output: The line number of the line.
+    """
+
+    lines = open(file, "r").readlines()
+    similar_lines = []
+    similarity: float = 0.0
+    for i in range(len(lines)):
+        similarity = APPROXIMATE_LINE(line, lines[i])
+        if similarity >= 0.7:
+            similar_lines.append({"line": lines[i], "similarity": similarity})
+    if similar_lines:
+        similar_lines.sort(key=lambda x: x["similarity"], reverse=True)
+        return similar_lines[0]["line"]
+    else:
+        return -1
+
+
 
 def tokenize_file(path: str) -> list[list[str]]:
     """
@@ -25,16 +59,16 @@ def tokenize_file(path: str) -> list[list[str]]:
 
     [
         tokenized_lines.extend(tokenize_line(line))
-        for line in remove_comments("|line_sep<:>line_sep|".join(lines)).split(
-            "|line_sep<:>line_sep|"
+        for line in remove_comments(LINE_BREAK.join(lines)).split(
+            LINE_BREAK
         )
     ]
 
     CACHE[path] = [
-        token.split("|nested_line_sep<:>nested_line_sep|")
+        token.split(SUB_LINE_BREAK)
         for token in normalize_tokens(
-            "|line_sep<:>line_sep|".join(tokenized_lines)
-        ).split("|line_sep<:>line_sep|")
+            LINE_BREAK.join(tokenized_lines)
+        ).split(LINE_BREAK)
     ]
 
     return CACHE[path]

@@ -22,7 +22,7 @@ class ERROR_CODES:
     cli_argument = "[HEX-001]"
 
 def help_screen():
-    print("""usage: main.py [-h] [-v] [-o COMPILE] [-d] [-l LOG] [-c CONFIG] [-s] file ...
+    print("""usage: helix [-h] [-v] [-o COMPILE] [-d] [-l LOG] [-c CONFIG] [-s] file ...
 
 Welcome to the Helix CLI, the gateway to harnessing the power and simplicity of Helix,
 a programming language designed for developers who cherish Python's ease but crave more
@@ -86,8 +86,7 @@ def parse_args() -> Namespace:
     return args
 
 if __name__ == "__main__":
-    args = parse_args()
-    save_config(args)
+    
     from src.token.tokenize_file import tokenize_file
     from src.classes.namespace import process
     from time import time
@@ -95,11 +94,29 @@ if __name__ == "__main__":
     start = time()
 
     a = tokenize_file("syntax.hlx")
-    b = process(a)
-    print(b)
-
+    #b = process(a)
+    #print(b)
+    #exit()
     end = time()
 
     for i in a:
-        print(" ".join(i))
+        # " ".join(i) gives: <\t:0> include "add" from "test.c"
+        # i want to make the <\t:0> into a space multiplied by the number of tabs it represents
+     
+        print("".join([word + " " if not word.startswith("<\\t:") else "    " * int(word[4:-1]) for word in i]))
     print(end - start)
+
+def regex_replace(string: str, regex: str, replacement: str) -> str:
+    """
+    Replace all instances of a regex pattern in a string with a replacement string.
+
+    Args:
+        string (str): The string to replace in
+        regex (str): The regex pattern to replace
+        replacement (str): The string to replace the regex pattern with
+
+    Returns:
+        str: The string with all instances of the regex pattern replaced
+    """
+
+    return __import__("re").sub(regex, replacement, string)

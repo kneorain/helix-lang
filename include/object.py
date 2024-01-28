@@ -4,7 +4,6 @@ import inspect, os, re
 
 terminal_width: int = os.get_terminal_size().columns
 
-
 def compare_with_type(__value: object, __type: type) -> bool:
     if __type in __primitive__:
         return type(__value) in __primitive__[__type]
@@ -35,12 +34,12 @@ def panic(__error: ref[Exception], *mark: tuple[Any]) -> exit:
     lines: list[str] = open(file, "r").readlines()[((line_no-lines_to_print) if line_no-lines_to_print > 0 else 0):line_no]
 
     chars    = {
-        "dash": "─",
-        "b-left": "╰",
-        "b-right": "╯",
+        "dash":     "─",
+        "b-left":   "╰",
+        "b-right":  "╯",
         "straight": "│",
-        "t-left": "╭",
-        "t-right": "╮",
+        "t-left":   "╭",
+        "t-right":  "╮",
     }
 
     import sys
@@ -598,4 +597,3 @@ a.__add__(i8(1221))
 # a: string = "Hello, World!"
 
 print(a)
-    

@@ -1,7 +1,10 @@
-from functools import cache
-from src.global_vars import BODY_REQUIRED_KEYWORDS
+from functools import lru_cache
+import itertools
+from src.global_vars import BODY_REQUIRED_KEYWORDS, LINE_BREAK, SUB_LINE_BREAK
 
-@cache
+
+
+@lru_cache
 def normalize_tokens(_lines: str) -> str:
     """
     This function normalizes the tokens. This is a smaller part of the tokenizer,
@@ -13,15 +16,14 @@ def normalize_tokens(_lines: str) -> str:
 
     Args:
         lines (str): The code to normalize
-                     - LINES MUST BE SEPARATED BY `|line_sep<:>line_sep|`
+                     - LINES MUST BE SEPARATED BY LINE_BREAK
                      This is because this allows for the function to be cached
 
     Returns:
-        str: The normalized code separated by `|line_sep<:>line_sep|`, and
-             `|nested_line_sep<:>nested_line_sep|`
+        str: The normalized code separated by LINE_BREAK, and SUB_LINE_BREAK
     """
 
-    lines:        list[str]       = _lines.split("|line_sep<:>line_sep|")
+    lines:        list[str]       = _lines.split(LINE_BREAK)
     stack:        list[str]       = []
     current_line: list[str]       = []
     final_lines:  list[list[str]] = []
@@ -29,9 +31,18 @@ def normalize_tokens(_lines: str) -> str:
     in_for_loop:  bool            = False
     indent_level: int             = 0
 
-    for index, token in enumerate(lines):
+    def process_token(token: str, index: int) -> str:
+        nonlocal indent_level, firs_inst, stack, lines
+        _ = ""
         if token in BODY_REQUIRED_KEYWORDS.keys():
-            stack.append(token)
+            # append the line to the stack
+            for i in range(index, len(lines)):
+                if lines[i] == "{":
+                    break
+                else:
+                    _ += lines[i] + " "
+            stack.append(_)
+            del _
             indent_level += 1
             firs_inst = True
         elif token == "{":
@@ -67,8 +78,18 @@ def normalize_tokens(_lines: str) -> str:
                     lines[i] = ""
         if token == ";":
             lines[index] = "<\\n>"
-
-    for index, token in enumerate(lines):
+    
+    [
+        process_token(token, index)
+        for index, token in enumerate(lines)
+    ]
+    
+    #if indent_level > 0:
+    #    return f"ERROR::{indent_level}||\"{stack[-1] + '{'}\""
+    # TODO fix this error
+        
+    def process_token_2(token: str, index: int) -> str:
+        nonlocal in_for_loop, lines
         if token == "for":
             in_for_loop = True
         if in_for_loop:
@@ -76,8 +97,13 @@ def normalize_tokens(_lines: str) -> str:
                 lines[index] = ";"
                 if lines[index + 1].startswith("<\\t:"):
                     lines[index + 1] = ""
-            elif token == ":":
+            elif token == ":" and index + 1 < len(lines):
                 in_for_loop = False
+
+    [
+        process_token_2(token, index)
+        for index, token in enumerate(lines)
+    ]
 
     for token in [token for token in lines if token]:
         if token == "<\\n>":
@@ -96,6 +122,4 @@ def normalize_tokens(_lines: str) -> str:
     final_lines = [line for line in final_lines if line]
     final_lines[0].insert(0, "<\\t:0>")
 
-    return "|line_sep<:>line_sep|".join(
-        ["|nested_line_sep<:>nested_line_sep|".join(line) for line in final_lines]
-    )
+    return LINE_BREAK.join([SUB_LINE_BREAK.join(line) for line in final_lines])

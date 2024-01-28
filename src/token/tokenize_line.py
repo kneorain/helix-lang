@@ -15,14 +15,14 @@ def tokenize_line(code: str) -> list[str]:
     """
     
     pattern: str = rf"""
-        ("[^"\\]*(?:\\.[^"\\]*)*")  | # Double quotes strings
-        ('[^'\\]*(?:\\.[^'\\]*)*')  | # Single quotes strings
-        ({'\\'.join(COMMENT.split())}[^\n]*)                | # Single line comments (//)
-        ({'\\'.join(BLOCK_COMMENT.split())}[\s\S]*?{'\\'.join(BLOCK_COMMENT.split())})      | # Multi line comments (/* */)
-        (\b\w+\b)                   | # Words (identifiers, keywords)
-        ({'|'.join(DOUBLE_CHARACTER)}) | # Double character operators
-        ([\(\){{}};,])                | # Single character delimiters
-        (\S)                          # Catch other characters
+        ("[^"\\]*(?:\\.[^"\\]*)*")                                                          | # Double quotes strings
+        ('[^'\\]*(?:\\.[^'\\]*)*')                                                          | # Single quotes strings
+        ({'\\'.join(COMMENT.split())}[^\n]*)                                                | # Single line comments (~~)
+        ({'\\'.join(BLOCK_COMMENT.split())}[\s\S]*?{'\\'.join(BLOCK_COMMENT.split())})      | # Multi line comments (~*~ ... ~*~)
+        (\b\w+\b)                                                                           | # Words (identifiers, keywords)
+        ({'|'.join(DOUBLE_CHARACTER)})                                                      | # Double character operators
+        ([\(\){{}};,])                                                                      | # Single character delimiters
+        (\S)                                                                                  # Catch other characters
     """
 
     tokens: list[list[str]] = re.findall(pattern, code, re.MULTILINE | re.VERBOSE)

@@ -42,6 +42,28 @@ in the namespace object, read the lines and if there is a namespace then create 
 repeat until there are no more namespaces
 """
 
+class Namespace:
+    def __init__(self, name: str, namespace_type: str, lines: list):
+        self.name = name
+        self.namespace_type = namespace_type
+        self.lines = lines
+        self.children = []  # Nested namespaces
+
+    def __str__(self, indent_level=0) -> str:
+        indent = '    ' * indent_level
+        representation = f"{indent}Namespace: {self.name} (Type: {self.namespace_type})\n"
+        
+        for line in self.lines:
+            # Assuming the line is a list of strings, we join them with a space
+            # and replace spaces with an empty string
+            cleaned_line = ' '.join(line)
+            representation += f"{indent}    {repr(cleaned_line)}\n"
+
+        for child in self.children:
+            representation += child.__str__(indent_level + 1)
+
+        return representation
+
 def process(lines: list[list[str]]) -> Namespace:
     """
     Process a list of lines and return a Namespace object.
@@ -52,43 +74,61 @@ def process(lines: list[list[str]]) -> Namespace:
     Returns:
         Namespace: The Namespace object
     """
-    
-    # ~~~~~~~~~~~~ Innit Variables ~~~~~~~~~~~~ #
-    _current_indent_level: int = 0
-    _start_indent_level: int = 0
-    _in_namespace: bool = False
-    _start: int = 0
-    _end: int = 0
-    _namespace_type: str = ""
-    _namespace_name: str = ""
-    _lines: list[list[str or "Namespace"]] = [[]]
-    
-    # ~~~~~~~~~~~~ Parse top level namespaces ~~~~~~~~~~~~ #
-    for index, line in enumerate(lines):
-        # ['<\\t:0>', 'include', '"add"', 'from', '"test.c"']
-        # look at indent levels, recurse until change has been found or a base keyword is there,
-        # if then mark index as start along with indent level, recurse until end of said level so
-        # if start at 0 go thru anything over 0 until 0 is found then save index - 1 as end remove
-        # from lost and store as namespace object, then parse the lines in there the same way.
-        _current_indent_level = int(line[0].split("<\\t:")[1][:-1])
-        
-        if _in_namespace:
-            if _current_indent_level == _start_indent_level:
-                _in_namespace = False
-                _end = index - 1
-                continue
-            else:
-                _lines.append(line)
 
-        if line[1] in BODY_REQUIRED_KEYWORDS.keys():
-            _in_namespace = True
-            _lines.append(line)
-            _start = index
-            _start_indent_level = _current_indent_level
-            _namespace_type = BODY_REQUIRED_KEYWORDS[line[1]]
-    
+    def parse_namespace(lines, start_index=0, start_indent_level=0):
+        children = []
+        namespace_name = None
+        namespace_type = None
+        current_lines = []
+        lines_to_remove = []
 
-    
+        index = start_index
+        while index < len(lines):
+            line = lines[index]
+            current_indent_level = int(line[0].split("<\\t:")[1][:-1])
+
+            if current_indent_level < start_indent_level:
+                break
+
+            if current_indent_level == start_indent_level and namespace_name is not None and line[1] in BODY_REQUIRED_KEYWORDS and line[1] not in ("else", "elif", "except", "finally", "catch", "if", "try", "unless"):
+                nested_ns, nested_lines_to_remove = parse_namespace(current_lines, 0, start_indent_level + 1)
+                ns = Namespace(namespace_name, namespace_type, current_lines)
+                ns.children.extend(nested_ns)
+                children.append(ns)
+                lines_to_remove.extend(nested_lines_to_remove)
+                current_lines = []
+
+                namespace_name = line[2]
+                namespace_type = BODY_REQUIRED_KEYWORDS[line[1]]
+            elif namespace_name is None and line[1] in BODY_REQUIRED_KEYWORDS and line[1] not in ("else", "elif", "except", "finally", "catch", "if", "try", "unless"):
+                namespace_name = line[2]
+                namespace_type = BODY_REQUIRED_KEYWORDS[line[1]]
+            elif namespace_name is not None:
+                current_lines.append(line)
+                lines_to_remove.append(line)
+
+            index += 1
+
+        if namespace_name is not None:
+            nested_ns, nested_lines_to_remove = parse_namespace(current_lines, 0, start_indent_level + 1)
+            ns = Namespace(namespace_name, namespace_type, current_lines)
+            ns.children.extend(nested_ns)
+            children.append(ns)
+            lines_to_remove.extend(nested_lines_to_remove)
+
+        return children, lines_to_remove
+
+    root_namespace = Namespace("root", "root", [])
+    children, lines_to_remove = parse_namespace(lines, 0, 0)
+    root_namespace.children = children
+
+    # Removing processed lines
+    remaining_lines = [line for line in lines if line not in lines_to_remove]
+    root_namespace.lines = remaining_lines
+
+    return root_namespace
+
+
 
 """
 
