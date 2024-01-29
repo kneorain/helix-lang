@@ -1,5 +1,5 @@
 from src.token.tokenize_line import tokenize_line
-from src.token.remove_comments import remove_comments
+from src.token.remove_comments import remove_comment
 from src.token.normalize_tokens import normalize_tokens
 from src.global_vars import CACHE, LINE_BREAK, SUB_LINE_BREAK
 import re
@@ -36,6 +36,7 @@ def find_line_number(line: str, file: str) -> int:
         return -1
 
 
+from src.classes.ast import AST, AST_LIST
 
 def tokenize_file(path: str) -> list[list[str]]:
     """
@@ -48,27 +49,31 @@ def tokenize_file(path: str) -> list[list[str]]:
         list[list[str]]: The normalized and tokenized file
     """
     
-    lines:           list[str] = []
-    tokenized_lines: list[str] = []
+    lines:           list[AST] = []
+    tokenized_lines: list[AST_LIST] = []
 
     if path in CACHE:
         return CACHE[path]
 
     with open(path) as file:
-        lines = file.readlines()
+        lines = tuple(AST(line, "", index+1, 0) for index, line in enumerate(file.readlines()))
 
-    [
-        tokenized_lines.extend(tokenize_line(line))
-        for line in remove_comments(LINE_BREAK.join(lines)).split(
-            LINE_BREAK
-        )
-    ]
+    
+    for index, ast in enumerate(lines):
+        temp_arr = []
+        remove_comment(ast)
+        ast.line = tokenize_line(ast.line)
+        
+    tokenized_lines = normalize_tokens(lines, path)
+    
+    for AST_line in tokenized_lines:
+        for token in AST_line:
+            print(token)
+    
+    print(*tokenized_lines, sep='\n')
+    exit()
+    
 
-    CACHE[path] = [
-        token.split(SUB_LINE_BREAK)
-        for token in normalize_tokens(
-            LINE_BREAK.join(tokenized_lines)
-        ).split(LINE_BREAK)
-    ]
+    CACHE[path];
 
     return CACHE[path]

@@ -31,6 +31,7 @@ with a range of commands and options tailored for a seamless development experie
 
 positional arguments:
   file                  the name of the file to be executed
+  doc                   the name of the documentation page to be displayed
   other                 other arguments to be passed to the file as argv
 
 options:
@@ -43,7 +44,9 @@ options:
   -s, --silent                       enable silent mode
   -w, --watch                        watch the file for changes and recompile
   -i, --install PACKAGE_NAME         install new packages
-  -u, --uninstall PACKAGE_NAME       uninstall packages""", word_wrap=False)
+  -u, --uninstall PACKAGE_NAME       uninstall packages
+  -doc DOC                           the name of the documentation page to be displayed
+""", word_wrap=False, end="")
     exit()
     
 def version_screen():
@@ -60,6 +63,7 @@ def parse_args() -> Namespace:
     
     # Positional arguments
     parser.add_argument('file', nargs='?', help='the name of the file to be executed')
+    parser.add_argument('doc', nargs='?', help='the name of the documentation page to be displayed')
     parser.add_argument('other', nargs='*', help='other arguments to be passed to the file as argv')
     
     # Optional arguments
@@ -72,12 +76,19 @@ def parse_args() -> Namespace:
     parser.add_argument('-w', '--watch', action='store_true', help='watch the file for changes and recompile')
     parser.add_argument('-i', '--install', dest='install_package', help='install new packages')
     parser.add_argument('-u', '--uninstall', dest='uninstall_package', help='uninstall packages')
+    parser.add_argument('-doc', dest='doc', help='the name of the documentation page to be displayed')
 
     args = parser.parse_args()
 
     # Handling version flag
     if args.version:
         version_screen()
+        
+    # Handling doc flag
+    if args.doc:
+        from src.docs.doc import doc
+        doc(args.doc)
+        exit()
 
     # Handling help flag
     if not args.file and not any(vars(args).values()):
@@ -86,9 +97,9 @@ def parse_args() -> Namespace:
     return args
 
 if __name__ == "__main__":
+    args = parse_args()
     
     from src.token.tokenize_file import tokenize_file
-    from src.classes.namespace import process
     from time import time
 
     start = time()
@@ -105,18 +116,3 @@ if __name__ == "__main__":
      
         print("".join([word + " " if not word.startswith("<\\t:") else "    " * int(word[4:-1]) for word in i]))
     print(end - start)
-
-def regex_replace(string: str, regex: str, replacement: str) -> str:
-    """
-    Replace all instances of a regex pattern in a string with a replacement string.
-
-    Args:
-        string (str): The string to replace in
-        regex (str): The regex pattern to replace
-        replacement (str): The string to replace the regex pattern with
-
-    Returns:
-        str: The string with all instances of the regex pattern replaced
-    """
-
-    return __import__("re").sub(regex, replacement, string)

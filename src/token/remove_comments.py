@@ -1,9 +1,12 @@
 from functools import lru_cache
 import re
+from src.classes.ast import AST
 from src.global_vars import COMMENT, BLOCK_COMMENT, LINE_BREAK, INLINE_COMMENT
 
+in_block_comment: bool = False
+
 @lru_cache
-def remove_comments(_code: str) -> str:
+def remove_comment(_code: AST):
     """
     Removes comments from the code. This is a smaller part of the tokenizer,
     but it is in its own file because it is a very important part of the tokenizer.
@@ -17,22 +20,16 @@ def remove_comments(_code: str) -> str:
     Returns:
         list[str]: The code with comments removed
     """
+    global in_block_comment
 
-    code:             list[str] = _code.split(LINE_BREAK) # type: ignore
-    in_block_comment: bool      = False
+    code: str = _code.original_line
+    code = re.sub(INLINE_COMMENT, "", re.sub(COMMENT, "", code))
     
-    for index, line in enumerate(code):
-        code[index] = re.sub(INLINE_COMMENT, "", re.sub(COMMENT, "", line))
+    if re.search(BLOCK_COMMENT, code):
+        in_block_comment = ~in_block_comment # type: ignore
+        code = ""
         
-        if re.search(BLOCK_COMMENT, line):
-            in_block_comment = ~in_block_comment # type: ignore
-            code[index] = ""
-            continue
-
-        if in_block_comment:
-            code[index] = ""
-
     if in_block_comment:
-        raise Exception("Unclosed block comment")
+        code = ""
 
-    return LINE_BREAK.join([line for line in code if line])
+    _code.line = code
