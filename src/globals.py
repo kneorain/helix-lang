@@ -231,6 +231,13 @@ lexer = HelixSyntaxHighlightingLexer()
 formatter = TerminalTrueColorFormatter(style='one-dark') if sys_stdout.isatty() else Terminal256Formatter(style='one-dark')
 def highlight_code(code: str) -> str: return highlight(code, lexer, formatter)
 
+from threading import Thread
+from functools import wraps
+def ASYNC(func):
+    def wrapper(*args, **kwargs):
+        Thread(target=func, args=args, kwargs=kwargs).start()
+    return wrapper
+
 #print(highlight_code("""
 #fn main() {
 #    n: int?; ~~ ? initializes to null instead of 0

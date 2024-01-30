@@ -1,7 +1,8 @@
 from typing import Annotated, Any, Iterable, Self
 from weakref import ref
-import inspect, os, re
-from src.global_vars import highlight_code
+import inspect, os
+import re
+from src.globals import highlight_code
 
 terminal_width: int = os.get_terminal_size().columns
 
@@ -191,57 +192,3 @@ def panic(__error: ref[Exception], *mark: tuple[Any], file: str = "", line_no: i
     # check if terminal width is even
     print(f"{red}{chars['b-left']}{chars['dash']*len_of_halfs} {green}{file}{gray}:{green}{line_no}{red} {' ' if terminal_width % 2 != 0 else ''}{chars['dash']*len_of_halfs}{chars['b-right']}{reset}")
     exit(1)
-    
-def panic_internal(__error: ref[Exception], *mark: tuple[Any], file: str = "", line_no: int = 0):
-    import traceback
-    import sys
-    error = None
-    try:
-        raise __error
-    except Exception as e:
-        error = e
-        from rich.console import Console
-        console = Console()
-        console.print_exception()
-        
-    if not error: return
-    
-    lines: list[str] = traceback.format_exception(type(error), error, error.__traceback__)
-    lines = lines[1:]
-    # look for elemnts in lines that start with "  File"
-    # and split them into 2 parts
-    
-    for index, line in enumerate(lines):
-        if line.startswith("  File"):
-            lines.insert(index+1, line.split("\n")[1])
-            lines[index] = line.split("\n")[0]
-    
-    lines = [line.strip() for line in lines]
-    
-    error_message: str = ": ".join(lines[-1].split(": ")[1:])
-    error_type: str = __error.__class__.__name__
-    lines = lines[:-1]
-    
-    does_support_colors: bool =  sys.stdout.isatty()
-    if does_support_colors:
-        red      = "\u001b[31m"
-        bold_red = "\u001b[31;1m"
-        reset    = "\u001b[0m"
-        gray     = "\u001b[90m"
-        yellow   = "\u001b[33m"
-        green    = "\u001b[32m"
-    else:
-        red, bold_red, reset, gray, yellow, green = "", "", "", "", "", ""
-    
-    def s_u(line: str | list) -> str:
-            # \u001b\[\d+m wiht also match \u001b[91;1m
-            if isinstance(line, list):
-                return list(re.sub(r"\u001b\[\d+(m|\;\d+m)", "", "".join(line)))
-            return re.sub(r"\u001b\[\d+(m|\;\d+m)", "", line)
-
-    
-    for line in lines:
-        print(repr(line))
-        
-
-        

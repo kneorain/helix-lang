@@ -1,8 +1,137 @@
+include "add" from "test.c";
+~*~
+runs command: gcc -shared -o /tmp/.helix/gcc/test.so test.c
+becomes:
+from ctypes import cdll
+test_c = cdll.LoadLibrary("/Volumes/Container/OPSECQUIZ/libmylib.so")
+add = test_c.add
+~*~
+
+fn factorial(n: int) -> int {
+    if (n > 1) {
+        return n * factorial(n - 1);
+    } else {
+        a: map? = {
+            {1 : {2 : 3} } : 3
+        }; ~~ become a = map({{1 : {2 : 3} } : 3}, null_safe=False)
+        a = 20; ~~ error because it does a.set(20)
+        return 1;
+    }
+
+    for (var i; t >= 0; i < 10; i++) {
+        print(i);
+    }
+
+    return match(n) {
+        0 -> 1,
+        _ -> n * factorial(n - 1)
+    }
+
+    ~*~
+    becomes:
+    def factorial(n: int) -> int:
+        if n > 1:
+            return n * factorial(n - 1)
+        else:
+            return 1
+        return default_value_dict({
+            0: 1,
+            _: n * factorial(n - 1)
+        })[n]
+    ~*~
+}
+~*~
+becomes:
+def factorial(n):
+    if n > 1:
+        return n * factorial(n - 1)
+    else:
+        return 1
+~*~
+
 fn main() {
     n: int?; ~~ ? initializes to null instead of 0
+    n = input("Enter a positive integer: ").to_int();
     n: opt[int]; ~~ opt is a generic type that can be used to initialize to null
     n = input("Enter a positive integer ");
     print("Factorial of " + n + " = " + factorial(n));
+}
+~*~
+becomes:
+n = None
+n = int(input("Enter a positive integer: "))
+print("Factorial of " + n + " = " + factorial(n))
+~*~
+
+interface Legs {
+    fn walk() -> string {};
+}
+
+~*~
+becomes:
+class Legs(ABC):
+    @abstractmethod
+    def walk(self) -> string: pass
+~*~
+
+interface Ears {
+    fn listen() -> string {};
+}
+~*~
+becomes:
+class Ears(ABC):
+    @abstractmethod
+    def listen(self) -> string: pass
+~*~
+
+interface Animal impl Legs, Ears {
+    fn speak() -> string {};
+    fn eat() -> string {};
+    fn sleep() -> int {};
+}
+~*~
+becomes:
+class Animal(Legs, Ears, ABC):
+    @abstractmethod
+    def speak(self) -> string: pass
+    @abstractmethod
+    def eat(self) -> string: pass
+    @abstractmethod
+    def sleep(self) -> int: pass
+~*~
+
+class Dog::Animal { ~~ Dog extends Animal and Legs
+    fn speak() -> string {
+        return "Woof!";
+    }
+
+    #[override]
+    fn static eat() -> string {
+        return "The dog is eating.";
+    }
+
+    fn sleep() -> int {
+        return 8;
+    }
+}
+~*~
+becomes:
+class Dog(Animal):
+    def speak(self) -> string:
+        return "Woof!"
+    def eat(self) -> string:
+        return "The dog is eating."
+    def sleep(self) -> int:
+        return 8
+~*~
+
+class GoldenRetriever::Dog { ~~ GoldenRetriever extends Dog
+    fn speak() -> string {
+        return "Bark!";
+        for (var i; int = 0; i < 10; i++) {
+            print(i);
+        }
+    }
     fn factorial(n: int) -> int {
         if (n == 0) {
             return 1;
@@ -10,9 +139,12 @@ fn main() {
             return n * factorial(n - 1);
         }
     }
-
-    for (var i = 0; i < 10; i++) {
-        print(i);
-    }
 }
 
+
+~*~
+becomes:
+class GoldenRetriever(Dog):
+    def speak(self) -> string:
+        return "Bark!"
+~*~

@@ -1,6 +1,6 @@
 import re
-from functools import cache
-from src.global_vars import DOUBLE_CHARACTER, COMMENT, BLOCK_COMMENT
+from src.classes.cache_store import cache
+from src.globals import DOUBLE_CHARACTER, COMMENT, BLOCK_COMMENT
 
 @cache
 def tokenize_line(code: str) -> list[str]:
@@ -24,7 +24,7 @@ def tokenize_line(code: str) -> list[str]:
         ([\(\){{}};,])                                                                      | # Single character delimiters
         (\S)                                                                                  # Catch other characters
     """
-
+    
     tokens: list[list[str]] = re.findall(pattern, code, re.MULTILINE | re.VERBOSE)
     flattened_tokens = [
         token

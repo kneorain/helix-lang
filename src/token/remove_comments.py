@@ -1,11 +1,12 @@
-from functools import lru_cache
-import re
+from src.classes.cache_store import cache
+import ast
 from src.classes.ast import AST
-from src.global_vars import COMMENT, BLOCK_COMMENT, LINE_BREAK, INLINE_COMMENT
+from src.globals import COMMENT, BLOCK_COMMENT, INLINE_COMMENT
+import re2 as re
 
 in_block_comment: bool = False
 
-@lru_cache
+@cache
 def remove_comment(_code: AST):
     """
     Removes comments from the code. This is a smaller part of the tokenizer,

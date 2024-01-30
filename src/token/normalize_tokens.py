@@ -1,8 +1,9 @@
-from functools import lru_cache
+from src.classes.cache_store import cache
 
-from src.global_vars import BODY_REQUIRED_KEYWORDS, LINE_BREAK, SUB_LINE_BREAK
+from src.globals import BODY_REQUIRED_KEYWORDS
 from src.classes.ast import AST, AST_LIST
 
+@cache
 def normalize_tokens(_lines: tuple[AST, ...], path: str) -> tuple[AST_LIST, ...]:
     """
     This function normalizes the tokens. This is a smaller part of the tokenizer,
@@ -23,19 +24,24 @@ def normalize_tokens(_lines: tuple[AST, ...], path: str) -> tuple[AST_LIST, ...]
 
     # spile the ast list into a list of asts contngn all the same metadata but the changed line
     lines: list[AST] = []
+    
     for ast_line in _lines:
         for token in ast_line.line:
             lines.append(AST(ast_line.original_line, token, ast_line.line_number, ast_line.indent_level))
 
-    stack:        list[AST]       = []
-    current_line: list[AST]       = []
-    final_lines:  list[list[AST]] = []
-    firs_inst:    bool            = True
-    in_for_loop:  bool            = False
-    indent_level: int             = 0
+    stack:            list[AST]       = []
+    current_line:     list[AST]       = []
+    final_lines:      list[list[AST]] = []
+    firs_inst:        bool            = True
+    in_for_loop:      bool            = False
+    indent_level:     int             = 0
+    previous_element: AST             = AST("", "", 0, 0)
     
     # lines is expected to countian ['token', ...] for every token in the file NOT individual line
-    for index, ast_token in enumerate(lines):
+    def process_line(index: int):
+        index = index[0]
+        nonlocal stack, indent_level, firs_inst, previous_element
+        
         token = lines[index].line
         if token in BODY_REQUIRED_KEYWORDS.keys():
             # append the line to the stack
@@ -59,7 +65,7 @@ def normalize_tokens(_lines: tuple[AST, ...], path: str) -> tuple[AST_LIST, ...]
             if len(stack) == indent_level:
                 lines[index].line = "<\\n>"
                 indent_level -= 1
-                stack.pop()
+                previous_element = stack.pop()
             else:
                 indent_level -= 1
         if token == "<\\r>":
@@ -78,11 +84,14 @@ def normalize_tokens(_lines: tuple[AST, ...], path: str) -> tuple[AST_LIST, ...]
                     lines[i].line = ""
         if token == ";":
             lines[index].line = "<\\n>"
+        
+    frozenset((process_line(_),) for _ in enumerate(lines))
     
     if indent_level > 0:
         from src.core.panic import panic
+        if stack[-1].indent_level == 0:
+            stack[-1] = previous_element
         panic(SyntaxError(f"<Hex(01.E20)>: Expected an indent: level of 0, but got {indent_level}"), "{", file=path, line_no=stack[-1].line_number)
-        exit(1)
     
     def process_for_loops(index: int) -> str:
         nonlocal in_for_loop, lines
@@ -97,32 +106,28 @@ def normalize_tokens(_lines: tuple[AST, ...], path: str) -> tuple[AST_LIST, ...]
             elif token == ":" and index + 1 < len(lines):
                 in_for_loop = False
 
-    [
-        process_for_loops(index)
-        for index in range(len(lines))
-    ]
+    frozenset((process_for_loops(_) for _ in range(len(lines))))
 
     lines.insert(0, AST(lines[0].original_line, "<\\t:0>", lines[0].line_number, 0))
-    # TODO if this is broken do after  clearing of the lines
-    
-    # len(i) == 1 and i[0].startswith("<\\t:")
+
     indent_level = 0
-    for ast_token in [ast_token for ast_token in lines if ast_token.line]:
+    def process_indent_level(ast_token: AST):
+        nonlocal indent_level, lines, current_line, final_lines
         token = ast_token.line
         if token.startswith("<\\t:"):
             indent_level = int(token[4:-1])
-            continue
+            return
         if token == "<\\n>":
             for i in current_line: i.indent_level = indent_level
             final_lines.append(current_line)
             current_line = []
         else:
             current_line.append(ast_token)
-    else:
-        if current_line:
-            for i in current_line: i.indent_level = indent_level
-            final_lines.append(current_line)
+    
+    frozenset((process_indent_level(_) for _ in [_ for _ in lines if _.line]))
+    
+    if current_line:
+        for i in current_line: i.indent_level = indent_level
+        final_lines.append(current_line)
         
-    #final_lines: tuple[AST_LIST, ...]
     return tuple(AST_LIST(_, _[0].indent_level) for _ in final_lines if _)
-

@@ -1,7 +1,7 @@
 from rich.markdown import Markdown
 from rich.console import Console
 from rich.style import Style
-from src.global_vars import HelixSyntaxHighlightingLexer, lexer, highlight_code, formatter
+from src.globals import HelixSyntaxHighlightingLexer, lexer, highlight_code, formatter
 
 console = Console()
 

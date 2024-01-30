@@ -1,6 +1,7 @@
 from typing import Annotated, Any, Iterable, Self
 from weakref import ref
-import inspect, os, re
+import inspect, os
+import re2 as re
 
 terminal_width: int = os.get_terminal_size().columns
 

@@ -5,7 +5,7 @@ from dataclasses import dataclass
 from typing import override
 from threading import Thread
 from time import time
-from src.global_vars import BODY_REQUIRED_KEYWORDS
+from src.globals import BODY_REQUIRED_KEYWORDS
 
 class Namespace:
     def __init__(self, name: str, namespace_type: str, lines: list):

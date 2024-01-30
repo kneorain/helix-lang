@@ -4,8 +4,12 @@ PRODUCTION_BUILD = False
 
 from argparse import Namespace, ArgumentParser
 from sys import exit
+from src.classes.ast import AST_LIST
 from src.functions.better_print import color_print as print
 from shared_accessor import save_config
+from threading import Event
+
+bar_thread = Event()
 
 class UNICODE_ERROR_LINERS:
     left_starting  = "├",
@@ -96,12 +100,15 @@ def parse_args() -> Namespace:
 
     return args
 
-if __name__ == "__main__":
+def main():
     args = parse_args()
     
     from src.token.tokenize_file import tokenize_file
-    from time import time
-
+    from time import perf_counter as time
+    from src.core.compile_bar import show_bar
+    
+    #show_bar(bar_thread)
+    
     start = time()
 
     a = tokenize_file("syntax.hlx")
@@ -110,9 +117,18 @@ if __name__ == "__main__":
     #exit()
     end = time()
 
+    i: AST_LIST
     for i in a:
-        # " ".join(i) gives: <\t:0> include "add" from "test.c"
-        # i want to make the <\t:0> into a space multiplied by the number of tabs it represents
-     
-        print("".join([word + " " if not word.startswith("<\\t:") else "    " * int(word[4:-1]) for word in i]))
-    print(end - start)
+        print(("    "*i.indent_level) + str(i))
+    
+    bar_thread.set()
+    #print(end - start)
+
+if __name__ == "__main__":
+    try:
+        main()
+    except KeyboardInterrupt:
+        print("Exiting...")
+        exit()
+    finally:
+        bar_thread.set()

@@ -42,7 +42,7 @@ class AST:
         
     def __hash__(self):
         # Use a tuple of all the relevant attributes for hashing
-        return hash((self.__original_line, self.__processed_line, self.__line_number, self.__indent_level))
+        return hash((self.__original_line, frozenset(self.__processed_line), self.__line_number, self.__indent_level))
 
     def __eq__(self, other):
         # Compare all attributes for equality
@@ -72,3 +72,14 @@ class AST_LIST(list[AST]):
     
     def __iter__(self) -> AST:
         return iter(self.line)
+    
+    def __hash__(self) -> int:
+        return hash((frozenset(self.line), self.indent_level))
+    
+    def __eq__(self, other) -> bool:
+        if isinstance(other, AST_LIST):
+            return self.line == other.line and self.indent_level == other.indent_level
+        return False
+    
+    def __repr__(self) -> str:
+        return f"AST_LIST({self.line}, {self.indent_level})"
