@@ -2,25 +2,31 @@
 HELIX_VERSION = "Helix 1.0.0"
 PRODUCTION_BUILD = False
 
+from src.core.better_print import color_print as print
+from src.token.tokenize_file import tokenize_file
 from argparse import Namespace, ArgumentParser
-from sys import exit
-from src.classes.ast import AST_LIST
-from src.functions.better_print import color_print as print
+from src.classes.Transpiler import Transpiler
+from src.core.compile_bar import show_bar
 from shared_accessor import save_config
+from src.classes.namespace import Scope
+from src.classes._ast import AST_LIST
+from time import perf_counter as time
+from src.globals import POOL
 from threading import Event
+from sys import exit
 
 bar_thread = Event()
 
 class UNICODE_ERROR_LINERS:
-    left_starting  = "├",
-    right_starting = "┤",
+    left_starting  =  "├",
+    right_starting =  "┤",
     down_right     = ["┐", "╮"]
     down_left      = ["┌", "╭"]
     up_left        = ["└", "╰"]
     up_right       = ["┘", "╯"]
-    vertical       = "│"
-    horizontal     = "─"
-    underline      = "~"
+    vertical       =  "│"
+    horizontal     =  "─"
+    underline      =  "~"
 
 class ERROR_CODES:
     cli_argument = "[HEX-001]"
@@ -56,7 +62,7 @@ options:
 def version_screen():
     print(HELIX_VERSION)
     exit()
-    
+
 def parse_args() -> Namespace:
     parser = ArgumentParser(
         description="Welcome to the Helix CLI, the gateway to harnessing the power and simplicity of Helix,"
@@ -102,27 +108,23 @@ def parse_args() -> Namespace:
 
 def main():
     args = parse_args()
-    
-    from src.token.tokenize_file import tokenize_file
-    from time import perf_counter as time
-    from src.core.compile_bar import show_bar
-    
-    #show_bar(bar_thread)
-    
+
+
     start = time()
-
+    
     a = tokenize_file("syntax.hlx")
-    #b = process(a)
-    #print(b)
-    #exit()
-    end = time()
-
-    i: AST_LIST
-    for i in a:
-        print(("    "*i.indent_level) + str(i))
+    b = Scope.process_from_lines(a)
+    print(b)
+    c = Transpiler.transpile(b)
+    
+    print(time() - start, " seconds")
+    POOL.close()
+    exit()
+    #i: AST_LIST
+    #for i in a:
+    #    print(("    "*i.indent_level) + str(i))
     
     bar_thread.set()
-    #print(end - start)
 
 if __name__ == "__main__":
     try:

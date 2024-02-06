@@ -34,12 +34,7 @@ def get_cache(path: str, args: tuple) -> Union[any, None]:
     return None
 
 from functools import lru_cache
-def cache(func: Callable) -> Callable:
-    return lru_cache(maxsize=None)(func)
-    def dummy(*args: Tuple[any, ...], **kwargs: dict[str, any]) -> any:
-        return func(*args, **kwargs)
-    
-    
+def cache(func: Callable) -> Callable:    
     @wraps(func)
     def wrapper(*args: Tuple[any, ...], **kwargs: dict[str, any]) -> any:
         if DISABLED: return func(*args, **kwargs)

@@ -62,19 +62,19 @@
 			"patterns": [
 				{
 				  	"name": "constant.numeric.decimal.helix",
-				  	"match": "\\b\\d[\\d_]*(\\.?)[\\d_]*(?:(E|e)([+-]?)([\\d_]+))?(f32|f64|i128|i16|i32|i64|i8|isize|u128|u16|u32|u64|u8|usize)?\\b"
+				  	"match": "\\b\\d[\\d_]*(\\.?)[\\d_]*(?:(E|e)([+-]?)([\\d_]+))?\\b"
 				},
 				{
 				  	"name": "constant.numeric.hex.helix",
-				  	"match": "\\b0x[\\da-fA-F_]+(i128|i16|i32|i64|i8|isize|u128|u16|u32|u64|u8|usize)?\\b"
+				  	"match": "\\b0x[\\da-fA-F_]+\\b"
 				},
 				{
 				  	"name": "constant.numeric.oct.helix",
-				  	"match": "\\b0o[0-7_]+(i128|i16|i32|i64|i8|isize|u128|u16|u32|u64|u8|usize)?\\b"
+				  	"match": "\\b0o[0-7_]+\\b"
 				},
 				{
 				  	"name": "constant.numeric.bin.helix",
-				  	"match": "\\b0b[01_]+(i128|i16|i32|i64|i8|isize|u128|u16|u32|u64|u8|usize)?\\b"
+				  	"match": "\\b0b[01_]+\\b"
 				},
 				{
 				  	"name": "constant.language.bool.helix",

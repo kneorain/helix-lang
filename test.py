@@ -16,3 +16,7 @@ class default_value_dict(dict):
         super().__setitem__(key, value)
         
 
+P = lambda x: -(4*(x**2)) -(6*x) + 48
+
+for i in range(8):
+    print(f"P({i}) = {P(i)}")

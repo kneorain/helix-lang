@@ -1,7 +1,7 @@
 from src.classes.cache_store import cache
-
+from src.core.panic import panic
 from src.globals import BODY_REQUIRED_KEYWORDS
-from src.classes.ast import AST, AST_LIST
+from src.classes._ast import AST, AST_LIST
 
 @cache
 def normalize_tokens(_lines: tuple[AST, ...], path: str) -> tuple[AST_LIST, ...]:
@@ -24,7 +24,7 @@ def normalize_tokens(_lines: tuple[AST, ...], path: str) -> tuple[AST_LIST, ...]
 
     # spile the ast list into a list of asts contngn all the same metadata but the changed line
     lines: list[AST] = []
-    
+
     for ast_line in _lines:
         for token in ast_line.line:
             lines.append(AST(ast_line.original_line, token, ast_line.line_number, ast_line.indent_level))
@@ -36,12 +36,12 @@ def normalize_tokens(_lines: tuple[AST, ...], path: str) -> tuple[AST_LIST, ...]
     in_for_loop:      bool            = False
     indent_level:     int             = 0
     previous_element: AST             = AST("", "", 0, 0)
-    
+
     # lines is expected to countian ['token', ...] for every token in the file NOT individual line
     def process_line(index: int):
         index = index[0]
         nonlocal stack, indent_level, firs_inst, previous_element
-        
+
         token = lines[index].line
         if token in BODY_REQUIRED_KEYWORDS.keys():
             # append the line to the stack
@@ -65,7 +65,10 @@ def normalize_tokens(_lines: tuple[AST, ...], path: str) -> tuple[AST_LIST, ...]
             if len(stack) == indent_level:
                 lines[index].line = "<\\n>"
                 indent_level -= 1
-                previous_element = stack.pop()
+                try:
+                    previous_element = stack.pop()
+                except IndexError:
+                    panic(SyntaxError(f"<Hex(01.E20)>: This error is not yet implemented, but this means you have used {{}} in a context that it shouldn't be used in, such as trying to assign code to a variable like this: \n```\nunsafe let a = {{\n    print(\"Hello World\");\n}}\n```"), "}", file=path, line_no=lines[index].line_number)
             else:
                 indent_level -= 1
         if token == "<\\r>":
@@ -84,11 +87,10 @@ def normalize_tokens(_lines: tuple[AST, ...], path: str) -> tuple[AST_LIST, ...]
                     lines[i].line = ""
         if token == ";":
             lines[index].line = "<\\n>"
-        
-    frozenset((process_line(_),) for _ in enumerate(lines))
-    
+
+    frozenset((process_line(_) for _ in enumerate(lines)))
+
     if indent_level > 0:
-        from src.core.panic import panic
         if stack[-1].indent_level == 0:
             stack[-1] = previous_element
         panic(SyntaxError(f"<Hex(01.E20)>: Expected an indent: level of 0, but got {indent_level}"), "{", file=path, line_no=stack[-1].line_number)
@@ -123,11 +125,11 @@ def normalize_tokens(_lines: tuple[AST, ...], path: str) -> tuple[AST_LIST, ...]
             current_line = []
         else:
             current_line.append(ast_token)
-    
+
     frozenset((process_indent_level(_) for _ in [_ for _ in lines if _.line]))
-    
+
     if current_line:
         for i in current_line: i.indent_level = indent_level
         final_lines.append(current_line)
-        
-    return tuple(AST_LIST(_, _[0].indent_level) for _ in final_lines if _)
+
+    return tuple(AST_LIST(_, _[0].indent_level, path) for _ in final_lines if _)

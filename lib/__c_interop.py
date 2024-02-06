@@ -21,7 +21,7 @@ class __c_lib__(__c_interop_abstraction__):
     
     @staticmethod
     @override
-    def __import__(path: str, attr: str = ""):
+    def __c_cpp_import__(path: str, attr: str = ""):
         out = __c_lib__(path, attr).__lib_ref__
         return out
 

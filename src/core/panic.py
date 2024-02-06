@@ -1,12 +1,124 @@
-from typing import Annotated, Any, Iterable, Self
+from typing import Any, NoReturn
 from weakref import ref
 import inspect, os
+from sys import stdout as sys_stdout
 import re
-from src.globals import highlight_code
+from pygments import highlight
+from pygments.lexer import RegexLexer, bygroups, include
+from pygments.formatters import TerminalTrueColorFormatter, Terminal256Formatter
+from pygments.token import Comment, String, Keyword, Name, Operator, Number, Punctuation, Literal, Whitespace
+class HelixSyntaxHighlightingLexer(RegexLexer):
+    name = 'Helix'
+    aliases = ['Helix']
+    filenames = ["*.hlx"]
+    base_style = "one-dark"
+    background_color = "default"
+
+    tokens = {
+        'root': [
+            (r'\bfor\b', Keyword),
+            include('comments'),
+            include('block-comments'),
+            include('keywords'),
+            include('constants'),
+            include('functions'),
+            include('types'),
+            include('in_line_replace'),
+            include('namespaces'),
+            include('punctuation'),
+            include('strings'),
+            include('variables'),
+            include('class_reference'),
+            (r'\s+', Whitespace),
+        ],
+        'comments': [
+            (r'~~.*$', Comment.Single)
+        ],
+        'block-comments': [
+            (r'~\*~', Comment.Multiline, 'block-comment'),
+            (r'~\*', Comment.Multiline, 'block-comment')
+        ],
+        'block-comment': [
+            (r'[^~]+', Comment.Multiline),
+            (r'~\*', Comment.Multiline, '#push'),
+            (r'\*~', Comment.Multiline, '#pop'),
+            (r'~', Comment.Multiline)
+        ],
+        'constants': [
+            (r'\b\d[\d_]*(\.?)[\d_]*(?:(E|e)([+-]?)([\d_]+))?(f32|f64|i128|i16|i32|i64|i8|isize|u128|u16|u32|u64|u8|usize)?\b', Number),
+            (r'\b0x[\da-fA-F_]+(i128|i16|i32|i64|i8|isize|u128|u16|u32|u64|u8|usize)?\b', Number),
+            (r'\b0o[0-7_]+(i128|i16|i32|i64|i8|isize|u128|u16|u32|u64|u8|usize)?\b', Number),
+            (r'\b0b[01_]+(i128|i16|i32|i64|i8|isize|u128|u16|u32|u64|u8|usize)?\b', Number),
+            (r'\b(true|false)\b', Literal),
+        ],
+        'types': [
+            (r'\b(int|float|double|char|string|bool|byte|short|long)\b', Name.Builtin),
+            (r'\b(array|list|tuple|map|set)\b', Name.Class),
+            (r'\b(void|opt)\b', Name.Class),
+            (r'\b(class|struct|enum|union)\s+([A-Z][A-Za-z0-9_]*)(<)([A-Z][A-Za-z0-9_]*)(>)\b', bygroups(Keyword, Name.Class, Punctuation, Name.Class, Punctuation)),
+            (r'\b([A-Z][A-Za-z0-9_]*)\b', Name.Class),
+        ],
+        'keywords': [
+            (r'\b(if|else|else\s+if|while|break|continue|return|switch|case|default|stop)\b', Keyword),
+            (r'\b(fn|return|yield|async|for|await|lambda|delegate)\b', Keyword),
+            (r'\b(class|struct|new|interface|private|protected|final)\b', Keyword),
+            (r'\b(impl|abstract)\b', Keyword),
+            (r'\b(try|catch|finally|throw)\b', Keyword),
+            (r'\b(let|const|var|final)\b', Keyword),
+            (r'\b(public|private|protected)\b', Keyword),
+            (r'\b(include|import|using|from)\b', Keyword),
+            (r'\b(async|await|thread|yield|yield\s+from)\b', Keyword),
+            (r'\b(in|override|static|ref|type|->)\b', Keyword),
+            (r'(\+|\-|\*|\/|\%|\+\+|\-\-|\+=|\-=|\*=|\/=|\%=|==|!=|>|<|>=|<=|===|!==|&&|\|\||!|&|\||\^|~|<<|>>|\.|::|\?|,|=>|@|\#)', Operator),
+        ],
+        'functions': [
+            (r'\bfn\b', Keyword),
+            (r'([A-Za-z_][A-Za-z0-9_]*)\s*(\()', bygroups(Name.Function, Punctuation)),
+            (r'\b(self|super)\b', Name.Builtin.Pseudo),
+        ],
+        'in_line_replace': [
+            (r'(([a-z_][A-Za-z0-9_]*!)|([A-Z_][A-Za-z0-9_]*!))', bygroups(Name.Function, Name.Class)),
+        ],
+        'namespaces': [
+            (r'(?<![A-Za-z0-9_])([A-Za-z0-9_]+)(::)', bygroups(Name.Namespace, Punctuation)),
+        ],
+        'punctuation': [
+            (r'(\(|\)|\[|\]|\{|\})', Punctuation),
+            (r'(\,)', Punctuation),
+            (r'(\.\.\.)', Punctuation),
+        ],
+        'strings': [
+            # Double-quoted strings
+            (r'"[^"\\]*(?:\\.[^"\\]*)*"', String),
+            # Single-quoted strings
+            (r"'[^'\\]*(?:\\.[^'\\]*)*'", String.Char),
+        ],
+
+        'variables': [
+            (r'(?<![A-Za-z0-9_])([A-Za-z0-9_]+)(?![A-Za-z0-9_])', Name.Variable),
+        ],
+        'class_reference': [
+            # self
+            (r'\bself\b', Name.Builtin.Pseudo),
+            # super
+            (r'\bsuper\b', Name.Builtin.Pseudo)
+        ]
+    }
+
+lexer = HelixSyntaxHighlightingLexer()
+formatter = (
+    TerminalTrueColorFormatter(style='one-dark')
+    if sys_stdout.isatty()
+    else Terminal256Formatter(style='one-dark')
+)
+
+def highlight_code(code: str) -> str:
+    return highlight(code, lexer, formatter)
+
 
 terminal_width: int = os.get_terminal_size().columns
 
-def panic(__error: ref[Exception], *mark: tuple[Any], file: str = "", line_no: int = 0) -> exit:
+def panic(__error: ref[Exception], *mark: tuple[Any], file: str = "", line_no: int = 0) -> NoReturn:
     lines_to_print: int = 5
     mark = [str(item) for item in mark]
     
@@ -189,6 +301,11 @@ def panic(__error: ref[Exception], *mark: tuple[Any], file: str = "", line_no: i
         len_of_file: int = len(file + ':' + str(line_no))
         len_of_halfs = int(((terminal_width-4)/2 - len_of_file/2))
     
+    final_line: str = chars['b-left'] + f" {file}:{line_no} ".center(terminal_width-2, chars['dash']) + chars['b-right']
+    final_line = f"{red}{final_line}{reset}"
+    final_line = final_line.split(file)[0] + green + file + reset + gray + ":" + green + str(line_no) + red + final_line.split(":")[1][len(str(line_no)):] + reset
+    
     # check if terminal width is even
-    print(f"{red}{chars['b-left']}{chars['dash']*len_of_halfs} {green}{file}{gray}:{green}{line_no}{red} {' ' if terminal_width % 2 != 0 else ''}{chars['dash']*len_of_halfs}{chars['b-right']}{reset}")
+    print(final_line)
+    
     exit(1)

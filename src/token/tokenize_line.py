@@ -1,9 +1,9 @@
 import re
-from src.classes.cache_store import cache
+from functools import cache
 from src.globals import DOUBLE_CHARACTER, COMMENT, BLOCK_COMMENT
 
 @cache
-def tokenize_line(code: str) -> list[str]:
+def tokenize_line(code) -> list[str]:
     """
     Tokenize a line of code.
     
@@ -25,7 +25,7 @@ def tokenize_line(code: str) -> list[str]:
         (\S)                                                                                  # Catch other characters
     """
     
-    tokens: list[list[str]] = re.findall(pattern, code, re.MULTILINE | re.VERBOSE)
+    tokens: list[list[str]] = re.findall(pattern, code.line, re.MULTILINE | re.VERBOSE)
     flattened_tokens = [
         token
         for group in tokens
@@ -33,4 +33,4 @@ def tokenize_line(code: str) -> list[str]:
         if token and not token.startswith(COMMENT) and not token.startswith(BLOCK_COMMENT) and not token.endswith(BLOCK_COMMENT)
     ]
 
-    return flattened_tokens
+    code.line = flattened_tokens
