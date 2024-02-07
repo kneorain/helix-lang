@@ -27,6 +27,11 @@ class Scope:
         self.separate_file_namespace = False
         self.children = [] if not children else children
         self.indent_level = indent_level
+        
+        self.variables = {}
+        self.functions = {}
+        self.classes = {}
+        
 
     def make_readable(self, indent: str = "") -> str:
         output = f"\n{indent}Scope: {self.name} (Type: {self.namespace_type}) (Indent: {self.indent_level})\n"

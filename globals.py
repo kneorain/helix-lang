@@ -4,7 +4,6 @@ from threading import Thread
 from classes.WorkerPool import WorkerPool
 from functions._include import include as _include
 from functions._functions import function as _function
-from functions._async_pre import async_prefixed as _async_pre
 from classes.Token import Token_List
 
 

@@ -9,7 +9,7 @@ from classes.Transpiler import Transpiler
 from core.compile_bar import show_bar
 from core.config import save_config
 from classes.Scope import Scope
-from classes.Token import Token_List
+import cProfile
 from time import perf_counter as time
 from globals import POOL
 from threading import Event
@@ -107,13 +107,13 @@ def parse_args() -> Namespace:
     return args
 
 def main():
-    args = parse_args()
+    #args = parse_args()
 
     start = time()
     
     a = tokenize_file("syntax.hlx")
     b = Scope.process_from_lines(a)
-    print(b)
+    #print(b)
     c = Transpiler.transpile(b)
     
     print(time() - start, " seconds")
@@ -127,6 +127,12 @@ def main():
 
 if __name__ == "__main__":
     try:
+        # 7357813 function calls (7918273 primitive calls) in 1.235 second  (close to 18000 lines of code)
+        # 3420506 function calls (3369961 primitive calls) in 0.803 second  (close to 10000 lines of code)
+        # 1052186 function calls (1037209 primitive calls) in 0.044 seconds (close to 3000 lines of code)
+        # 274039 function calls (268734 primitive calls) in 0.013 seconds   (close to 1000 lines of code)
+        # 93556 function calls (92307 primitive calls) in 0.008 seconds     (close to 200 lines of code)
+        # 65722 function calls (65097 primitive calls) in 0.005 seconds     (close to 100 lines of code)
         main()
     except KeyboardInterrupt:
         print("Exiting...")

@@ -1,6 +1,7 @@
 from classes.Token import Token_List, Token
 from headder import INDENT_CHAR
 from core.panic import panic
+from functions._class import _class
 from os import path as os_path
 import re2 as re
 
@@ -101,7 +102,6 @@ def process_modifiers(ast_list: Token_List, root_scope) -> list[str]:
         root_scope.get_keyword("ASYNC"),
         root_scope.get_keyword("PRIVATE"),
         root_scope.get_keyword("PROTECTED"),
-        root_scope.get_keyword("PUBLIC"),
         root_scope.get_keyword("FINAL"),
         root_scope.get_keyword("UNSAFE"),
         root_scope.get_keyword("STATIC")
@@ -136,14 +136,75 @@ def function(ast_list: Token_List, current_scope, parent_scope, root_scope) -> s
     modifiers = process_modifiers(ast_list, root_scope)
     if ast_list.line[0].token != root_scope.get_keyword("FUNCTION"):
         # TODO: link with classes and other namespaces
+        if ast_list.line[0].token == root_scope.get_keyword("CLASS"):
+            return _class(ast_list, current_scope, parent_scope, root_scope, modifiers)
         panic(SyntaxError(f"<Hex(02.E3)>: Expected the {root_scope.get_keyword("FUNCTION")} keyword"), file=ast_list.file, line_no=ast_list.find_line_number(root_scope.get_keyword("FUNCTION")))
     
     variables = extract_variables(ast_list, root_scope)
     name = ast_list.line[1].token
     
-    print(variables, modifiers, name)
+    output = f"def {name}("
+    
+    if not variables["params"]:
+        output += ")"
+    else:
+        for k, v in variables["params"].items():
+            if v["type"] == "void":
+                panic(SyntaxError(f"<Hex(02.E3)>: The type void is not allowed for variables"), file=ast_list.file, line_no=ast_list.find_line_number(k))
+            output += f"{k}: {v['type']}, "
+            current_scope.variables[k] = v["type"]
+        output = output[:-2] + ")"
+    
+    if ast_list.line[-1].token == "<\\r1>" and ast_list.indent_level == 0:
+        panic(SyntaxError(f"<Hex(02.E3)>: Cannot have a blank function in the global scope"), file=ast_list.file, line_no=ast_list.find_line_number(name))
+    
+    if variables["return_type"]:
+        output += f" -> {variables['return_type']}:" if ast_list.line[-1].token != "<\\r1>" else f" -> {variables['return_type']}\n{INDENT_CHAR*(ast_list.indent_level+1)}pass"
+    else:
+        output += ":" if ast_list.line[-1].token != "<\\r1>" else f":\n{INDENT_CHAR*(ast_list.indent_level+1)}pass"
+    
+    output = f"\n{INDENT_CHAR*ast_list.indent_level}{output}"
+    
+    static:  bool = False
+    async_:  bool = False
+    private: bool = False
+    unsafe:  bool = False
+    
+    if root_scope.get_keyword("STATIC") in modifiers:
+        output = f"{INDENT_CHAR*ast_list.indent_level}@staticmethod\n{output}"
+        static = True
+    
+    if root_scope.get_keyword("ASYNC") in modifiers:
+        output = f"{INDENT_CHAR*ast_list.indent_level}@async\n{output}"
+        async_ = True
 
-    output: str = ""
-    output += f"{INDENT_CHAR*ast_list.indent_level}def "
-    output += " ".join([_.token for _ in ast_list.line[1:]])
+    if root_scope.get_keyword("PRIVATE") in modifiers:
+        output = output.replace("def ", "def __")
+        private = True
+
+    if root_scope.get_keyword("PROTECTED") in modifiers:
+        output = output.replace("def ", "def _")
+        
+    if root_scope.get_keyword("FINAL") in modifiers:
+        output = f"{INDENT_CHAR*ast_list.indent_level}@final\n{output}"
+        
+    if root_scope.get_keyword("UNSAFE") in modifiers:
+        unsafe = True
+    
+    if async_ and static:
+        panic(SyntaxError(f"<Hex(02.E3)>: The {root_scope.get_keyword("ASYNC")} and {root_scope.get_keyword("STATIC")} modifiers cannot be used together"), file=ast_list.file, line_no=ast_list.find_line_number(root_scope.get_keyword("STATIC")))
+        
+    if private and static:
+        panic(SyntaxError(f"<Hex(02.E3)>: The {root_scope.get_keyword("PRIVATE")} and {root_scope.get_keyword("STATIC")} modifiers cannot be used together"), file=ast_list.file, line_no=ast_list.find_line_number(root_scope.get_keyword("STATIC")))
+        
+    if async_ and unsafe:
+        panic(SyntaxError(f"<Hex(02.E3)>: The {root_scope.get_keyword("ASYNC")} and {root_scope.get_keyword("UNSAFE")} modifiers cannot be used together"), file=ast_list.file, line_no=ast_list.find_line_number(root_scope.get_keyword("STATIC")))
+        
+    parent_scope.functions[name] = {"type": variables["return_type"], "params": variables["params"], root_scope.get_keyword("STATIC"): static, root_scope.get_keyword("ASYNC"): async_, root_scope.get_keyword("PRIVATE"): private, root_scope.get_keyword("UNSAFE"): unsafe}
+        
+    if "unknown" in output:
+        output = output.replace("unknown", "Any")
+    
+    
+    #print(output)
     return output

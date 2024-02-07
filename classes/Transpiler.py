@@ -38,6 +38,6 @@ class Transpiler:
         cls.parent_scope = root_scope
         
         cls.__transpile()
-        exit()
+        print(cls.root_scope.name, cls.root_scope.functions)
         return cls.transpiled
         

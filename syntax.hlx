@@ -4,16 +4,7 @@ include ("add","sub") from CPP("test.cpp");
 
 
 
-~~ fn function(a: int<some, some> , b: str, c: str) -> int<T> {}
-interface ITest {
-    fn function(a:int, b: map<map<int, map<int, int>>, int>) -> int {};
-    fn function(a:int, b: map<map<int, map<int, int>>, int>) -> int {};
-    fn function(a:int, b: map<map<int, map<int, int>>, int>) -> int {};
-    fn function(a:int, b: map<map<int, map<int, int>>, int>) -> int {};
-    fn function(a:int, b: map<map<int, map<int, int>>, int>) -> int {};
-}
-
-fn factorial(n: map, b: int) {
+fn factorial(n: int) -> int {
     if (n > 1) {
         return n * factorial(n - 1);
     } else {
@@ -39,6 +30,20 @@ fn factorial(n: map, b: int) {
     return 0xff01;
 }
 
+class int using ref {
+    static fn parse(s: string) -> int {
+        return int(s);
+    }
+
+    fn add(a: int, b: int) -> int {
+        return a + b;
+    }
+
+    fn sub(a: int, b: int) -> int {
+        return a - b;
+    }
+}
+
 fn main() {
     let n: int?; ~~ ? initializes to null instead of 0
 
@@ -56,7 +61,7 @@ fn main() {
     return 0;
 }
 
-class GoldenRetriever:: Dog + Cat {
+class GoldenRetriever using Dog + Animal {
     fn speak() -> string {
         return "Bark!";
     }
