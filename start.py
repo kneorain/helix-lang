@@ -7,7 +7,7 @@ from core.token.tokenize_file import tokenize_file
 from argparse import Namespace, ArgumentParser
 from classes.Transpiler import Transpiler
 from core.compile_bar import show_bar
-from shared_accessor import save_config
+from core.config import save_config
 from classes.Scope import Scope
 from classes.Token import Token_List
 from time import perf_counter as time

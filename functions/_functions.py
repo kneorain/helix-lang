@@ -32,9 +32,7 @@ def extract_variables(ast_line: Token_List, root_scope) -> str:
     in_generic: bool = False
     generic: str = ""
     generic_count: int = 0
-    return_type: str = ""
-    found_return_generic: bool = False
-    
+
     if in_param:
         while line:
             if line[0].token == ")":
