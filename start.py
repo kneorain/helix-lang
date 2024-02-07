@@ -2,16 +2,16 @@
 HELIX_VERSION = "Helix 1.0.0"
 PRODUCTION_BUILD = False
 
-from src.core.better_print import color_print as print
-from src.token.tokenize_file import tokenize_file
+from core.better_print import color_print as print
+from core.token.tokenize_file import tokenize_file
 from argparse import Namespace, ArgumentParser
-from src.classes.Transpiler import Transpiler
-from src.core.compile_bar import show_bar
+from classes.Transpiler import Transpiler
+from core.compile_bar import show_bar
 from shared_accessor import save_config
-from src.classes.namespace import Scope
-from src.classes._ast import AST_LIST
+from classes.Scope import Scope
+from classes.Token import Token_List
 from time import perf_counter as time
-from src.globals import POOL
+from globals import POOL
 from threading import Event
 from sys import exit
 
@@ -96,7 +96,7 @@ def parse_args() -> Namespace:
         
     # Handling doc flag
     if args.doc:
-        from src.docs.doc import doc
+        from docs.doc import doc
         doc(args.doc)
         exit()
 
@@ -109,7 +109,6 @@ def parse_args() -> Namespace:
 def main():
     args = parse_args()
 
-
     start = time()
     
     a = tokenize_file("syntax.hlx")
@@ -120,7 +119,7 @@ def main():
     print(time() - start, " seconds")
     POOL.close()
     exit()
-    #i: AST_LIST
+    #i: Token_List
     #for i in a:
     #    print(("    "*i.indent_level) + str(i))
     
