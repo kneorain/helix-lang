@@ -1,6 +1,7 @@
 from types import MappingProxyType as map
 from sys import stdout as sys_stdout
 from threading import Thread
+from typing import Callable
 from classes.WorkerPool import WorkerPool
 from functions._include import include as _include
 from functions._functions import function as _function
@@ -9,7 +10,7 @@ from classes.Token import Token_List
 
 
 def dummy(line: Token_List, current_scope, parent_scope, root_scope) -> str:
-    return ' '.join([str(_.token) for _ in line.line])
+    return ''
     
 
 
@@ -42,7 +43,7 @@ DOUBLE_CHARACTER: list[str] = [
     r"\*\*",
     r"\.\.\.",
 ]
-KEYWORDS: map[str, map[str, str | bool]] = map({
+KEYWORDS: map[str, map[str, str | bool | Callable[..., str]]] = map({
     # Control Flow
     "if"           : map({"internal_name": "IF"        , "parser": dummy        , "namespace": False, "body_required": True , "keyword_type": "control_flow"}),
     "else"         : map({"internal_name": "ELSE"      , "parser": dummy        , "namespace": False, "body_required": True , "keyword_type": "control_flow"}),

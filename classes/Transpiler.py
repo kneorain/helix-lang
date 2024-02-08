@@ -1,3 +1,4 @@
+from typing import Callable
 from classes.Scope import Scope
 from globals import POOL, KEYWORDS, KEYWORDS
 
@@ -12,7 +13,7 @@ class Transpiler:
         pass
     
     @classmethod
-    def get_match_function(cls, child: Scope):
+    def get_match_function(cls, child: Scope) -> Callable[..., str]:
         match = Scope.get_match(child, KEYWORDS.keys())
         
         if match:
@@ -24,13 +25,16 @@ class Transpiler:
     def __transpile(cls):
         for child in cls.current_scope.children:
             if isinstance(child, Scope):
-                cls.parent_scope = cls.current_scope
+                if child.indent_level == 0:
+                    cls.parent_scope = cls.root_scope
+                else:
+                    cls.parent_scope = cls.current_scope
                 cls.current_scope = child
                 cls.__transpile()
             elif isinstance(child, list):
                 cls.transpiled.append(cls.get_match_function(child)(child, cls.current_scope, cls.parent_scope, cls.root_scope))
-            
-    
+
+
     @classmethod
     def transpile(cls, root_scope: Scope):
         cls.root_scope = root_scope
@@ -38,6 +42,6 @@ class Transpiler:
         cls.parent_scope = root_scope
         
         cls.__transpile()
-        print(cls.root_scope.name, cls.root_scope.functions)
+        print(*cls.transpiled, sep="\n")
         return cls.transpiled
         
