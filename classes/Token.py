@@ -105,6 +105,16 @@ class Token_List(list[Token]):
     def __repr__(self) -> str:
         return '"' + ' '.join([_.token for _ in self.line]) + '"'
     
+    
+    def __getitem__(self, index: int) -> Token:
+        return self.line[index]
+    
+    def __setitem__(self, index: int, value: Token) -> None:
+        self.line[index] = value
+        
+    def remove(self, __value: str) -> None:
+        self.line = [token for token in self.line if token.token != __value]
+    
     def find_line_number(self, token: str) -> int:
         for line in self.line:
             if token in line.token:

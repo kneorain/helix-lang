@@ -10,7 +10,7 @@ from classes.Token import Token_List
 
 
 def dummy(line: Token_List, current_scope, parent_scope, root_scope) -> str:
-    return ''
+    return '    '*line.indent_level + ' '.join([_.token for _ in line])
     
 
 

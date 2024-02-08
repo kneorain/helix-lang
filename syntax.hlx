@@ -4,7 +4,7 @@ include ("add","sub") from CPP("test.cpp");
 
 
 
-fn factorial(n: int) -> int {
+static async fn factorial(n: int) -> int {
     if (n > 1) {
         return n * factorial(n - 1);
     } else {
@@ -30,20 +30,6 @@ fn factorial(n: int) -> int {
     return 0xff01;
 }
 
-class int using ref {
-    static fn parse(s: string) -> int {
-        return int(s);
-    }
-
-    fn add(a: int, b: int) -> int {
-        return a + b;
-    }
-
-    fn sub(a: int, b: int) -> int {
-        return a - b;
-    }
-}
-
 fn main() {
     let n: int?; ~~ ? initializes to null instead of 0
 
@@ -59,23 +45,6 @@ fn main() {
     print("Factorial of " + n + " = " + factorial(n));
     
     return 0;
-}
-
-class GoldenRetriever using Dog + Animal {
-    fn speak() -> string {
-        return "Bark!";
-    }
-
-    fn speak() -> string {
-        return "Meow!";
-    }
-
-    fn speak() -> string {
-        for (var i = 0; int = 0; i < 10; i++) {
-            print(i);
-        }
-        return "Bark!";
-    }
 }
 
 ~~ All Primitive Types

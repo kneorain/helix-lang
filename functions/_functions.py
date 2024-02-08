@@ -171,29 +171,26 @@ def function(ast_list: Token_List, current_scope, parent_scope, root_scope) -> s
     unsafe:  bool = False
     
     if root_scope.get_keyword("STATIC") in modifiers:
-        output = f"{INDENT_CHAR*ast_list.indent_level}@staticmethod\n{output}"
+        output = f"\n{INDENT_CHAR*ast_list.indent_level}@staticmethod{output}"
         static = True
     
     if root_scope.get_keyword("ASYNC") in modifiers:
-        output = f"{INDENT_CHAR*ast_list.indent_level}@async\n{output}"
+        output = f"\n{INDENT_CHAR*ast_list.indent_level}@async{output}"
         async_ = True
 
-    if root_scope.get_keyword("PRIVATE") in modifiers:
-        output = output.replace("def ", "def __")
-        private = True
+    # if root_scope.get_keyword("PRIVATE") in modifiers:
+    #     output = output.replace("def ", "def __")
+    #     private = True
 
-    if root_scope.get_keyword("PROTECTED") in modifiers:
-        output = output.replace("def ", "def _")
+    # if root_scope.get_keyword("PROTECTED") in modifiers:
+    #     output = output.replace("def ", "def _")
         
     if root_scope.get_keyword("FINAL") in modifiers:
-        output = f"{INDENT_CHAR*ast_list.indent_level}@final\n{output}"
+        output = f"\n{INDENT_CHAR*ast_list.indent_level}@final{output}"
         
     if root_scope.get_keyword("UNSAFE") in modifiers:
         unsafe = True
-    
-    if async_ and static:
-        panic(SyntaxError(f"<Hex(02.E3)>: The {root_scope.get_keyword("ASYNC")} and {root_scope.get_keyword("STATIC")} modifiers cannot be used together"), file=ast_list.file, line_no=ast_list.find_line_number(root_scope.get_keyword("STATIC")))
-        
+
     if private and static:
         panic(SyntaxError(f"<Hex(02.E3)>: The {root_scope.get_keyword("PRIVATE")} and {root_scope.get_keyword("STATIC")} modifiers cannot be used together"), file=ast_list.file, line_no=ast_list.find_line_number(root_scope.get_keyword("STATIC")))
         
