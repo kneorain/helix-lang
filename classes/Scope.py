@@ -32,6 +32,7 @@ class Scope:
         self.variables = {}
         self.functions = {}
         self.classes = {}
+        self.operator_functions = {}
         
 
     def make_readable(self, indent: str = "") -> str:

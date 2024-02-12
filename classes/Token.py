@@ -88,8 +88,8 @@ class Token_List(list[Token]):
         self.file = file
         
     def __str__(self):
-        return json.dumps({"line_indent_level": self.indent_level, "joined_line": [_.token for _ in self.line]})
-    #f"\"Token_List\": {{\"line_indent_level\": {self.indent_level}, \"joined_line\": \"{(' '.join([_.token for _ in self.line])).replace('\"', '\\\"').replace('\'', '\\\'')}\"}}"
+        return json.dumps({"line_indent_level": self.indent_level, "joined_line": ' '.join([_.token for _ in self.line])})
+        #f"\"Token_List\": {{\"line_indent_level\": {self.indent_level}, \"joined_line\": \"{(' '.join([_.token for _ in self.line])).replace('\"', '\\\"').replace('\'', '\\\'')}\"}}"
     
     def __iter__(self) -> Iterator[Token]:
         return iter(self.line)
