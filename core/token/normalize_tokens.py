@@ -119,9 +119,9 @@ def normalize_tokens(_lines: tuple[Token, ...], path: str) -> tuple[Token_List, 
         if token.startswith("<\\t:"):
             indent_level = int(token[4:-1])
             return
-        if token == "<\\n>":
+        if token == "<\\n>" or token == "<\\r1>":
             for i in current_line: i.indent_level = indent_level
-            final_lines.append(current_line)
+            final_lines.append((current_line + [ast_token]) if token == "<\\r1>" else current_line)
             current_line = []
         else:
             current_line.append(ast_token)

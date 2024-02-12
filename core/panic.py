@@ -117,8 +117,13 @@ def highlight_code(code: str) -> str:
 
 
 terminal_width: int = os.get_terminal_size().columns
+from threading import Lock
+
+lock = Lock()
 
 def panic(__error: ref[Exception], *mark: tuple[Any], file: str = "", line_no: int = 0) -> NoReturn:
+    lock.acquire()
+    
     lines_to_print: int = 5
     mark = [str(item) for item in mark]
     
@@ -308,4 +313,5 @@ def panic(__error: ref[Exception], *mark: tuple[Any], file: str = "", line_no: i
     # check if terminal width is even
     print(final_line)
     
+    lock.release()
     exit(1)

@@ -1,12 +1,19 @@
 n = 0
 _ = "_"
 class default_value_dict(dict):
-    # same as a dict but if there a key of _ then if a key is not found it will return the value of _
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.default = self[_]
-        
+        self.default = self["_"]
+
     def __getitem__(self, key):
+        # Check if the key is a tuple and iterate over the items in the dictionary
+        if isinstance(key, tuple):
+            for dict_key in self.keys():
+                if isinstance(dict_key, tuple) and len(dict_key) == len(key):
+                    # Check if all elements match or are wildcards
+                    if all(k == dk or dk == "?" or dk == "any" for k, dk in zip(key, dict_key)):
+                        return super().__getitem__(dict_key)
+            return self.default
         try:
             return super().__getitem__(key)
         except KeyError:
@@ -15,8 +22,19 @@ class default_value_dict(dict):
     def __setitem__(self, key, value):
         super().__setitem__(key, value)
         
+"""return match(n) {
+    1 -> "one",
+    2 -> "two",
+    3 -> "three",
+    _ -> "fuck all"
+};"""
 
-P = lambda x: -(4*(x**2)) -(6*x) + 48
+def something(n) -> str:
+    return default_value_dict({
+        1: "one",
+        2: "two",
+        3: "three",
+        _: "fuck all"
+    })[n]
 
-for i in range(8):
-    print(f"P({i}) = {P(i)}")
+print(something(3123))

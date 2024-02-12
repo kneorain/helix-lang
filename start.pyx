@@ -1,3 +1,4 @@
+# distutils: language=c++
 #!/usr/bin/env python3
 HELIX_VERSION = "Helix 1.0.0"
 PRODUCTION_BUILD = False

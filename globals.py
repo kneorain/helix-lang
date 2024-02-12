@@ -5,15 +5,13 @@ from typing import Callable
 from classes.WorkerPool import WorkerPool
 from functions._include import include as _include
 from functions._functions import function as _function
-from classes.Token import Token_List
-
-
+from functions._class import _class
+from functions._match import _match
+from classes.Token import Token_List, Processed_Line
 
 def dummy(line: Token_List, current_scope, parent_scope, root_scope) -> str:
-    return '    '*line.indent_level + ' '.join([_.token for _ in line])
+    return Processed_Line('    '*line.indent_level + ' '.join([_.token for _ in line]), line)
     
-
-
 CACHE: dict = {}
 POOL: WorkerPool = WorkerPool(50)
 
@@ -21,27 +19,29 @@ LINE_BREAK:     str = '\x03'
 SUB_LINE_BREAK: str = '\x04'
 
 DOUBLE_CHARACTER: list[str] = [
-    r"==",
-    r"!=",
-    r"->",
-    r"<-",
-    r"<=",
-    r">=",
-    r"&&",
-    r"--",
-    r"\:\:",
-    r"\|\|",
-    r"\+\+",
-    r"\+\=",
-    r"\-\=",
-    r"\*\=",
-    r"\/\=",
-    r"\&\=",
-    r"\|\=",
-    r"\^\=",
-    r"\%\=",
-    r"\*\*",
+    r"=="    ,
+    r"!="    ,
+    r"->"    ,
+    r"<-"    ,
+    r"<="    ,
+    r">="    ,
+    r"&&"    ,
+    r"--"    ,
+    r"\:\:"  ,
+    r"\|\|"  ,
+    r"\+\+"  ,
+    r"\+\="  ,
+    r"\-\="  ,
+    r"\*\="  ,
+    r"\/\="  ,
+    r"\&\="  ,
+    r"\|\="  ,
+    r"\^\="  ,
+    r"\%\="  ,
+    r"\*\*"  ,
     r"\.\.\.",
+    r"=\=\=",
+    r"!\=\=",
 ]
 KEYWORDS: map[str, map[str, str | bool | Callable[..., str]]] = map({
     # Control Flow
@@ -60,18 +60,18 @@ KEYWORDS: map[str, map[str, str | bool | Callable[..., str]]] = map({
     "case"         : map({"internal_name": "CASE"      , "parser": dummy        , "namespace": False, "body_required": True , "keyword_type": "case_control"}),
     "default"      : map({"internal_name": "DEFAULT"   , "parser": dummy        , "namespace": False, "body_required": True , "keyword_type": "case_control"}),
     "switch"       : map({"internal_name": "SWITCH"    , "parser": dummy        , "namespace": False, "body_required": False, "keyword_type": "case_control"}),
-    "match"        : map({"internal_name": "MATCH"     , "parser": dummy        , "namespace": False, "body_required": False, "keyword_type": "case_control"}),
+    "match"        : map({"internal_name": "MATCH"     , "parser": _match       , "namespace": False, "body_required": False, "keyword_type": "case_control"}),
 
     # Function
     "fn"           : map({"internal_name": "FUNCTION"  , "parser": _function    , "namespace": True , "body_required": True , "keyword_type": "function_declaration"}),
     "lambda"       : map({"internal_name": "LAMBDA"    , "parser": dummy        , "namespace": False, "body_required": False, "keyword_type": "function_declaration"}),
     "thread"       : map({"internal_name": "THREAD"    , "parser": dummy        , "namespace": True , "body_required": True , "keyword_type": "function_declaration"}),
     "macro"        : map({"internal_name": "MACRO"     , "parser": dummy        , "namespace": True , "body_required": True , "keyword_type": "function_declaration"}),
-    "async"        : map({"internal_name": "ASYNC"     , "parser": _function   , "namespace": False, "body_required": False, "keyword_type": "function_modifier"}),
+    "async"        : map({"internal_name": "ASYNC"     , "parser": _function    , "namespace": False, "body_required": False, "keyword_type": "function_modifier"}),
     "return"       : map({"internal_name": "RETURN"    , "parser": dummy        , "namespace": False, "body_required": False, "keyword_type": "function_control"}),
 
     # Class
-    "class"        : map({"internal_name": "CLASS"     , "parser": dummy        , "namespace": True , "body_required": True , "keyword_type": "class_declaration"}),
+    "class"        : map({"internal_name": "CLASS"     , "parser": _class       , "namespace": True , "body_required": True , "keyword_type": "class_declaration"}),
     "impl"         : map({"internal_name": "EXTEND"    , "parser": dummy        , "namespace": True , "body_required": True , "keyword_type": "class_declaration"}),
 
     # Struct, Interface, Union, Enum

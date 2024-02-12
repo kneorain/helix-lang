@@ -25,6 +25,9 @@ def remove_comment(_code: Token):
     code: str = _code.original_line
     code = re.sub(INLINE_COMMENT, "", re.sub(COMMENT, "", code))
     
+    code = re.sub(r"override\s+.*\:", "", code)
+    code = re.sub(r"impl\s+.*:", "", code)
+    
     if re.search(BLOCK_COMMENT, code):
         in_block_comment = ~in_block_comment # type: ignore
         code = ""

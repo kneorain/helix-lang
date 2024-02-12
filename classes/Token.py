@@ -60,7 +60,7 @@ class Token:
         # Use a tuple of all the relevant attributes for hashing
         return hash((self.__original_line, frozenset(self.__processed_line), self.__line_number, self.__indent_level))
 
-    def __eq__(self, other):
+    def __eq__(self, other: 'Token'):
         # Compare all attributes for equality
         if isinstance(other, Token):
             return (
@@ -120,3 +120,60 @@ class Token_List(list[Token]):
             if token in line.token:
                 return line.line_number
         return -1
+    
+    def __contains__(self, __key: object) -> bool:
+        return any([__key == token.token for token in self.line])
+
+    def full_line(self) -> str:
+        return ' '.join([_.token for _ in self.line])
+
+    def get_all_after(self, token: str) -> list[Token]:
+        # get all tokens after the token
+        found: int = 0
+        for i, line in enumerate(self.line):
+            if line.token == token:
+                found = i
+                break
+        return [line for line in self.line[found+1:]]
+    
+    def get_all_before(self, token: str) -> list[Token]:
+        # get all tokens before the token
+        found: int = 0
+        for i, line in enumerate(self.line):
+            if line.token == token:
+                found = i
+                break
+        return [line for line in self.line[:found]]
+    
+    def get_between(self, start: str, end: str) -> list[Token]:
+        start_index: int = 0
+        end_index: int = 0
+        count: int = 0
+
+        for i, line in enumerate(self.line):
+            if line.token == start and not count > 0:
+                start_index = i
+                count += 1
+            elif line.token == start and count > 0:
+                count += 1
+            if line.token == end:
+                count -= 1
+                if count == 0:
+                    end_index = i
+                    break
+
+        return [line for line in self.line[start_index+1:end_index]]
+    
+    def copy(self) -> 'Token_List':
+        return Token_List(self.line.copy(), self.indent_level, self.file)
+            
+    def count(self, __value: str) -> int:
+        return sum([1 for token in self.line if token.token == __value])
+    
+class Processed_Line(Token_List):
+    def __init__(self, line: str, non_parsed_line: Token_List):
+        self.line = line
+        self.non_parsed_line = non_parsed_line
+        
+    def __str__(self):
+        return self.line

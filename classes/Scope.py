@@ -18,7 +18,8 @@ class Scope:
     
     variables: dict[str, str]
     functions: dict[str, str]
-    classes: dict[str, str]
+    classes:   dict[str, str]
+    operator_functions: dict[str, str]
         
     def __init__(self, name: str, namespace_type: str, children: list, indent_level: int = 0):
         self.name = name

@@ -1,4 +1,4 @@
-from classes.Token import Token_List, Token
+from classes.Token import Processed_Line, Token_List, Token
 from headder import INDENT_CHAR
 from core.panic import panic
 from functions._class import _class
@@ -132,12 +132,23 @@ def contains(line: Token_List, compare: tuple):
     # check if any of the tokens in compare are in line and
     return any([_ in line for _ in compare])
 
+# static async fn factorial(n: int) -> int {
 def function(ast_list: Token_List, current_scope, parent_scope, root_scope) -> str:
+    decorators = []
+    if ast_list.line[0].token == "#":
+        for _ in range(ast_list.count("#")):
+            decorator = ast_list.get_between("[", "]")
+            ast_list.line = ast_list.line[len(decorator)+3:]
+            decorators.append('@' + ' '.join([__.token for __ in decorator]))
+            
     modifiers = process_modifiers(ast_list, root_scope)
+        
+            
     if ast_list.line[0].token != root_scope.get_keyword("FUNCTION"):
         # TODO: link with classes and other namespaces
         if ast_list.line[0].token == root_scope.get_keyword("CLASS"):
             return _class(ast_list, current_scope, parent_scope, root_scope, modifiers)
+    
         panic(SyntaxError(f"<Hex(02.E3)>: Expected the {root_scope.get_keyword("FUNCTION")} keyword"), file=ast_list.file, line_no=ast_list.find_line_number(root_scope.get_keyword("FUNCTION")))
     
     variables = extract_variables(ast_list, root_scope)
@@ -186,7 +197,7 @@ def function(ast_list: Token_List, current_scope, parent_scope, root_scope) -> s
     #     output = output.replace("def ", "def _")
         
     if root_scope.get_keyword("FINAL") in modifiers:
-        output = f"\n{INDENT_CHAR*ast_list.indent_level}@final{output}"
+        output = f"{INDENT_CHAR*ast_list.indent_level}@final{output}"
         
     if root_scope.get_keyword("UNSAFE") in modifiers:
         unsafe = True
@@ -202,6 +213,9 @@ def function(ast_list: Token_List, current_scope, parent_scope, root_scope) -> s
     if "unknown" in output:
         output = output.replace("unknown", "Any")
     
-    
     #print(output)
-    return output
+    if decorators:
+        for _, decorator in enumerate(reversed(decorators)):
+            output = f"{INDENT_CHAR*ast_list.indent_level}{decorator}\n{INDENT_CHAR*ast_list.indent_level}{output.strip()}"
+
+    return Processed_Line('\n' + output, ast_list)
