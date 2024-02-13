@@ -9,11 +9,7 @@ from threading import Thread as __thread__
 from time import sleep as __sleep__
 from os import path as __os_path__
 from typing import Any
-        
-        
-        
-        
-        
+
 class __c_lib__():
     __lib_name__: str = ""
     __path__: str = ""
