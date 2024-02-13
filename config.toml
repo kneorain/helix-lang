@@ -1,0 +1,35 @@
+[Compiler]
+
+    val compiler = new Compiler {
+      def compile(code: String): Either[Throwable, String] = {
+        val result = originalCompiler.compile(code)
+        result match {
+          case Right(_) => Right("Success")
+          case Left(e) => Left(e)
+        }
+      }
+    }
+
+    val result = compiler.compile("val x: Int = 1")
+    result should be(Right("Success"))
+  }
+
+  it should "return a Left if the original compiler returns a Left" in {
+    val originalCompiler = new Compiler {
+      def compile(code: String): Either[Throwable, String] = Left(new Exception("Error"))
+    }
+
+    val compiler = new Compiler {
+      def compile(code: String): Either[Throwable, String] = {
+        val result = originalCompiler.compile(code)
+        result match {
+          case Right(_) => Right("Success")
+          case Left(e) => Left(e)
+        }
+      }
+    }
+
+    val result = compiler.compile("val x: Int = 1")
+    result should be(Left(new Exception("Error")))
+  }
+}

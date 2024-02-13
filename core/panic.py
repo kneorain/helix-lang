@@ -115,8 +115,10 @@ formatter = (
 def highlight_code(code: str) -> str:
     return highlight(code, lexer, formatter)
 
-
-terminal_width: int = os.get_terminal_size().columns
+try:
+    terminal_width: int = os.get_terminal_size().columns
+except OSError:
+    terminal_width = 80
 from threading import Lock
 
 lock = Lock()

@@ -3,6 +3,16 @@ MODE = 1
 from setuptools import setup
 from Cython.Build import cythonize
 
+# distutils: language=c++
+
+with open("start.py", "r") as file:
+    code = file.read()
+    
+with open("start.pyx", "w") as file:
+    file.write("# distutils: language=c++\n\n" + code)
+    
+input("Press any key to continue...")
+
 setup(
     ext_modules=cythonize(
         "start.pyx",
