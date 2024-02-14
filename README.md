@@ -4,6 +4,7 @@
 <img src="assets/example_3.png" align="right" width="450"
      alt="Quicksort code in Carbon. Follow the link to read more.">
 </a>
+<div><a href="#"><img src="assets/bumper.png"></a></div>
 
 ## Table of Contents
 - [Helix](#helix)
@@ -23,9 +24,10 @@ Helix is an experimental language that is designed to interop with Python, C, C+
 - Works with existing code and libraries in Python, C, C++, and Rust, allowing developers to leverage the power of these languages while taking advantage of Helix's simplicity and ease of use.
 - Helix is designed to be fast and efficient, with a simple syntax that makes it easy to write and maintain code. It is also designed to be easy to learn, with a focus on readability and simplicity.
 
-<img src="assets/example_1.png" align="left" width="450" padding="10"
+<img src="assets/example_1.png" align="left" width="450"
      alt="Quicksort code in Carbon. Follow the link to read more.">
 </a>
+<div><a href="#"><img src="assets/bumper.png"></a></div>
 
 ## Project status
 The project is currently in the early stages of development, and is not yet ready for use. The goal is to have a working prototype by March 2024.
