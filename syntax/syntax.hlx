@@ -84,7 +84,7 @@ include PY("numpy");
 include "binary_sort" from CPP("sorting.cpp")
 
 ~~ Evaluated during compile time
-const compile squared_numbers = array(x ** 2 for x in [1, 2, 3, 4, 5]);
+const compile SQUARED_NUMBERS = array(x ** 2 for x in [1, 2, 3, 4, 5]);
 
 ~~ Create a type that can be either a int or float
 type AgeType = int | float;
@@ -112,7 +112,7 @@ fn main():{
     let sorted: list = binary_sort([1, 2, 3, 4, 5]);
 
     ~~ Print outputs
-    print("Squared numbers:", squared_numbers);
+    print("Squared numbers:", SQUARED_NUMBERS);
     print(f"{dog.name} is {dog.age} years old.");
 }
 
