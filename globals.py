@@ -43,6 +43,7 @@ DOUBLE_CHARACTER: list[str] = [
     r"=\=\=",
     r"!\=\=",
 ]
+
 KEYWORDS: map[str, map[str, str | bool | Callable[..., str]]] = map({
     # Control Flow
     "if"           : map({"internal_name": "IF"        , "parser": dummy        , "namespace": False, "body_required": True , "keyword_type": "control_flow"}),

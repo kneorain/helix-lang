@@ -1,8 +1,12 @@
 from typing import Callable
+
 from classes.Scope import Scope
-from globals import POOL, KEYWORDS, KEYWORDS
 from classes.Token import Token_List
-from headder import INDENT_CHAR
+from core.config import load_config
+from globals import KEYWORDS, POOL
+
+INDENT_CHAR = load_config().Formatter["indent_char"]
+
 
 class Transpiler:
     root_scope: Scope

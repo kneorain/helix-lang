@@ -160,7 +160,7 @@
 				{
 					"comment": "Control flow keywords",
 					"name": "keyword.control.helix",
-					"match": "\\b(if|else|else\\s+if|while|break|continue|return|switch|case|default|stop)\\b"
+					"match": "\\b(if|else|unless|else\\s+if|while|break|continue|return|match|case|default|stop)\\b"
 				},
 				{
 					"comment": "Function and method keywords",
@@ -185,7 +185,7 @@
 				{
 					"comment": "Variable declaration keywords",
 					"name": "keyword.declaration.helix",
-					"match": "\\b(let|const|var|final)\\b"
+					"match": "\\b(let|compile|const|var|final)\\b"
 				},
 				{
 					"comment": "Access specifiers",

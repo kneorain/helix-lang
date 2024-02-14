@@ -19,7 +19,7 @@ class Scope:
     variables: dict[str, str]
     functions: dict[str, str]
     classes:   dict[str, str]
-    operator_functions: dict[str, str]
+    operator_functions: dict[str, dict[str, str]]
         
     def __init__(self, name: str, namespace_type: str, children: list, indent_level: int = 0):
         self.name = name
@@ -32,7 +32,12 @@ class Scope:
         self.variables = {}
         self.functions = {}
         self.classes = {}
-        self.operator_functions = {}
+        self.operator_functions = {
+            "prefix": {},
+            "infix": {},
+            "postfix": {}
+        }
+        
         
 
     def make_readable(self, indent: str = "") -> str:

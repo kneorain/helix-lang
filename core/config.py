@@ -1,13 +1,26 @@
-import pickle, os
+import toml, os
 from argparse import Namespace
+from core.panic import panic
+
+CACHE: dict[str, Namespace] = {}
+CONFIG_PATH = "config.toml"
 
 def save_config(config: Namespace):
-    with open(f"cache{os.sep}shared.data", "wb") as config_file:
-        pickle.dump(config, config_file)
+    with open(CONFIG_PATH, "w") as file:
+        toml.dump(config, file)
         
-def load_config() -> Namespace:
-    with open(f"cache{os.sep}shared.data", "rb") as config_file:
-        return pickle.load(config_file)
+def load_config(path: str = CONFIG_PATH) -> Namespace:
+    if path in CACHE:
+        return CACHE[path]
+    
+    if path != CONFIG_PATH:
+        panic(f"Could not find config file at {path}") if not os.path.exists(path) else None
+    
+    with open(path, "r") as file:
+        data = Namespace(**toml.load(file))
+        CACHE[path] = data
+        return data
 
-def delete_config():
-    os.remove(f"cache{os.sep}shared.data")
+def set_config_path(path: str) -> None:
+    global CONFIG_PATH
+    CONFIG_PATH = path

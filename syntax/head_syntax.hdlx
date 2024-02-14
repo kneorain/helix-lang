@@ -1,0 +1,9 @@
+target "rust";
+use "syntax.hlx";
+include system;
+
+if system::is_windows() {
+    define set_something(int value) -> void;
+} else {
+    define set_something_else(int value) -> void;
+}

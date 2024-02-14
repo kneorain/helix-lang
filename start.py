@@ -110,11 +110,11 @@ def main():
 
     start = time()
     
-    a = tokenize_file("syntax.hlx")
+    a = tokenize_file("syntax/syntax.hlx")
     b = Scope.process_from_lines(a)
     c = Transpiler.transpile(b)
     
-    print((time()-start) / 1000, " us")
+    print((time()-start) / 1_000_000, " ms")
     POOL.close()
     exit()
     #i: Token_List

@@ -1,1 +1,0 @@
-INDENT_CHAR = "    "

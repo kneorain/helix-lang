@@ -1,0 +1,268 @@
+include PY("numpy");
+include "test" from RS("test.rs");
+include ("add","sub") from CPP("test.cpp");
+
+~~ op ^ as xor(lhs: bool, rhs: bool) -> bool {
+~~     return lhs ^ rhs;
+~~ }
+
+static async fn factorial(n: int) -> int {
+    if (n > 1) {
+        return n * factorial(n - 1);
+    } else {
+        a: map<map<int, map<int, int>>, int>? = {
+            {1 : {2 : 3} } : 3
+        }; ~~ become a = map({{1 : {2 : 3} } : 3}, null_safe=False)
+        
+        return 1;
+    }
+
+    fn new_function(n: int) -> int {
+        if (n == 0) {
+            return 1;
+        } else {
+            return n * new_function(n - 1);
+        }
+    }
+
+    for (var i = 0; t >= 0; i < 10; i++) {
+        print(i);
+    }
+
+    return 0xff01;
+}
+
+fn main() {
+    let n: int?; ~~ ? initializes to null instead of 0
+
+    fn something(n: int) -> string {
+        return match (n) {
+            1 -> "one",
+            2 -> "two",
+            3 -> "three",
+            _ -> "fuck all"
+        };
+    }
+
+    n = int::parse(input("Enter a positive integer "));
+    print("Factorial of " + n + " = " + factorial(n));
+    
+    return 0;
+}
+
+class Mammal {
+    fn new(self: ref, name: string, age: int, breed: string) {}
+    fn info() {}
+}
+
+class Dog::Mammal {
+    let name:  string;
+    let breed: string;
+    let age:   int;
+
+    override Mammal:
+        async fn new(self: ref, name: string, age: int, breed: string) {
+            self.breed = breed;
+            self.name  = name;
+            self.age   = age;
+
+            let a: int = 1 add 2 sub 2;
+
+            return a;
+
+        }
+
+        fn info() {
+            print(self.name + " is a " + self.age + " year old " + self.breed);
+        }
+}
+
+~* ------------------------------ EXAMPLES ---------------------------------- *~
+
+~~ Import python and C++
+include PY("numpy");
+include "binary_sort" from CPP("sorting.cpp")
+
+~~ Evaluated during compile time
+const compile squared_numbers = array(x ** 2 for x in [1, 2, 3, 4, 5]);
+
+~~ Create a type that can be either a int or float
+type AgeType = int | float;
+
+~~ Define a function
+fn greet(name: string) {
+    print(f"Hello, {name}!");
+}
+
+~~ Define a class
+class Dog {
+    fn new(self: ref, name: string, age: AgeType) {
+        self.name = name;
+        self.age  = age;
+    }
+}
+
+~~ Create an instance of the class
+fn main():{
+    ~~ Create a new instance of the Dog class
+    dog = Dog("Buddy", 5);
+    greet("World");
+    
+    ~~ Sort a list using C++
+    let sorted: list = binary_sort([1, 2, 3, 4, 5]);
+
+    ~~ Print outputs
+    print("Squared numbers:", squared_numbers);
+    print(f"{dog.name} is {dog.age} years old.");
+}
+
+
+~~ ------------------------------ EXAMPLES ---------------------------------- ~~
+~~ Evaluated during compile time
+const compile squared_numbers = array(x ** 2 for x in [1, 2, 3, 4, 5]);
+
+
+fn main() {
+    ~~ Create a new instance of the Dog class
+    let arr: list = [12, 11, 13, 5, 6];
+
+    ~~ Print outputs
+    arr = insertion_sort(arr);
+    print("Sorted array:", arr);
+}
+
+type EitherIntOrFloat = int | float;
+
+~~ Define a function
+fn binary_search(arr: list, val: int, start: int, end: int) -> int {
+    if start == end {
+        if arr[start] > val {
+            return start;
+        } else {
+            return start + 1;
+        }
+    }
+
+    if (start > end) {
+        return start;
+    }
+    
+    let mid: EitherIntOrFloat = (start + end) / 2;
+    
+    if arr[mid] < val {
+        return binary_search(arr, val, mid + 1, end);
+    } unless arr[mid] > val {
+        return binary_search(arr, val, start, mid - 1);
+    } else {
+        return mid;
+    }
+}
+
+fn insertion_sort(arr: list) -> list {
+    for (var i = 1; i < arr.len(); i++) {
+        let j:   int = i - 1;
+        let key: int = arr[i];
+        
+        while (j >= 0 && arr[j] > key) {
+            arr[j + 1] = arr[j];
+            j = j - 1;
+        }
+        
+        arr[j + 1] = key;
+    }
+
+    return arr;
+}
+
+
+
+~~ +: __add__
+~~ &: __and__
+~~ ==: __eq__
+~~ //: __floordiv__
+~~ >=: __ge__
+~~ >: __gt__
+~~ ~: __invert__
+~~ <=: __le__
+~~ <<: __lshift__
+~~ <: __lt__
+~~ %: __mod__
+~~ *: __mul__
+~~ !=: __ne__
+~~ -: __neg__
+~~ |: __or__
+~~ +: __pos__
+~~ **: __pow__
+~~ +: __radd__
+~~ &: __rand__
+~~ //: __rfloordiv__
+~~ <<: __rlshift__
+~~ %: __rmod__
+~~ *: __rmul__
+~~ |: __ror__
+~~ **: __rpow__
+~~ >>: __rrshift__
+~~ >>: __rshift__
+~~ -: __rsub__
+~~ /: __rtruediv__
+~~ ^: __rxor__
+~~ -: __sub__
+~~ /: __truediv__
+~~ ^: __xor__
+~~ 
+~~ to_bool: __bool__
+~~ to_string: __str__
+~~ to_float: __float__
+~~ to_hash: __hash__
+~~ to_int: __int__
+~~ 
+~~ math.ceil: __ceil__
+~~ __class__
+~~ divmod: __divmod__
+~~ docstring: __doc__
+~~ abs: __abs__
+~~ math.floor: __floor__
+~~ str.format: __format__
+~~ attribute access: __getattribute__
+~~ index: __index__
+~~ new: __init__
+~~ __init_subclass__: __init_subclass__
+~~ object creation: __new__
+~~ divmod: __rdivmod__
+~~ 
+~~ reduce protocol for pickling: __reduce__
+~~ extended reduce for pickling: __reduce_ex__
+~~ 
+~~ new arguments for serialization: __getnewargs__
+~~ repr: __repr__
+~~ round: __round__
+~~ set attribute: __setattr__
+~~ sys.getsizeof: __sizeof__
+~~ __subclasshook__
+~~ math.trunc: __trunc__
+~~ All Primitive Types
+~~ int;
+~~ string;
+~~ float;
+~~ map;
+~~ list;
+~~ bool;
+~~ char;
+~~ void;
+~~ tuple;
+~~ array;
+~~ set;
+
+~~ u8;
+~~ u16;
+~~ u32;
+~~ u64;
+~~ u128;
+~~ i8;
+~~ i16;
+~~ i32;
+~~ i64;
+~~ i128;
+~~ f32;
+~~ f64;
+~~ f128;

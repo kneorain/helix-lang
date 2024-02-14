@@ -1,8 +1,12 @@
-from classes.Token import Processed_Line, Token_List, Token
-from headder import INDENT_CHAR
-from core.panic import panic
+from classes.Token import Processed_Line, Token, Token_List
+
+from core.config import load_config
+INDENT_CHAR = load_config().Formatter["indent_char"]
+
 from os import path as os_path
 import re2 as re
+from core.panic import panic
+
 
 def is_in_string(token: str) -> bool:
     return re.search(r"\".*?\"", token) or re.search(r"\'[a-zA-Z0-9]\'", token)
