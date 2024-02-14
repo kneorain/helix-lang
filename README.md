@@ -23,7 +23,7 @@ Helix is an experimental language that is designed to interop with Python, C, C+
 - Works with existing code and libraries in Python, C, C++, and Rust, allowing developers to leverage the power of these languages while taking advantage of Helix's simplicity and ease of use.
 - Helix is designed to be fast and efficient, with a simple syntax that makes it easy to write and maintain code. It is also designed to be easy to learn, with a focus on readability and simplicity.
 
-<img src="assets/example_1.png" align="left" width="450"
+<img src="assets/example_1.png" align="left" width="450" padding="10"
      alt="Quicksort code in Carbon. Follow the link to read more.">
 </a>
 
