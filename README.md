@@ -14,7 +14,7 @@ Helix is an experimental language designed for seamless interoperability with Py
 ---
 <div>
 <img src="assets/example_1.png" width="450" align="right"
-     alt="Quicksort code in Carbon. Follow the link to read more.">
+     alt="Code Example">
 </a>
 <a href="#"><img src="assets/bumper.png"></a>
 </div>
@@ -35,7 +35,7 @@ Helix is an experimental language designed for seamless interoperability with Py
 
 
 <img src="assets/example_3.png" width="450"
-     alt="Quicksort code in Carbon. Follow the link to read more.">
+     alt="Code Example">
 </a>
 
 ## Project status

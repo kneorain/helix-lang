@@ -5,10 +5,10 @@ from Cython.Build import cythonize
 
 # distutils: language=c++
 
-with open("start.py", "r") as file:
+with open("start.py", "r", encoding="utf-8") as file:
     code = file.read()
     
-with open("start.pyx", "w") as file:
+with open("start.pyx", "w", encoding="utf-8") as file:
     file.write("# distutils: language=c++\n\n" + code)
     
 input("Press any key to continue...")

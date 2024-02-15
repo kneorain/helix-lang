@@ -5,7 +5,7 @@ INDENT_CHAR = load_config().Formatter["indent_char"]
 
 from os import path as os_path
 
-import re2 as re
+re = __import__(load_config().Transpiler["regex_module"])
 
 from core.panic import panic
 

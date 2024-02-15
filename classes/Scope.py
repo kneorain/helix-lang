@@ -1,6 +1,5 @@
 from concurrent.futures import Future
 from dataclasses import dataclass
-from typing import override
 from threading import Thread
 from time import time
 from core.panic import panic

@@ -1,12 +1,19 @@
+import inspect
+import os
+from sys import stdout as sys_stdout
 from typing import Any, NoReturn
 from weakref import ref
-import inspect, os
-from sys import stdout as sys_stdout
+
 import re
+
 from pygments import highlight
+from pygments.formatters import (Terminal256Formatter,
+                                 TerminalTrueColorFormatter)
 from pygments.lexer import RegexLexer, bygroups, include
-from pygments.formatters import TerminalTrueColorFormatter, Terminal256Formatter
-from pygments.token import Comment, String, Keyword, Name, Operator, Number, Punctuation, Literal, Whitespace
+from pygments.token import (Comment, Keyword, Literal, Name, Number, Operator,
+                            Punctuation, String, Whitespace)
+
+
 class HelixSyntaxHighlightingLexer(RegexLexer):
     name = 'Helix'
     aliases = ['Helix']

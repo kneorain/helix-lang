@@ -81,13 +81,8 @@ class Dog::Mammal {
 
 ~~ Import python and C++
 include PY("numpy");
-include "binary_sort" from CPP("sorting.cpp")
+include "binary_sort" from CPP("sorting.cpp");
 
-~~ Evaluated during compile time
-const compile SQUARED_NUMBERS = array(x ** 2 for x in [1, 2, 3, 4, 5]);
-
-~~ Create a type that can be either a int or float
-type AgeType = int | float;
 
 ~~ Define a function
 fn greet(name: string) {
@@ -103,9 +98,9 @@ class Dog {
 }
 
 ~~ Create an instance of the class
-fn main():{
+fn main() {
     ~~ Create a new instance of the Dog class
-    dog = Dog("Buddy", 5);
+    let dog: Dog = Dog("Buddy", 5);
     greet("World");
     
     ~~ Sort a list using C++
@@ -119,7 +114,7 @@ fn main():{
 
 ~~ ------------------------------ EXAMPLES ---------------------------------- ~~
 ~~ Evaluated during compile time
-const compile squared_numbers = array(x ** 2 for x in [1, 2, 3, 4, 5]);
+
 
 
 fn main() {
@@ -130,8 +125,6 @@ fn main() {
     arr = insertion_sort(arr);
     print("Sorted array:", arr);
 }
-
-type EitherIntOrFloat = int | float;
 
 ~~ Define a function
 fn binary_search(arr: list, val: int, start: int, end: int) -> int {

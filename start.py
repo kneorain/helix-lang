@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 HELIX_VERSION = "Helix 1.0.0"
 PRODUCTION_BUILD = False
 
@@ -7,7 +8,7 @@ from core.token.tokenize_file import tokenize_file
 from argparse import Namespace, ArgumentParser
 from classes.Transpiler import Transpiler
 from core.compile_bar import show_bar
-from core.config import save_config
+from core.config import load_config
 from classes.Scope import Scope
 from time import perf_counter_ns as time
 from globals import POOL
@@ -110,10 +111,10 @@ def main():
 
     start = time()
     
+    print(load_config().Transpiler["regex_module"])
     a = tokenize_file("syntax/syntax.hlx")
     b = Scope.process_from_lines(a)
     c = Transpiler.transpile(b)
-    
     print((time()-start) / 1_000_000, " ms")
     POOL.close()
     exit()

@@ -1,25 +1,26 @@
 [Transpiler]
-# Choose target language: "c++" or "c" or "python" or "asm"
-target   = "c++"
-threads  = 4
-optimization = 3
-warnings = true
-verbose  = false
+    # Choose target language: "c++" or "c" or "python" or "asm"
+    target   = "c++"
+    threads  = 4
+    optimization = 3
+    warnings = true
+    verbose  = false
+    regex_module = "re" # "re" or "re2" or any other regex module
 
 [Build]
-output_dir = "build"
-output     = "a.out"
+    output_dir = "build"
+    output     = "a.out"
 
 [Compiler]
-compiler.py  = "python3"
-compiler.c   = "gcc"
-compiler.cpp = "g++"
-compiler_flags.cpp = "-std=c++17"
-compiler_flags.c   = "-std=c11"
+    compiler.py  = "python3"
+    compiler.c   = "gcc"
+    compiler.cpp = "g++"
+    compiler_flags.cpp = "-std=c++17"
+    compiler_flags.c   = "-std=c11"
 
 [Linker]
-dirs.include = ["include"]
-dirs.libs    = ["lib"]
+    dirs.include = ["include"]
+    dirs.libs    = ["lib"]
 
 [Formatter]
-indent_char = "    "
+    indent_char = "    "

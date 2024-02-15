@@ -5,7 +5,7 @@ INDENT_CHAR = load_config().Formatter["indent_char"]
 
 from os import path as os_path
 
-import re2 as re
+re = __import__(load_config().Transpiler["regex_module"])
 
 from core.panic import panic
 from functions._class import _class
@@ -23,18 +23,18 @@ def extract_variables(ast_line: Token_List, root_scope) -> str:
         if line[2].token == "->":
             # no parameters, just a return type
             if line[3].token == ":" or line[3].token == "<\\r1>":
-                panic(SyntaxError(f"<Hex(02.E3)>: Expected a return type after the {root_scope.get_keyword("FUNCTION")} keyword"), "->", file=ast_line.file, line_no=ast_line.find_line_number(root_scope.get_keyword("FUNCTION")))
+                panic(SyntaxError(f"<Hex(02.E3)>: Expected a return type after the {root_scope.get_keyword('FUNCTION')} keyword"), "->", file=ast_line.file, line_no=ast_line.find_line_number(root_scope.get_keyword('FUNCTION')))
             return {"return_type": line[3].token, "params": {}}
         else:
             # no parameters, no return type
             if line[2].token != ":" and line[2].token != "<\\r1>":
-                panic(SyntaxError(f"<Hex(02.E3)>: Expected a colon after the parameters"), ":", file=ast_line.file, line_no=ast_line.find_line_number(root_scope.get_keyword("FUNCTION")))
+                panic(SyntaxError(f"<Hex(02.E3)>: Expected a colon after the parameters"), ":", file=ast_line.file, line_no=ast_line.find_line_number(root_scope.get_keyword('FUNCTION')))
             return {"return_type": None, "params": {}}
     elif line[0].token == "(":
         in_param = True
         line = line[1:]
     else:
-        panic(SyntaxError(f"<Hex(02.E3)>: Expected an open parenthesis after the {root_scope.get_keyword("FUNCTION")} keyword"), "(", file=ast_line.file, line_no=ast_line.find_line_number(root_scope.get_keyword("FUNCTION")))
+        panic(SyntaxError(f"<Hex(02.E3)>: Expected an open parenthesis after the {root_scope.get_keyword('FUNCTION')} keyword"), "(", file=ast_line.file, line_no=ast_line.find_line_number(root_scope.get_keyword('FUNCTION')))
     
     in_generic: bool = False
     generic: str = ""
@@ -46,12 +46,12 @@ def extract_variables(ast_line: Token_List, root_scope) -> str:
                 if line[1].token == "->":
                     # no parameters, just a return type
                     if line[2].token == ":" or line[2].token == "<\\r1>":
-                        panic(SyntaxError(f"<Hex(02.E3)>: Expected a return type after the {root_scope.get_keyword("FUNCTION")} keyword"), "->", file=ast_line.file, line_no=ast_line.find_line_number(root_scope.get_keyword("FUNCTION")))
+                        panic(SyntaxError(f"<Hex(02.E3)>: Expected a return type after the {root_scope.get_keyword('FUNCTION')} keyword"), "->", file=ast_line.file, line_no=ast_line.find_line_number(root_scope.get_keyword('FUNCTION')))
                     return {"return_type": line[2].token, "params": variables}
                 else:
                     # no parameters, no return type
                     if line[1].token != ":" and line[1].token != "<\\r1>":
-                        panic(SyntaxError(f"<Hex(02.E3)>: Expected a colon after the parameters"), ":", file=ast_line.file, line_no=ast_line.find_line_number(root_scope.get_keyword("FUNCTION")))
+                        panic(SyntaxError(f"<Hex(02.E3)>: Expected a colon after the parameters"), ":", file=ast_line.file, line_no=ast_line.find_line_number(root_scope.get_keyword('FUNCTION')))
                     return {"return_type": None, "params": variables}
             if line[0].token == "<":
                 generic_count += 1
@@ -84,12 +84,12 @@ def extract_variables(ast_line: Token_List, root_scope) -> str:
                     line = line[3:]
                 else:
                     if line[0].token == "=":
-                        panic(SyntaxError(f"<Hex(02.E3)>: Default values are not allowed in function parameters"), line[0].token, file=ast_line.file, line_no=ast_line.find_line_number(root_scope.get_keyword("FUNCTION")))
+                        panic(SyntaxError(f"<Hex(02.E3)>: Default values are not allowed in function parameters"), line[0].token, file=ast_line.file, line_no=ast_line.find_line_number(root_scope.get_keyword('FUNCTION')))
                     if line[0].token == "<":
                         in_generic = True
                         generic = ""
                         continue
-                    panic(SyntaxError(f"<Hex(02.E3)>: Expected a colon and a type after the variable name"), line[0].token, file=ast_line.file, line_no=ast_line.find_line_number(root_scope.get_keyword("FUNCTION")))
+                    panic(SyntaxError(f"<Hex(02.E3)>: Expected a colon and a type after the variable name"), line[0].token, file=ast_line.file, line_no=ast_line.find_line_number(root_scope.get_keyword('FUNCTION')))
                     
     return variables
     
@@ -105,18 +105,18 @@ def process_modifiers(ast_list: Token_List, root_scope) -> list[str]:
     #   - final
     #   - virtual
     allowed_modifiers = (
-        root_scope.get_keyword("ASYNC"),
-        root_scope.get_keyword("PRIVATE"),
+        root_scope.get_keyword('ASYNC'),
+        root_scope.get_keyword('PRIVATE'),
         root_scope.get_keyword("PROTECTED"),
         root_scope.get_keyword("FINAL"),
-        root_scope.get_keyword("UNSAFE"),
-        root_scope.get_keyword("STATIC")
+        root_scope.get_keyword('UNSAFE'),
+        root_scope.get_keyword('STATIC')
     )
 
     modifiers = []
     index = 0
     
-    if ast_list.line[0].token != root_scope.get_keyword("FUNCTION"):
+    if ast_list.line[0].token != root_scope.get_keyword('FUNCTION'):
         line = ast_list.line.copy()
         while line:
             index += 1
@@ -124,7 +124,7 @@ def process_modifiers(ast_list: Token_List, root_scope) -> list[str]:
                 modifiers.append(line[0].token)
                 line = line[1:]
             else:
-                if line[0].token != root_scope.get_keyword("FUNCTION"):
+                if line[0].token != root_scope.get_keyword('FUNCTION'):
                     return modifiers
                 else:
                     break
@@ -150,12 +150,12 @@ def function(ast_list: Token_List, current_scope, parent_scope, root_scope) -> s
     modifiers = process_modifiers(ast_list, root_scope)
         
             
-    if ast_list.line[0].token != root_scope.get_keyword("FUNCTION"):
+    if ast_list.line[0].token != root_scope.get_keyword('FUNCTION'):
         # TODO: link with classes and other namespaces
         if ast_list.line[0].token == root_scope.get_keyword("CLASS"):
             return _class(ast_list, current_scope, parent_scope, root_scope, modifiers)
     
-        panic(SyntaxError(f"<Hex(02.E3)>: Expected the {root_scope.get_keyword("FUNCTION")} keyword"), file=ast_list.file, line_no=ast_list.find_line_number(root_scope.get_keyword("FUNCTION")))
+        panic(SyntaxError(f"<Hex(02.E3)>: Expected the {root_scope.get_keyword('FUNCTION')} keyword"), file=ast_list.file, line_no=ast_list.find_line_number(root_scope.get_keyword('FUNCTION')))
     
     variables = extract_variables(ast_list, root_scope)
     name = ast_list.line[1].token
@@ -187,15 +187,15 @@ def function(ast_list: Token_List, current_scope, parent_scope, root_scope) -> s
     private: bool = False
     unsafe:  bool = False
     
-    if root_scope.get_keyword("STATIC") in modifiers:
+    if root_scope.get_keyword('STATIC') in modifiers:
         output = f"\n{INDENT_CHAR*ast_list.indent_level}@staticmethod{output}"
         static = True
     
-    if root_scope.get_keyword("ASYNC") in modifiers:
+    if root_scope.get_keyword('ASYNC') in modifiers:
         output = f"\n{INDENT_CHAR*ast_list.indent_level}@async{output}"
         async_ = True
 
-    # if root_scope.get_keyword("PRIVATE") in modifiers:
+    # if root_scope.get_keyword('PRIVATE') in modifiers:
     #     output = output.replace("def ", "def __")
     #     private = True
 
@@ -205,16 +205,16 @@ def function(ast_list: Token_List, current_scope, parent_scope, root_scope) -> s
     if root_scope.get_keyword("FINAL") in modifiers:
         output = f"{INDENT_CHAR*ast_list.indent_level}@final{output}"
         
-    if root_scope.get_keyword("UNSAFE") in modifiers:
+    if root_scope.get_keyword('UNSAFE') in modifiers:
         unsafe = True
 
     if private and static:
-        panic(SyntaxError(f"<Hex(02.E3)>: The {root_scope.get_keyword("PRIVATE")} and {root_scope.get_keyword("STATIC")} modifiers cannot be used together"), file=ast_list.file, line_no=ast_list.find_line_number(root_scope.get_keyword("STATIC")))
+        panic(SyntaxError(f"<Hex(02.E3)>: The {root_scope.get_keyword('PRIVATE')} and {root_scope.get_keyword('STATIC')} modifiers cannot be used together"), file=ast_list.file, line_no=ast_list.find_line_number(root_scope.get_keyword('STATIC')))
         
     if async_ and unsafe:
-        panic(SyntaxError(f"<Hex(02.E3)>: The {root_scope.get_keyword("ASYNC")} and {root_scope.get_keyword("UNSAFE")} modifiers cannot be used together"), file=ast_list.file, line_no=ast_list.find_line_number(root_scope.get_keyword("STATIC")))
+        panic(SyntaxError(f"<Hex(02.E3)>: The {root_scope.get_keyword('ASYNC')} and {root_scope.get_keyword('UNSAFE')} modifiers cannot be used together"), file=ast_list.file, line_no=ast_list.find_line_number(root_scope.get_keyword('STATIC')))
         
-    parent_scope.functions[name] = {"type": variables["return_type"], "params": variables["params"], root_scope.get_keyword("STATIC"): static, root_scope.get_keyword("ASYNC"): async_, root_scope.get_keyword("PRIVATE"): private, root_scope.get_keyword("UNSAFE"): unsafe}
+    parent_scope.functions[name] = {"type": variables["return_type"], "params": variables["params"], root_scope.get_keyword('STATIC'): static, root_scope.get_keyword('ASYNC'): async_, root_scope.get_keyword('PRIVATE'): private, root_scope.get_keyword('UNSAFE'): unsafe}
         
     if "unknown" in output:
         output = output.replace("unknown", "Any")
