@@ -45,22 +45,22 @@ As of now, the project has the following structure and features:
 
 #### Language Implementation
 - [x] Lexer
-- [ ] Parser
-- [ ] Abstract Syntax Tree (AST)
-- [ ] Error Handling
+- [x] Parser
+- [x] Abstract Syntax Tree (AST)
+- [x] Error Handling
 - [ ] Type Checking
 - [ ] Transpiler
 
 #### Language Features
-- [x] Variables
+- [ ] Variables
 - [x] Functions
-- [x] Control Flow
-- [x] Data Types
+- [ ] Control Flow
+- [ ] Data Types
 - [x] Classes
-- [ ] Generics
-- [ ] Inheritance
+- [x] Generics
+- [x] Inheritance
 - [ ] Operator Overloading
-Interop:
+- Interop:
   - [ ] Python
   - [ ] C
   - [ ] C++
