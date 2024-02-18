@@ -2,10 +2,10 @@ include PY("numpy");
 include "test" from RS("test.rs");
 include ("add","sub") from CPP("test.cpp");
 
+~*~
 ~~ op ^ as xor(lhs: bool, rhs: bool) -> bool {
 ~~     return lhs ^ rhs;
 ~~ }
-
 static async fn factorial(n: int) -> int {
     if (n > 1) {
         return n * factorial(n - 1);
@@ -150,24 +150,50 @@ fn binary_search(arr: list, val: int, start: int, end: int) -> int {
         return mid;
     }
 }
+~*~
+~~ var a, b : int = 0;                  FAIL + #TODO: single declaration for multiple variables not defined
+~~ let a: float, var b: int = 0.2, 1;   FAIL + #TODO: unpacking not defined
 
-fn insertion_sort(arr: list) -> list {
-    for (var i = 1; i < arr.len(); i++) {
-        let j:   int = i - 1;
-        let key: int = arr[i];
-        
-        while (j >= 0 && arr[j] > key) {
-            arr[j + 1] = arr[j];
-            j = j - 1;
-        }
-        
-        arr[j + 1] = key;
+class dog {
+    let name:  string;
+    let breed: string;
+    let age:   int;
+
+    fn info() {
+        print(self.name + " is a " + self.age + " year old " + self.breed);
+    }
+    
+    async fn new(self: ref, name: string, age: int, breed: string) {
+        self.breed = breed;
+        self.name  = name;
+        self.age   = age;
+
+        let a: int = 1 add 2 sub 2;
+
+        return a;
+
     }
 
-    return arr;
+}
+
+class somehting::dog {
+    static fn some_fucntion(arr: list<string>) -> list {
+        let arr: list<int> = [1, 2, 3];
+        for var s, var i in arr {
+            print(i);
+        }
+
+        for var i: int<int> = 0; i < 10; i++ {
+            print(i);
+        }
+
+        return arr;
+    }
 }
 
 
+
+~~ i ++ , j += fomenc ( [ 1 , 2 , 3 ] )
 
 ~~ +: __add__
 ~~ &: __and__

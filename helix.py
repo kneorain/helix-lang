@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-HELIX_VERSION = "Helix 1.0.0"
-PRODUCTION_BUILD = False
+__version__: str = "0.0.2-alpha.p"
+PRODUCTION_BUILD: bool = False
 
 from core.better_print import color_print as print
 from core.token.tokenize_file import tokenize_file
@@ -60,7 +60,7 @@ options:
     exit()
     
 def version_screen():
-    print(HELIX_VERSION)
+    print(__version__)
     exit()
 
 def parse_args() -> Namespace:
@@ -111,11 +111,14 @@ def main():
 
     start = time()
     
-    print(load_config().Transpiler["regex_module"])
     a = tokenize_file("syntax/syntax.hlx")
     b = Scope.process_from_lines(a)
     c = Transpiler.transpile(b)
+    
     print((time()-start) / 1_000_000, " ms")
+    
+    #print(*[repr(_) + "\n" for _ in Transpiler.transpiled], sep="\n")
+    
     POOL.close()
     exit()
     #i: Token_List
@@ -124,7 +127,7 @@ def main():
     
     bar_thread.set()
 
-if __name__ == "__main__":
+def start():
     try:
         # 7357813 function calls (7918273 primitive calls) in 1.235 ms  (close to 18000 lines of code)
         # 3420506 function calls (3369961 primitive calls) in 0.803 ms  (close to 10000 lines of code)
@@ -138,3 +141,6 @@ if __name__ == "__main__":
         exit()
     finally:
         bar_thread.set()
+        
+if __name__ == "__main__":
+    start()

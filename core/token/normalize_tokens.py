@@ -1,6 +1,6 @@
 from core.cache_store import cache
 from core.panic import panic
-from globals import BODY_REQUIRED_KEYWORDS
+from globals import BODY_REQUIRED_KEYWORDS, find_keyword
 from classes.Token import Token, Token_List
 
 @cache
@@ -43,7 +43,7 @@ def normalize_tokens(_lines: tuple[Token, ...], path: str) -> tuple[Token_List, 
         nonlocal stack, indent_level, firs_inst, previous_element
 
         token = lines[index].line
-        if token in BODY_REQUIRED_KEYWORDS.keys():
+        if token in BODY_REQUIRED_KEYWORDS.keys() and lines[index-1].line not in (find_keyword("ELSE"), ):
             # append the line to the stack
             for i in range(index, len(lines)):
                 if lines[i].line == "{":
@@ -105,7 +105,7 @@ def normalize_tokens(_lines: tuple[Token, ...], path: str) -> tuple[Token_List, 
                 lines[index].line = ";"
                 if lines[index + 1].line.startswith("<\\t:"):
                     lines[index + 1].line = ""
-            elif token == ":" and index + 1 < len(lines):
+            elif token == ":" and (index + 1) < len(lines) and lines[index + 1].line == "<\\n>":
                 in_for_loop = False
 
     frozenset((process_for_loops(_) for _ in range(len(lines))))

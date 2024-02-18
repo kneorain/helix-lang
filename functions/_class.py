@@ -2,9 +2,6 @@ from classes.Token import Processed_Line, Token, Token_List
 from core.config import load_config
 
 INDENT_CHAR = load_config().Formatter["indent_char"]
-
-from os import path as os_path
-
 re = __import__(load_config().Transpiler["regex_module"])
 
 from core.panic import panic
@@ -30,11 +27,12 @@ def _class(ast_list: Token_List, current_scope, parent_scope, root_scope, modifi
     for i in class_extends:
         if i.token not in parent_scope.classes.keys():
             panic(NameError(f"Class '{i.token}' not found"), i.token, file=ast_list.file, line_no=ast_list.find_line_number(i.token))
-            
-    
+        
     output = f"class {class_name}"
     if class_extends:
-        output += f"({', '.join([i.token for i in class_extends])})"
+        output += f"({', '.join([i.token for i in class_extends])}, metaclass=multimeta)"
+    else:
+        output += "(metaclass=multimeta)"
     output += ":"
     
     parent_scope.classes[class_name] = {

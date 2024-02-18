@@ -1,6 +1,6 @@
 import inspect
 import os
-from sys import stdout as sys_stdout
+from sys import (stdout as sys_stdout, exit)
 from typing import Any, NoReturn
 from weakref import ref
 
@@ -246,6 +246,14 @@ def panic(__error: ref[Exception], *mark: tuple[Any], file: str = "", line_no: i
             
         output.append(output_line)
         output.append("".join(mark_line) + (f"\b {red}{chars['straight']}{reset}" if marked else ""))
+        # if output has any lists in it, flatten them 
+        if any([isinstance(item, list) for item in output]):
+            # there could be a list and a string in the output put all the contents of the list into the output list in the correct order and remove the list
+            for index, item in enumerate(output):
+                if isinstance(item, list):
+                    _ = "".join(item)
+                    output.pop(index)
+                    output.insert(index, _)
         
         return "\n".join(output)
     

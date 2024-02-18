@@ -2,16 +2,13 @@ from classes.Token import Processed_Line, Token, Token_List
 from core.config import load_config
 
 INDENT_CHAR = load_config().Formatter["indent_char"]
-
-from os import path as os_path
-
 re = __import__(load_config().Transpiler["regex_module"])
 
 from core.panic import panic
 from functions._class import _class
+from classes.Scope import Scope
 
-
-def extract_variables(ast_line: Token_List, root_scope) -> str:
+def extract_variables(ast_line: Token_List, root_scope: Scope) -> str:
     variables = {}
     # remove the fn keyword
     line = ast_line.line[1:]
@@ -94,7 +91,7 @@ def extract_variables(ast_line: Token_List, root_scope) -> str:
     return variables
     
 
-def process_modifiers(ast_list: Token_List, root_scope) -> list[str]:
+def process_modifiers(ast_list: Token_List, root_scope: Scope) -> list[str]:
     # all modifiers are optional
     # all allowed modifiers:
     #   - async
@@ -139,8 +136,9 @@ def contains(line: Token_List, compare: tuple):
     return any([_ in line for _ in compare])
 
 # static async fn factorial(n: int) -> int {
-def function(ast_list: Token_List, current_scope, parent_scope, root_scope) -> str:
+def function(ast_list: Token_List, current_scope: Scope, parent_scope: Scope, root_scope: Scope) -> str:
     decorators = []
+    print(parent_scope.name)
     if ast_list.line[0].token == "#":
         for _ in range(ast_list.count("#")):
             decorator = ast_list.get_between("[", "]")
@@ -182,12 +180,27 @@ def function(ast_list: Token_List, current_scope, parent_scope, root_scope) -> s
     
     output = f"\n{INDENT_CHAR*ast_list.indent_level}{output}"
     
+    not_allowed_classes = (
+        parent_scope.get_keyword("CLASS"),
+        parent_scope.get_keyword("INTERFACE"),
+        parent_scope.get_keyword("STRUCT"),
+        parent_scope.get_keyword("UNION"),
+        parent_scope.get_keyword("ENUM"),
+        parent_scope.get_keyword("ABSTRACT")
+    )
+    
+    if not any([i in not_allowed_classes for i in parent_scope.name]):
+        output = f"\n{INDENT_CHAR*ast_list.indent_level}@__internal__multi_method" + output
+
     static:  bool = False
     async_:  bool = False
     private: bool = False
     unsafe:  bool = False
     
     if root_scope.get_keyword('STATIC') in modifiers:
+        if not any([i in not_allowed_classes for i in parent_scope.name]):
+            panic(SyntaxError(f"<Hex(02.E3)>: The {root_scope.get_keyword('STATIC')} modifier cannot be used outside a class"), root_scope.get_keyword("STATIC"), file=ast_list.file, line_no=ast_list[0].line_number)
+        
         output = f"\n{INDENT_CHAR*ast_list.indent_level}@staticmethod{output}"
         static = True
     

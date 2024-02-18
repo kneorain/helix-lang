@@ -1,6 +1,5 @@
 DISABLED: bool = False
 
-
 from   os        import (path as os_path, mkdir)
 from   pickle     import dump, load
 from   threading import Thread
@@ -36,6 +35,8 @@ def get_cache(path: str, args: tuple) -> Union[any, None]:
 from functools import lru_cache
 def cache(func: Callable) -> Callable:
     return lru_cache(maxsize=None)(func)
+
+def file_cache(func: Callable) -> Callable:
     @wraps(func)
     def wrapper(*args: Tuple[any, ...], **kwargs: dict[str, any]) -> any:
         if DISABLED: return func(*args, **kwargs)
