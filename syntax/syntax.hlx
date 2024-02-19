@@ -155,13 +155,13 @@ fn binary_search(arr: list, val: int, start: int, end: int) -> int {
 ~~ let a: float, var b: int = 0.2, 1;   FAIL + #TODO: unpacking not defined
 
 enum dog {
-    let name:  string;
+    let name:  string<int, string> = "Buddy";
     let breed: string;
     let age:   int;
 
     fn info() {
-        print(self.name + " is a " + self.age + " year old " + self.breed);
-        a, b, self.a = self::something(1, 2, 3), 12, 43;
+        print(f"a dog named {self.name} is a {self.age} year old {self.breed}");
+        printf("a dog named %s is a %d year old %s", self.name, self.age, self.breed);
     }
     
     async fn new(self: ref, name: string, age: int, breed: string) {
@@ -177,8 +177,9 @@ enum dog {
 
 }
 
+~~ ALL TESTS ONLY FOR THE PARSER
 interface Somehting<int>::dog {
-    static fn some_fucntion(arr: list<string>) -> list {
+    fn some_fucntion(arr: list<string>) -> list {
         let arr: list<int> = [1, 2, 3];
         for var s, var i in arr {
             print(i);

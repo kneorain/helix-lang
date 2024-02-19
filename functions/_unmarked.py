@@ -16,7 +16,7 @@ def _unmarked(ast_list: Token_List, current_scope, parent_scope, root_scope) -> 
     # example: a, b = (5, 6), (7, 8)  ->  a.set((5, 6)); b.set((7, 8))
     # example: a, b = (5, 6), somecall("yes", a=19) -> a.set((5, 6)); b.set(somecall("yes", a=19))
     
-    expecting_name = False
+    output = ""
     
     if "=" in ast_list:
         # so something like a = 5 would become a.set(5)
@@ -30,7 +30,7 @@ def _unmarked(ast_list: Token_List, current_scope, parent_scope, root_scope) -> 
             )
     
         temp = ast_list.get_all_before("=")
-        variables: dict[str, str] = {} # {name: value}
+        variables: dict[str, Token_List] = {} # {name: value}
         name = ""
         in_brackets = False
         bracket_count: int = 0
@@ -88,10 +88,22 @@ def _unmarked(ast_list: Token_List, current_scope, parent_scope, root_scope) -> 
                 except IndexError:
                     panic(SyntaxError("Too many values to unpack for assignment"), "=", file=ast_list.file, line_no=ast_list[-1].line_number)
                 value = Token_List([], ast_list.indent_level, ast_list.file)
-    
+
+        if index != len(variables.keys()) - 1:
+            panic(SyntaxError("Not enough values to unpack for assignment"), "=", file=ast_list.file, line_no=ast_list[-1].line_number)
         
-        print(variables)
+        for name, value in variables.items():
+            if name not in current_scope.variables and name not in parent_scope.variables:
+                panic(NameError(f"Name '{name.strip()}' is not defined"), name.strip(), file=ast_list.file, line_no=ast_list[0].line_number)
+                pass
+            
+            if "::" in value:
+                static_call = value.get_all_after("::")[0]
+                # TODO: add support for static calls
+            
+            output += f"{INDENT_CHAR*ast_list.indent_level}{name}.set({value.full_line()})\n"
+            
             
         
     
-    return Processed_Line("yessir", ast_list)
+    return Processed_Line(output, ast_list)

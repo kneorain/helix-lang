@@ -11,6 +11,7 @@ from functions._functions import function as _function
 from functions._include import include as _include
 from functions._match import _match
 from functions._unless import _unless
+from functions._let import _let
 
 
 def dummy(line: Token_List, current_scope, parent_scope, root_scope) -> str:
@@ -177,7 +178,7 @@ KEYWORDS: map[str, map[str, str | bool | Callable[..., str]]] = map({
     ## "implements"   : map({"internal_name": "IMPLEMENTS", "parser": dummy        , "scoped": False, "body_required": False, "keyword_type": "class_modifier"}),
 
     # Variable Declarations
-    "let"          : map({"internal_name": "LET"       , "parser": dummy        , "scoped": False, "body_required": False, "keyword_type": "variable_declaration"}),
+    "let"          : map({"internal_name": "LET"       , "parser": _let         , "scoped": False, "body_required": False, "keyword_type": "variable_declaration"}),
     "const"        : map({"internal_name": "CONST"     , "parser": dummy        , "scoped": False, "body_required": False, "keyword_type": "variable_declaration"}),
     "var"          : map({"internal_name": "VAR"       , "parser": dummy        , "scoped": False, "body_required": False, "keyword_type": "variable_declaration"}),
     

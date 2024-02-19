@@ -9,21 +9,6 @@ from core.panic import panic
 CLASS_EXTENSION = "::"
 SEPARATOR_FOR_CLASSES = "+"
 
-def _interface(ast_list: Token_List, current_scope, parent_scope, root_scope, modifiers=None) -> str:
-    pass
-
-def _struct(ast_list: Token_List, current_scope, parent_scope, root_scope, modifiers=None) -> str:
-    pass
-
-def _union(ast_list: Token_List, current_scope, parent_scope, root_scope, modifiers=None) -> str:
-    pass
-
-def _enum(ast_list: Token_List, current_scope, parent_scope, root_scope, modifiers=None) -> str:
-    pass
-
-def _abstract(ast_list: Token_List, current_scope, parent_scope, root_scope, modifiers=None) -> str:
-    pass
-
 def _class(ast_list: Token_List, current_scope, parent_scope, root_scope, modifiers=None) -> str:
     data_structure_types = (
         parent_scope.get_keyword("INTERFACE"),
