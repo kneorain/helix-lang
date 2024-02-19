@@ -138,7 +138,7 @@ def contains(line: Token_List, compare: tuple):
 # static async fn factorial(n: int) -> int {
 def function(ast_list: Token_List, current_scope: Scope, parent_scope: Scope, root_scope: Scope) -> str:
     decorators = []
-    print(parent_scope.name)
+    
     if ast_list.line[0].token == "#":
         for _ in range(ast_list.count("#")):
             decorator = ast_list.get_between("[", "]")
@@ -147,13 +147,20 @@ def function(ast_list: Token_List, current_scope: Scope, parent_scope: Scope, ro
             
     modifiers = process_modifiers(ast_list, root_scope)
         
-            
-    if ast_list.line[0].token != root_scope.get_keyword('FUNCTION'):
-        # TODO: link with classes and other namespaces
-        if ast_list.line[0].token == root_scope.get_keyword("CLASS"):
-            return _class(ast_list, current_scope, parent_scope, root_scope, modifiers)
+    not_allowed_classes = (
+        parent_scope.get_keyword("CLASS"),
+        parent_scope.get_keyword("INTERFACE"),
+        parent_scope.get_keyword("STRUCT"),
+        parent_scope.get_keyword("UNION"),
+        parent_scope.get_keyword("ENUM"),
+        parent_scope.get_keyword("ABSTRACT")
+    )
     
-        panic(SyntaxError(f"<Hex(02.E3)>: Expected the {root_scope.get_keyword('FUNCTION')} keyword"), file=ast_list.file, line_no=ast_list.find_line_number(root_scope.get_keyword('FUNCTION')))
+    if ast_list.line[0].token != root_scope.get_keyword('FUNCTION'):
+        if ast_list.splice(len(modifiers))[0] in not_allowed_classes:
+            return _class(ast_list.splice(len(modifiers)), current_scope, parent_scope, root_scope, modifiers)
+    
+        panic(SyntaxError(f"<Hex(02.E3)>: Expected the {root_scope.get_keyword('FUNCTION')} keyword"), ast_list[1].token, file=ast_list.file, line_no=ast_list[0].line_number)
     
     variables = extract_variables(ast_list, root_scope)
     name = ast_list.line[1].token
@@ -180,17 +187,14 @@ def function(ast_list: Token_List, current_scope: Scope, parent_scope: Scope, ro
     
     output = f"\n{INDENT_CHAR*ast_list.indent_level}{output}"
     
-    not_allowed_classes = (
-        parent_scope.get_keyword("CLASS"),
-        parent_scope.get_keyword("INTERFACE"),
-        parent_scope.get_keyword("STRUCT"),
-        parent_scope.get_keyword("UNION"),
-        parent_scope.get_keyword("ENUM"),
-        parent_scope.get_keyword("ABSTRACT")
-    )
-    
     if not any([i in not_allowed_classes for i in parent_scope.name]):
         output = f"\n{INDENT_CHAR*ast_list.indent_level}@__internal__multi_method" + output
+    # if the type of parent_sope is an abstract class
+    if any([i == root_scope.get_keyword("ABSTRACT") for i in parent_scope.name]):
+        output = f"\n{INDENT_CHAR*ast_list.indent_level}@__internal__abstract_method" + output
+    # if the type of parent_sope is an interface
+    if any([i == root_scope.get_keyword("INTERFACE") for i in parent_scope.name]):
+        output = f"\n{INDENT_CHAR*ast_list.indent_level}@__internal__abstract_method" + output
 
     static:  bool = False
     async_:  bool = False

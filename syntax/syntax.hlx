@@ -154,13 +154,14 @@ fn binary_search(arr: list, val: int, start: int, end: int) -> int {
 ~~ var a, b : int = 0;                  FAIL + #TODO: single declaration for multiple variables not defined
 ~~ let a: float, var b: int = 0.2, 1;   FAIL + #TODO: unpacking not defined
 
-class dog {
+enum dog {
     let name:  string;
     let breed: string;
     let age:   int;
 
     fn info() {
         print(self.name + " is a " + self.age + " year old " + self.breed);
+        a, b, self.a = self::something(1, 2, 3), 12, 43;
     }
     
     async fn new(self: ref, name: string, age: int, breed: string) {
@@ -176,14 +177,14 @@ class dog {
 
 }
 
-class somehting::dog {
+interface Somehting<int>::dog {
     static fn some_fucntion(arr: list<string>) -> list {
         let arr: list<int> = [1, 2, 3];
         for var s, var i in arr {
             print(i);
         }
 
-        for var i: int<int> = 0; i < 10; i++ {
+        for let i: int = 0; i < 10; i++ {
             print(i);
         }
 

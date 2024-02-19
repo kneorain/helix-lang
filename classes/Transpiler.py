@@ -3,22 +3,25 @@ from typing import Callable
 from classes.Scope import Scope
 from classes.Token import Processed_Line, Token_List
 from core.config import load_config
+from functions._unmarked import _unmarked
 import globals
+
 
 INDENT_CHAR = load_config().Formatter["indent_char"]
 
 
 class Transpiler:
     copied_scope: Scope
+    
     root_scope: Scope
-    current_scope: Scope
-    parent_scope: Scope
+    scope_stack: list[Scope] = []
+    
     transpiled: list[Processed_Line] = []
     add_to_transpiled_queue: list[tuple[str, Scope]] = []
     
     @classmethod
     def parse_non_keyword(cls, line: Token_List, *_: Scope) -> str:
-        return f"{INDENT_CHAR*line.indent_level}{line.full_line()}".replace("::", ".")
+        return _unmarked(line, cls.scope_stack[-1] if len(cls.scope_stack) >= 1 else cls.root_scope, cls.scope_stack[-2] if len(cls.scope_stack) >= 2 else cls.root_scope, cls.root_scope)
     
     @classmethod
     def get_match_function(cls, child: Scope) -> Callable[..., str]:
@@ -30,20 +33,15 @@ class Transpiler:
             return cls.parse_non_keyword
     
     @classmethod
-    def __transpile(cls, child: Scope = None) -> None:
+    def __transpile(cls, child: Scope | Token_List = None) -> None:
         if isinstance(child, Scope):
-            if child.indent_level == 0:
-                cls.parent_scope = cls.root_scope
-            else:
-                cls.parent_scope = cls.current_scope
-            cls.current_scope = child
-            
-            [cls.__transpile(child) for child in child.children]
-            
-            cls.__add_from_queue(child)
+            cls.scope_stack.append(child) # push
+            [cls.__transpile(child) for child in child.children] # recursive call
+            cls.scope_stack.pop() # pop
+            cls.__add_from_queue(child) # add any lines that were added to the queue (so at the end of the current scope)
                 
-        elif isinstance(child, list):
-            cls.transpiled.append(cls.get_match_function(child)(child, cls.current_scope, cls.parent_scope, cls.root_scope))
+        elif isinstance(child, Token_List):
+            cls.transpiled.append(cls.get_match_function(child)(child, cls.scope_stack[-1] if len(cls.scope_stack) >= 1 else cls.root_scope, cls.scope_stack[-2] if len(cls.scope_stack) >= 2 else cls.root_scope, cls.root_scope))
 
     @classmethod
     def append_at_end(cls, line: str, current_scope: Scope):
@@ -60,8 +58,7 @@ class Transpiler:
     @classmethod
     def transpile(cls, root_scope: Scope):
         cls.root_scope    = root_scope
-        cls.current_scope = root_scope
-        cls.parent_scope  = root_scope
+        cls.scope_stack   = []
         
         #globals.POOL.map(cls.__transpile, root_scope.children, chunksize=10)
         [cls.__transpile(child) for child in root_scope.children]

@@ -1,4 +1,4 @@
-from multimethod import multimethod
+from multimethod import multimethod as __internal__multi_method
 
 
 n = 0
@@ -80,8 +80,12 @@ class C_For:
         self.increment = increment.replace('++', '+= 1').replace('--', '-= 1').replace('+*', '*= 1').replace('-*', '*= -1').replace('/-', '/ -1').replace('/*', '*= 1')
         return self
 
-@multimethod
-def some_fucntion(arr: int) -> list:
+arr = [1, 2, 3]
+for i, j in C_For(i = int(0), j = int(0)).set_con('i < len(arr)').set_inc('i ++ ; j ++'):
+    print(i, j)
+
+@__internal__multi_method
+def some_function(arr: list[str]) -> list:
     arr : list[int] = [ 1 , 2 , 3 ]
     for i in arr:
         print ( i )
@@ -93,4 +97,4 @@ def some_fucntion(arr: int) -> list:
 
     return arr
 
-print(some_fucntion([ 1 , "2" , "3" ]))
+print(some_function([ "1" , "2" , "3" ]))

@@ -2,6 +2,7 @@ from concurrent.futures import Future
 from dataclasses import dataclass
 from threading import Thread
 from time import time
+from core.cache_store import cache
 from core.panic import panic
 from classes.Token import Token_List, Token
 import globals
@@ -171,5 +172,6 @@ class Scope:
         root_scope.children = [cls.process_scope_from_scope(child) if isinstance(child, cls) else child for child in root_scope.children]
         return root_scope
 
+    @cache
     def get_keyword(self, internal_name: str) -> str:
         return next((keyword for keyword in globals.KEYWORDS if globals.KEYWORDS[keyword]["internal_name"] == internal_name), None)

@@ -46,13 +46,17 @@ def _for(ast_list: Token_List, current_scope: Scope, parent_scope: Scope, root_s
             current_var_unsafe:  bool = False
             current_var_discard: bool = True
 
+            #TODO: add support for generics in loop declarations IF needed
+            
             expecting_type:  bool = False
             expecting_value: bool = False
             excepting_name:  bool = False
+            in_generic:      bool = False
+            generic_count:   int  = 0
 
             @cache
             def extract_variables(index: int, token: Token) -> None:
-                nonlocal current_var_name, current_var_type, current_var_value, current_var_unsafe, current_var_discard, expecting_type, expecting_value, excepting_name
+                nonlocal current_var_name, in_generic, generic_count, current_var_type, current_var_value, current_var_unsafe, current_var_discard, expecting_type, expecting_value, excepting_name
 
                 if token in [globals.find_keyword("LET"), globals.find_keyword("VAR"), globals.find_keyword("UNSAFE")]:
                     if expecting_value:
@@ -96,6 +100,15 @@ def _for(ast_list: Token_List, current_scope: Scope, parent_scope: Scope, root_s
                     return
 
                 if expecting_type:
+                    if in_generic:
+                        if token == "<":
+                            generic_count += 1
+                        if token == ">":
+                            generic_count -= 1
+                            if generic_count == 0:
+                                in_generic = False
+                        return
+                    
                     if token == "=":
                         expecting_value = True
                         expecting_type = False
@@ -118,6 +131,11 @@ def _for(ast_list: Token_List, current_scope: Scope, parent_scope: Scope, root_s
                             "discard": current_var_discard
                         }
                         current_var_type = ""
+                        return
+                        
+                    if token == "<":
+                        in_generic = True
+                        generic_count += 1
                         return
 
                     current_var_type += token.token + " "

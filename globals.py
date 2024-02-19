@@ -148,11 +148,11 @@ KEYWORDS: map[str, map[str, str | bool | Callable[..., str]]] = map({
 
     # Class
     "class"        : map({"internal_name": "CLASS"     , "parser": _class       , "scoped": True , "body_required": True , "keyword_type": "class_declaration"}),
-    "interface"    : map({"internal_name": "INTERFACE" , "parser": dummy        , "scoped": True , "body_required": True , "keyword_type": "type_declaration"}),
-    "struct"       : map({"internal_name": "STRUCT"    , "parser": dummy        , "scoped": True , "body_required": True , "keyword_type": "type_declaration"}),
-    "union"        : map({"internal_name": "UNION"     , "parser": dummy        , "scoped": True , "body_required": True , "keyword_type": "type_declaration"}),
-    "enum"         : map({"internal_name": "ENUM"      , "parser": dummy        , "scoped": True , "body_required": True , "keyword_type": "type_declaration"}),
-    "abstract"     : map({"internal_name": "ABSTRACT"  , "parser": dummy        , "scoped": True , "body_required": True , "keyword_type": "class_modifier"}),
+    "interface"    : map({"internal_name": "INTERFACE" , "parser": _class        , "scoped": True , "body_required": True , "keyword_type": "type_declaration"}),
+    "struct"       : map({"internal_name": "STRUCT"    , "parser": _class        , "scoped": True , "body_required": True , "keyword_type": "type_declaration"}),
+    "union"        : map({"internal_name": "UNION"     , "parser": _class        , "scoped": True , "body_required": True , "keyword_type": "type_declaration"}),
+    "enum"         : map({"internal_name": "ENUM"      , "parser": _class        , "scoped": True , "body_required": True , "keyword_type": "type_declaration"}),
+    "abstract"     : map({"internal_name": "ABSTRACT"  , "parser": _class        , "scoped": True , "body_required": True , "keyword_type": "class_modifier"}),
     ## "impl"         : map({"internal_name": "EXTEND"    , "parser": dummy        , "scoped": True , "body_required": True , "keyword_type": "class_declaration"}),
 
     # Error Handling
