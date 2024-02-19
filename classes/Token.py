@@ -1,6 +1,5 @@
 import json
-from typing import Iterator
-
+from typing import Iterable, Iterator
 
 class Token:
     # ---------------------------- Constructor ------------------------------- #
@@ -69,7 +68,13 @@ class Token:
                 self.__line_number == other.__line_number and
                 self.__indent_level == other.__indent_level
             )
+        if isinstance(self.__processed_line, str) and isinstance(other, str):
+            return self.__processed_line == other
         return False
+    
+    def __contains__(self, other: Iterable) -> bool:
+        if isinstance(self.__processed_line, str):
+            return self.__processed_line in other
     
     def __str__(self) -> str:
         return f"Token(\n\toriginal_line\t= {repr(self.__original_line)}, \n\tprocessed_line\t= {self.__processed_line}, \n\tline_number\t= {self.__line_number},\n\tindent_level\t= {self.__indent_level}\n)\n"
@@ -88,8 +93,8 @@ class Token_List(list[Token]):
         self.file = file
         
     def __str__(self):
-        return json.dumps({"line_indent_level": self.indent_level, "joined_line": [_.token for _ in self.line]})
-    #f"\"Token_List\": {{\"line_indent_level\": {self.indent_level}, \"joined_line\": \"{(' '.join([_.token for _ in self.line])).replace('\"', '\\\"').replace('\'', '\\\'')}\"}}"
+        return json.dumps({"line_indent_level": self.indent_level, "joined_line": ' '.join([_.token for _ in self.line])})
+        #f"\"Token_List\": {{\"line_indent_level\": {self.indent_level}, \"joined_line\": \"{(' '.join([_.token for _ in self.line])).replace('\"', '\\\"').replace('\'', '\\\'')}\"}}"
     
     def __iter__(self) -> Iterator[Token]:
         return iter(self.line)
@@ -101,10 +106,12 @@ class Token_List(list[Token]):
         if isinstance(other, Token_List):
             return self.line == other.line and self.indent_level == other.indent_level
         return False
+
+    def __len__(self) -> int:
+        return len(self.line)
     
     def __repr__(self) -> str:
         return '"' + ' '.join([_.token for _ in self.line]) + '"'
-    
     
     def __getitem__(self, index: int) -> Token:
         return self.line[index]
@@ -117,7 +124,9 @@ class Token_List(list[Token]):
     
     def find_line_number(self, token: str) -> int:
         for line in self.line:
-            if token in line.token:
+            if isinstance(token, str) and token in line.token:
+                return line.line_number
+            elif isinstance(token, Token) and token.token in line.token:
                 return line.line_number
         return -1
     
@@ -170,10 +179,32 @@ class Token_List(list[Token]):
     def count(self, __value: str) -> int:
         return sum([1 for token in self.line if token.token == __value])
     
-class Processed_Line(Token_List):
+    def split(self, __value: str) -> list['Token_List']:
+        output: list['Token_List'] = []
+        temp: list[Token] = []
+        for token in self.line:
+            if token.token == __value:
+                output.append(Token_List(temp, self.indent_level, self.file))
+                temp = []
+            else:
+                temp.append(token)
+        if temp:
+            output.append(Token_List(temp, self.indent_level, self.file))
+        return output
+    
+    # add support for the splicing so [1:2] works or any other slicing
+    def splice(self, start: int = 0, end: int = None) -> 'Token_List':
+        temp = self.copy()
+        temp.line = temp.line[start:end]
+        return temp
+    
+class Processed_Line:
     def __init__(self, line: str, non_parsed_line: Token_List):
         self.line = line
         self.non_parsed_line = non_parsed_line
         
     def __str__(self):
         return self.line
+    
+    def __repr__(self):
+        return repr(self.line.rstrip())

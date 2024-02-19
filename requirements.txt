@@ -1,0 +1,6 @@
+cx_Freeze==6.16.0.dev46
+Cython==3.0.8
+Pygments==2.17.2
+rich==13.7.0
+setuptools==69.1.0
+toml==0.10.2

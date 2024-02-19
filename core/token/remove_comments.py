@@ -1,8 +1,11 @@
-from functools import cache
 import ast
+from functools import cache
+
+from core.config import load_config
+
+re = __import__(load_config().Transpiler["regex_module"])
 from classes.Token import Token
-from globals import COMMENT, BLOCK_COMMENT, INLINE_COMMENT
-import re2 as re
+from globals import BLOCK_COMMENT, COMMENT, INLINE_COMMENT
 
 in_block_comment: bool = False
 

@@ -1,8 +1,11 @@
+import inspect
+import os
 from typing import Annotated, Any, Iterable, Self
 from weakref import ref
-import inspect, os
-import re2 as re
 
+from core.config import load_config
+
+re = __import__(load_config().Transpiler["regex_module"])
 terminal_width: int = os.get_terminal_size().columns
 
 def compare_with_type(__value: object, __type: type) -> bool:
