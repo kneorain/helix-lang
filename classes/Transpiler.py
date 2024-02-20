@@ -64,5 +64,4 @@ class Transpiler:
         [cls.__transpile(child) for child in root_scope.children]
         cls.__add_from_queue(root_scope)
             
-        print(*cls.transpiled, sep="\n")
         return cls.transpiled

@@ -62,17 +62,17 @@ def include(ast_list: Token_List, current_scope, parent_scope, root_scope) -> st
     import_statement = ""
     if type == "C":
         if not alias and not modules:
-            return Processed_Line(f"{INDENT_CHAR*ast_list.line[0].indent_level}{os_path.splitext(path)[0].strip()} = __c_cpp_import__({path})\n", ast_list)
+            return Processed_Line(f"{INDENT_CHAR*ast_list.line[0].indent_level}{os_path.splitext(path)[0].strip()} = __c_cpp_import__(\"{path}\")\n", ast_list)
         elif alias and modules and len(modules) == 1:
-            return Processed_Line(f"{INDENT_CHAR*ast_list.line[0].indent_level}{alias} = __c_cpp_import__({path}).{modules[0]}\n", ast_list)
+            return Processed_Line(f"{INDENT_CHAR*ast_list.line[0].indent_level}{alias} = __c_cpp_import__(\"{path}\").{modules[0]}\n", ast_list)
         elif alias and modules and len(modules) > 1:
             panic(SyntaxError(f"Invalid include statement: {combined_line} cannot have multiple modules and an alias"), file=ast_list.file, line_no=ast_list.line[0].line_number)
         elif alias and not modules:
-            return Processed_Line(f"{INDENT_CHAR*ast_list.line[0].indent_level}{alias} = __c_cpp_import__({path})\n", ast_list)
+            return Processed_Line(f"{INDENT_CHAR*ast_list.line[0].indent_level}{alias} = __c_cpp_import__(\"{path}\")\n", ast_list)
         elif not alias and modules and len(modules) == 1:
-            return Processed_Line(f"{INDENT_CHAR*ast_list.line[0].indent_level}{os_path.splitext(path)[0].strip()} = __c_cpp_import__({path}).{modules[0]}\n", ast_list)
+            return Processed_Line(f"{INDENT_CHAR*ast_list.line[0].indent_level}{os_path.splitext(path)[0].strip()} = __c_cpp_import__(\"{path}\").{modules[0]}\n", ast_list)
         elif not alias and modules and len(modules) > 1:
-            import_statement = f"{INDENT_CHAR*ast_list.line[0].indent_level}{os_path.splitext(path)[0].strip()} = __c_cpp_import__({path})\n"
+            import_statement = f"{INDENT_CHAR*ast_list.line[0].indent_level}{os_path.splitext(path)[0].strip()} = __c_cpp_import__(\"{path}\")\n"
             for module in modules:
                 import_statement += f"{INDENT_CHAR*ast_list.line[0].indent_level}{module.strip()} = {os_path.splitext(path)[0].strip()}.{module}\n"
             import_statement += f"{INDENT_CHAR*ast_list.line[0].indent_level}del {os_path.splitext(path)[0].strip()}\n"
@@ -81,17 +81,17 @@ def include(ast_list: Token_List, current_scope, parent_scope, root_scope) -> st
             panic(SyntaxError(f"Invalid include statement: {combined_line}"), file=ast_list.file, line_no=ast_list.line[0].line_number)
     elif type == "CPP":
         if not alias and not modules:
-            return Processed_Line(f"{INDENT_CHAR*ast_list.line[0].indent_level}{os_path.splitext(path)[0].strip()} = __c_cpp_import__({path})\n", ast_list)
+            return Processed_Line(f"{INDENT_CHAR*ast_list.line[0].indent_level}{os_path.splitext(path)[0].strip()} = __c_cpp_import__(\"{path}\")\n", ast_list)
         elif alias and modules and len(modules) == 1:
-            return Processed_Line(f"{INDENT_CHAR*ast_list.line[0].indent_level}{alias} = __c_cpp_import__({path}).{modules[0]}\n", ast_list)
+            return Processed_Line(f"{INDENT_CHAR*ast_list.line[0].indent_level}{alias} = __c_cpp_import__(\"{path}\").{modules[0]}\n", ast_list)
         elif alias and modules and len(modules) > 1:
             panic(SyntaxError(f"Invalid include statement: {combined_line} cannot have multiple modules and an alias"), file=ast_list.file, line_no=ast_list.line[0].line_number)
         elif alias and not modules:
-            return Processed_Line(f"{INDENT_CHAR*ast_list.line[0].indent_level}{alias} = __c_cpp_import__({path})\n", ast_list)
+            return Processed_Line(f"{INDENT_CHAR*ast_list.line[0].indent_level}{alias} = __c_cpp_import__(\"{path}\")\n", ast_list)
         elif not alias and modules and len(modules) == 1:
-            return Processed_Line(f"{INDENT_CHAR*ast_list.line[0].indent_level}{os_path.splitext(path)[0].strip()} = __c_cpp_import__({path}).{modules[0]}\n", ast_list)
+            return Processed_Line(f"{INDENT_CHAR*ast_list.line[0].indent_level}{os_path.splitext(path)[0].strip()} = __c_cpp_import__(\"{path}\").{modules[0]}\n", ast_list)
         elif not alias and modules and len(modules) > 1:
-            import_statement = f"{INDENT_CHAR*ast_list.line[0].indent_level}{os_path.splitext(path)[0].strip()} = __c_cpp_import__({path})\n"
+            import_statement = f"{INDENT_CHAR*ast_list.line[0].indent_level}{os_path.splitext(path)[0].strip()} = __c_cpp_import__(\"{path}\")\n"
             for module in modules:
                 import_statement += f"{INDENT_CHAR*ast_list.line[0].indent_level}{module} = {os_path.splitext(path)[0].strip()}.{module}\n"
             import_statement += f"{INDENT_CHAR*ast_list.line[0].indent_level}del {os_path.splitext(path)[0].strip()}\n"
@@ -113,17 +113,17 @@ def include(ast_list: Token_List, current_scope, parent_scope, root_scope) -> st
             panic(SyntaxError(f"Invalid include statement: {combined_line}"), file=ast_list.file, line_no=ast_list.line[0].line_number)
     elif type == "RS":
         if not alias and not modules:
-            return Processed_Line(f"{INDENT_CHAR*ast_list.line[0].indent_level}{os_path.splitext(path)[0].strip()} = __rs_import__({path})\n", ast_list)
+            return Processed_Line(f"{INDENT_CHAR*ast_list.line[0].indent_level}{os_path.splitext(path)[0].strip()} = __rs_import__(\"{path}\")\n", ast_list)
         elif alias and not modules:
-            return Processed_Line(f"{INDENT_CHAR*ast_list.line[0].indent_level}{alias} = __rs_import__({path})\n", ast_list)
+            return Processed_Line(f"{INDENT_CHAR*ast_list.line[0].indent_level}{alias} = __rs_import__(\"{path}\")\n", ast_list)
         elif alias and modules and len(modules) == 1:
-            return Processed_Line(f"{INDENT_CHAR*ast_list.line[0].indent_level}{alias} = __rs_import__({path}).{modules[0]}\n", ast_list)
+            return Processed_Line(f"{INDENT_CHAR*ast_list.line[0].indent_level}{alias} = __rs_import__(\"{path}\").{modules[0]}\n", ast_list)
         elif alias and modules and len(modules) > 1:
             panic(SyntaxError(f"Invalid include statement: {combined_line} cannot have multiple modules and an alias"), file=ast_list.file, line_no=ast_list.line[0].line_number)
         elif not alias and modules and len(modules) == 1:
-            return Processed_Line(f"{INDENT_CHAR*ast_list.line[0].indent_level}{os_path.splitext(path)[0].strip()} = __rs_import__({path}).{modules[0]}\n", ast_list)
+            return Processed_Line(f"{INDENT_CHAR*ast_list.line[0].indent_level}{os_path.splitext(path)[0].strip()} = __rs_import__(\"{path}\").{modules[0]}\n", ast_list)
         elif not alias and modules and len(modules) > 1:
-            import_statement = f"{INDENT_CHAR*ast_list.line[0].indent_level}{os_path.splitext(path)[0].strip()} = __rs_import__({path})\n"
+            import_statement = f"{INDENT_CHAR*ast_list.line[0].indent_level}{os_path.splitext(path)[0].strip()} = __rs_import__(\"{path}\")\n"
             for module in modules:
                 import_statement += f"{INDENT_CHAR*ast_list.line[0].indent_level}{module} = {os_path.splitext(path)[0].strip()}.{module}\n"
             import_statement += f"{INDENT_CHAR*ast_list.line[0].indent_level}del {os_path.splitext(path)[0].strip()}\n"
@@ -131,7 +131,7 @@ def include(ast_list: Token_List, current_scope, parent_scope, root_scope) -> st
         else:
             panic(SyntaxError(f"Invalid include statement: {combined_line}"), file=ast_list.file, line_no=ast_list.line[0].line_number)
     elif type == "HX":
-        panic(SyntaxError(f"importing namespace {path} is not supported"), file=ast_list.file, line_no=ast_list.line[0].line_number)
+        panic(SyntaxError(f"importing namespace \"{path}\" is not supported"), file=ast_list.file, line_no=ast_list.line[0].line_number)
 
     return Processed_Line(import_statement, ast_list)
 

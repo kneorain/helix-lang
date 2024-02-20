@@ -94,16 +94,24 @@ def _unmarked(ast_list: Token_List, current_scope, parent_scope, root_scope) -> 
         
         for name, value in variables.items():
             if name not in current_scope.variables and name not in parent_scope.variables:
-                panic(NameError(f"Name '{name.strip()}' is not defined"), name.strip(), file=ast_list.file, line_no=ast_list[0].line_number)
+                #panic(NameError(f"Name '{name.strip()}' is not defined"), name.strip(), file=ast_list.file, line_no=ast_list[0].line_number)
+                # TODO: add support for checking if the name is defined in the parent scope
                 pass
             
             if "::" in value:
                 static_call = value.get_all_after("::")[0]
                 # TODO: add support for static calls
             
-            output += f"{INDENT_CHAR*ast_list.indent_level}{name}.set({value.full_line()})\n"
-            
-            
-        
-    
+            if "self" not in name:
+                output += f"{INDENT_CHAR*ast_list.indent_level}try:\n"
+                output += f"{INDENT_CHAR*(ast_list.indent_level+1)}{name}.__set__({value.full_line()})\n"
+                output += f"{INDENT_CHAR*ast_list.indent_level}except AttributeError:\n"
+                output += f"{INDENT_CHAR*(ast_list.indent_level+1)}{name} = {value.full_line()}\n"
+                output += f"{INDENT_CHAR*(ast_list.indent_level+1)}print(\"WARN: \\\"{name}\\\" does not contain the attribute '__set__' falling back to default assignment.\")\n"
+            else:
+                output += f"{INDENT_CHAR*ast_list.indent_level}{name} = {value.full_line()}\n"
+                # TODO: add support for self calls
+    else:
+        output = INDENT_CHAR*ast_list.indent_level + ast_list.full_line().replace("::", ".")
+
     return Processed_Line(output, ast_list)

@@ -1,0 +1,15 @@
+include "test.cpp";
+
+fn main() {
+    let a: int = 213;
+    print(test.add(1, 2));
+    a = 123;
+    print(a);
+    a = a + 3;
+    dumb(a);
+}
+
+fn dumb(a: int) {
+    a = 123;
+    print(a);
+}

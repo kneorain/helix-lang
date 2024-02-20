@@ -4,9 +4,47 @@ from core.config import load_config
 INDENT_CHAR = load_config().Formatter["indent_char"]
 re = __import__(load_config().Transpiler["regex_module"])
 
+from types import MappingProxyType as map
+
+from classes.Scope import Scope
 from core.panic import panic
 from functions._class import _class
-from classes.Scope import Scope
+
+replace_function_name = map({
+    "=="  : "__eq__",
+    "//"  : "__floordiv__",
+    ">="  : "__ge__",
+    "<="  : "__le__",
+    "<<"  : "__lshift__",
+    "!="  : "__ne__",
+    "**"  : "__pow__",
+    "//"  : "__rfloordiv__",
+    "<<"  : "__rlshift__",
+    ">>"  : "__rshift__",
+    "**"  : "__rpow__",
+    ">>"  : "__rrshift__",
+    "%"   : "__rmod__",
+    "%"   : "__mod__",
+    "*"   : "__rmul__",
+    "&"   : "__and__",
+    "*"   : "__mul__",
+    "+"   : "__radd__",
+    "+"   : "__add__",
+    "-"   : "__neg__",
+    "|"   : "__ror__",
+    "~"   : "__invert__",
+    "+"   : "__pos__",
+    ">"   : "__gt__",
+    "&"   : "__rand__",
+    "<"   : "__lt__",
+    "-"   : "__rsub__",
+    "/"   : "__rtruediv__",
+    "|"   : "__or__",
+    "^"   : "__rxor__",
+    "-"   : "__sub__",
+    "/"   : "__truediv__",
+    "^"   : "__xor__"
+})
 
 def extract_variables(ast_line: Token_List, root_scope: Scope) -> str:
     variables = {}
@@ -58,12 +96,12 @@ def extract_variables(ast_line: Token_List, root_scope: Scope) -> str:
                     variables[tuple(variables.keys())[-1]] = {"type": variables[tuple(variables.keys())[-1]]["type"] + generic}
                     line = line[1:]
                     continue
-                generic += "["
+                generic += "[" + " "
                 line = line[1:]
             elif line[0].token == ">":
                 generic_count -= 1
                 in_generic = True if generic_count > 0 else False
-                generic += "]"
+                generic += " " + "]"
                 if not in_generic:
                     in_generic = False
                     variables[tuple(variables.keys())[-1]] = {"type": variables[tuple(variables.keys())[-1]]["type"] + generic}
@@ -165,6 +203,11 @@ def function(ast_list: Token_List, current_scope: Scope, parent_scope: Scope, ro
     variables = extract_variables(ast_list, root_scope)
     name = ast_list.line[1].token
     
+    if name in replace_function_name:
+        if not_allowed_classes not in parent_scope.namespace_header:
+            panic(SyntaxError(f"<Hex(02.E3)>: Cannot overload a unary operator outside a class"), name, file=ast_list.file, line_no=ast_list.find_line_number(name))
+        name = replace_function_name[name]
+    
     output = f"def {name}("
     
     if not variables["params"]:
@@ -188,13 +231,13 @@ def function(ast_list: Token_List, current_scope: Scope, parent_scope: Scope, ro
     output = f"\n{INDENT_CHAR*ast_list.indent_level}{output}"
     
     if not any([i in not_allowed_classes for i in parent_scope.name]):
-        output = f"\n{INDENT_CHAR*ast_list.indent_level}@__internal__multi_method" + output
+        output = f"\n{INDENT_CHAR*ast_list.indent_level}@hx__multi_method" + output
     # if the type of parent_sope is an abstract class
     if any([i == root_scope.get_keyword("ABSTRACT") for i in parent_scope.name]):
-        output = f"\n{INDENT_CHAR*ast_list.indent_level}@__internal__abstract_method" + output
+        output = f"\n{INDENT_CHAR*ast_list.indent_level}@hx__abstract_method" + output
     # if the type of parent_sope is an interface
     if any([i == root_scope.get_keyword("INTERFACE") for i in parent_scope.name]):
-        output = f"\n{INDENT_CHAR*ast_list.indent_level}@__internal__abstract_method" + output
+        output = f"\n{INDENT_CHAR*ast_list.indent_level}@hx__abstract_method" + output
 
     static:  bool = False
     async_:  bool = False
@@ -209,7 +252,7 @@ def function(ast_list: Token_List, current_scope: Scope, parent_scope: Scope, ro
         static = True
     
     if root_scope.get_keyword('ASYNC') in modifiers:
-        output = f"\n{INDENT_CHAR*ast_list.indent_level}@async{output}"
+        output = f"\n{INDENT_CHAR*ast_list.indent_level}@hx__async{output}"
         async_ = True
 
     # if root_scope.get_keyword('PRIVATE') in modifiers:

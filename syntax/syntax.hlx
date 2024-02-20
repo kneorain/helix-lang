@@ -1,6 +1,3 @@
-include PY("numpy");
-include "test" from RS("test.rs");
-include ("add","sub") from CPP("test.cpp");
 
 ~*~
 ~~ op ^ as xor(lhs: bool, rhs: bool) -> bool {
@@ -153,23 +150,25 @@ fn binary_search(arr: list, val: int, start: int, end: int) -> int {
 ~*~
 ~~ var a, b : int = 0;                  FAIL + #TODO: single declaration for multiple variables not defined
 ~~ let a: float, var b: int = 0.2, 1;   FAIL + #TODO: unpacking not defined
+include PY("numpy");
+include "test" from RS("test.rs");
+include ("add","sub") from CPP("test.cpp");
 
 enum dog {
     let name:  string<int, string> = "Buddy";
-    let breed: string;
-    let age:   int;
+    let breed, age: int = 21, 5;
 
     fn info() {
         print(f"a dog named {self.name} is a {self.age} year old {self.breed}");
         printf("a dog named %s is a %d year old %s", self.name, self.age, self.breed);
     }
     
-    async fn new(self: ref, name: string, age: int, breed: string) {
+    async fn new(self: ref, name: string<somehting, sad>, age: int, breed: string) {
         self.breed = breed;
         self.name  = name;
         self.age   = age;
 
-        let a: int = 1 add 2 sub 2;
+        let a: int = 1 + 2 - 2;
 
         return a;
 
@@ -177,9 +176,7 @@ enum dog {
 
 }
 
-~~ ALL TESTS ONLY FOR THE PARSER
-interface Somehting<int>::dog {
-    fn some_fucntion(arr: list<string>) -> list {
+fn some_fucntion(arr: list<string>) -> list {
         let arr: list<int> = [1, 2, 3];
         for var s, var i in arr {
             print(i);
@@ -191,8 +188,6 @@ interface Somehting<int>::dog {
 
         return arr;
     }
-}
-
 
 
 ~~ i ++ , j += fomenc ( [ 1 , 2 , 3 ] )
@@ -236,7 +231,7 @@ interface Somehting<int>::dog {
 ~~ to_float: __float__
 ~~ to_hash: __hash__
 ~~ to_int: __int__
-~~ 
+~~
 ~~ math.ceil: __ceil__
 ~~ __class__
 ~~ divmod: __divmod__

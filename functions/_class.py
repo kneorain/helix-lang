@@ -9,6 +9,20 @@ from core.panic import panic
 CLASS_EXTENSION = "::"
 SEPARATOR_FOR_CLASSES = "+"
 
+def generate_default_code(indent_chars: str) -> str:
+    return f"""
+{indent_chars}    __value__: object = None
+{indent_chars}    def __set__(self, value: Any) -> None:
+{indent_chars}        if isinstance(value, self.__class__):
+{indent_chars}            self.value = value.value
+{indent_chars}        else:
+{indent_chars}            try:
+{indent_chars}                self.value = getattr(value, f"to_{{self.__class__.__name__.lower()}}")()
+{indent_chars}            except Exception as e:
+{indent_chars}                panic(TypeError(f"Expected type {{self.__class__}}, got {{type(value)}}, unable to cast"), file=__file__)
+"""
+
+
 def _class(ast_list: Token_List, current_scope, parent_scope, root_scope, modifiers=None) -> str:
     data_structure_types = (
         parent_scope.get_keyword("INTERFACE"),
@@ -107,4 +121,5 @@ def _class(ast_list: Token_List, current_scope, parent_scope, root_scope, modifi
     if class_decorators:
         output = "\n" + "\n".join([f"{INDENT_CHAR*ast_list.indent_level}{i}" for i in class_decorators]) + "\n" + output
     
-    return Processed_Line(output, ast_list)
+    
+    return Processed_Line(output + generate_default_code(INDENT_CHAR*ast_list.indent_level), ast_list)

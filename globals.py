@@ -9,9 +9,9 @@ from functions._class import _class
 from functions._for import _for
 from functions._functions import function as _function
 from functions._include import include as _include
+from functions._let import _let
 from functions._match import _match
 from functions._unless import _unless
-from functions._let import _let
 
 
 def dummy(line: Token_List, current_scope, parent_scope, root_scope) -> str:
@@ -81,30 +81,7 @@ DOUBLE_CHARACTER: list[str] = [
 
 DEFAULT_TYPE_MAP: map[str, str] = map({
     # helix type   |   python type
-    "int"          : "__helix_int"     ,
-    "string"       : "__helix_string"  ,
-    "float"        : "__helix_float"   ,
-    "map"          : "__helix_map"     ,
-    "list"         : "__helix_list"    ,
-    "bool"         : "__helix_bool"    ,
-    "char"         : "__helix_char"    ,
-    "void"         : "__helix_void"    ,
-    "tuple"        : "__helix_tuple"   ,
-    "array"        : "__helix_array"   ,
-    "set"          : "__helix_set"     ,
-    "u8"           : "__helix_u8"      ,
-    "u16"          : "__helix_u16"     ,
-    "u32"          : "__helix_u32"     ,
-    "u64"          : "__helix_u64"     ,
-    "u128"         : "__helix_u128"    ,
-    "i8"           : "__helix_i8"      ,
-    "i16"          : "__helix_i16"     ,
-    "i32"          : "__helix_i32"     ,
-    "i64"          : "__helix_i64"     ,
-    "i128"         : "__helix_i128"    ,
-    "f32"          : "__helix_f32"     ,
-    "f64"          : "__helix_f64"     ,
-    "f128"         : "__helix_f128"    ,
+    
 })
 
 EARLY_REPLACEMENTS: map[str, str] = map({ # These are replaced as soon as the tokenization is done (before normalization and transpilation)
@@ -118,6 +95,33 @@ EARLY_REPLACEMENTS: map[str, str] = map({ # These are replaced as soon as the to
     "==="          : "=="            ,
     "!=="          : "!="            ,
     "stop"         : "break"         ,
+    
+    "int"          : "hx_int"      ,
+    "string"       : "hx_string"   ,
+    "float"        : "hx_float"    ,
+    "map"          : "hx_map"      ,
+    "list"         : "hx_list"     ,
+    "bool"         : "hx_bool"     ,
+    "char"         : "hx_char"     ,
+    "void"         : "hx_void"     ,
+    "tuple"        : "hx_tuple"    ,
+    "array"        : "hx_array"    ,
+    "set"          : "hx_set"      ,
+    "unknown"      : "hx_unknown"  ,
+    
+    "u8"           : "hx_u8"       ,
+    "u16"          : "hx_u16"      ,
+    "u32"          : "hx_u32"      ,
+    "u64"          : "hx_u64"      ,
+    "u128"         : "hx_u128"     ,
+    "i8"           : "hx_i8"       ,
+    "i16"          : "hx_i16"      ,
+    "i32"          : "hx_i32"      ,
+    "i64"          : "hx_i64"      ,
+    "i128"         : "hx_i128"     ,
+    "f32"          : "hx_f32"      ,
+    "f64"          : "hx_f64"      ,
+    "f128"         : "hx_f128"     ,
 })
 
 KEYWORDS: map[str, map[str, str | bool | Callable[..., str]]] = map({

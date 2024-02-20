@@ -182,7 +182,7 @@ def _for(ast_list: Token_List, current_scope: Scope, parent_scope: Scope, root_s
             # if any vars need to be discarded
             if any([declarations[_name]["discard"] for _name in declarations]):
                 Transpiler.Transpiler.add_to_transpiled_queue.append((
-                    f"{INDENT_CHAR*ast_list.indent_level}del {', '.join([f'{_name}' for _name in declarations if declarations[_name]['discard']])}\n",
+                    Processed_Line(f"{INDENT_CHAR*ast_list.indent_level}del {', '.join([f'{_name}' for _name in declarations if declarations[_name]['discard']])}\n", ast_list),
                     current_scope
                 ))
         elif len(init_statement) > 1:
@@ -309,7 +309,7 @@ def _for(ast_list: Token_List, current_scope: Scope, parent_scope: Scope, root_s
         # if any vars need to be discarded
         if any([declarations[_name]["discard"] for _name in declarations]):
             Transpiler.Transpiler.add_to_transpiled_queue.append((
-                f"{INDENT_CHAR*ast_list.indent_level}del {', '.join([f'{_name}' for _name in declarations if declarations[_name]['discard']])}\n",
+                Processed_Line(f"{INDENT_CHAR*ast_list.indent_level}del {', '.join([f'{_name}' for _name in declarations if declarations[_name]['discard']])}\n", ast_list),
                 current_scope
             ))
 

@@ -22,8 +22,8 @@ def tokenize_line(code: Token | str) -> list[str]:
     back_slash = "\\"
     
     pattern: str = rf"""
-        ("[^"\\]*(?:\\.[^"\\]*)*")                                                          | # Double quotes strings
-        ('[^'\\]*(?:\\.[^'\\]*)*')                                                          | # Single quotes strings
+        ([fbur]*"[^"\\]*(?:\\.[^"\\]*)*")                                                          | # Double quotes strings, including f, b, r, u strings
+        ([fbur]*'[^'\\]*(?:\\.[^'\\]*)*')                                                          | # Single quotes strings, including f, b, r, u strings
         ({back_slash.join(globals.COMMENT.split())}[^\n]*)                                                      | # Single line comments (~~)
         ({back_slash.join(globals.BLOCK_COMMENT.split())}[\s\S]*?{back_slash.join(globals.BLOCK_COMMENT.split())})      | # Multi line comments (~*~ ... ~*~)
         (\b\d+\.\d+\b)                                                                      | # Decimal numbers

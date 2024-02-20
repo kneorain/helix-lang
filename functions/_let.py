@@ -22,9 +22,9 @@ def _let(ast_list: Token_List, current_scope, parent_scope, root_scope) -> str:
         )
 
     temp = ast_list.splice(1).get_all_before("=") if "=" in ast_list else ast_list.splice(1)
-    variables: dict[str, Token_List] = {} # {name: value}
+    variables: dict[str, dict[str, Token_List]] = {} # {name: {type: Token_List, value: Token_List}}
     name = ""
-    type = ""
+    type: Token_List = Token_List([], ast_list.indent_level, ast_list.file)
     in_type: bool = False
     in_brackets = False
     generic_count: int = 0
@@ -49,12 +49,12 @@ def _let(ast_list: Token_List, current_scope, parent_scope, root_scope) -> str:
                 if generic_count == 0:
                     in_type = False
             
-            type += token.token + " "
+            type.line.append(token)
 
             if not in_type:
-                variables[name.strip()] = {"type": type.strip().replace("<", "[").replace(">", "]"), "value": ""}
+                variables[name.strip()] = {"type": type.replace("<", "[").replace(">", "]"), "value": ""}
                 name = ""
-                type = ""
+                type = Token_List([], ast_list.indent_level, ast_list.file)
                 continue
             
             continue
@@ -62,7 +62,7 @@ def _let(ast_list: Token_List, current_scope, parent_scope, root_scope) -> str:
             in_type = True
             continue
         if token == "," and not in_brackets:
-            variables[name.strip()] = {"type": type.strip().replace("<", "[").replace(">", "]") if type else "", "value": ""}
+            variables[name.strip()] = {"type": type.replace("<", "[").replace(">", "]") if type.line else "", "value": ""}
             name = ""
             continue
         elif token == "::" and not in_brackets:
@@ -77,7 +77,7 @@ def _let(ast_list: Token_List, current_scope, parent_scope, root_scope) -> str:
         name += token.token + " "
     else:
         if name:
-            variables[name.strip()] = {"type": type.strip().replace("<", "[").replace(">", "]") if type else "", "value": ""}
+            variables[name.strip()] = {"type": type.replace("<", "[").replace(">", "]") if type.line else "", "value": ""}
             name = ""
 
     if "=" in ast_list:
@@ -112,6 +112,51 @@ def _let(ast_list: Token_List, current_scope, parent_scope, root_scope) -> str:
                     panic(SyntaxError("Too many values to unpack for assignment"), "=", file=ast_list.file, line_no=ast_list[-1].line_number)
                 value = Token_List([], ast_list.indent_level, ast_list.file)
     
-    print(variables)
+    
+    def extract_generics_from_type(type: Token_List) -> Token_List:
+        generics = Token_List([], type.indent_level, type.file)
+        in_generics = False
+        generic_count = 0
         
+        for token in type:
+            if in_generics:
+                if token == "[":
+                    generic_count += 1
+                elif token == "]":
+                    generic_count -= 1
+                    if generic_count == 0:
+                        in_generics = False
+                        continue
+                generics.line.append(token)
+            elif token == "[":
+                in_generics = True
+                generic_count += 1
+                
+        return generics
+    
+    def mass_replace(string: str, replacements: dict[str, str]) -> str:
+        for key, value in replacements.items():
+            string = string.replace(key, value)
+        return string
+    
+    cleaning = {
+        " , ": ", ",
+        " [ ": "[" ,
+        " ] ": "]" ,
+        " ]": "]"
+    }
+    
+    for name, value in variables.items():
+        current_scope.variables[name] = value["type"].full_line().strip() if not isinstance(value["type"], str) else value["type"]
+        value["type"] = (type if type.full_line().strip() else panic(SyntaxError("You must specify the type of the variable"), "=", file=ast_list.file, line_no=ast_list[0].line_number)) if not value["type"] else value["type"]
+        value["value"] = (
+            (' '.join([_.token for _ in value["type"].get_all_before("[")]) if "[" in value["type"] else value["type"].full_line())
+            + ("(" + value["value"].full_line() if value["value"].full_line() else "None"
+            if "?" == value["type"][-1] else "DEFAULT_VALUE")
+            + ")" + ((".__set_generic__(\"[" + mass_replace(extract_generics_from_type(value["type"]).full_line().strip(), cleaning) + ']")') if "[" in value["type"] else "")
+        )
         
+        value["type"] = mass_replace(value["type"].replace("?", "").full_line().strip(), cleaning)
+        output += f"{INDENT_CHAR*ast_list.indent_level}{name}: {value['type']} = {value['value']}\n"
+    
+    return Processed_Line(output, ast_list)

@@ -53,6 +53,10 @@ class Token:
     def indent_level(self, value: int) -> None:
         self.__indent_level = value
         
+    def set_token(self, value: str) -> 'Token':
+        self.__processed_line = value
+        return self
+        
     # ---------------------------- Magic Methods ----------------------------- #
 
     def __hash__(self):
@@ -198,6 +202,17 @@ class Token_List(list[Token]):
         temp.line = temp.line[start:end]
         return temp
     
+    def append(self, __value: Token | str) -> None:
+        if isinstance(__value, str):
+            self.line.append(Token(None, __value, -1, self.indent_level))
+        else:
+            self.line.append(__value)
+            
+    def replace(self, __old: str, __new: str) -> 'Token_List':
+        self.line = [token if token.token != __old else token.set_token(__new) for token in self.line]
+        return self
+        
+    
 class Processed_Line:
     def __init__(self, line: str, non_parsed_line: Token_List):
         self.line = line
@@ -208,3 +223,6 @@ class Processed_Line:
     
     def __repr__(self):
         return repr(self.line.rstrip())
+    
+    def to_code(self) -> str:
+        return self.line
