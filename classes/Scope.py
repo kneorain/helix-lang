@@ -26,6 +26,7 @@ class Scope:
         self.namespace_type = namespace_type
         self.separate_file_namespace = False
         self.children = [] if not children else children
+        Scope.internal_name = "Variable Assignment Namespace"
         self.indent_level = indent_level
         
         self.variables = {}

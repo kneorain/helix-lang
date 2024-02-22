@@ -1,15 +1,110 @@
-include "test.cpp";
+include "sleep" from "time";
+import types;
+import functools;
+
+~~ print(argv);
+
+
+~~ do_something();
+~~ test_int();
+~~ test_float();
+~~ test_double();
+~~ test_char();
+~~ test_string();
+~~ test_bool();
+~~ test_list();
+~~ test_tuple();
+~~ test_list();
+~~ test_set();
+
 
 fn main() {
-    let a: int = 213;
-    print(test.add(1, 2));
-    a = 123;
-    print(a);
-    a = a + 3;
-    dumb(a);
+    print(a_cursed_fucntion()()()()()()()()()()()()() === a_cursed_fucntion()()()());
+    print(a_cursed_fucntion()()()()()()()());
+    print(a_cursed_fucntion()()()()()()());
+    print(a_cursed_fucntion()()()()()());
+    print(a_cursed_fucntion()()()()());
+    print(a_cursed_fucntion()()()());
+    print(a_cursed_fucntion()()());
+    print(a_cursed_fucntion()());
+    print(a_cursed_fucntion());
+    print(a_cursed_fucntion);
 }
 
-fn dumb(a: int) {
-    a = 123;
-    print(a);
+fn a_cursed_fucntion() -> FunctionType {
+    return a_cursed_fucntion;
+}
+
+async fn do_something() {
+    for (let i: int = 0; i < 10; i++) {
+        print("doing something: %d", i);
+    }
+}
+
+fn test_int() {
+    let a: int = 21;
+    let b: int = 42;
+    printf("just adding: %d", a + b);
+
+    a = 42;
+    printf("a is now: %d", a);
+
+}
+
+fn test_float() {
+    let a: float = 1;
+    let b: float = 7;
+    print("a / b is", a / b);
+}
+
+fn test_double() {
+    let a: double = 1.0;
+    let b: double = 7.0;
+    print("a / b is", a / b);
+}
+
+fn test_char() {
+    let a: char = 'a';
+    let b: char = 'b';
+    print("a + b is", a + b);
+}
+
+fn test_string() {
+    let a: string = "hello";
+    let b: string = "world";
+    print("a + b is", a + b);
+}
+
+
+fn test_bool() {
+    let a: bool = true;
+    let b: bool = false;
+    print("a and b is", a && b);
+    print("a or b is", a || b);
+    print("not a is", !a);
+}
+
+fn test_list() {
+    let a: list<int> = [1, 2, 3];
+    let b: list<int> = [4, 5, 6];
+    print("list a is", a);
+    exit();
+}
+
+fn test_tuple() {
+    let a: tuple<int> = (1, 2, 3);
+    let b: tuple<int> = (4, 5, 6);
+    print("a + b is", a + b);
+}
+
+fn test_map() {
+    let a: map<string, int> = { "a": 1, "b": 2, "c": 3 };
+    let b: map<string, int> = { "d": 4, "e": 5, "f": 6 };
+    print("a + b is", a + b);
+}
+
+fn test_set() {
+    let a: set<int> = { 1, 2, 3 };
+    let b: set<int> = { 4, 5, 6 };
+    print("a + b is", a + b);
 }

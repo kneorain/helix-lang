@@ -18,6 +18,9 @@ def _unmarked(ast_list: Token_List, current_scope, parent_scope, root_scope) -> 
     
     output = ""
     
+    if ast_list.indent_level == 0:
+        panic(SyntaxError("You cannot have code outside of a function"), ast_list[0], file=ast_list.file, line_no=ast_list[0].line_number)
+    
     if "=" in ast_list:
         # so something like a = 5 would become a.set(5)
         # and something like a, b = 5, 6 would become a.set(5); b.set(6)
@@ -101,10 +104,13 @@ def _unmarked(ast_list: Token_List, current_scope, parent_scope, root_scope) -> 
             if "::" in value:
                 static_call = value.get_all_after("::")[0]
                 # TODO: add support for static calls
-            
+
             if "self" not in name:
                 output += f"{INDENT_CHAR*ast_list.indent_level}try:\n"
-                output += f"{INDENT_CHAR*(ast_list.indent_level+1)}{name}.__set__({value.full_line()})\n"
+                try:
+                    output += f"{INDENT_CHAR*(ast_list.indent_level+1)}{name}: {current_scope.variables[name.strip()]} = {current_scope.variables[name.strip()]}({value.full_line()})\n"
+                except KeyError:
+                    panic(NameError(f"Variable '{name.strip()}' is not defined"), name.strip(), file=ast_list.file, line_no=ast_list[0].line_number)
                 output += f"{INDENT_CHAR*ast_list.indent_level}except AttributeError:\n"
                 output += f"{INDENT_CHAR*(ast_list.indent_level+1)}{name} = {value.full_line()}\n"
                 output += f"{INDENT_CHAR*(ast_list.indent_level+1)}print(\"WARN: \\\"{name}\\\" does not contain the attribute '__set__' falling back to default assignment.\")\n"

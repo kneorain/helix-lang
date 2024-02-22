@@ -1,6 +1,7 @@
 from classes.Token import Token, Token_List, Processed_Line
 from core.config import load_config
 from core.token.tokenize_line import tokenize_line
+import globals
 
 INDENT_CHAR = load_config().Formatter["indent_char"]
 re = __import__(load_config().Transpiler["regex_module"])
@@ -69,7 +70,10 @@ def _let(ast_list: Token_List, current_scope, parent_scope, root_scope) -> str:
             panic(SyntaxError("You cannot use the `::` operator in a variable assignment"), token, file=ast_list.file, line_no=ast_list[0].line_number)
         elif token in ("(", "[", "{"):
             in_brackets = True
-            bracket_count += 1
+            try:
+                bracket_count += 1
+            except UnboundLocalError:
+                panic(SyntaxError(f"Unknown Keyword '{ast_list[0].token}'"), ast_list[0].token, file=ast_list.file, line_no=ast_list[0].line_number)
         elif token in (")", "]", "}"):
             bracket_count -= 1
             if bracket_count == 0:
@@ -146,17 +150,44 @@ def _let(ast_list: Token_List, current_scope, parent_scope, root_scope) -> str:
         " ]": "]"
     }
     
+    override_dispatch_error = True
+    broken_type = False
+    
     for name, value in variables.items():
+        null_value = "None" if "?" in value["type"] else ""
+        if null_value:
+            value["type"].remove("?")
+        
         current_scope.variables[name] = value["type"].full_line().strip() if not isinstance(value["type"], str) else value["type"]
+        
         value["type"] = (type if type.full_line().strip() else panic(SyntaxError("You must specify the type of the variable"), "=", file=ast_list.file, line_no=ast_list[0].line_number)) if not value["type"] else value["type"]
         value["value"] = (
-            (' '.join([_.token for _ in value["type"].get_all_before("[")]) if "[" in value["type"] else value["type"].full_line())
-            + ("(" + value["value"].full_line() if value["value"].full_line() else "None"
-            if "?" == value["type"][-1] else "DEFAULT_VALUE")
-            + ")" + ((".__set_generic__(\"[" + mass_replace(extract_generics_from_type(value["type"]).full_line().strip(), cleaning) + ']")') if "[" in value["type"] else "")
-        )
+            (
+                ' '.join([_.token for _ in value["type"].get_all_before("[")]) if "[" in value["type"]
+                else value["type"].full_line()
+            )
+            + "(" + (
+                value["value"].full_line() if value["value"]
+                else "None"
+                
+                if null_value
+                else null_value
+            )
+            + ")" + (
+                (".__set_generic__(\"[" + mass_replace(extract_generics_from_type(value["type"]).full_line().strip(), cleaning) + ']")')
+                if "[" in value["type"]
+                else ""
+            )
+        ) if value["type"] not in globals.IGNORE_TYPES_MAP else value["value"]
         
-        value["type"] = mass_replace(value["type"].replace("?", "").full_line().strip(), cleaning)
-        output += f"{INDENT_CHAR*ast_list.indent_level}{name}: {value['type']} = {value['value']}\n"
+        for values in globals.IGNORE_TYPES_MAP:
+            if values in value["type"]:
+                value["value"] = "Any"
+                broken_type = True
+        
+        value["type"] = mass_replace(value["type"].full_line().strip(), cleaning) if not broken_type else "Any"
+        output += f"{INDENT_CHAR*(ast_list.indent_level + (1 if override_dispatch_error else 0))}{name}: {value['type']} = {value['value']}\n"
+        if override_dispatch_error:
+            output  = f"{INDENT_CHAR*ast_list.indent_level}try:\n{output}{INDENT_CHAR*ast_list.indent_level}except DispatchError:\n{INDENT_CHAR*((ast_list.indent_level+1))}panic(TypeError(f\"Method '{value["type"]}' expects, '{{str(tuple({value["type"]}.__annotations__.values())[-1]).replace('|', 'or')}}', got something else.\"), ':', file=inspect.stack()[0].filename, line_no=inspect.stack()[0].lineno-8)\n"
     
     return Processed_Line(output, ast_list)

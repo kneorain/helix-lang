@@ -231,7 +231,7 @@ def function(ast_list: Token_List, current_scope: Scope, parent_scope: Scope, ro
     output = f"\n{INDENT_CHAR*ast_list.indent_level}{output}"
     
     if not any([i in not_allowed_classes for i in parent_scope.name]):
-        output = f"\n{INDENT_CHAR*ast_list.indent_level}@hx__multi_method" + output
+        output = (f"\n{INDENT_CHAR*ast_list.indent_level}@hx__multi_method" if not root_scope.get_keyword('ASYNC') in modifiers and not root_scope.get_keyword('UNSAFE') in modifiers else "") + output
     # if the type of parent_sope is an abstract class
     if any([i == root_scope.get_keyword("ABSTRACT") for i in parent_scope.name]):
         output = f"\n{INDENT_CHAR*ast_list.indent_level}@hx__abstract_method" + output

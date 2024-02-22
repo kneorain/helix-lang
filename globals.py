@@ -27,6 +27,8 @@ LINE_BREAK:     str = '\x03'
 SUB_LINE_BREAK: str = '\x04'
 
 DOUBLE_CHARACTER: list[str] = [
+    r"==="   ,
+    r"!=="   ,
     r"=="    ,
     r"!="    ,
     r"->"    ,
@@ -49,6 +51,7 @@ DOUBLE_CHARACTER: list[str] = [
     r"\*\*"  ,
     r"\.\.\.",
     r"=\=\=",
+    r"!\=\=",
     r"!\=\=",
 ]
 
@@ -79,10 +82,9 @@ DOUBLE_CHARACTER: list[str] = [
 # f64;
 # f128;
 
-DEFAULT_TYPE_MAP: map[str, str] = map({
-    # helix type   |   python type
-    
-})
+IGNORE_TYPES_MAP: tuple[str, ...] = (
+    "Callable",
+)
 
 EARLY_REPLACEMENTS: map[str, str] = map({ # These are replaced as soon as the tokenization is done (before normalization and transpilation)
     "true"         : "True"          ,
@@ -92,8 +94,8 @@ EARLY_REPLACEMENTS: map[str, str] = map({ # These are replaced as soon as the to
     "&&"           : "and"           ,
     "||"           : "or"            ,
     "!"            : "not"           ,
-    "==="          : "=="            ,
-    "!=="          : "!="            ,
+    "==="          : "is"            ,
+    "!=="          : "is not"            ,
     "stop"         : "break"         ,
     
     "int"          : "hx_int"      ,
@@ -108,6 +110,19 @@ EARLY_REPLACEMENTS: map[str, str] = map({ # These are replaced as soon as the to
     "array"        : "hx_array"    ,
     "set"          : "hx_set"      ,
     "unknown"      : "hx_unknown"  ,
+    
+    "Int"          : "hx_int"      ,
+    "String"       : "hx_string"   ,
+    "Float"        : "hx_float"    ,
+    "Map"          : "hx_map"      ,
+    "List"         : "hx_list"     ,
+    "Bool"         : "hx_bool"     ,
+    "Char"         : "hx_char"     ,
+    "Void"         : "hx_void"     ,
+    "Tuple"        : "hx_tuple"    ,
+    "Array"        : "hx_array"    ,
+    "Set"          : "hx_set"      ,
+    "Unknown"      : "hx_unknown"  ,
     
     "u8"           : "hx_u8"       ,
     "u16"          : "hx_u16"      ,

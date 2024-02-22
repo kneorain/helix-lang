@@ -131,7 +131,7 @@ from threading import Lock
 lock = Lock()
 
 def panic(__error: ref[Exception], *mark: tuple[Any], file: str = "", line_no: int = 0) -> NoReturn:
-    lock.acquire()
+    lock.acquire(blocking=True)
     
     lines_to_print: int = 5
     mark = [str(item) for item in mark]
@@ -325,7 +325,7 @@ def panic(__error: ref[Exception], *mark: tuple[Any], file: str = "", line_no: i
     
     final_line: str = chars['b-left'] + f" {file}:{line_no} ".center(terminal_width-2, chars['dash']) + chars['b-right']
     final_line = f"{red}{final_line}{reset}"
-    final_line = final_line.split(file)[0] + green + file + reset + gray + ":" + green + str(line_no) + red + final_line.split(":")[1][len(str(line_no)):] + reset
+    final_line = final_line.split(file)[0] + green + file + reset + gray + ":" + green + str(line_no) + red + final_line.split(":")[(1 if ":\\" != ":" + final_line.split(":")[1][0] else 2)][len(str(line_no)):] + reset
     
     # check if terminal width is even
     print(final_line)

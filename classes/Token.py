@@ -8,6 +8,7 @@ class Token:
         self.__processed_line: list[str] | str = processed_line
         self.__line_number:    int             = line_number
         self.__indent_level:   int             = indent_level
+        Token.internal:       str             = "Helix Token"
         
     # ------------------------------- Getters -------------------------------- #
 
@@ -30,6 +31,7 @@ class Token:
     @property
     def indent_level(self) -> int:
         return self.__indent_level
+    
 
     # ------------------------------- Setters -------------------------------- #
 
@@ -95,6 +97,7 @@ class Token_List(list[Token]):
         self.line = tokens
         self.indent_level = indent_level
         self.file = file
+        Token_List.name = "Raw Token List; Using Token_List"
         
     def __str__(self):
         return json.dumps({"line_indent_level": self.indent_level, "joined_line": ' '.join([_.token for _ in self.line])})

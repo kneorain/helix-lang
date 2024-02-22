@@ -8,9 +8,10 @@ from sys import stdout as __sys_stdout__
 from threading import Thread as __thread__
 from time import sleep as __sleep__
 from os import path as __os_path__
-from typing import Any
+from typing import Any, override
+from include.__c_abstraction import c_interop_abstraction as __c_interop_abstraction__
 
-class __c_cpp_import__:
+class __c_lib__(__c_interop_abstraction__):
     __lib_name__: str = ""
     __path__: str = ""
     __compiled_path__: str = ""
@@ -19,66 +20,44 @@ class __c_cpp_import__:
     __lib_ref__: Any = None
     
     @staticmethod
-    def __c_cpp_import__(path: str, attr: str = ""):
-        # TODO: add comments
-        out = __c_cpp_import__(path, attr).__lib_ref__
+    @override
+    def __import__(path: str, attr: str = ""):
+        out = __c_lib__(path, attr).__lib_ref__
         return out
 
+    @override
     def __init__(self, path: str, attr: str = ""):
-        
         self.__lib_name__ = ''.join(__os_path__.basename(path).split(".")[:-1])
-        self. __compiled_path__ = f"{__c_cpp_import__.__user_dir__}/.helix/temp/gcc/{self.__lib_name__}.hx_c_lib"
+        self. __compiled_path__ = f"{__c_lib__.__user_dir__}\\.helix\\temp\\gcc\\{self.__lib_name__}.hx_c_lib"
         self. __path__ = __os_path__.abspath(path) if not __os_path__.isabs(path) else path
 
-        __CDLL__ = __CDLL__.kernel32[1]
-        
         if attr:
             if path.endswith(".cpp"):
                 self.__lib_ref__ = getattr(__CDLL__(self.__compile_c_cpp__("clang++")), attr)
+
             self.__lib_ref__ = getattr(__CDLL__(self.__compile_c_cpp__()), attr)
-        
+
         if path.endswith(".cpp"):
             self.__lib_ref__ = __CDLL__(self.__compile_c_cpp__("clang++"))
 
         self.__lib_ref__ = __CDLL__(self.__compile_c_cpp__())
     
+    @override
     def __create_compile_dir__(self):
-        """
-        Creates the directory where compiled files will be stored.
-        """
-        
-        if not __os_path__.exists(f"{__c_cpp_import__.__user_dir__}/.helix/temp/gcc"):
-            __os_makedirs__(f"{__c_cpp_import__.__user_dir__}/.helix/temp/gcc")
+        if not __os_path__.exists(f"{__c_lib__.__user_dir__}\\.helix\\temp\\gcc"):
+            __os_makedirs__(f"{__c_lib__.__user_dir__}\\.helix\\temp\\gcc")
 
+    @override
     def __remove_compiled_files__():
-        """
-        Removes all compiled files from the directory.
-        """
-        
-        for compiled_path in __c_cpp_import__.__compiled__:
+        for compiled_path in __c_lib__.__compiled__:
             __os_remove__(compiled_path)
 
+    @override
     def __append_to_compiled__(self):
-        """
-        Adds a file to the list of compiled files.
-        This is used to prevent the same file from being compiled multiple times.
+        __c_lib__.__compiled__.append(self.__compiled_path__)
 
-        Args:
-            path (str): The path to the file to be added.
-        """
-        
-        __c_cpp_import__.__compiled__.append(self.__compiled_path__)
-
+    @override
     def __run_compile_command__(self, compiler: str):
-        """
-        Runs the compilation command.
-
-        Args:
-            compiler (str): The compiler to be used. Defaults to "gcc".
-            compiled_path (str): The path to the compiled file.
-            path (str): The path to the file to be compiled.
-        """
-        
         try:
             result = __subprocess_run__([compiler, "-shared", "-o", self.__compiled_path__, self.__path__], stderr=__PIPE__, text=True)
             if result.returncode != 0:
@@ -88,16 +67,9 @@ class __c_cpp_import__:
             print("\nAn error occurred during compilation:", e)
             exit(1)
 
+    @override
     def __compile_c_cpp__(self, compiler: str = "clang") -> str:
-        """
-        Compiles a C or C++ file.
-
-        Args:
-            path (str): The path to the file to be compiled.
-            compiler (str, optional): The compiler to be used. Defaults to "gcc".
-        """
-        
-        if self.__compiled_path__ in __c_cpp_import__.__compiled__:
+        if self.__compiled_path__ in __c_lib__.__compiled__:
             return self.__compiled_path__
 
         self.__create_compile_dir__()

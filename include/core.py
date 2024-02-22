@@ -1,67 +1,104 @@
+from __future__ import annotations
 from abc import ABC
 from abc import abstractmethod as hx__abstract_method
+from collections.abc import Iterator
 from dataclasses import dataclass
-from enum import Enum
-from threading import Thread
-from types import MappingProxyType as FastMap
-from typing import Any, NoReturn
+from decimal import (Decimal as double, getcontext)
+from array import array
 
-from multimethod import multimeta
+from enum import Enum
+import inspect
+from threading import Thread
+from types import MappingProxyType as FastMap, NoneType, FunctionType
+from typing import Any, Callable, NoReturn, Self
+from weakref import ref
+
+from multimethod import DispatchError, multimeta
 from multimethod import multimethod as hx__multi_method
 from multimethod import subtype
 
+from typing import Type, TypeVar
 from core.panic import panic
-from include.__c_cpp_import__ import __c_cpp_import__
-    
+from time import sleep
+from include.c_cpp import __import_c__
+
+getcontext().prec = 128
+
 def printf(string: str, *args):
-    panic(
-        NotImplementedError("printf is not implemented in Helix (YET)"),
-        file=__file__,
-    )
+    #panic(
+    #    NotImplementedError("printf is not implemented in Helix (YET)"),
+    #    file=inspect.stack()[4].filename,
+    #    line_no=inspect.stack()[4].lineno,
+    #)
     print(string % args)
     
+def scanf(string: str, *args):
+    #panic(
+    #    NotImplementedError("scanf is not implemented in Helix (YET)"),
+    #    file=inspect.stack()[4].filename,
+    #    line_no=inspect.stack()[4].lineno,
+    #)
+    return input(string % args)
+
 unknown = Any
-replace_primitives = FastMap({
-    "hx_int"    : "int",
-    "hx_string" : "string",
-    "hx_float"  : "float",
-    "hx_map"    : "map",
-    "hx_list"   : "list",
-    "hx_bool"   : "bool",
-    "hx_char"   : "char",
-    "hx_void"   : "void",
-    "hx_tuple"  : "tuple",
-    "hx_array"  : "array",
-    "hx_set"    : "set"
-})
+replace_primitives = FastMap(
+    {
+        "hx_int"    : "int",
+        "hx_string" : "string",
+        "hx_float"  : "float",
+        "hx_map"    : "map",
+        "hx_list"   : "list",
+        "hx_bool"   : "bool",
+        "hx_char"   : "char",
+        "hx_void"   : "void",
+        "hx_tuple"  : "tuple",
+        "hx_array"  : "array",
+        "hx_set"    : "set",
+    }
+)
 
 class void:
     def __init__(self, *args, **kwargs):
         pass
+
     def __set__(self, value: Any) -> None:
         pass
+
     def __set_generic__(self, value: Any) -> None:
         pass
+
     def __get__(self) -> None:
         pass
+
     def __get_generic__(self) -> None:
         pass
+
     def __new__(self, *args, **kwargs):
         return self
+
     def __call__(self, *args, **kwargs):
         pass
+
     def __del__(self):
         pass
 
+    def __empty__(self) -> bool:
+        return True
+
+    def __void__(self) -> bool:
+        return True
+
+
 DEFAULT_VALUE = void()
+
 
 class C_For:
     def __init__(self, **kwargs):
         # Initialize loop variables
         self.loop_vars = kwargs
         # Extract condition and increment expressions
-        self.condition = 'True'
-        self.increment = ''
+        self.condition = "True"
+        self.increment = ""
         # Evaluate initial conditions
         [exec(f"{var} = {value}") for var, value in self.loop_vars.items()]
 
@@ -75,391 +112,850 @@ class C_For:
         exec(self.increment, None, self.loop_vars)
         self.loop_condition_met = eval(self.condition, None, self.loop_vars)
         return current_values if len(current_values) > 1 else current_values[0]
-    
+
     def set_con(self, condition):
         self.condition = condition
         self.loop_condition_met = eval(self.condition, None, self.loop_vars)
         return self
-    
+
     def set_inc(self, increment):
-        self.increment = increment.replace('++', '+= 1').replace('--', '-= 1').replace('+*', '*= 1').replace('-*', '*= -1').replace('/-', '/ -1').replace('/*', '*= 1')
+        self.increment = (
+            increment.replace("++", "+= 1")
+            .replace("--", "-= 1")
+            .replace("+*", "*= 1")
+            .replace("-*", "*= -1")
+            .replace("/-", "/ -1")
+            .replace("/*", "*= 1")
+        )
         return self
-    
+
+
 def hx__async(func):
     def wrapper(*args, **kwargs):
         Thread(target=func, args=args, kwargs=kwargs, daemon=True).start()
+
     return wrapper
 
-class hx_void:
-    def __init__(self, *args, **kwargs):
-        pass
-    def __set__(self, value: Any) -> None:
-        pass
-    def __set_generic__(self, value: Any) -> None:
-        pass
-    def __get__(self) -> None:
-        pass
-    def __get_generic__(self) -> None:
-        pass
-    def __new__(self, *args, **kwargs):
-        return self
-    def __call__(self, *args, **kwargs):
-        pass
-    def __del__(self):
-        pass
-
-class hx_int(int, metaclass=multimeta):
-    __value__: int = 0
-    
-    def __set__(self, __o: int) -> None:
-        if isinstance(__o, subtype(self.__class__ | void | int | float | bytes)):
-            self.__value__ = __o
-        else:
-            try:
-                self.__value__ = int(__o)
-            except Exception as e:
-                panic(
-                    TypeError(f"Expected type {self.__class__}, got {type(__o)}, unable to cast"),
-                    file=__file__,
-                )
-                
-    def __set_generic__(self, _: str) -> NoReturn:
-        panic(
-            TypeError(f"Cannot set generic type for {self.__class__}"),
-            file=__file__,
-        )
-    
-    def __init__(self, __o: int):
-        self.__set__(__o if not isinstance(__o, void) else 0)
-        
-    def __get__(self) -> int:
-        return self.__value__
-    
-    def __int__(self) -> int:
-        return self.__value__
-    
-class hx_string(str, metaclass=multimeta):
-    __value__: str = ""
-    
-    def __set__(self, __o: str) -> None:
-        if isinstance(__o, self.__class__):
-            self.__value__ = __o
-        else:
-            try:
-                self.__value__ = str(__o)
-            except Exception as e:
-                panic(
-                    TypeError(f"Expected type {self.__class__}, got {type(__o)}, unable to cast"),
-                    file=__file__,
-                )
-                
-    def __set_generic__(self, _: str) -> NoReturn:
-        panic(
-            TypeError(f"Cannot set generic type for {self.__class__}"),
-            file=__file__,
-        )
-    
-    def __init__(self, __o: str):
-        self.__set__(__o if not isinstance(__o, void) else "")
-        super().__new__(self.__value__)
-        
-    def __get__(self) -> str:
-        return self.__value__
-    
-class hx_float(float, metaclass=multimeta):
-    __value__: float = 0.0
-    
-    def __set__(self, __o: float | void) -> None:
-        if isinstance(__o, self.__class__):
-            self.__value__ = __o
-        else:
-            try:
-                self.__value__ = float(__o)
-            except Exception as e:
-                panic(
-                    TypeError(f"Expected type {self.__class__}, got {type(__o)}, unable to cast"),
-                    file=__file__,
-                )
-                
-    def __set_generic__(self, _: str) -> NoReturn:
-        panic(
-            TypeError(f"Cannot set generic type for {self.__class__}"),
-            file=__file__,
-        )
-    
-    def __init__(self, __o: float | void):
-        self.__set__(__o if not isinstance(__o, void) else 0.0)
-        super().__new__(self.__value__)
-        
-    def __get__(self) -> float:
-        return self.__value__
-
-
-class hx_map[T](dict, metaclass=multimeta):
-    __value__: dict = {}
-    __generic__: subtype = None
-    
-    def __set__(self, __o: dict | void) -> None:
-        if isinstance(__o, self.__class__ if not self.__generic__ else self.__generic__):
-            self.__value__ = __o
-        else:
-            try:
-                self.__value__ = dict(__o)
-                if self.__generic__ and not isinstance(self.__value__, self.__generic__):
-                    panic(
-                        TypeError(f"Expected type {self.__generic__}, got {type(__o)}, unable to cast"),
-                        file=__file__,
-                    )
-            except Exception as e:
-                panic(
-                    TypeError(f"Expected type {self.__generic__}, got {type(__o)}, unable to cast"),
-                    file=__file__,
-                )
-                
-    def __set_generic__(self, __o: str) -> None:
-        exec(f"self.__generic__ = {f'subtype(dict[{__o[1:-1]}]'.replace('hx_map', 'dict')} | void)")
-        if self.__value__: self.__set__(self.__value__) # recheck the value
-
-    def __init__(self, __o: dict | void):
-        self.__set__(__o if not isinstance(__o, void) else {})
-        super().__init__(self.__value__)
-        
-    def __get__(self) -> dict:
-        return self.__value__
-
-class hx_list[T](list, metaclass=multimeta):
-    __value__: list = []
-    __generic__: subtype = None
-    
-    def __set__(self, __o: list | void) -> None:
-        if isinstance(__o, self.__class__ if not self.__generic__ else self.__generic__):
-            self.__value__ = __o
-        else:
-            try:
-                self.__value__ = list(__o)
-                if self.__generic__ and not isinstance(self.__value__, self.__generic__):
-                    panic(
-                        TypeError(f"Expected type {self.__generic__}, got {type(__o)}, unable to cast"),
-                        file=__file__,
-                    )
-            except Exception as e:
-                panic(
-                    TypeError(f"Expected type {self.__generic__}, got {type(__o)}, unable to cast"),
-                    file=__file__,
-                )
-                
-    def __set_generic__(self, __o: str) -> None:
-        exec(f"self.__generic__ = {f'subtype(list[{__o[1:-1]}]'.replace('hx_list', 'list')} | void)")
-        if self.__value__: self.__set__(self.__value__) # recheck the value
-
-    def __init__(self, __o: list | void):
-        self.__set__(__o if not isinstance(__o, void) else [])
-        super().__init__(self.__value__)
-        
-    def __get__(self) -> list:
-        return self.__value__
-
+class hx_void(void): pass
 
 class hx_bool(metaclass=multimeta):
-    __value__: bool = False
-    
-    def __set__(self, __o: bool | void) -> None:
-        if isinstance(__o, self.__class__):
+    __value__: int | void | bool | hx_bool | None = False
+
+    def __set__(self, __o) -> None:
+        if isinstance(__o, int):
+            if __o != 0 and __o != 1:
+                panic(
+                    ValueError(f"Expected 0 or 1, got {__o}"),
+                    file=inspect.stack()[4].filename,
+                    line_no=inspect.stack()[4].lineno,
+                )
+            self.__value__ = bool(__o)
+        elif isinstance(__o, hx_bool):
+            self.__value__ = __o.__value__
+        elif isinstance(__o, subtype(int | void | bool | hx_bool | hx_int | hx_void)):
             self.__value__ = __o
+        elif isinstance(__o, NoneType):
+            self.__value__ = None
         else:
             try:
                 self.__value__ = bool(__o)
             except Exception as e:
                 panic(
-                    TypeError(f"Expected type {self.__class__}, got {type(__o)}, unable to cast"),
-                    file=__file__,
+                    TypeError(
+                        f"Expected type {self.__class__}, got {type(__o)}, unable to cast"
+                    ),
+                    file=inspect.stack()[4].filename,
+                    line_no=inspect.stack()[4].lineno,
                 )
-                
+
     def __set_generic__(self, _: str) -> NoReturn:
         panic(
             TypeError(f"Cannot set generic type for {self.__class__}"),
-            file=__file__,
+            file=inspect.stack()[4].filename,
+            line_no=inspect.stack()[4].lineno,
         )
-    
-    def __init__(self, __o: bool | void):
-        self.__set__(__o if not isinstance(__o, void) else False)
+
+    def __empty__(self) -> bool:
+        return self.__value__ == False or self.__value__ == None
+
+    def __init__(self, __o = False):
+        self.__set__(__o)
+
+    def __str__(self) -> str:
+        return str(self.__value__)
+
+    def __repr__(self) -> str:
+        return repr(self.__value__)
+
     def __get__(self) -> bool:
         return self.__value__
-    def __and__(self, __o: bool) -> bool:
-        return self.__value__ and __o
-    def __and__(self, __o: int) -> int:
-        return self.__value__ and __o
-    def __or__(self, __o: bool) -> bool:
-        return self.__value__ or __o
-    def __or__(self, __o: int) -> int:
-        return self.__value__ or __o
-    def __xor__(self, __o: bool) -> bool:
-        return self.__value__ ^ __o
-    def __xor__(self, __o: int) -> int:
-        return self.__value__ ^ __o
-    def __rand__(self, __o: bool) -> bool:
-        return __o and self.__value__
-    def __rand__(self, __o: int) -> int:
-        return __o and self.__value__
-    def __ror__(self, __o: bool) -> bool:
-        return __o or self.__value__
-    def __ror__(self, __o: int) -> int:
-        return __o or self.__value__
-    def __rxor__(self, __o: bool) -> bool:
-        return self.__value__ ^ __o
-    def __rxor__(self, __o: int) -> int:
-        return self.__value__ ^ __o
-    def __getnewargs__(self) -> tuple[int]:
-        return (self.__value__,)
-    def __invert__(self) -> int:
-        return ~self.__value__
-    
-class hx_char(str, metaclass=multimeta):
-    __value__: str = ""
-    
-    def __set__(self, __o: str) -> None:
-        if isinstance(__o, self.__class__):
+
+
+
+class hx_int(int, metaclass=multimeta):
+    __value__: int | bytes | hx_bytes | float | double | void | hx_int | hx_float | hx_double | hx_char | None = 0
+
+    def __set__(self, __o) -> None:
+        if isinstance(__o, int):
             self.__value__ = __o
+        elif isinstance(__o, hx_int):
+            self.__value__ = __o.__value__
+        elif isinstance(__o, subtype(int | bytes | hx_bytes | float | double | void | hx_float | hx_double | hx_int | hx_char | hx_void)):
+            self.__value__ = (
+                __o
+                if not isinstance(__o, subtype(float | double | hx_float | hx_double)) else int(__o)
+                if not isinstance(__o, subtype(hx_char | str)) else ord(__o.__value__)
+                if isinstance(__o, hx_char) else ord(__o) if len(__o) == 1 else panic(
+                    TypeError(
+                        f"Got a string of length {len(__o)}, expected a char or similar."
+                    ),
+                    file=inspect.stack()[4].filename,
+                    line_no=inspect.stack()[4].lineno,
+                )
+            )
+        elif isinstance(__o, NoneType):
+            self.__value__ = None
+        else:
+            try:
+                self.__value__ = int(__o)
+            except Exception as e:
+                panic(
+                    TypeError(
+                        f"Expected type {self.__class__}, got {type(__o)}, unable to cast"
+                    ),
+                    file=inspect.stack()[4].filename,
+                    line_no=inspect.stack()[4].lineno,
+                )
+
+    def __set_generic__(self, _: str) -> NoReturn:
+        panic(
+            TypeError(f"Cannot set generic type for {self.__class__}"),
+            file=inspect.stack()[4].filename,
+            line_no=inspect.stack()[4].lineno,
+        )
+
+    def __empty__(self) -> bool:
+        return self.__value__ == 0 or self.__value__ == None
+
+    def __init__(self, __o = 0):
+        self.__set__(__o)
+
+    def __get__(self) -> int:
+        return self.__value__
+
+    def __str__(self) -> str:
+        return str(self.__value__)
+
+    def __repr__(self) -> str:
+        return repr(self.__value__)
+
+    def __float__(self) -> float:
+        return float(self.__value__)
+
+    def __int__(self) -> int:
+        return int(self.__value__)
+
+    def __double__(self) -> double:
+        return double(self.__value__)
+
+    def __bytes__(self) -> bytes:
+        return bytes(self.__value__)
+
+    def __char__(self) -> str:
+        return chr(self.__value__)
+
+class hx_string(str, metaclass=multimeta):
+    __value__: str | hx_string | hx_char | None = ""
+
+    def __set__(self, __o) -> None:
+        if isinstance(__o, str):
+            self.__value__ = __o
+        elif isinstance(__o, hx_string):
+            self.__value__ = __o.__value__
+        elif isinstance(__o, hx_char):
+            self.__value__ = __o.__value__
+        elif isinstance(__o, NoneType):
+            self.__value__ = None
         else:
             try:
                 self.__value__ = str(__o)
             except Exception as e:
                 panic(
-                    TypeError(f"Expected type {self.__class__}, got {type(__o)}, unable to cast"),
-                    file=__file__,
+                    TypeError(
+                        f"Expected type {self.__class__}, got {type(__o)}, unable to cast"
+                    ),
+                    file=inspect.stack()[4].filename,
+                    line_no=inspect.stack()[4].lineno,
                 )
-                
+
     def __set_generic__(self, _: str) -> NoReturn:
         panic(
             TypeError(f"Cannot set generic type for {self.__class__}"),
-            file=__file__,
+            file=inspect.stack()[4].filename,
+            line_no=inspect.stack()[4].lineno,
         )
-    
-    def __init__(self, __o: str):
-        self.__set__(__o if not isinstance(__o, void) else "")
-        super().__new__(self.__value__)
-        
+
+    def __empty__(self) -> bool:
+        return self.__value__ == "" or self.__value__ == None
+
+    def __init__(self, __o = ""):
+        self.__set__(__o)
+
     def __get__(self) -> str:
         return self.__value__
-    
-class hx_tuple[T](tuple, metaclass=multimeta):
-    __value__: tuple = ()
-    __generic__: subtype = None
-    
-    def __set__(self, __o: tuple | void) -> None:
-        if isinstance(__o, self.__class__ if not self.__generic__ else self.__generic__):
+
+    def __str__(self) -> str:
+        return str(self.__value__)
+
+    def __repr__(self) -> str:
+        return repr(self.__value__)
+
+    def __bytes__(self) -> bytes:
+        return bytes(self.__value__, "utf-8")
+
+
+class hx_float(float, metaclass=multimeta):
+    __value__: float | int | bytes | hx_bytes | double | void | hx_float | hx_double | hx_int | None = 0.0
+
+    def __set__(self, __o) -> None:
+        if isinstance(__o, float):
             self.__value__ = __o
+        elif isinstance(__o, hx_float):
+            self.__value__ = __o.__value__
+        elif isinstance(__o, subtype(float | int | bytes | hx_bytes | double | void | hx_float | hx_double | hx_int)):
+            self.__value__ = (
+                __o
+                if not isinstance(__o, subtype(int | bytes | hx_bytes | hx_int)) else float(__o)
+            )
+        elif isinstance(__o, NoneType):
+            self.__value__ = None
         else:
             try:
-                self.__value__ = tuple(__o)
-                if self.__generic__ and not isinstance(self.__value__, self.__generic__):
+                self.__value__ = float(__o)
+            except Exception as e:
+                panic(
+                    TypeError(
+                        f"Expected type {self.__class__}, got {type(__o)}, unable to cast"
+                    ),
+                    file=inspect.stack()[4].filename,
+                    line_no=inspect.stack()[4].lineno,
+                )
+
+    def __set_generic__(self, _: str) -> NoReturn:
+        panic(
+            TypeError(f"Cannot set generic type for {self.__class__}"),
+            file=inspect.stack()[4].filename,
+            line_no=inspect.stack()[4].lineno,
+        )
+
+    def __empty__(self) -> bool:
+        return self.__value__ == 0.0 or self.__value__ == None
+
+    def __init__(self, __o = 0.0):
+        self.__set__(__o)
+
+    def __get__(self) -> float:
+        return self.__value__
+
+    def __str__(self) -> str:
+        return str(self.__value__)
+
+    def __repr__(self) -> str:
+        return repr(self.__value__)
+
+    def __float__(self) -> float:
+        return float(self.__value__)
+
+    def __int__(self) -> int:
+        return int(self.__value__)
+
+    def __double__(self) -> double:
+        return double(self.__value__)
+
+    def __bytes__(self) -> bytes:
+        return bytes(self.__value__)
+
+class hx_double(double, metaclass=multimeta):
+    __value__: double | float | int | bytes | hx_bytes | void | hx_double | hx_float | hx_int | None = 0.0
+
+    def __set__(self, __o) -> None:
+        if isinstance(__o, double):
+            self.__value__ = __o
+        elif isinstance(__o, hx_double):
+            self.__value__ = __o.__value__
+        elif isinstance(__o, subtype(double | float | int | bytes | hx_bytes | void | hx_double | hx_float | hx_int)):
+            self.__value__ = (
+                __o
+                if not isinstance(__o, subtype(float | hx_float | int | bytes | hx_bytes | hx_int)) else double(__o, 64)
+            )
+        elif isinstance(__o, NoneType):
+            self.__value__ = None
+        else:
+            try:
+                self.__value__ = double(__o, 64)
+            except Exception as e:
+                panic(
+                    TypeError(
+                        f"Expected type {self.__class__}, got {type(__o)}, unable to cast"
+                    ),
+                    file=inspect.stack()[4].filename,
+                    line_no=inspect.stack()[4].lineno,
+                )
+
+    def __set_generic__(self, _: str) -> NoReturn:
+        panic(
+            TypeError(f"Cannot set generic type for {self.__class__}"),
+            file=inspect.stack()[4].filename,
+            line_no=inspect.stack()[4].lineno,
+        )
+
+    def __empty__(self) -> bool:
+        return self.__value__ == 0.0 or self.__value__ == None
+
+    def __init__(self, __o = 0.0):
+        self.__set__(__o)
+
+    def __get__(self) -> double:
+        return self.__value__
+
+    def __str__(self) -> str:
+        return str(self.__value__)
+
+    def __repr__(self) -> str:
+        return repr(self.__value__)
+
+    def __float__(self) -> float:
+        return float(self.__value__)
+
+    def __int__(self) -> int:
+        return int(self.__value__)
+
+    def __double__(self) -> double:
+        return double(self.__value__)
+
+    def __bytes__(self) -> bytes:
+        return bytes(self.__value__)
+
+
+class hx_char(str, metaclass=multimeta):
+    __value__: str | int | bytes | hx_bytes | hx_char | hx_int | None = ""
+
+    def __set__(self, __o) -> None:
+        if isinstance(__o, str):
+            self.__value__ = __o if len(__o) == 1 else panic(
+                TypeError(
+                    f"Got a string of length {len(__o)}, expected a char or similar."
+                ),
+                file=inspect.stack()[4].filename,
+                line_no=inspect.stack()[4].lineno,
+            )
+        elif isinstance(__o, hx_char):
+            self.__value__ = __o.__value__
+        elif isinstance(__o, subtype(str | int | bytes | hx_bytes | hx_int)):
+            self.__value__ = (
+                __o
+                if not isinstance(__o, subtype(int | bytes | hx_bytes | hx_int)) else chr(__o)
+            )
+        elif isinstance(__o, NoneType):
+            self.__value__ = None
+        else:
+            try:
+                self.__value__ = str(__o) if len(str(__o)) == 1 else panic(
+                    TypeError(
+                        f"Got a string of length {len(__o)}, expected a char or similar."
+                    ),
+                    file=inspect.stack()[4].filename,
+                    line_no=inspect.stack()[4].lineno,
+                )
+            except Exception as e:
+                panic(
+                    TypeError(
+                        f"Expected type {self.__class__}, got {type(__o)}, unable to cast"
+                    ),
+                    file=inspect.stack()[4].filename,
+                    line_no=inspect.stack()[4].lineno,
+                )
+
+    def __set_generic__(self, _: str) -> NoReturn:
+        panic(
+            TypeError(f"Cannot set generic type for {self.__class__}"),
+            file=inspect.stack()[4].filename,
+            line_no=inspect.stack()[4].lineno,
+        )
+
+    def __empty__(self) -> bool:
+        return self.__value__ == "" or self.__value__ == None
+
+    def __init__(self, __o = ""):
+        self.__set__(__o)
+
+    def __get__(self) -> str:
+        return self.__value__
+
+    def __str__(self) -> str:
+        return str(self.__value__)
+
+    def __repr__(self) -> str:
+        return repr(self.__value__)
+
+    def __int__(self) -> int:
+        return ord(self.__value__)
+
+    def __char__(self) -> str:
+        return self.__value__
+
+    def __bytes__(self) -> bytes:
+        return bytes(self.__value__, "utf-8")
+
+class hx_bytes(bytes, metaclass=multimeta):
+    __value__: bytes = b""
+
+    def __set__(self, __o) -> None:
+        if isinstance(__o, bytes):
+            self.__value__ = __o
+        elif isinstance(__o, hx_bytes):
+            self.__value__ = __o.__value__
+        elif isinstance(__o, subtype(bytes)):
+            self.__value__ = __o
+        elif isinstance(__o, NoneType):
+            self.__value__ = None
+        else:
+            try:
+                self.__value__ = bytes(__o, "utf-8")
+            except Exception as e:
+                panic(
+                    TypeError(
+                        f"Expected type {self.__class__}, got {type(__o)}, unable to cast"
+                    ),
+                    file=inspect.stack()[4].filename,
+                    line_no=inspect.stack()[4].lineno,
+                )
+
+    def __set_generic__(self, _: str) -> NoReturn:
+        panic(
+            TypeError(f"Cannot set generic type for {self.__class__}"),
+            file=inspect.stack()[4].filename,
+            line_no=inspect.stack()[4].lineno,
+        )
+
+    def __empty__(self) -> bool:
+        return self.__value__ == b"" or self.__value__ == None
+
+    def __init__(self, __o = b""):
+        self.__set__(__o)
+
+    def __get__(self) -> bytes:
+        return self.__value__
+
+    def __str__(self) -> str:
+        return str(self.__value__)
+
+    def __repr__(self) -> str:
+        return repr(self.__value__)
+
+    def __bytes__(self) -> bytes:
+        return self.__value__
+
+class hx_tuple[T](tuple, metaclass=multimeta):
+    __value__: tuple | hx_tuple | None = ()
+    __generic__: subtype = None
+    
+    def __set__(self, __o) -> None:
+        if not self.__generic__:
+            if isinstance(__o, tuple):
+                self.__value__ = __o
+            elif isinstance(__o, hx_tuple):
+                self.__value__ = __o.__value__
+            elif isinstance(__o, subtype(tuple)):
+                self.__value__ = __o
+            elif isinstance(__o, NoneType):
+                self.__value__ = None
+            else:
+                try:
+                    self.__value__ = tuple(__o)
+                except Exception as e:
                     panic(
-                        TypeError(f"Expected type {self.__generic__}, got {type(__o)}, unable to cast"),
-                        file=__file__,
+                        TypeError(
+                            f"Expected type {self.__class__}, got {type(__o)}, unable to cast"
+                        ),
+                        file=inspect.stack()[4].filename,
+                        line_no=inspect.stack()[4].lineno,
+                    )
+        else:
+            try:
+                self.__value__ = tuple(__o) if not isinstance(__o, hx_tuple) else __o.__value__
+                if self.__generic__ and not isinstance(
+                    self.__value__, self.__generic__
+                ):
+                    panic(
+                        TypeError(
+                            f"Expected type {self.__generic__}, got {type(__o)}, unable to cast"
+                        ),
+                        file=inspect.stack()[4].filename,
+                        line_no=inspect.stack()[4].lineno,
                     )
             except Exception as e:
                 panic(
-                    TypeError(f"Expected type {self.__generic__}, got {type(__o)}, unable to cast"),
-                    file=__file__,
+                    TypeError(
+                        f"Expected type {self.__generic__}, got {type(__o)}, unable to cast"
+                    ),
+                    file=inspect.stack()[4].filename,
+                    line_no=inspect.stack()[4].lineno,
                 )
+        super().__init__(self.__value__)
                 
     def __set_generic__(self, __o: str) -> None:
         exec(f"self.__generic__ = {f'subtype(tuple[{__o[1:-1]}]'.replace('hx_tuple', 'tuple')} | void)")
-        if self.__value__: self.__set__(self.__value__) # recheck the value
-
-    def __init__(self, __o: tuple | void):
-        self.__set__(__o if not isinstance(__o, void) else ())
-        super().__new__(self.__value__)
-        
+        if self.__value__:
+            self.__set__(self.__value__) # recheck the value
+            
+    def __init__(self, __o = ()):
+        self.__set__(__o)
+        super().__init__(self.__value__)
+    
     def __get__(self) -> tuple:
         return self.__value__
     
-class hx_array[T](list, metaclass=multimeta):
-    __value__: list = []
-    __generic__: subtype = None
+    def __str__(self) -> str:
+        return str(self.__value__)
     
-    def __set__(self, __o: list | void) -> None:
-        if isinstance(__o, self.__class__ if not self.__generic__ else self.__generic__):
-            self.__value__ = __o
-        else:
-            try:
-                self.__value__ = list(__o)
-                if self.__generic__ and not isinstance(self.__value__, self.__generic__):
-                    panic(
-                        TypeError(f"Expected type {self.__generic__}, got {type(__o)}, unable to cast"),
-                        file=__file__,
-                    )
-            except Exception as e:
+    def __repr__(self) -> str:
+        return repr(self.__value__)
+    
+    def __empty__(self) -> bool:
+        return self.__value__ == () or self.__value__ == None
+    
+    @property
+    def length(self) -> int:
+        return len(self.__value__)
+    
+    @property
+    def first(self) -> T:
+        return self.__value__[0]
+    
+    @property
+    def last(self) -> T:
+        return self.__value__[-1]
+
+# Derived Types
+class hx_list[T](list, metaclass=multimeta):
+    __value__: list = None
+    __generic__: subtype = None
+    __initialized__ = False
+    
+    def __check_if_initialed(self) -> None:
+        if not self.__initialized__:
+            panic(
+                TypeError(
+                    f"Expected type a generic to be set, got none instead."
+                ),
+                file=inspect.stack()[5].filename,
+                line_no=inspect.stack()[5].lineno,
+            )
+        return
+    
+    def __type_check__(self, __o: Any) -> None:
+        if self.__generic__:
+            if not isinstance(__o, self.__generic__):
                 panic(
-                    TypeError(f"Expected type {self.__generic__}, got {type(__o)}, unable to cast"),
-                    file=__file__,
+                    TypeError(
+                        f"Expected type {self.__generic__}, got {type(__o)}, unable to cast"
+                    ),
+                    file=inspect.stack()[4].filename,
+                    line_no=inspect.stack()[4].lineno,
                 )
                 
-    def __set_generic__(self, __o: str) -> None:
-        exec(f"self.__generic__ = {f'subtype(list[{__o[1:-1]}]'.replace('hx_array', 'list')} | void)")
-        if self.__value__: self.__set__(self.__value__) # recheck the value
-
-    def __init__(self, __o: list | void):
-        self.__set__(__o if not isinstance(__o, void) else [])
-        super().__init__(self.__value__)
+    def __set_generic__(self, __o: str) -> Self:
+        exec(
+            f"self.__generic__ = subtype(list{__o} | {((" | ".join(["list[" + _ + "]" for _ in [replace_primitives[_] for _ in replace_primitives if _ in __o]])) + " | ") if " | ".join(["list[" + _ + "]" for _ in [replace_primitives[_] for _ in replace_primitives if _ in __o] if _]) else ""} void {'| list' if not __o.endswith(']') else ''})"
+        )
+        if self.__initialized__:
+            panic(
+                TypeError(
+                    f"Generic type already set, cannot change it."
+                ),
+                file=inspect.stack()[4].filename,
+                line_no=inspect.stack()[4].lineno,
+            )
+        self.__initialized__ = True
+        if self.__value__: self.__type_check__(self.__value__)  # recheck the value
+        return self
+        
+            
+    def __init__(self, __o = None):
+        self.__value__ = __o if not isinstance(__o, void) else [] if isinstance(__o, NoneType) else None
         
     def __get__(self) -> list:
+        self.__check_if_initialed()
         return self.__value__
     
-class hx_set[T](set, metaclass=multimeta):
-    __value__: set = set()
-    __generic__: subtype = None
+    def __empty__(self) -> bool:
+        self.__check_if_initialed()
+        return self.__value__ == [] or self.__value__ == None
     
-    def __set__(self, __o: set | void) -> None:
-        if isinstance(__o, self.__class__ if not self.__generic__ else self.__generic__):
-            self.__value__ = __o
-        else:
-            try:
-                self.__value__ = set(__o)
-                if self.__generic__ and not isinstance(self.__value__, self.__generic__):
-                    panic(
-                        TypeError(f"Expected type {self.__generic__}, got {type(__o)}, unable to cast"),
-                        file=__file__,
-                    )
-            except Exception as e:
+    def __str__(self) -> str:
+        self.__check_if_initialed()
+        return str(self.__value__)
+    
+    def __repr__(self) -> str:
+        self.__check_if_initialed()
+        return repr(self.__value__)
+    
+    @property
+    def length(self) -> int:
+        self.__check_if_initialed()
+        return len(self.__value__)
+
+class hx_array[T](array, metaclass=multimeta):
+    __value__: list = None
+    __generic__: subtype = None
+    __initialized__ = False
+    
+    def __check_if_initialed(self) -> None:
+        if not self.__initialized__:
+            panic(
+                TypeError(
+                    f"Expected type a generic to be set, got none instead."
+                ),
+                file=inspect.stack()[5].filename,
+                line_no=inspect.stack()[5].lineno,
+            )
+        return
+    
+    def __type_check__(self, __o: Any) -> None:
+        if self.__generic__:
+            if not isinstance(__o, self.__generic__):
                 panic(
-                    TypeError(f"Expected type {self.__generic__}, got {type(__o)}, unable to cast"),
-                    file=__file__,
+                    TypeError(
+                        f"Expected type {self.__generic__}, got {type(__o)}, unable to cast"
+                    ),
+                    file=inspect.stack()[4].filename,
+                    line_no=inspect.stack()[4].lineno,
                 )
                 
-    def __set_generic__(self, __o: str) -> None:
-        exec(f"self.__generic__ = {f'subtype(set[{__o[1:-1]}]'.replace('hx_set', 'set')} | void)")
-        if self.__value__: self.__set__(self.__value__) # recheck the value
-
-    def __init__(self, __o: set | void):
-        self.__set__(__o if not isinstance(__o, void) else set())
-        super().__init__(self.__value__)
+    def __set_generic__(self, __o: str) -> Self:
+        exec(
+            f"self.__generic__ = subtype(list{__o} | {((" | ".join(["list[" + _ + "]" for _ in [replace_primitives[_] for _ in replace_primitives if _ in __o]])) + " | ") if " | ".join(["array[" + _ + "]" for _ in [replace_primitives[_] for _ in replace_primitives if _ in __o] if _]) else ""} void {'| array' if not __o.endswith(']') else ''})"
+        )
+        if self.__initialized__:
+            panic(
+                TypeError(
+                    f"Generic type already set, cannot change it."
+                ),
+                file=inspect.stack()[4].filename,
+                line_no=inspect.stack()[4].lineno,
+            )
+        self.__initialized__ = True
+        if self.__value__: self.__type_check__(self.__value__)  # recheck the value
+        return self
+    
+    def __init__(self, __o = None):
+        self.__value__ = __o if not isinstance(__o, void) else [] if isinstance(__o, NoneType) else None
         
-    def __get__(self) -> set:
+    def __get__(self) -> list:
+        self.__check_if_initialed()
         return self.__value__
     
+    def __empty__(self) -> bool:
+        self.__check_if_initialed()
+        return self.__value__ == [] or self.__value__ == None
+    
+    def __str__(self) -> str:
+        self.__check_if_initialed()
+        return str(self.__value__)
+    
+    def __repr__(self) -> str:
+        self.__check_if_initialed()
+        return repr(self.__value__)
+    
+    @property
+    def length(self) -> int:
+        self.__check_if_initialed()
+        return len(self.__value__)
+
+class hx_set[T](set, metaclass=multimeta):
+    __value__: list = None
+    __generic__: subtype = None
+    __initialized__ = False
+    
+    def __check_if_initialed(self) -> None:
+        if not self.__initialized__:
+            panic(
+                TypeError(
+                    f"Expected type a generic to be set, got none instead."
+                ),
+                file=inspect.stack()[5].filename,
+                line_no=inspect.stack()[5].lineno,
+            )
+        return
+    
+    def __type_check__(self, __o: Any) -> None:
+        if self.__generic__:
+            if not isinstance(__o, self.__generic__):
+                panic(
+                    TypeError(
+                        f"Expected type {self.__generic__}, got {type(__o)}, unable to cast"
+                    ),
+                    file=inspect.stack()[4].filename,
+                    line_no=inspect.stack()[4].lineno,
+                )
+                
+    def __set_generic__(self, __o: str) -> Self:
+        exec(
+            f"self.__generic__ = subtype(set{__o} | {((" | ".join(["set[" + _ + "]" for _ in [replace_primitives[_] for _ in replace_primitives if _ in __o]])) + " | ") if " | ".join(["set[" + _ + "]" for _ in [replace_primitives[_] for _ in replace_primitives if _ in __o] if _]) else ""} void {'| set' if not __o.endswith(']') else ''})"
+        )
+        if self.__initialized__:
+            panic(
+                TypeError(
+                    f"Generic type already set, cannot change it."
+                ),
+                file=inspect.stack()[4].filename,
+                line_no=inspect.stack()[4].lineno,
+            )
+        self.__initialized__ = True
+        if self.__value__: self.__type_check__(self.__value__)  # recheck the value
+        return self
+    
+    def __init__(self, __o = None):
+        self.__value__ = __o if not isinstance(__o, void) else set() if isinstance(__o, NoneType) else None
+        
+    def __get__(self) -> list:
+        self.__check_if_initialed()
+        return self.__value__
+    
+    def __empty__(self) -> bool:
+        self.__check_if_initialed()
+        return self.__value__ == set() or self.__value__ == None
+    
+    def __str__(self) -> str:
+        self.__check_if_initialed()
+        return str(self.__value__)
+    
+    def __repr__(self) -> str:
+        self.__check_if_initialed()
+        return repr(self.__value__)
+    
+    @property
+    def length(self) -> int:
+        self.__check_if_initialed()
+        return len(self.__value__)
+    
+    
+    
+    
+class hx_map[T](dict, metaclass=multimeta):
+    __value__: list = None
+    __generic__: subtype = None
+    __initialized__ = False
+
+
 class hx_unknown(metaclass=multimeta):
     __value__: Any = None
-    
-    def __set__(self, __o: Any | void) -> None:
-        if isinstance(__o, self.__class__):
-            self.__value__ = __o
-        else:
-            try:
-                self.__value__ = __o
-            except Exception as e:
-                panic(
-                    TypeError(f"Expected type {self.__class__}, got {type(__o)}, unable to cast"),
-                    file=__file__,
-                )
-                
+
+    def __set__(self, __o) -> None:
+        self.__value__ = __o if not isinstance(__o, void) else None if not isinstance(__o, hx_unknown) else __o.__value__
+
     def __set_generic__(self, _: str) -> NoReturn:
         panic(
             TypeError(f"Cannot set generic type for {self.__class__}"),
-            file=__file__,
+            file=inspect.stack()[4].filename,
+            line_no=inspect.stack()[4].lineno,
         )
-    
-    def __init__(self, __o: Any | void):
+
+    def __init__(self, __o):
         self.__set__(__o if not isinstance(__o, void) else None)
+
     def __get__(self) -> Any:
         return self.__value__
+
+
+# def __int__(self) -> int: return self.__value__
+    # def __add__(self, __value: int) -> int: return self.__value__ + __value
+    # def __sub__(self, __value: int) -> int: return self.__value__ - __value
+    # def __mul__(self, __value: int) -> int: return self.__value__ * __value
+    # def __floordiv__(self, __value: int) -> int: return self.__value__ // __value
+    # def __truediv__(self, __value: int) -> float: return self.__value__ / __value
+    # def __mod__(self, __value: int) -> int: return self.__value__ % __value
+    # def __divmod__(self, __value: int) -> tuple[int, int]: return divmod(self.__value__, __value)
+    # def __radd__(self, __value: int) -> int: return __value + self.__value__
+    # def __rsub__(self, __value: int) -> int: return __value - self.__value__
+    # def __rmul__(self, __value: int) -> int: return __value * self.__value__
+    # def __rfloordiv__(self, __value: int) -> int: return __value // self.__value__
+    # def __rtruediv__(self, __value: int) -> float: return __value / self.__value__
+    # def __rmod__(self, __value: int) -> int: return __value % self.__value__
+    # def __rdivmod__(self, __value: int) -> tuple[int, int]: return divmod(__value, self.__value__)
+    # def __pow__(self, __value: int, __mod: int) -> int: return self.__value__ ** __value
+    # def __rpow__(self, __value: int, __mod: int | None = None) -> Any: return __value ** self.__value__
+    # def __and__(self, __value: int) -> int: return self.__value__ & __value
+    # def __or__(self, __value: int) -> int: return self.__value__ | __value
+    # def __xor__(self, __value: int) -> int: return self.__value__ ^ __value
+    # def __lshift__(self, __value: int) -> int: return self.__value__ << __value
+    # def __rshift__(self, __value: int) -> int: return self.__value__ >> __value
+    # def __rand__(self, __value: int) -> int: return __value & self.__value__
+    # def __ror__(self, __value: int) -> int: return __value | self.__value__
+    # def __rxor__(self, __value: int) -> int: return __value ^ self.__value__
+    # def __rlshift__(self, __value: int) -> int: return __value << self.__value__
+    # def __rrshift__(self, __value: int) -> int: return __value >> self.__value__
+    # def __neg__(self) -> int: return -self.__value__
+    # def __pos__(self) -> int: return +self.__value__
+    # def __invert__(self) -> int: return ~self.__value__
+    # def __trunc__(self) -> int: return self.__value__
+    # def __ceil__(self) -> int: return self.__value__
+    # def __floor__(self) -> int: return self.__value__
+    # def __round__(self, __ndigits: int) -> int: return round(self.__value__, __ndigits)
+    # def __getnewargs__(self) -> tuple[int]: return (self.__value__,)
+    # def __eq__(self, __value: object) -> bool: return self.__value__ == __value
+    # def __ne__(self, __value: object) -> bool: return self.__value__ != __value
+    # def __lt__(self, __value: int) -> bool: return self.__value__ < __value
+    # def __le__(self, __value: int) -> bool: return self.__value__ <= __value
+    # def __gt__(self, __value: int) -> bool: return self.__value__ > __value
+    # def __ge__(self, __value: int) -> bool: return self.__value__ >= __value
+    # def __float__(self) -> float: return float(self.__value__)
+    # def __int__(self) -> int: return self.__value__
+    # def __abs__(self) -> int: return abs(self.__value__)
+    # def __hash__(self) -> int: return hash(self.__value__)
+    # def __bool__(self) -> bool: return bool(self.__value__)
+    # def __index__(self) -> int: return self.__value__
+
+
+#    def __and__(self, __o: bool) -> bool:
+#        return self.__value__ and __o
+#
+#    def __and__(self, __o: int) -> int:
+#        return self.__value__ and __o
+#
+#    def __or__(self, __o: bool) -> bool:
+#        return self.__value__ or __o
+#
+#    def __or__(self, __o: int) -> int:
+#        return self.__value__ or __o
+#
+#    def __xor__(self, __o: bool) -> bool:
+#        return self.__value__ ^ __o
+#
+#    def __xor__(self, __o: int) -> int:
+#        return self.__value__ ^ __o
+#
+#    def __rand__(self, __o: bool) -> bool:
+#        return __o and self.__value__
+#
+#    def __rand__(self, __o: int) -> int:
+#        return __o and self.__value__
+#
+#    def __ror__(self, __o: bool) -> bool:
+#        return __o or self.__value__
+#
+#    def __ror__(self, __o: int) -> int:
+#        return __o or self.__value__
+#
+#    def __rxor__(self, __o: bool) -> bool:
+#        return self.__value__ ^ __o
+#
+#    def __rxor__(self, __o: int) -> int:
+#        return self.__value__ ^ __o
+#
+#    def __getnewargs__(self) -> tuple[int]:
+#        return (self.__value__,)
+#
+#    def __invert__(self) -> int:
+#        return ~self.__value__
