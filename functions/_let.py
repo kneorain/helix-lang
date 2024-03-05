@@ -116,28 +116,6 @@ def _let(ast_list: Token_List, current_scope, parent_scope, root_scope) -> str:
                     panic(SyntaxError("Too many values to unpack for assignment"), "=", file=ast_list.file, line_no=ast_list[-1].line_number)
                 value = Token_List([], ast_list.indent_level, ast_list.file)
     
-    
-    def extract_generics_from_type(type: Token_List) -> Token_List:
-        generics = Token_List([], type.indent_level, type.file)
-        in_generics = False
-        generic_count = 0
-        
-        for token in type:
-            if in_generics:
-                if token == "[":
-                    generic_count += 1
-                elif token == "]":
-                    generic_count -= 1
-                    if generic_count == 0:
-                        in_generics = False
-                        continue
-                generics.line.append(token)
-            elif token == "[":
-                in_generics = True
-                generic_count += 1
-                
-        return generics
-    
     def mass_replace(string: str, replacements: dict[str, str]) -> str:
         for key, value in replacements.items():
             string = string.replace(key, value)
@@ -150,35 +128,72 @@ def _let(ast_list: Token_List, current_scope, parent_scope, root_scope) -> str:
         " ]": "]"
     }
     
-    override_dispatch_error = True
+    override_dispatch_error = False
     broken_type = False
     
     for name, value in variables.items():
-        null_value = "None" if "?" in value["type"] else ""
+        null_value = True if "?" in value["type"] else False
         if null_value:
             value["type"].remove("?")
-        
+
         current_scope.variables[name] = value["type"].full_line().strip() if not isinstance(value["type"], str) else value["type"]
         
         value["type"] = (type if type.full_line().strip() else panic(SyntaxError("You must specify the type of the variable"), "=", file=ast_list.file, line_no=ast_list[0].line_number)) if not value["type"] else value["type"]
+        #value["value"] = (
+        #    (
+        #        ' '.join([_.token for _ in value["type"].get_all_before("[")]) if "[" in value["type"]
+        #        else value["type"].full_line()
+        #    )
+        #    + "(" + (
+        #        value["value"].full_line() if value["value"]
+        #        else "None"
+        #
+        #        if null_value
+        #        else null_value
+        #    )
+        #    + ")" + (
+        #        (".__set_generic__(\"[" + mass_replace(extract_generics_from_type(value["type"]).full_line().strip(), cleaning) + ']")')
+        #        if "[" in value["type"]
+        #        else ""
+        #    )
+        #) if not value["type"] else value["value"].full_line()
+        
+        
         value["value"] = (
-            (
-                ' '.join([_.token for _ in value["type"].get_all_before("[")]) if "[" in value["type"]
-                else value["type"].full_line()
-            )
-            + "(" + (
-                value["value"].full_line() if value["value"]
-                else "None"
-                
+            (value["value"].full_line()
+            ) if (
+                value["value"]
+            ) else (
+                ' '.join([_.token for _ in value["type"].get_all_before("[")])
+                if (
+                    "[" in value["type"]
+                ) else (
+                    value["type"].full_line()
+                )
+            ) + "(" + (
+                "None"
                 if null_value
                 else null_value
+            ) + ")"
+        ) if (
+            not value["type"] and not null_value
+        ) else (
+            "None"
+        ) if (
+            null_value and not value["value"]
+        ) else (
+            ' '.join([_.token for _ in value["type"].get_all_before("[")])
+            if (
+                "[" in value["type"]
+            ) else (
+                value["type"].full_line() + "(" + ")"
             )
-            + ")" + (
-                (".__set_generic__(\"[" + mass_replace(extract_generics_from_type(value["type"]).full_line().strip(), cleaning) + ']")')
-                if "[" in value["type"]
-                else ""
-            )
-        ) if value["type"] not in globals.IGNORE_TYPES_MAP else value["value"]
+        ) if (
+            not value["value"]
+        ) else (
+            value["value"].full_line()
+        )
+        
         
         for values in globals.IGNORE_TYPES_MAP:
             if values in value["type"]:
@@ -186,8 +201,21 @@ def _let(ast_list: Token_List, current_scope, parent_scope, root_scope) -> str:
                 broken_type = True
         
         value["type"] = mass_replace(value["type"].full_line().strip(), cleaning) if not broken_type else "Any"
-        output += f"{INDENT_CHAR*(ast_list.indent_level + (1 if override_dispatch_error else 0))}{name}: {value['type']} = {value['value']}\n"
-        if override_dispatch_error:
-            output  = f"{INDENT_CHAR*ast_list.indent_level}try:\n{output}{INDENT_CHAR*ast_list.indent_level}except DispatchError:\n{INDENT_CHAR*((ast_list.indent_level+1))}panic(TypeError(f\"Method '{value["type"]}' expects, '{{str(tuple({value["type"]}.__annotations__.values())[-1]).replace('|', 'or')}}', got something else.\"), ':', file=inspect.stack()[0].filename, line_no=inspect.stack()[0].lineno-8)\n"
-    
+
+        if not null_value:
+            output += f"{INDENT_CHAR*(ast_list.indent_level + (1 if override_dispatch_error else 0))}{name}: {globals.replace_primitive(value['type'])} = {globals.replace_primitive(value['type'], 3) if globals.replace_primitive(value['type'], 3) not in value['value'] else ''}({value['value']})\n"
+        elif null_value and value["value"] == "None":
+            output += f"{INDENT_CHAR*(ast_list.indent_level + (1 if override_dispatch_error else 0))}{name}: Optional[{globals.replace_primitive(value['type'])}] = {value['value']}\n"
+        elif null_value and value["value"]:
+            output += f"{INDENT_CHAR*(ast_list.indent_level + (1 if override_dispatch_error else 0))}{name}: Optional[{globals.replace_primitive(value['type'])}]= {globals.replace_primitive(value['type'], 3) if globals.replace_primitive(value['type'], 3) not in value['value'] else ''}({value['value']})\n"
+        #    + "\n" + (
+        #    (
+        #        INDENT_CHAR*(ast_list.indent_level) + "print(" + name + ")\n"
+        #        + INDENT_CHAR*(ast_list.indent_level) + "if isinstance(" + name + ", " + "Exception):\n"
+        #        + INDENT_CHAR*(ast_list.indent_level + 1) + "raise " + name + "\n"
+        #    )
+        #)
+        #if override_dispatch_error:
+        #    output  = f"{INDENT_CHAR*ast_list.indent_level}try:\n{output}{INDENT_CHAR*ast_list.indent_level}except DispatchError:\n{INDENT_CHAR*((ast_list.indent_level+1))}panic(TypeError(f\"Method '{value["type"]}' expects, '{{str(tuple({value["type"]}.__annotations__.values())[-1]).replace('|', 'or')}}', got something else.\"), ':', file=inspect.stack()[0].filename, line_no=inspect.stack()[0].lineno-8)\n"
+        #    output += f"{INDENT_CHAR*ast_list.indent_level}except Exception as {name}:\n{INDENT_CHAR*((ast_list.indent_level+1))}panic({name}, ':', file=inspect.stack()[0].filename, line_no=inspect.stack()[0].lineno-8)\n"
     return Processed_Line(output, ast_list)

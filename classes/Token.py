@@ -1,5 +1,8 @@
+from __future__ import annotations
 import json
 from typing import Iterable, Iterator
+
+from multimethod import subtype
 
 class Token:
     # ---------------------------- Constructor ------------------------------- #
@@ -8,7 +11,7 @@ class Token:
         self.__processed_line: list[str] | str = processed_line
         self.__line_number:    int             = line_number
         self.__indent_level:   int             = indent_level
-        Token.internal:       str             = "Helix Token"
+        Token.internal:       str              = "Helix Token"
         
     # ------------------------------- Getters -------------------------------- #
 
@@ -91,6 +94,9 @@ class Token:
     def __iter__(self) -> str:
         return iter(self.__processed_line)
     
+    def __contains__(self, __key: Iterable) -> bool:
+        return self.__processed_line in __key
+    
     
 class Token_List(list[Token]):
     def __init__(self, tokens: list[Token], indent_level: int, file: str):
@@ -128,6 +134,9 @@ class Token_List(list[Token]):
         
     def remove(self, __value: str) -> None:
         self.line = [token for token in self.line if token.token != __value]
+        
+    def index(self, __value: str) -> int:
+        return [i for i, token in enumerate(self.line) if token.token == __value][0]
     
     def find_line_number(self, token: str) -> int:
         for line in self.line:
@@ -137,8 +146,18 @@ class Token_List(list[Token]):
                 return line.line_number
         return -1
     
-    def __contains__(self, __key: object) -> bool:
-        return any([__key == token.token for token in self.line])
+    def __contains__(self, __key: object | Iterable[Token_List]) -> bool:
+        if isinstance(__key, subtype(Iterable[Token_List])):
+            return any([token in __key for token in self.line])
+        if isinstance(__key, tuple):
+            return any([token in __key for token in self.line])
+        return any([token == __key for token in self.line])
+    
+    
+    def contains_from(self, __key: object | Iterable[Token_List]) -> str:
+        if isinstance(__key, subtype(Iterable[Token_List])):
+            return [[token for token in self.line if token in __key]+[False]][0]
+        return [[token for token in self.line if token == __key]+[False]][0]
 
     def full_line(self) -> str:
         return ' '.join([_.token for _ in self.line])
@@ -229,3 +248,11 @@ class Processed_Line:
     
     def to_code(self) -> str:
         return self.line
+    
+    def to_line_number(self) -> str:
+        # get the most commen line num in self.non_parsed_line.line not the largest
+        from collections import Counter
+        if len(self.line.splitlines()) > 1:
+            return (str(Counter([str(_.line_number) for _ in self.non_parsed_line.line]).most_common(1)[0][0]) + "\n") * len([_ for _ in self.line.splitlines() if _.strip()])
+        
+        return str(Counter([str(_.line_number) for _ in self.non_parsed_line.line]).most_common(1)[0][0])

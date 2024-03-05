@@ -160,22 +160,22 @@
 				{
 					"comment": "Control flow keywords",
 					"name": "keyword.control.helix",
-					"match": "\\b(if|else|unless|else\\s+if|while|break|continue|return|match|case|default|stop)\\b"
+					"match": "\\b(if|else|unless|else\\s+if|or|and|is|not|elif|switch|while|break|continue|return|match|case|default|stop)\\b"
 				},
 				{
 					"comment": "Function and method keywords",
 					"name": "keyword.function.helix",
-					"match": "\\b(fn|return|yield|async|for|await|lambda|delegate)\\b"
+					"match": "\\b(fn|macro|return|yield|async|for|await|lambda|delegate)\\b"
 				},
 				{
 					"comment": "Class and struct keywords",
 					"name": "keyword.class.helix",
-					"match": "\\b(class|struct|new|interface|private|protected|final)\\b"
+					"match": "\\b(class|struct|new|interface|final|union|enum)\\b"
 				},
 				{
 					"comment": "Inheritance and polymorphism keywords",
 					"name": "keyword.inheritance.helix",
-					"match": "\\b(impl|abstract)\\b"
+					"match": "\\b(impl|abstract|implements)\\b"
 				},
 				{
 					"comment": "Error handling keywords",
@@ -195,7 +195,7 @@
 				{
 					"comment": "Module importing keywords",
 					"name": "keyword.import.helix",
-					"match": "\\b(include|import|using|from)\\b"
+					"match": "\\b(include|import|as|use|using|from)\\b"
 				},
 				{
 					"comment": "Concurrency keywords",
@@ -205,7 +205,7 @@
 				{
 					"comment": "Other keywords",
 					"name": "keyword.other.helix",
-					"match": "\\b(in|override|static|ref|type|->)\\b"
+					"match": "\\b(in|override|unsafe|auto|deadly|static|ref|type|->)\\b"
 				},
 				{
 					"comment": "Operators",

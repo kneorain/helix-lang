@@ -9,17 +9,11 @@ from core.panic import panic
 CLASS_EXTENSION = "::"
 SEPARATOR_FOR_CLASSES = "+"
 
-def generate_default_code(indent_chars: str) -> str:
+def generate_default_code(indent_chars: str, class_name) -> str:
     return f"""
-{indent_chars}    __value__: object = None
-{indent_chars}    def __set__(self, value: Any) -> None:
-{indent_chars}        if isinstance(value, self.__class__):
-{indent_chars}            self.value = value.value
-{indent_chars}        else:
-{indent_chars}            try:
-{indent_chars}                self.value = getattr(value, f"to_{{self.__class__.__name__.lower()}}")()
-{indent_chars}            except Exception as e:
-{indent_chars}                panic(TypeError(f"Expected type {{self.__class__}}, got {{type(value)}}, unable to cast"), file=__file__)
+{indent_chars}    def __init__(self: Any, __val: '{class_name}'):
+{indent_chars}            raise NotImplementedError("Define an __init__ method for this class with the function signature new(self: Any, inst_class: '{class_name}')")
+
 """
 
 
@@ -29,7 +23,8 @@ def _class(ast_list: Token_List, current_scope, parent_scope, root_scope, modifi
         parent_scope.get_keyword("STRUCT"),
         parent_scope.get_keyword("UNION"),
         parent_scope.get_keyword("ENUM"),
-        parent_scope.get_keyword("ABSTRACT")
+        parent_scope.get_keyword("ABSTRACT"),
+        parent_scope.get_keyword("UNSAFE"),
     )
     
     if CLASS_EXTENSION in ast_list:
@@ -39,6 +34,7 @@ def _class(ast_list: Token_List, current_scope, parent_scope, root_scope, modifi
         
     class_extends: list[Token]  = [i for i in ast_list.get_all_after(CLASS_EXTENSION) if i.token != SEPARATOR_FOR_CLASSES and i.token != ":" and i.token != "(" and i.token != ")"] if ast_list[2].token == CLASS_EXTENSION else []
     class_decorators: list[str] = []
+    unsafe: bool = False
 
     if any([i in ast_list for i in data_structure_types]):
         if ast_list[0] == parent_scope.get_keyword("INTERFACE"):
@@ -72,22 +68,37 @@ def _class(ast_list: Token_List, current_scope, parent_scope, root_scope, modifi
                 "static":  False,
                 "private": False,
             } if "ABC" not in parent_scope.classes else parent_scope.classes["ABC"]
+        elif ast_list[0] == parent_scope.get_keyword("UNSAFE"):
+            class_extends.append(Token(None, "ABC", None, None))
+            parent_scope.classes["ABC"] = {
+                "extends": [],
+                "modifiers": [],
+                "unsafe":  True,
+                "static":  False,
+                "private": False,
+            } if "ABC" not in parent_scope.classes else parent_scope.classes["ABC"]
+            unsafe = True
     else:
         # if the class has a final modifier, then it cannot be extended
         if modifiers and (parent_scope.get_keyword("FINAL") in modifiers and class_extends):
             panic(SyntaxError(f"Class '{class_name}' cannot be extended because it is marked as final"), "::", file=ast_list.file, line_no=ast_list[1].line_number)
-    
+    if modifiers and parent_scope.get_keyword("UNSAFE") in modifiers:
+        unsafe = True
+        
     [panic(SyntaxError(f"Unexpected token '{i.token}' in class extension"), i.token, file=ast_list.file, line_no=ast_list.find_line_number(i.token)) for i in class_extends if i.token in (CLASS_EXTENSION, SEPARATOR_FOR_CLASSES, "(", ")", ",")] if class_extends else None
-    
+
     for i in class_extends:
         if i.token not in parent_scope.classes.keys():
             panic(NameError(f"Class '{i.token}' not found"), i.token, file=ast_list.file, line_no=ast_list.find_line_number(i.token))
-        
+    
+    
     output = f"{INDENT_CHAR*ast_list.indent_level}class {class_name}"
+    
     if class_extends:
-        output += f"({', '.join([i.token for i in class_extends])}, metaclass=multimeta)"
+        output += f"({', '.join([i.token for i in class_extends])}, {'' if not unsafe else 'metaclass=multimeta'})"
     else:
-        output += "(metaclass=multimeta)"
+        output += "()" if not unsafe else "metaclass=multimeta"
+    
     output += ":"
     
     parent_scope.classes[class_name] = {
@@ -122,4 +133,4 @@ def _class(ast_list: Token_List, current_scope, parent_scope, root_scope, modifi
         output = "\n" + "\n".join([f"{INDENT_CHAR*ast_list.indent_level}{i}" for i in class_decorators]) + "\n" + output
     
     
-    return Processed_Line(output + generate_default_code(INDENT_CHAR*ast_list.indent_level), ast_list)
+    return Processed_Line(output + generate_default_code(INDENT_CHAR*ast_list.indent_level, class_name), ast_list)

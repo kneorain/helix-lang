@@ -1,3 +1,4 @@
+from types import UnionType
 from classes.Token import Token, Token_List, Processed_Line
 from core.config import load_config
 from core.token.tokenize_line import tokenize_line
@@ -95,6 +96,13 @@ def _unmarked(ast_list: Token_List, current_scope, parent_scope, root_scope) -> 
         if index != len(variables.keys()) - 1:
             panic(SyntaxError("Not enough values to unpack for assignment"), "=", file=ast_list.file, line_no=ast_list[-1].line_number)
         
+        
+        def split_or(str_: str, value: UnionType) -> str:
+            # so something like split_or("a, b", "," or "a") would return either "a" or "b" depending on the value
+            return str_.split(",")[0] if value == "," else str_.split(",")[1]
+            return value
+        
+        
         for name, value in variables.items():
             if name not in current_scope.variables and name not in parent_scope.variables:
                 #panic(NameError(f"Name '{name.strip()}' is not defined"), name.strip(), file=ast_list.file, line_no=ast_list[0].line_number)
@@ -108,7 +116,7 @@ def _unmarked(ast_list: Token_List, current_scope, parent_scope, root_scope) -> 
             if "self" not in name:
                 output += f"{INDENT_CHAR*ast_list.indent_level}try:\n"
                 try:
-                    output += f"{INDENT_CHAR*(ast_list.indent_level+1)}{name}: {current_scope.variables[name.strip()]} = {current_scope.variables[name.strip()]}({value.full_line()})\n"
+                    output += f"{INDENT_CHAR*(ast_list.indent_level+1)}{name} = {value.full_line()}\n"
                 except KeyError:
                     panic(NameError(f"Variable '{name.strip()}' is not defined"), name.strip(), file=ast_list.file, line_no=ast_list[0].line_number)
                 output += f"{INDENT_CHAR*ast_list.indent_level}except AttributeError:\n"

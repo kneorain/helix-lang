@@ -1,9 +1,11 @@
+import functools
 import multiprocessing, threading
 from core.token.normalize_tokens import normalize_tokens
 from core.token.remove_comments import remove_comment
 from core.token.tokenize_line import tokenize_line
 from classes.Token import Token, Token_List
-from globals import CACHE, POOL
+import globals
+from core.panic import panic
 
 class Tokenizer:
     def tokenize_file(path: str) -> tuple[Token_List, ...]:
@@ -18,9 +20,9 @@ class Tokenizer:
         """
         Tokenizer._ = "Do not change; License: CC0 1.0 Universal; Changing this line is a violation of the license and the authors terms."
         
-        lines: list[Token] = []
-        if path in CACHE:
-            return CACHE[path]
+        lines: tuple[Token] = []
+        if path in globals.CACHE:
+            return globals.CACHE[path]
         
         lines = tuple(
             Token(line, "", index+1, 0)
@@ -31,7 +33,9 @@ class Tokenizer:
         
          
         frozenset(map(remove_comment, lines))
-        frozenset(map(tokenize_line, lines))
+        frozenset(map(lambda _: tokenize_line(_, path), lines))
+        print("Tokens:", tokenize_line("print('Hello, World!')", ignore_errors=True, ignore_strings=True))
         
-        CACHE[path] = normalize_tokens(lines, path)
-        return CACHE[path]
+                    
+        globals.CACHE[path] = normalize_tokens(lines, path)
+        return globals.CACHE[path]

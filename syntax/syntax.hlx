@@ -10,7 +10,7 @@ static async fn factorial(n: int) -> int {
         a: map<map<int, map<int, int>>, int>? = {
             {1 : {2 : 3} } : 3
         }; ~~ become a = map({{1 : {2 : 3} } : 3}, null_safe=False)
-        
+
         return 1;
     }
 
@@ -43,7 +43,7 @@ fn main() {
 
     n = int::parse(input("Enter a positive integer "));
     print("Factorial of " + n + " = " + factorial(n));
-    
+
     return 0;
 }
 
@@ -99,7 +99,7 @@ fn main() {
     ~~ Create a new instance of the Dog class
     let dog: Dog = Dog("Buddy", 5);
     greet("World");
-    
+
     ~~ Sort a list using C++
     let sorted: list = binary_sort([1, 2, 3, 4, 5]);
 
@@ -136,9 +136,9 @@ fn binary_search(arr: list, val: int, start: int, end: int) -> int {
     if (start > end) {
         return start;
     }
-    
+
     let mid: EitherIntOrFloat = (start + end) / 2;
-    
+
     if arr[mid] < val {
         return binary_search(arr, val, mid + 1, end);
     } unless arr[mid] > val {
@@ -162,7 +162,7 @@ enum dog {
         print(f"a dog named {self.name} is a {self.age} year old {self.breed}");
         printf("a dog named %s is a %d year old %s", self.name, self.age, self.breed);
     }
-    
+
     async fn new(self: ref, name: string<somehting, sad>, age: int, breed: string) {
         self.breed = breed;
         self.name  = name;
@@ -174,6 +174,106 @@ enum dog {
 
     }
 
+}
+
+or and is as use elif switch union enum unsafe 
+
+in
+auto
+using
+from
+
+if
+elif
+else
+unless
+
+continue
+while
+for
+
+case
+default
+switch
+match
+
+fn
+lambda
+thread
+macro
+async
+return
+
+class
+interface
+struct
+union
+enum
+abstract
+
+try
+catch
+finally
+throw
+
+break
+delegate
+
+private
+protected
+public
+final
+static
+unsafe
+
+let
+const
+var
+
+include
+import
+using
+from
+
+yield from
+yield
+await
+
+deadly fn get_data_from_mem_address(adress: int, size: int) -> array<ctypes::c_char> {
+    let data: ctypes::c_ptr<ctypes::c_char> = ctypes::c_ptr(adress);
+    return data[0:size];
+}
+
+deadly fn write_to_mem_address(adress: int, data: string) -> void {
+    let data: BinaryData = data.encode("utf-8");
+    let size: int = len(data);
+    let buffer: ctypes::c_ptr<ctypes::c_char> = ctypes::c_ptr(data);
+
+    try {
+        ctypes::memcpy(adress, buffer, size);
+        ctypes::free(buffer);
+    } catch (e: AccessViolation) {
+        let *ptr: auto = ctypes::malloc(size);
+        sys::free(ptr, data, size);
+        ctypes::memcpy(adress, ptr, size);
+        ctypes::free(ptr);
+    }
+
+    print("wrote to memory");
+}
+
+fn read_pointer(a: Address) -> list<Binary> {
+    let val: array<ctypes::c_char> = get_data_from_mem_address(a, 1000);
+    let stream: list<Binary> = [_.get(val[i:i+4]) for _, i in zip(val, range(0, len(val), 4))];
+
+    return stream;
+}
+
+fn main() {
+    let g: Address = 0x7ff000000000;
+    let data: list<Binary> = read_pointer(g);
+
+    print(data);
 }
 
 fn some_fucntion(arr: list<string>) -> list {
@@ -225,7 +325,7 @@ fn some_fucntion(arr: list<string>) -> list {
 ~~ -: __sub__
 ~~ /: __truediv__
 ~~ ^: __xor__
-~~ 
+~~
 ~~ to_bool: __bool__
 ~~ to_string: __str__
 ~~ to_float: __float__
@@ -245,10 +345,10 @@ fn some_fucntion(arr: list<string>) -> list {
 ~~ __init_subclass__: __init_subclass__
 ~~ object creation: __new__
 ~~ divmod: __rdivmod__
-~~ 
+~~
 ~~ reduce protocol for pickling: __reduce__
 ~~ extended reduce for pickling: __reduce_ex__
-~~ 
+~~
 ~~ new arguments for serialization: __getnewargs__
 ~~ repr: __repr__
 ~~ round: __round__

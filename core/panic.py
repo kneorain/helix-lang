@@ -130,7 +130,7 @@ from threading import Lock
 
 lock = Lock()
 
-def panic(__error: ref[Exception], *mark: tuple[Any], file: str = "", line_no: int = 0) -> NoReturn:
+def panic(__error: Exception, *mark: tuple[Any] | str, file: str = "", line_no: int = 0, no_lines: bool = False, multi_frame: bool = False, pos: int = 0, replacements: dict[str, str] = None) -> NoReturn:
     lock.acquire(blocking=True)
     
     lines_to_print: int = 5
@@ -138,6 +138,9 @@ def panic(__error: ref[Exception], *mark: tuple[Any], file: str = "", line_no: i
     
     name: str = __error.__class__.__name__
     message: str = str(__error)
+    if replacements:
+        for key, value in replacements.items():
+            message = message.replace(key, value)
 
     line_no: int = inspect.currentframe().f_back.f_back.f_lineno if not line_no else line_no
     file: str = inspect.currentframe().f_back.f_code.co_filename if not file else file
@@ -278,15 +281,23 @@ def panic(__error: ref[Exception], *mark: tuple[Any], file: str = "", line_no: i
         line = line + (" " * (terminal_width - (len(s_u(line))+1))) + f"{red}{chars['straight']}{reset}"
         return line
     
-    top_section: list[str] = f"{red}{chars['t-left']}{chars['dash']}{reset} {bold_red}{name} {red}{chars['dash'] * (terminal_width-2-len(name)-3)}{reset}{red}{chars['t-right']}{reset}"
+    if not multi_frame:
+        top_section: list[str] = f"{red}{chars['t-left']}{chars['dash']}{reset} {bold_red}{name} {red}{chars['dash'] * (terminal_width-2-len(name)-3)}{reset}{red}{chars['t-right']}{reset}"
+    elif multi_frame and pos == 0:
+        print(f"{red}{chars['t-left']}{f"{bold_red} Complete Traceback {red}".center((terminal_width-2)+12, chars['dash'])}{reset}{red}{chars['t-right']}{reset}")
+        top_section: list[str] = f"{red}{chars['straight']} {reset}{bold_red}{name} {red}{chars['dash'] * (terminal_width-2-len(name)-3)} {reset}{red}{chars['straight']}{reset}"
+    else:
+        print(f"{red}{chars['straight']}{' '*(terminal_width-2)}{chars['straight']}{reset}")
+        top_section: list[str] = f"{red}{chars['straight']} {reset}{bold_red}{name}{red} {(gray + ' The above error propagated from the following error. ' + red if pos == 1 else gray + ' The above error caused the following error. ' + red).center(((terminal_width-4-(len(name) if len(name) % 2 == 0 else len(name)-1))-2)+10, chars['dash'])+reset} {red}{chars['straight']}{reset}"
+        # print a blank line
     
     print(top_section)
-    
     mid_section = [process_lines(line, index) for index, line in enumerate(lines)]
     
-    print("\n".join(mid_section[:-1])) if line_no != 1 else None
-    print(mark_all(mid_section[-1], f"{red}│ {gray}{'~'*len(str(line_no).center(len(str(line_no+(lines_to_print-1)))))}{reset}"))
-    print(f"{red}{chars['straight']}{' '*(terminal_width-2)}{chars['straight']}{reset}")
+    if not no_lines:
+        print("\n".join(mid_section[:-1])) if line_no != 1 else None
+        print(mark_all(mid_section[-1], f"{red}│ {gray}{'~'*len(str(line_no).center(len(str(line_no+(lines_to_print-1)))))}{reset}"))
+        print(f"{red}{chars['straight']}{' '*(terminal_width-2)}{chars['straight']}{reset}")
     
     # hex codes look like this: <Hex(x...)>
     hex_code = re.search(r"<Hex\((\d+)\.(\w+)\)>", message)
@@ -295,9 +306,11 @@ def panic(__error: ref[Exception], *mark: tuple[Any], file: str = "", line_no: i
         hex_code = f"{hex_code.group(1)}.{hex_code.group(2)}"
         message = message.replace(f"<Hex({hex_code})>: ", f"")
         hex_code = f"{red}{chars['straight']} {chars['dash']*2} {bold_red}{hex_code}{red} {chars['dash']*(terminal_width-4-len(hex_code)-4)} {chars['straight']}{reset}"
-        print(hex_code)
+        somewhat_middle = hex_code if not no_lines else ""
     else:
-        print(f"{red}{chars['straight']} {chars['dash']*(terminal_width-4)} {chars['straight']}{reset}")
+        somewhat_middle = f"{red}{chars['straight']} {chars['dash']*(terminal_width-4)} {chars['straight']}{reset}" if not no_lines else ""
+    
+    if not multi_frame or (multi_frame and pos == 2): print(somewhat_middle)
     
     def process_message(message: str) -> list[str]:
         # wrap message into lines that fit the terminal width
@@ -309,9 +322,10 @@ def panic(__error: ref[Exception], *mark: tuple[Any], file: str = "", line_no: i
         for line in message.split("\n"):
             for line2 in textwrap.wrap(line, terminal_width-4):
                 output.append(f"{red}{chars['straight']}{reset} {line2.ljust(terminal_width-4)} {red}{chars['straight']}{reset}")
-        if hex_code: return [out.replace(f"\'helix doc {_hex_code.group(1)}.{_hex_code.group(2)}\'", f"{yellow}\'helix doc {_hex_code.group(1)}.{_hex_code.group(2)}\'{reset}") for out in output]
+        if hex_code:
+            return [out.replace(f"\'helix doc {_hex_code.group(1)}.{_hex_code.group(2)}\'", f"{yellow}\'helix doc {_hex_code.group(1)}.{_hex_code.group(2)}\'{reset}") for out in output]
         return output
-    print("\n".join(process_message(message)))
+    if not multi_frame or (multi_frame and pos == 2): print("\n".join(process_message(message)))
 
     
     len_of_file: int = len(file + ':' + str(line_no))
@@ -328,7 +342,12 @@ def panic(__error: ref[Exception], *mark: tuple[Any], file: str = "", line_no: i
     final_line = final_line.split(file)[0] + green + file + reset + gray + ":" + green + str(line_no) + red + final_line.split(":")[(1 if ":\\" != ":" + final_line.split(":")[1][0] else 2)][len(str(line_no)):] + reset
     
     # check if terminal width is even
-    print(final_line)
+    if not multi_frame or (multi_frame and pos == 2):
+        print(final_line)
+    else:
+        print(f"{red}{chars['straight']} {final_line[6:-11]} {chars['straight']}{reset}")
+        print("\n".join(process_message(message)))
+        
     
     lock.release()
-    exit(1)
+    exit(1) if not multi_frame or (multi_frame and pos == 2) else None

@@ -1,6 +1,8 @@
 include "sleep" from "time";
 import types;
 import functools;
+import os;
+import random;
 
 ~~ print(argv);
 
@@ -18,25 +20,154 @@ import functools;
 ~~ test_set();
 
 
-fn main() {
-    print(a_cursed_fucntion()()()()()()()()()()()()() === a_cursed_fucntion()()()());
-    print(a_cursed_fucntion()()()()()()()());
-    print(a_cursed_fucntion()()()()()()());
-    print(a_cursed_fucntion()()()()()());
-    print(a_cursed_fucntion()()()()());
-    print(a_cursed_fucntion()()()());
-    print(a_cursed_fucntion()()());
-    print(a_cursed_fucntion()());
-    print(a_cursed_fucntion());
-    print(a_cursed_fucntion);
+~*~
+import random
+import time
+import os
+
+class Field:
+    def __init__(self, w, h):
+        self.w = w
+        self.h = h
+        self.s = [[False for _ in range(w)] for _ in range(h)]
+
+    def set(self, x, y, b):
+        self.s[y][x] = b
+
+    def alive(self, x, y):
+        x = (x + self.w) % self.w
+        y = (y + self.h) % self.h
+        return self.s[y][x]
+
+    def next(self, x, y):
+        alive = 0
+        for i in C_For(i=-1).set_con("i <= 1").set_inc("i++"):
+            for j in C_For(j=-1).set_con("j <= 1").set_inc("j++"):
+                if (i != 0 or j != 0) and self.alive(x+i, y+j):
+                    alive += 1
+        return alive == 3 or (alive == 2 and self.alive(x, y))
+
+class Life:
+    def __init__(self, w, h):
+        self.w = w
+        self.h = h
+        self.a = Field(w, h)
+        self.b = Field(w, h)
+        for _ in range(w * h // 4):
+            self.a.set(random.randint(0, w-1), random.randint(0, h-1), True)
+
+    def step(self):
+        for y in C_For(y=0).set_con("y < self.h").set_inc("y++"):
+            for x in C_For(x=0).set_con("x < self.w").set_inc("x++"):
+                self.b.set(x, y, self.a.next(x, y))
+        self.a, self.b = self.b, self.a
+
+    def __str__(self):
+        result = ""
+        for y in C_For(y=0).set_con("y < self.h").set_inc("y++"):
+            for x in C_For(x=0).set_con("x < self.w").set_inc("x++"):
+                result += '*' if self.a.alive(x, y) else ' '
+            result += '\n'
+        return result
+
+def main():
+    l = Life(40, 15)
+    for _ in C_For(i=0).set_con("i < 300").set_inc("i++"):
+        l.step()
+        os.system('cls' if os.name == 'nt' else 'clear')
+        print(l, end='', flush=True)
+        time.sleep(1 / 30)
+~*~
+
+class Field {
+    fn new(self, w: int, h: int) {
+        self.w = w;
+        self.h = h;
+        self.s = std::generate(h, lambda y: std::generate(w, lambda x: False));
+    }
+
+    fn set(self, x: int, y: int, b: bool) {
+        self.s[y][x] = b;
+    }
+
+    fn alive(self, x: int, y: int) -> bool {
+        x = (x + self.w) % self.w;
+        y = (y + self.h) % self.h;
+        return self.s[y][x];
+    }
+
+    fn next(self, x: int, y: int) -> bool {
+        let alive: int = 0;
+        for (var i: int = -1; i <= 1; i++) {
+            for (var j: int = -1; j <= 1; j++) {
+                if ((i != 0 || j != 0) && self.alive(x+i, y+j)) {
+                    alive += 1;
+                }
+            }
+        }
+        return alive == 3 || (alive == 2 && self.alive(x, y));
+    }
 }
 
-fn a_cursed_fucntion() -> FunctionType {
-    return a_cursed_fucntion;
+class Life {
+    fn new(self, w: int, h: int) {
+        self.w = w;
+        self.h = h;
+        self.a = Field.new(w, h);
+        self.b = Field.new(w, h);
+        for (var _: int = 0; _ < w * h / 4; _++) {
+            self.a.set(random.randint(0, w-1), random.randint(0, h-1), True);
+        }
+    }
+
+    fn step(self) {
+        for (var y: int = 0; y < self.h; y++) {
+            for (var x: int = 0; x < self.w; x++) {
+                self.b.set(x, y, self.a.next(x, y));
+            }
+        }
+        self.a, self.b = self.b, self.a;
+    }
+
+    fn __str__(self) -> string {
+        let result: string = "";
+        for (var y: int = 0; y < self.h; y++) {
+            for (var x: int = 0; x < self.w; x++) {
+                if (self.a.alive(x, y)) {
+                    result += '*';
+                } else {
+                    result += ' ';
+                }
+            }
+            result += '\n';
+        }
+        return result;
+    }
 }
+
+fn main() {
+    let l: Life = Life.new(40, 15);
+    
+    for (var _: int = 0; _ < 300; _++) {
+        l.step();
+        if (os.name == 'nt') {
+            os.system('cls');
+        } else {
+            os.system('clear');
+        }
+        printf(l);
+        sleep(1 / 30);
+    }
+}
+
+
+
+~*~
+fn a_cursed_fucntion(a: int)    -> FunctionType { printf("new something: %d", a); return a_cursed_fucntion }
+fn a_cursed_fucntion(a: string) -> FunctionType { let data: list = []; return "kys" }
 
 async fn do_something() {
-    for (let i: int = 0; i < 10; i++) {
+    for (var i: int = 0; i < 10; i++) {
         print("doing something: %d", i);
     }
 }
@@ -108,3 +239,4 @@ fn test_set() {
     let b: set<int> = { 4, 5, 6 };
     print("a + b is", a + b);
 }
+~*~

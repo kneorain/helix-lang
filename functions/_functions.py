@@ -10,6 +10,8 @@ from classes.Scope import Scope
 from core.panic import panic
 from functions._class import _class
 
+import globals
+
 replace_function_name = map({
     "=="  : "__eq__",
     "//"  : "__floordiv__",
@@ -47,6 +49,11 @@ replace_function_name = map({
 })
 
 def extract_variables(ast_line: Token_List, root_scope: Scope) -> str:
+    allowed_untyped = (
+        "self",
+        "cls",
+        "super"
+    )
     variables = {}
     # remove the fn keyword
     line = ast_line.line[1:]
@@ -124,6 +131,10 @@ def extract_variables(ast_line: Token_List, root_scope: Scope) -> str:
                         in_generic = True
                         generic = ""
                         continue
+                    if line[0].token in allowed_untyped:
+                        variables[line[0].token] = {"type": "Any"}
+                        line = line[1:]
+                        continue
                     panic(SyntaxError(f"<Hex(02.E3)>: Expected a colon and a type after the variable name"), line[0].token, file=ast_line.file, line_no=ast_line.find_line_number(root_scope.get_keyword('FUNCTION')))
                     
     return variables
@@ -176,7 +187,6 @@ def contains(line: Token_List, compare: tuple):
 # static async fn factorial(n: int) -> int {
 def function(ast_list: Token_List, current_scope: Scope, parent_scope: Scope, root_scope: Scope) -> str:
     decorators = []
-    
     if ast_list.line[0].token == "#":
         for _ in range(ast_list.count("#")):
             decorator = ast_list.get_between("[", "]")
@@ -191,7 +201,8 @@ def function(ast_list: Token_List, current_scope: Scope, parent_scope: Scope, ro
         parent_scope.get_keyword("STRUCT"),
         parent_scope.get_keyword("UNION"),
         parent_scope.get_keyword("ENUM"),
-        parent_scope.get_keyword("ABSTRACT")
+        parent_scope.get_keyword("ABSTRACT"),
+        parent_scope.get_keyword("UNSAFE"),
     )
     
     if ast_list.line[0].token != root_scope.get_keyword('FUNCTION'):
@@ -204,11 +215,11 @@ def function(ast_list: Token_List, current_scope: Scope, parent_scope: Scope, ro
     name = ast_list.line[1].token
     
     if name in replace_function_name:
-        if not_allowed_classes not in parent_scope.namespace_header:
+        if not any([i in not_allowed_classes for i in parent_scope.name]):
             panic(SyntaxError(f"<Hex(02.E3)>: Cannot overload a unary operator outside a class"), name, file=ast_list.file, line_no=ast_list.find_line_number(name))
         name = replace_function_name[name]
     
-    output = f"def {name}("
+    output = f"def {name}(" if name not in parent_scope.functions else f"def _("
     
     if not variables["params"]:
         output += ")"
@@ -216,7 +227,7 @@ def function(ast_list: Token_List, current_scope: Scope, parent_scope: Scope, ro
         for k, v in variables["params"].items():
             if v["type"] == "void":
                 panic(SyntaxError(f"<Hex(02.E3)>: The type void is not allowed for variables"), file=ast_list.file, line_no=ast_list.find_line_number(k))
-            output += f"{k}: {v['type']}, "
+            output += f"{k}: {globals.replace_primitive(v['type'], 0)}, "
             current_scope.variables[k] = v["type"]
         output = output[:-2] + ")"
     
@@ -231,7 +242,11 @@ def function(ast_list: Token_List, current_scope: Scope, parent_scope: Scope, ro
     output = f"\n{INDENT_CHAR*ast_list.indent_level}{output}"
     
     if not any([i in not_allowed_classes for i in parent_scope.name]):
-        output = (f"\n{INDENT_CHAR*ast_list.indent_level}@hx__multi_method" if not root_scope.get_keyword('ASYNC') in modifiers and not root_scope.get_keyword('UNSAFE') in modifiers else "") + output
+        if not root_scope.get_keyword('ASYNC') in modifiers and not root_scope.get_keyword('UNSAFE') in modifiers:
+            if name in parent_scope.functions:
+                output = (f"\n{INDENT_CHAR*ast_list.indent_level}@{name}.register" + output)
+            else:
+                output = (f"\n{INDENT_CHAR*ast_list.indent_level}@hx__multi_method" + output)
     # if the type of parent_sope is an abstract class
     if any([i == root_scope.get_keyword("ABSTRACT") for i in parent_scope.name]):
         output = f"\n{INDENT_CHAR*ast_list.indent_level}@hx__abstract_method" + output

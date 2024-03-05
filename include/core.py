@@ -7,22 +7,118 @@ from decimal import (Decimal as double, getcontext)
 from array import array
 
 from enum import Enum
+from functools import wraps
 import inspect
 from threading import Thread
-from types import MappingProxyType as FastMap, NoneType, FunctionType
-from typing import Any, Callable, NoReturn, Self
+from types import MappingProxyType as FastMap, NoneType, FunctionType, UnionType
+from typing import Any, Callable, Literal, NoReturn, Self
 from weakref import ref
 
 from multimethod import DispatchError, multimeta
-from multimethod import multimethod as hx__multi_method
 from multimethod import subtype
 
-from typing import Type, TypeVar
+from typing import Type, TypeVar, Optional
 from core.panic import panic
 from time import sleep
 from include.c_cpp import __import_c__
 
+ 
+from multimethod import multimethod as hx__multi_method
+    
+
 getcontext().prec = 128
+replace_primitives = {
+        "hx_int"    : "int",
+        "hx_string" : "str",
+        "hx_float"  : "float",
+        "hx_map"    : "map",
+        "hx_list"   : "list",
+        "hx_bool"   : "bool",
+        "hx_char"   : "char",
+        "hx_void"   : "void",
+        "hx_tuple"  : "tuple",
+        "hx_array"  : "array",
+        "hx_set"    : "set",
+    }
+__registered_functions__ = {}
+
+#def hx__multi_method(func: Callable) -> Callable:
+#    # get the annotations
+#    blacklist   = ["return"]
+#    annotations = [value for key, value in func.__annotations__.items() if key not in blacklist]
+#    # get the name of the function
+#    name = func.__name__
+#    # get the return type
+#    return_type = func.__annotations__.get("return", None)
+#
+#    # add | along with the replace_primitives if the type is a primitive
+#    from typing import Type, get_args, Union, get_origin
+#    
+#    def get_replaced_type(type_: Type) -> Type:
+#        # Check if type_ is a union type
+#        if get_origin(type_) is UnionType:
+#            # Get the types in the union
+#            union_types = get_args(type_)
+#            # Process each type in the union
+#            return Union[tuple(get_replaced_type(_) for _ in union_types)]
+#        else:
+#            # Handle non-union types
+#            return replace_type(type_)
+#
+#    def replace_type(type_: Type) -> Type:
+#        if get_origin(type_) is UnionType:
+#            return get_replaced_type(type_)
+#        return  (
+#            type_ if type_.__name__ not in replace_primitives else eval(replace_primitives[type_.__name__])
+#        )
+#
+#    # Example usage
+#    annotations = [get_replaced_type(_) for _ in annotations]
+#    return_type = get_replaced_type(return_type) if return_type else None
+#    
+#    annotations = [get_replaced_type(_) for _ in annotations]
+#    return_type = get_replaced_type(return_type) if return_type else None
+#
+#    if name not in __registered_functions__:
+#        # name: [{types: (func, return_type)}, ...]
+#        __registered_functions__[name] = []
+#        __registered_functions__[name].append(
+#            {
+#                "types": tuple(annotations),
+#                "func": func,
+#                "return_type": return_type,
+#            }
+#        )
+#    else:
+#        __registered_functions__[name].append(
+#            {
+#                "types": tuple(annotations),
+#                "func": func,
+#                "return_type": return_type,
+#            }
+#        )
+#    
+#    
+#    @wraps(func)
+#    def wrapper(*args, **kwargs):
+#        # get the types of the arguments
+#
+#        for arg in __registered_functions__[name]:
+#             if all(isinstance(arg, type_) for arg, type_ in zip(args, arg["types"])):
+#                val = arg["func"](*args, **kwargs)
+#                if arg["return_type"] and not isinstance(val, arg["return_type"]):
+#                    raise TypeError(
+#                        f"Method '{name}' expects, '{str(arg['return_type']).replace('|', 'or')}', got something else."
+#                    )
+#                return val
+#        else:
+#            raise TypeError(
+#                f"Method '{name}' expects, '{str(tuple(arg['types'])).replace('|', 'or')}', got something else."
+#            )
+#            
+#    return wrapper
+
+    
 
 def printf(string: str, *args):
     #panic(
@@ -41,21 +137,7 @@ def scanf(string: str, *args):
     return input(string % args)
 
 unknown = Any
-replace_primitives = FastMap(
-    {
-        "hx_int"    : "int",
-        "hx_string" : "string",
-        "hx_float"  : "float",
-        "hx_map"    : "map",
-        "hx_list"   : "list",
-        "hx_bool"   : "bool",
-        "hx_char"   : "char",
-        "hx_void"   : "void",
-        "hx_tuple"  : "tuple",
-        "hx_array"  : "array",
-        "hx_set"    : "set",
-    }
-)
+
 
 class void:
     def __init__(self, *args, **kwargs):
@@ -129,7 +211,6 @@ class C_For:
         )
         return self
 
-
 def hx__async(func):
     def wrapper(*args, **kwargs):
         Thread(target=func, args=args, kwargs=kwargs, daemon=True).start()
@@ -190,6 +271,56 @@ class hx_bool(metaclass=multimeta):
     def __get__(self) -> bool:
         return self.__value__
 
+
+class auto:
+    __value__: Any = None
+    __generic__: subtype = None
+    __type__: type = None
+    
+    def __init__(self, __o = False, __pre: auto = None):
+        if __pre:
+            self.__generic__ = __pre.__generic__
+            self.__type__    = __pre.__type__
+        self.__set__(__o)
+        
+    def __set__(self, __o) -> None:
+        if not self.__generic__ and not self.__type__:
+            self.__value__ = __o
+            self.__type__ = type(__o)
+            self.__generic__ = subtype(type(__o))
+        else:
+            if self.__generic__ and not isinstance(
+                __o, self.__generic__
+            ):
+                panic(
+                    TypeError(
+                        f"Expected type {self.__generic__}, got {type(__o)}, unable to cast"
+                    ),
+                    file=inspect.stack()[4].filename,
+                    line_no=inspect.stack()[4].lineno,
+                )
+            if self.__type__ and not isinstance(
+                __o, self.__type__
+            ):
+                panic(
+                    TypeError(
+                        f"Expected type {self.__type__}, got {type(__o)}, unable to cast"
+                    ),
+                    file=inspect.stack()[4].filename,
+                    line_no=inspect.stack()[4].lineno,
+                )
+            self.__value__ = __o
+        
+    def __empty__(self) -> bool:
+        return self.__value__ == False or self.__value__ == None
+    def __str__(self) -> str:
+        return str(self.__value__)
+
+    def __repr__(self) -> str:
+        return repr(self.__value__)
+
+    def __get__(self) -> bool:
+        return self.__value__
 
 
 class hx_int(int, metaclass=multimeta):
@@ -867,6 +998,14 @@ class hx_unknown(metaclass=multimeta):
 
     def __get__(self) -> Any:
         return self.__value__
+
+string = hx_string
+
+class std:
+    @staticmethod
+    def generate(iter: Iterator, func: Callable, filter: Callable = None) -> list:
+        return [func(_) for _ in iter if not filter or filter(_)]
+
 
 
 # def __int__(self) -> int: return self.__value__
