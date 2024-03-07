@@ -1,7 +1,9 @@
 import inspect
 import os
 from sys import (stdout as sys_stdout, exit)
-from typing import Any, Callable, NoReturn
+from types import FrameType
+
+from typing import Any, Callable, NoReturn, Optional
 from weakref import ref
 
 import re
@@ -176,25 +178,29 @@ def standalone_tokenize_line(line: str, preserve_spaces: bool = False) -> list[s
     ]
 
 def panic(__error: Exception,
-          *mark: tuple[Any] | str,
+          *_mark: tuple[Any] | str,
           file: str = "",
           line_no: int = 0,
           no_lines: bool = False,
           multi_frame: bool = False,
           pos: int = 0,
-          replacements: dict[str, str] = None,
+          replacements: Optional[dict[str, str]] = None,
           follow_marked_order: bool = False,
-          mark_start: int = None,
-          thread_name: str = None,
+          mark_start: Optional[int] = None,
+          thread_name: Optional[str] = None,
           no_exit: bool = False,
-          lang: str = "") -> NoReturn:
+          lang: str = ""):
     lock.acquire(blocking=True, timeout=0.5)
 
     lines_to_print: int = 5
-    mark: list[str] = [item.__str__() for item in mark]
+    
+    mark: list[str] = [item.__str__() for item in _mark]
     
     name: str = __error.__class__.__name__
     message: str = str(__error)
+    
+    if name == "KeyboardInterrupt" and message.strip() == "":
+        message = "KeyboardInterrupt was raised."
     
     # Second loop: process each relevant frame
     class custom_string:
@@ -218,13 +224,17 @@ def panic(__error: Exception,
             if mark:
                 for index, token in enumerate(mark):
                     if token == key:
-                        mark[index] = value if token not in ('.', '::') else custom_string('.', '::')
-                    
-    line_no: int = inspect.currentframe().f_back.f_back.f_lineno if not line_no else line_no
-    file: str = inspect.currentframe().f_back.f_code.co_filename if not file else file
-    try: lines: list[str] = open(file, "r").readlines()[((line_no-lines_to_print) if line_no-lines_to_print > 0 else 0):line_no]
-    except Exception:
-        lines = [f"Panic failed, '{file}' (likely due to an eval statement in the previous stack frame)."]
+                        mark[index] = value if token not in ('.', '::') else custom_string('.', '::') # type: ignore
+    
+    frame: FrameType = inspect.currentframe()
+    if frame is not None:
+        line_no: int = frame.f_back.f_back.f_lineno if not line_no else line_no
+        file:    str = frame.f_back.f_code.co_filename if not file else file
+        try: lines: list[str] = open(file, "r").readlines()[((line_no-lines_to_print) if line_no-lines_to_print > 0 else 0):line_no]
+        except Exception:
+            lines = [f"Panic failed, '{file}' (likely due to an eval statement in the previous stack frame)."]
+    else:
+        raise ValueError("Panic failed, could not find the right stack frame.")
     
     lang_dict: dict[str, str] = {
         # file extensions | language
@@ -367,7 +377,7 @@ def panic(__error: Exception,
             else: break
         return output + (1 if does_support_colors else 0)
     
-    def mark_all(line: str, mark_line: str, mark_start: int = None) -> str:
+    def mark_all(line: str, mark_line: str, mark_start: Optional[int] = None) -> str:
         tokenized_line: list[str] = standalone_tokenize_line(line, preserve_spaces=True)
         skip = 9
         if not tokenized_line[skip].isspace():
@@ -456,7 +466,7 @@ def panic(__error: Exception,
         ##     return "".join(tokenized_line) + mark_line[:-1] + f"{border_color}{chars['straight']}{reset}"
         return "".join(tokenized_line) + mark_line[:-1] + f"{border_color}{chars['straight']}{reset}"
     
-    def s_u(line: str|list) -> str:
+    def s_u(line: str|list) -> str | list[str]:
         # \u001b\[\d+m wiht also match \u001b[91;1m
         if isinstance(line, list):
             return list(re.sub(r"\u001b\[\d+(m|\;\d+m)", "", "".join(line)))
@@ -492,20 +502,20 @@ def panic(__error: Exception,
         return line
     
     if not multi_frame:
-        top_section: list[str] = f"{border_color}{chars['t-left']}{chars['dash']}{reset} {primary_error_color}{name} ▼ {border_color}{chars['dash'] * (terminal_width-2-len(name)-5)}{reset}{border_color}{chars['t-right']}{reset}"
+        top_section: str = f"{border_color}{chars['t-left']}{chars['dash']}{reset} {primary_error_color}{name} ▼ {border_color}{chars['dash'] * (terminal_width-2-len(name)-5)}{reset}{border_color}{chars['t-right']}{reset}"
     elif multi_frame and pos == 0:
         trace_title: str = (f"{primary_error_color} {'Stack Trace'} {border_color}".center((terminal_width-2)+12, chars['dash'])) if not thread_name else (f"{thread_error_color} Stack Trace @ {thread_name} {border_color}".center((terminal_width-2)+12, chars['dash']))
         print(f"{border_color}{chars['t-left']}{trace_title}{reset}{border_color}{chars['t-right']}{reset}")
-        top_section: list[str] = f"{border_color}{chars['straight']} {reset}{primary_error_color}{name} ▼ {border_color}{chars['dash'] * (terminal_width-2-len(name)-5)} {reset}{border_color}{chars['straight']}{reset}"
+        top_section: str = f"{border_color}{chars['straight']} {reset}{primary_error_color}{name} ▼ {border_color}{chars['dash'] * (terminal_width-2-len(name)-5)} {reset}{border_color}{chars['straight']}{reset}"
     else:
         if False:
             print(f"{border_color}{chars['straight']}{' '*(terminal_width-2)}{chars['straight']}{reset}")
             propagation: str = (gray + ' Propagated from the following ' + border_color if pos == 1 else gray + ' Propagation Caused by ' + border_color).center(((terminal_width-4-(len(name) if len(name) % 2 == 0 else len(name)-1))-2)+8, chars['dash'])+reset
-            top_section: list[str] = f"{border_color}{chars['straight']} {reset}{primary_error_color}{name} ▼{reset}{border_color}{' ' if (len(propagation)+len(name)+5) % 2 != 0 else ''} {propagation} {border_color}{chars['straight']}{reset}"
+            top_section: str = f"{border_color}{chars['straight']} {reset}{primary_error_color}{name} ▼{reset}{border_color}{' ' if (len(propagation)+len(name)+5) % 2 != 0 else ''} {propagation} {border_color}{chars['straight']}{reset}"
         else:
             print(f"{border_color}{chars['straight']}{' '*(terminal_width-2)}{chars['straight']}{reset}")
-            propagation: str = (' Propagated from the following ' if pos == 1 else ' Propagation Caused by ').center(((terminal_width-4-(len(name) if len(name) % 2 == 0 else len(name)-1))-4), chars['dash'])+reset
-            top_section: list[str] = f"{border_color}{chars['straight']} {reset}{primary_error_color}{name} ▼{gray}{' ' if (len(propagation)+len(name)+5) % 2 != 0 else ''} {propagation} {border_color}{chars['straight']}{reset}"
+            propagation: str = (' Propagated from the following ' if pos == 1 else ' Caused by ').center(((terminal_width-2-(len(name) if len(name) % 2 == 0 else len(name)-1))-8), chars['dash'])+reset
+            top_section: str = f"{border_color}{chars['straight']} {reset}{primary_error_color}{name} ▼{gray}{'  ' if (len(propagation)+len(name)+5) % 2 != 0 else '  '} {propagation} {border_color}{chars['straight']}{reset}"
     
     print(top_section)
     mid_section = [process_lines(line, index) for index, line in enumerate(lines)]

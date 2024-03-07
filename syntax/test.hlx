@@ -74,35 +74,25 @@ def main():
         print(l, end='', flush=true)
         time.sleep(1 / 30)
 ~*~
-include "sleep" from "time";
-import types;
-import functools;
-import os;
-import random;
+
 
 class C_cout {
-    fn new(self) {
-        ...
-    }
-
     fn <<(self, a: string) {
-        1 /0;
+        print(a);
     }
 
 }
 
-fn main() {
-    let cout: C_cout = C_cout();
-    cout << "Hello  World";
+
+
+fn main(argv: list<string>) {
+    let a: int = "12";
+    print(add(a, 42));
 }
 
 
-fn subtract(a: int, b: int) -> int {
-    return a / 0;
-}
-
-private fn add(a: int, b: int) -> int {
-    return a + b;
+private fn add(a: int, b: list<string>) -> int {
+    return "a + b";
 }
 
 ~*~

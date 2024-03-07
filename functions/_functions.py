@@ -238,7 +238,7 @@ def function(ast_list: Token_List, current_scope: Scope, parent_scope: Scope, ro
     else:
         output += ":" if ast_list.line[-1].token != "<\\r1>" else f":\n{INDENT_CHAR*(ast_list.indent_level+1)}pass"
     
-    output = f"\n{INDENT_CHAR*ast_list.indent_level}{output}"
+    output = f"\n{INDENT_CHAR*ast_list.indent_level}@beartype\n{INDENT_CHAR*ast_list.indent_level}{output}"
     
     if not any([i in not_allowed_classes for i in parent_scope.name]):
         if not root_scope.get_keyword('ASYNC') in modifiers and not root_scope.get_keyword('UNSAFE') in modifiers:
