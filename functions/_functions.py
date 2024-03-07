@@ -21,10 +21,8 @@ replace_function_name = map({
     "!="  : "__ne__",
     "**"  : "__pow__",
     "//"  : "__rfloordiv__",
-    "<<"  : "__rlshift__",
     ">>"  : "__rshift__",
     "**"  : "__rpow__",
-    ">>"  : "__rrshift__",
     "%"   : "__rmod__",
     "%"   : "__mod__",
     "*"   : "__rmul__",
@@ -45,7 +43,8 @@ replace_function_name = map({
     "^"   : "__rxor__",
     "-"   : "__sub__",
     "/"   : "__truediv__",
-    "^"   : "__xor__"
+    "^"   : "__xor__",
+    "@"   : "__matmul__",
 })
 
 def extract_variables(ast_line: Token_List, root_scope: Scope) -> str:
@@ -270,9 +269,8 @@ def function(ast_list: Token_List, current_scope: Scope, parent_scope: Scope, ro
         output = f"\n{INDENT_CHAR*ast_list.indent_level}@hx__async{output}"
         async_ = True
 
-    # if root_scope.get_keyword('PRIVATE') in modifiers:
-    #     output = output.replace("def ", "def __")
-    #     private = True
+    if root_scope.get_keyword('PRIVATE') in modifiers:
+        private = True
 
     # if root_scope.get_keyword("PROTECTED") in modifiers:
     #     output = output.replace("def ", "def _")

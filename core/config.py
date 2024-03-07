@@ -1,25 +1,37 @@
-import toml, os
+import os
+import toml
 from argparse import Namespace
 from core.panic import panic
 
 CACHE: dict[str, Namespace] = {}
 CONFIG_PATH = "config.toml"
 
+
 def save_config(config: Namespace):
     with open(CONFIG_PATH, "w") as file:
         toml.dump(config, file)
-        
+
+
 def load_config(path: str = CONFIG_PATH) -> Namespace:
     if path in CACHE:
         return CACHE[path]
-    
+
     if path != CONFIG_PATH:
-        panic(f"Could not find config file at {path}") if not os.path.exists(path) else None
-    
+        (
+            panic(
+                FileNotFoundError(f"Could not find config file at {path}"),
+                no_lines=True,
+                file=path,
+            )
+            if not os.path.exists(path)
+            else None
+        )
+
     with open(path, "r") as file:
         data = Namespace(**toml.load(file))
         CACHE[path] = data
         return data
+
 
 def set_config_path(path: str) -> None:
     global CONFIG_PATH

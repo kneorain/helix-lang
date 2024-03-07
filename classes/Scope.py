@@ -2,6 +2,7 @@ from concurrent.futures import Future
 from dataclasses import dataclass
 from threading import Thread
 from time import time
+from typing import Any
 from core.cache_store import cache
 from core.panic import panic
 from classes.Token import Token_List, Token
@@ -15,10 +16,10 @@ class Scope:
     children: list[Token_List]
     indent_level: int
     
-    variables: dict[str, str]
-    functions: dict[str, str]
-    classes:   dict[str, str]
-    operator_functions: dict[str, dict[str, str]]
+    variables: dict[str, dict[str, Any]]
+    functions: dict[str, dict[str, Any]]
+    classes:   dict[str, dict[str, Any]]
+    operator_functions: dict[str, dict[str, Any]]
         
     def __init__(self, name: str, namespace_type: str, children: list, indent_level: int = 0):
         self .name = name
@@ -32,11 +33,7 @@ class Scope:
         self.variables = {}
         self.functions = {}
         self.classes = {}
-        self.operator_functions = {
-            "prefix": {},
-            "infix": {},
-            "postfix": {}
-        }
+        self.operator_functions = {}
         
         
 
@@ -140,7 +137,7 @@ class Scope:
         return temp_scope
     
     @classmethod
-    def process_from_lines(cls, lines: tuple[Token_List]) -> 'Scope':
+    def process_from_lines(cls, lines: tuple[Token_List, ...]) -> 'Scope':
         root_scope = Scope(lines[0].file, "root", [], 0)
         new_scope = None
         in_scope = False

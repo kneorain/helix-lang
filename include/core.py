@@ -18,7 +18,7 @@ from multimethod import DispatchError, multimeta
 from multimethod import subtype
 
 from typing import Type, TypeVar, Optional
-from core.panic import panic
+from core.panic import panic, standalone_tokenize_line as __tokenize_line__
 from time import sleep
 from include.c_cpp import __import_c__
 
@@ -1006,6 +1006,8 @@ class std:
     def generate(iter: Iterator, func: Callable, filter: Callable = None) -> list:
         return [func(_) for _ in iter if not filter or filter(_)]
 
+    def div_by_0() -> int:
+        return 1 / 0
 
 
 # def __int__(self) -> int: return self.__value__

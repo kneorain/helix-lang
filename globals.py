@@ -23,6 +23,7 @@ def _no_change(line: Token_List, *args) -> str:
 
 CACHE: dict[str, tuple[Token_List, ...]] = {}
 POOL: WorkerPool = WorkerPool(50)
+USE_POOL: bool = True
 
 LINE_BREAK:     str = '\x03'
 SUB_LINE_BREAK: str = '\x04'
@@ -261,16 +262,16 @@ KEYWORDS: map[str, map[str, str | bool | Callable[..., str]]] = map({
     ## "impl"         : map({"internal_name": "EXTEND"    , "parser": dummy        , "scoped": True , "body_required": True , "keyword_type": "class_declaration"}),
 
     # Error Handling
-    "try"          : map({"internal_name": "TRY"       , "parser": dummy        , "scoped": False, "body_required": True , "keyword_type": "error_handling"}),
-    "catch"        : map({"internal_name": "CATCH"     , "parser": dummy        , "scoped": False, "body_required": True , "keyword_type": "error_handling"}),
-    "except"        : map({"internal_name": "EXCEPT"     , "parser": dummy        , "scoped": False, "body_required": True , "keyword_type": "error_handling"}),
-    "finally"      : map({"internal_name": "FINALLY"   , "parser": dummy        , "scoped": False, "body_required": True , "keyword_type": "error_handling"}),
-    "throw"        : map({"internal_name": "THROW"     , "parser": dummy        , "scoped": False, "body_required": False, "keyword_type": "error_handling"}),
+    "try"          : map({"internal_name": "TRY"       , "parser":  dummy        , "scoped": False, "body_required": True , "keyword_type": "error_handling"}),
+    "catch"        : map({"internal_name": "CATCH"     , "parser":  dummy        , "scoped": False, "body_required": True , "keyword_type": "error_handling"}),
+    "except"        : map({"internal_name": "EXCEPT"   , "parser":  dummy        , "scoped": False, "body_required": True , "keyword_type": "error_handling"}),
+    "finally"      : map({"internal_name": "FINALLY"   , "parser":  dummy        , "scoped": False, "body_required": True , "keyword_type": "error_handling"}),
+    "throw"        : map({"internal_name": "THROW"     , "parser":  dummy        , "scoped": False, "body_required": False, "keyword_type": "error_handling"}),
 
     # Core
-    "break"        : map({"internal_name": "BREAK"     , "parser": _no_change   , "scoped": False, "body_required": False, "keyword_type": "core"}),
-    "delegate"     : map({"internal_name": "DELEGATE"  , "parser": dummy        , "scoped": False, "body_required": False, "keyword_type": "core"}),
-    "with"         : map({"internal_name": "WITH"      , "parser": _no_change   , "scoped": False, "body_required": True , "keyword_type": "core"}),
+    "break"        : map({"internal_name": "BREAK"     , "parser":  _no_change   , "scoped": False, "body_required": False, "keyword_type": "core"}),
+    "delegate"     : map({"internal_name": "DELEGATE"  , "parser":  dummy        , "scoped": False, "body_required": False, "keyword_type": "core"}),
+    "with"         : map({"internal_name": "WITH"      , "parser":  _no_change   , "scoped": False, "body_required": True , "keyword_type": "core"}),
     
     # Access Modifiers
     "private"      : map({"internal_name": "PRIVATE"   , "parser":  _function   , "scoped": False, "body_required": False, "keyword_type": "access_modifier"}),
@@ -299,16 +300,19 @@ KEYWORDS: map[str, map[str, str | bool | Callable[..., str]]] = map({
     "yield"        : map({"internal_name": "YIELD"     , "parser": dummy        , "scoped": False, "body_required": False, "keyword_type": "asynchronous_control"}),
     "await"        : map({"internal_name": "AWAIT"     , "parser": dummy        , "scoped": False, "body_required": False, "keyword_type": "asynchronous_control"}),
 })
+
 BODY_REQUIRED_KEYWORDS: map[str, str] = map({
     keyword: KEYWORDS[keyword]["internal_name"]
     for keyword in KEYWORDS.keys()
     if KEYWORDS[keyword]["body_required"]
 })
+
 NAMESPACED_KEYWORD: map[str, str] = map({
     keyword: KEYWORDS[keyword]["internal_name"]
     for keyword in KEYWORDS.keys()
     if KEYWORDS[keyword]["scoped"]
 })
+
 PUNCTUATION = r".,:?()[]{}<>+-*/=|&^%$#~"
 COMMENT = r"\~\~.*"
 BLOCK_COMMENT = r"\~\*\~"
