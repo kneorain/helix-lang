@@ -83,16 +83,14 @@ class C_cout {
 
 }
 
-
-
 fn main(argv: list<string>) {
     let a: int = "12";
-    print(add(a, 42));
+    print(add(a, ["a", "b", "c"]));
 }
 
 
 private fn add(a: int, b: list<string>) -> int {
-    return "a + b";
+    return 2;
 }
 
 ~*~

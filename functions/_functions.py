@@ -238,14 +238,14 @@ def function(ast_list: Token_List, current_scope: Scope, parent_scope: Scope, ro
     else:
         output += ":" if ast_list.line[-1].token != "<\\r1>" else f":\n{INDENT_CHAR*(ast_list.indent_level+1)}pass"
     
-    output = f"\n{INDENT_CHAR*ast_list.indent_level}@beartype\n{INDENT_CHAR*ast_list.indent_level}{output}"
+    output = f"\n{INDENT_CHAR*ast_list.indent_level}{output}"
     
-    if not any([i in not_allowed_classes for i in parent_scope.name]):
-        if not root_scope.get_keyword('ASYNC') in modifiers and not root_scope.get_keyword('UNSAFE') in modifiers:
-            if name in parent_scope.functions:
-                output = (f"\n{INDENT_CHAR*ast_list.indent_level}@{name}.register" + output)
-            else:
-                output = (f"\n{INDENT_CHAR*ast_list.indent_level}@hx__multi_method" + output)
+    #if not any([i in not_allowed_classes for i in parent_scope.name]):
+    #    if not root_scope.get_keyword('ASYNC') in modifiers and not root_scope.get_keyword('UNSAFE') in modifiers:
+    #        if name in parent_scope.functions:
+    #            output = (f"\n{INDENT_CHAR*ast_list.indent_level}@{name}.register" + output)
+    #        else:
+    #            output = (f"\n{INDENT_CHAR*ast_list.indent_level}@hx__multi_method" + output)
     # if the type of parent_sope is an abstract class
     if any([i == root_scope.get_keyword("ABSTRACT") for i in parent_scope.name]):
         output = f"\n{INDENT_CHAR*ast_list.indent_level}@hx__abstract_method" + output
@@ -297,4 +297,4 @@ def function(ast_list: Token_List, current_scope: Scope, parent_scope: Scope, ro
         for _, decorator in enumerate(reversed(decorators)):
             output = f"{INDENT_CHAR*ast_list.indent_level}{decorator}\n{INDENT_CHAR*ast_list.indent_level}{output.strip()}"
 
-    return Processed_Line('\n' + output, ast_list)
+    return Processed_Line(f'\n{INDENT_CHAR*ast_list.indent_level}@overload_with_type_check' + output, ast_list)

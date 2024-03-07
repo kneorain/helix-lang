@@ -18,8 +18,8 @@ import functools
 from sys import exit
 from threading import Event
 from io import TextIOWrapper
-from types import ModuleType
-from typing import Any, Callable, Iterable, Optional
+from types import FrameType, ModuleType
+from typing import Any, Callable, Iterable, Optional, Tuple
 from argparse import Namespace, ArgumentParser
 from time import perf_counter_ns as time
 
@@ -58,8 +58,10 @@ class Hashing:
         self.__output_path = output_path
 
     def __str__(self) -> str:
-        return f"Hashing(hash={self.__hash.decode()}, output_path={self.__output_path})"
-
+        try:
+            return f"Hashing(hash={self.__hash.decode()}, output_path={self.__output_path})"
+        except UnicodeDecodeError:
+            return f"Hashing(hash={repr(self.__hash)}, output_path={self.__output_path})"
     def __repr__(self) -> str:
         return self.__str__()
 
@@ -93,17 +95,19 @@ class Hashing:
         return open(self.__output_path + ":hash", "rb").read()
 
     def __linux_io(self, writeable: str = "") -> Optional[bytes]:
-        import xattr
+        if sys.platform in ["linux", "linux2", "darwin"]:
+            import xattr # type: ignore
 
-        if writeable:
-            with open(self.__output_path, "wb") as file:
-                file.write(writeable.encode("utf-8"))
+            if writeable:
+                with open(self.__output_path, "wb") as file:
+                    file.write(writeable.encode("utf-8"))
+
+                attr = xattr.xattr(self.__output_path)
+                attr.set("user.hash", self.__hash)
 
             attr = xattr.xattr(self.__output_path)
-            attr.set("user.hash", self.__hash)
-
-        attr = xattr.xattr(self.__output_path)
-        return attr.get("user.hash")
+            return attr.get("user.hash")
+        return None
 
     def __io(self, writeable: str = "") -> Optional[bytes]:
         if sys.platform == "win32":
@@ -440,20 +444,20 @@ class Timer:
 
 
 class DisabledKeyboardInterrupt:
-    def __enter__(self):
-        self.signal_received = False
-        self.old_handler = signal.signal(signal.SIGINT, self.handler)
+    def __enter__(self) -> None:
+        self.signal_received: Optional[Tuple[int, Any]] = None
+        self.old_handler: Callable[[int, FrameType | None], Any] | int | None = signal.signal(signal.SIGINT, self.handler)
 
-    def handler(self, sig, frame):
+    def handler(self, sig: int, frame: Any) -> None:
         self.signal_received = (sig, frame)
         print(
             "KeyboardInterrupt detected. use exit() to quit.", style="rgb(200, 50, 50)"
         )
 
-    def __exit__(self, type, value, traceback):
+    def __exit__(self, type: Any, value: Any, traceback: Any) -> None:
         signal.signal(signal.SIGINT, self.old_handler)
         if self.signal_received:
-            self.old_handler(*self.signal_received)
+            self.old_handler(*self.signal_received) # type: ignore
 
 
 class HelixProcess:
@@ -801,7 +805,7 @@ from __future__ import annotations # type: ignore
 
 from beartype.door import is_bearable as is_typeof, is_subhint as is_sub_typeof # type: ignore
 from beartype import beartype, BeartypeConf # type: ignore
-from beartype.claw import beartype_all                         # type: ignore
+###### from include.plum.plum import dispatch as overload_with_type_check
 
 import os               # type: ignore
 import sys              # type: ignore
@@ -860,9 +864,7 @@ def exception_handler(exception_type: type[BaseException] | threading.ExceptHook
 
         # Check specific conditions to skip
         if (
-            linecache.getline(filename, line_no-1).strip() == "func = self.dispatch(*args)" # type: ignore
-            and
-            linecache.getline(filename, line_no).strip() == "return func(*args, **kwargs)" # type: ignore
+            f"plum{{os.sep}}plum" in filename
         ):
             continue
             
@@ -974,15 +976,15 @@ sys.excepthook = exception_handler  # type: ignore
 threading.excepthook = functools.partial(exception_handler, thread_error=True)
 sys.argv = ["{os.path.realpath(__file__).replace("\\", "\\\\")}", "{os.path.realpath(self.__file__).replace("\\", "\\\\")}"] + list(sys.argv)[2:]
 del os, threading, functools
-
-beartype = beartype(conf=BeartypeConf(is_color=False))   # type: ignore
+overload_with_type_check = beartype(conf=BeartypeConf(is_color=False))   # type: ignore
 
 \x92
+
 if __name__ == "__main__":
     try:
-        main(hx_list(sys.argv).__set_generic__("[str]"))
-    except TypeError:
-        main()
+        main() # type: ignore
+    except (KeyError, TypeError):
+        main(sys.argv)
 """
         if not is_main:
             return inject_code.split("\x92")[0] + (code if code else "\x92")
@@ -998,7 +1000,9 @@ if __name__ == "__main__":
         locals_: dict[str, Any] = {}
         globals_: dict[str, Any] = {}
         context: tuple[dict[str, Any], dict[str, Any]] = (globals_, locals_)
-
+        
+        #TODO: add auto printing, and also indentation for multiline inputs
+        
         with DisabledKeyboardInterrupt():
             prev_code: str = ""
             code: str = ""
@@ -1071,7 +1075,7 @@ if __name__ == "__main__":
 
 if __name__ == "__main__":
     try:
-        HelixProcess.factory(os.path.join(".helix", "config.json"), profile=False)
+        HelixProcess.factory(os.path.join(".helix", "config.json"), profile=True)
         # HelixProcess.__hook_import__("syntax/test.hlx")
         # from test_hlx import subtract
         # subtract(5, 3)

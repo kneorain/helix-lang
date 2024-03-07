@@ -177,6 +177,25 @@ def standalone_tokenize_line(line: str, preserve_spaces: bool = False) -> list[s
         if token and not token.startswith(r"\~\~.*") and not token.startswith(r"\~\*\~") and not token.endswith(r"\~\*\~")
     ]
 
+def s_u(line: str|list) -> str | list[str]:
+    # \u001b\[\d+m wiht also match \u001b[91;1m
+    if isinstance(line, list):
+        return list(re.sub(r"\u001b\[\d+(m|\;\d+m)", "", "".join(line)))
+    return re.sub(r"\u001b\[\d+(m|\;\d+m)", "", line)
+
+def s_u2(line: str | list) -> str:
+    ansi_escape = re.compile(
+        r'''
+        \x1b  # ESC
+        \[    # literal [
+        [0-9;]*  # zero or more numbers or semicolons
+        [A-Za-z]  # a letter
+        ''', re.VERBOSE
+    )
+    if isinstance(line, list):
+        line = "".join(line)
+    return ansi_escape.sub('', line)
+
 def panic(__error: Exception,
           *_mark: tuple[Any] | str,
           file: str = "",
@@ -197,7 +216,7 @@ def panic(__error: Exception,
     mark: list[str] = [item.__str__() for item in _mark]
     
     name: str = __error.__class__.__name__
-    message: str = str(__error)
+    message: str = s_u2(s_u(str(__error)))
     
     if name == "KeyboardInterrupt" and message.strip() == "":
         message = "KeyboardInterrupt was raised."
@@ -465,25 +484,6 @@ def panic(__error: Exception,
         ## except Exception:
         ##     return "".join(tokenized_line) + mark_line[:-1] + f"{border_color}{chars['straight']}{reset}"
         return "".join(tokenized_line) + mark_line[:-1] + f"{border_color}{chars['straight']}{reset}"
-    
-    def s_u(line: str|list) -> str | list[str]:
-        # \u001b\[\d+m wiht also match \u001b[91;1m
-        if isinstance(line, list):
-            return list(re.sub(r"\u001b\[\d+(m|\;\d+m)", "", "".join(line)))
-        return re.sub(r"\u001b\[\d+(m|\;\d+m)", "", line)
-    
-    def s_u2(line: str | list) -> str:
-        ansi_escape = re.compile(
-            r'''
-            \x1b  # ESC
-            \[    # literal [
-            [0-9;]*  # zero or more numbers or semicolons
-            [A-Za-z]  # a letter
-            ''', re.VERBOSE
-        )
-        if isinstance(line, list):
-            line = "".join(line)
-        return ansi_escape.sub('', line)
     
     def process_lines(line: str, index: int) -> str:
         # called fro each element in lines
