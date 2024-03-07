@@ -1,8 +1,4 @@
-include "sleep" from "time";
-import types;
-import functools;
-import os;
-import random;
+
 
 ~~ print(argv);
 
@@ -29,7 +25,7 @@ class Field:
     def __init__(self, w, h):
         self.w = w
         self.h = h
-        self.s = [[False for _ in range(w)] for _ in range(h)]
+        self.s = [[false for _ in range(w)] for _ in range(h)]
 
     def set(self, x, y, b):
         self.s[y][x] = b
@@ -54,7 +50,7 @@ class Life:
         self.a = Field(w, h)
         self.b = Field(w, h)
         for _ in range(w * h // 4):
-            self.a.set(random.randint(0, w-1), random.randint(0, h-1), True)
+            self.a.set(random.randint(0, w-1), random.randint(0, h-1), true)
 
     def step(self):
         for y in C_For(y=0).set_con("y < self.h").set_inc("y++"):
@@ -75,92 +71,27 @@ def main():
     for _ in C_For(i=0).set_con("i < 300").set_inc("i++"):
         l.step()
         os.system('cls' if os.name == 'nt' else 'clear')
-        print(l, end='', flush=True)
+        print(l, end='', flush=true)
         time.sleep(1 / 30)
 ~*~
 
-class Field {
-    fn new(self, w: int, h: int) {
-        self.w = w;
-        self.h = h;
-        self.s = std::generate(h, lambda y: std::generate(w, lambda x: False));
+
+class C_cout {
+    fn <<(self, a: string) {
+        print(a);
     }
 
-    fn set(self, x: int, y: int, b: bool) {
-        self.s[y][x] = b;
-    }
-
-    fn alive(self, x: int, y: int) -> bool {
-        x = (x + self.w) % self.w;
-        y = (y + self.h) % self.h;
-        return self.s[y][x];
-    }
-
-    fn next(self, x: int, y: int) -> bool {
-        let alive: int = 0;
-        for (var i: int = -1; i <= 1; i++) {
-            for (var j: int = -1; j <= 1; j++) {
-                if ((i != 0 || j != 0) && self.alive(x+i, y+j)) {
-                    alive += 1;
-                }
-            }
-        }
-        return alive == 3 || (alive == 2 && self.alive(x, y));
-    }
 }
 
-class Life {
-    fn new(self, w: int, h: int) {
-        self.w = w;
-        self.h = h;
-        self.a = Field.new(w, h);
-        self.b = Field.new(w, h);
-        for (var _: int = 0; _ < w * h / 4; _++) {
-            self.a.set(random.randint(0, w-1), random.randint(0, h-1), True);
-        }
-    }
-
-    fn step(self) {
-        for (var y: int = 0; y < self.h; y++) {
-            for (var x: int = 0; x < self.w; x++) {
-                self.b.set(x, y, self.a.next(x, y));
-            }
-        }
-        self.a, self.b = self.b, self.a;
-    }
-
-    fn __str__(self) -> string {
-        let result: string = "";
-        for (var y: int = 0; y < self.h; y++) {
-            for (var x: int = 0; x < self.w; x++) {
-                if (self.a.alive(x, y)) {
-                    result += '*';
-                } else {
-                    result += ' ';
-                }
-            }
-            result += '\n';
-        }
-        return result;
-    }
-}
-
-fn main() {
-    let l: Life = Life.new(40, 15);
-    
-    for (var _: int = 0; _ < 300; _++) {
-        l.step();
-        if (os.name == 'nt') {
-            os.system('cls');
-        } else {
-            os.system('clear');
-        }
-        printf(l);
-        sleep(1 / 30);
-    }
+fn main(argv: list<string>) {
+    let a: int = "12";
+    print(add(a, ["a", "b", "c"]));
 }
 
 
+private fn add(a: int, b: list<string>) -> int {
+    return 2;
+}
 
 ~*~
 fn a_cursed_fucntion(a: int)    -> FunctionType { printf("new something: %d", a); return a_cursed_fucntion }

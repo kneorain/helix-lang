@@ -1,0 +1,3 @@
+[submodule "include/plum"]
+	path = include/plum
+	url = https://github.com/beartype/plum

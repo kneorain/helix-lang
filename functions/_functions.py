@@ -21,10 +21,8 @@ replace_function_name = map({
     "!="  : "__ne__",
     "**"  : "__pow__",
     "//"  : "__rfloordiv__",
-    "<<"  : "__rlshift__",
     ">>"  : "__rshift__",
     "**"  : "__rpow__",
-    ">>"  : "__rrshift__",
     "%"   : "__rmod__",
     "%"   : "__mod__",
     "*"   : "__rmul__",
@@ -45,7 +43,8 @@ replace_function_name = map({
     "^"   : "__rxor__",
     "-"   : "__sub__",
     "/"   : "__truediv__",
-    "^"   : "__xor__"
+    "^"   : "__xor__",
+    "@"   : "__matmul__",
 })
 
 def extract_variables(ast_line: Token_List, root_scope: Scope) -> str:
@@ -241,12 +240,12 @@ def function(ast_list: Token_List, current_scope: Scope, parent_scope: Scope, ro
     
     output = f"\n{INDENT_CHAR*ast_list.indent_level}{output}"
     
-    if not any([i in not_allowed_classes for i in parent_scope.name]):
-        if not root_scope.get_keyword('ASYNC') in modifiers and not root_scope.get_keyword('UNSAFE') in modifiers:
-            if name in parent_scope.functions:
-                output = (f"\n{INDENT_CHAR*ast_list.indent_level}@{name}.register" + output)
-            else:
-                output = (f"\n{INDENT_CHAR*ast_list.indent_level}@hx__multi_method" + output)
+    #if not any([i in not_allowed_classes for i in parent_scope.name]):
+    #    if not root_scope.get_keyword('ASYNC') in modifiers and not root_scope.get_keyword('UNSAFE') in modifiers:
+    #        if name in parent_scope.functions:
+    #            output = (f"\n{INDENT_CHAR*ast_list.indent_level}@{name}.register" + output)
+    #        else:
+    #            output = (f"\n{INDENT_CHAR*ast_list.indent_level}@hx__multi_method" + output)
     # if the type of parent_sope is an abstract class
     if any([i == root_scope.get_keyword("ABSTRACT") for i in parent_scope.name]):
         output = f"\n{INDENT_CHAR*ast_list.indent_level}@hx__abstract_method" + output
@@ -270,9 +269,8 @@ def function(ast_list: Token_List, current_scope: Scope, parent_scope: Scope, ro
         output = f"\n{INDENT_CHAR*ast_list.indent_level}@hx__async{output}"
         async_ = True
 
-    # if root_scope.get_keyword('PRIVATE') in modifiers:
-    #     output = output.replace("def ", "def __")
-    #     private = True
+    if root_scope.get_keyword('PRIVATE') in modifiers:
+        private = True
 
     # if root_scope.get_keyword("PROTECTED") in modifiers:
     #     output = output.replace("def ", "def _")
@@ -299,4 +297,4 @@ def function(ast_list: Token_List, current_scope: Scope, parent_scope: Scope, ro
         for _, decorator in enumerate(reversed(decorators)):
             output = f"{INDENT_CHAR*ast_list.indent_level}{decorator}\n{INDENT_CHAR*ast_list.indent_level}{output.strip()}"
 
-    return Processed_Line('\n' + output, ast_list)
+    return Processed_Line(f'\n{INDENT_CHAR*ast_list.indent_level}@overload_with_type_check' + output, ast_list)

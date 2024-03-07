@@ -9,7 +9,7 @@ re = __import__(load_config().Transpiler["regex_module"])
 from core.panic import panic
 
 
-def _unmarked(ast_list: Token_List, current_scope, parent_scope, root_scope) -> str:
+def _unmarked(ast_list: Token_List, current_scope, parent_scope, root_scope, ignore_main) -> str:
 
     # example: name = "John" ->  name.set("John")
     # example: a, b = 5, 6 ->  a.set(5); b.set(6)
@@ -19,7 +19,7 @@ def _unmarked(ast_list: Token_List, current_scope, parent_scope, root_scope) -> 
     
     output = ""
     
-    if ast_list.indent_level == 0:
+    if ast_list.indent_level == 0 and not ignore_main:
         panic(SyntaxError("You cannot have code outside of a function"), ast_list[0], file=ast_list.file, line_no=ast_list[0].line_number)
     
     if "=" in ast_list:

@@ -6,6 +6,7 @@ from concurrent.futures import (
 import multiprocessing
 
 from typing import (
+    Literal,
     TypeAlias,
     Annotated,
     Callable,
@@ -27,7 +28,7 @@ import sys
 
 # ------------------------------ Type Variables ------------------------------ #
 T = TypeVar("T")
-class void(Generic[T]): pass
+void = None
 # ----------------------------- Version Checking ----------------------------- #
 if sys.version_info < (3, 10):
     raise NotImplementedError(f"Python version must be 3.10 or greater to use this module, current version is {sys.version_info}")
@@ -65,7 +66,7 @@ def start_all_threads(x: Any = None) -> NoReturn:
 
 __process_worker_function: Callable[..., T] = None
 
-def set_process_worker_function(func: Callable[..., T]) -> void:
+def set_process_worker_function(func: Callable[..., T]) -> None:
     global __process_worker_function
     __process_worker_function = func
     
@@ -114,7 +115,7 @@ class WorkerPool(Generic[T]):
             pool_type:   Annotated[Union[bool, str], "If True or 'thread', the pool will be an IO pool, if False or 'process', the pool will be a CPU pool"] = "thread",
             time_out:    float    = 60.0,
             initializer: Callable[..., None] = start_all_threads,
-    ) -> void:
+    ) -> None:
         self.__initializer = initializer
         self.__futures     = []
         self.__time_out    = time_out
@@ -137,7 +138,7 @@ class WorkerPool(Generic[T]):
         by: Annotated[int, "The amount of workers to add or remove from the pool (< 0 to remove, > 0 to add)"] = 0,
         non_main_origin: Annotated[bool, "If the function is not from the main module or is a lambda"] = False,
         non_main_origin_function: Annotated[Callable, "The function to add to a workers namespace"] = None
-    ) -> void:
+    ) -> None:
         if by != 0:
             self.__workers += by
         if not non_main_origin or self.__pool_type == "thread":
@@ -160,12 +161,12 @@ class WorkerPool(Generic[T]):
         exc_type:  T,
         exc_value: int,
         traceback: Exception
-    ) -> bool:
+    ) -> Literal[False]:
         if not self.__shutdown:
             self.close()
         return False
 
-    def __del__(self) -> void:
+    def __del__(self) -> None:
         if not self.__shutdown:
             self.close()
 
@@ -173,22 +174,22 @@ class WorkerPool(Generic[T]):
     def add_worker(
         self,
         workers: WorkerType = 1,
-    ) -> void:
+    ) -> None:
         with self.__lock:
             self.__structure_pool(workers)
 
     def remove_worker(
         self,
         workers: WorkerType = 1,
-    ) -> void:
+    ) -> None:
         with self.__lock:
             self.__structure_pool(-workers)
 
     # ------------------------------ Appenders ------------------------------- #
-    def add_to_futures(self, *parm: T) -> void:
+    def add_to_futures(self, *parm: T) -> None:
         self.__futures += [parm[0]] if len(parm) == 1 else parm
     
-    def clear_futures(self) -> void:
+    def clear_futures(self) -> None:
         self.__futures.clear()
         
     def iter_futures(self) -> Iterable[FutureType]:
@@ -197,7 +198,7 @@ class WorkerPool(Generic[T]):
     def append_future(
         self,
         future: FutureType
-    ) -> void:
+    ) -> None:
         with self.__lock:
             if not isinstance(future, Future):
                 raise TypeError("Future must be of type Future")
@@ -206,7 +207,7 @@ class WorkerPool(Generic[T]):
     def append_futures(
         self,
         *futures: FuturesType
-    ) -> void:
+    ) -> None:
         with self.__lock:
             if not all(isinstance(future, Future) for future in futures):
                 raise TypeError("All items in futures must be of type Future")
@@ -215,8 +216,8 @@ class WorkerPool(Generic[T]):
     def append(
         self,
         func:     Annotated[Callable[..., T], "The function to be executed in the pool, adds to execution queue, (Queue is cleared after execute method is called)"],
-        *args:    Annotated[Iterable[T],      "The arguments to be passed to the function"],
-        **kwargs: Annotated[Mapping[str, T],  "The keyword arguments to be passed to the function"]
+        *args:    Annotated[Iterable[T] | T,      "The arguments to be passed to the function"],
+        **kwargs: Annotated[Mapping[str, T] | T,  "The keyword arguments to be passed to the function"]
     ) -> FutureType:
         if not function_origin_is_outside(func) or self.__pool_type == "thread":
             with self.__lock:
@@ -235,7 +236,7 @@ class WorkerPool(Generic[T]):
         post_func: Annotated[Callable,        "The function to be executed after the future is completed, cannot take any arguments or return any"],
         *args:     Annotated[Iterable[T],     "The arguments to be passed to the function"],
         **kwargs:  Annotated[Mapping[str, T], "The keyword arguments to be passed to the function"]
-    ) -> void:
+    ) -> None:
         if not function_origin_is_outside(func) or self.__pool_type == "thread":
             with self.__lock:
                 self.add_to_futures(self.__pool.submit(func, *args, **kwargs))
@@ -252,7 +253,7 @@ class WorkerPool(Generic[T]):
         self,
         func:       FunctionType,
         *iterables: Annotated[Iterable[T], "The iterables to be passed to the function, must be the same length as the amount of arguments the function takes"]
-    ) -> void:
+    ) -> None:
         if not function_origin_is_outside(func) or self.__pool_type == "thread":
             with self.__lock:
                 [
@@ -274,7 +275,7 @@ class WorkerPool(Generic[T]):
         func:       FunctionType,
         post_func:  Annotated[Callable, "The function to be executed after the future is completed, cannot take any arguments or return any"],
         *iterables: Annotated[Iterable[T], "The iterables to be passed to the function, must be the same length as the amount of arguments the function takes"]
-    ) -> void:
+    ) -> None:
         if not function_origin_is_outside(func) or self.__pool_type == "thread":
             with self.__lock:
                 [
@@ -369,7 +370,7 @@ class WorkerPool(Generic[T]):
     def close(
         self,
         wait: Annotated[bool, "If the pool should wait for all the futures to complete before shutting down"] = True
-    ) -> void:
+    ) -> None:
         with self.__lock:
             if self.__pool:
                 if wait: self.__pool.shutdown(wait=True)
@@ -401,7 +402,7 @@ class WorkerPool(Generic[T]):
     def workers(
         self,
         value: WorkerType
-    ) -> void:
+    ) -> None:
         with self.__lock:
             self.__workers = value
             self.__structure_pool()
@@ -410,7 +411,7 @@ class WorkerPool(Generic[T]):
     def futures(
         self,
         value: FuturesType
-    ) -> void:
+    ) -> None:
         with self.__lock:
             if not isinstance(value, list):
                 raise TypeError("Futures must be a list")
@@ -426,7 +427,7 @@ class WorkerPool(Generic[T]):
     def pool_type(
         self,
         value: PoolNameType
-    ) -> void:
+    ) -> None:
         with self.__lock:
             if value.lower() not in ("thread", "process"):
                 raise ValueError("Pool type must be 'thread' or 'process'")
@@ -437,19 +438,19 @@ class WorkerPool(Generic[T]):
     def results(
         self,
         value: ResultsType
-    ) -> void: raise AttributeError("Cannot set results, attribute is read-only")
+    ) -> None: raise AttributeError("Cannot set results, attribute is read-only")
 
     @is_alive.setter
     def is_alive(
         self,
         value: ShutdownType
-    ) -> void: raise AttributeError("Cannot set is_alive, attribute is read-only")
+    ) -> None: raise AttributeError("Cannot set is_alive, attribute is read-only")
 
     @pool.setter
     def pool(
         self,
         value: PoolType
-    ) -> void: raise AttributeError("Cannot set pool, attribute is read-only")
+    ) -> None: raise AttributeError("Cannot set pool, attribute is read-only")
 
 if __name__ == "__main__":
     raise NotImplementedError("This module cannot be run as a script, to test it, run the ThreadPool_test.py file")

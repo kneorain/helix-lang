@@ -107,6 +107,7 @@ def _class(ast_list: Token_List, current_scope, parent_scope, root_scope, modifi
         "unsafe":  False,
         "static":  False,
         "private": False,
+        "final":  False,
     }
     
     if modifiers:
@@ -117,15 +118,17 @@ def _class(ast_list: Token_List, current_scope, parent_scope, root_scope, modifi
             
         parent_scope.classes[class_name] = {
             "extends": class_extends,
-            root_scope.get_keyword("STATIC"): True if root_scope.get_keyword("STATIC") in modifiers else False,
-            root_scope.get_keyword("PRIVATE"): True if root_scope.get_keyword("PRIVATE") in modifiers else False,
-            root_scope.get_keyword("UNSAFE"): True if root_scope.get_keyword("UNSAFE") in modifiers else False,
+            "static": True if root_scope.get_keyword("STATIC") in modifiers else False,
+            "private": True if root_scope.get_keyword("PRIVATE") in modifiers else False,
+            "unsafe": True if root_scope.get_keyword("UNSAFE") in modifiers else False,
+            "final":  False,
         }
     else:
         parent_scope.classes[class_name] = {
             "extends": class_extends,
             "unsafe": False,
             "static": False,
+            "private": False,
             "final":  False,
         }
 

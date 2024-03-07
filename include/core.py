@@ -11,20 +11,41 @@ from functools import wraps
 import inspect
 from threading import Thread
 from types import MappingProxyType as FastMap, NoneType, FunctionType, UnionType
-from typing import Any, Callable, Literal, NoReturn, Self
+from beartype.typing import Any, Callable, Literal, NoReturn, Self
 from weakref import ref
 
 from multimethod import DispatchError, multimeta
 from multimethod import subtype
 
 from typing import Type, TypeVar, Optional
-from core.panic import panic
+from core.panic import panic, standalone_tokenize_line as _H_tokenize_line__
 from time import sleep
-from include.c_cpp import __import_c__
+#from include.c_cpp import __import_c__
+
+# make an empty wrapper for hx__multi_method
+def hx__multi_method(func: Callable) -> Callable:
+    @wraps(func)
+    def hx_internal_multi_method_decorator(*args, **kwargs):
+        return func(*args, **kwargs)
+    return hx_internal_multi_method_decorator
+
+
+
+
+def __import_cpp__(*args, **kwargs):
+    raise NotImplementedError("C++ is not supported in Helix (YET)")
+
+def __import_c__(*args, **kwargs):
+    raise NotImplementedError("C is not supported in Helix (YET)")
+
+def __import_rs__(*args, **kwargs):
+    raise NotImplementedError("Rust is not supported in Helix (YET)")
+
+def __import_py__(*args, **kwargs):
+    raise NotImplementedError("Python is not supported in Helix (YET)")
 
  
-from multimethod import multimethod as hx__multi_method
-    
+
 
 getcontext().prec = 128
 replace_primitives = {
@@ -1006,6 +1027,8 @@ class std:
     def generate(iter: Iterator, func: Callable, filter: Callable = None) -> list:
         return [func(_) for _ in iter if not filter or filter(_)]
 
+    def div_by_0() -> int:
+        return 1 / 0
 
 
 # def __int__(self) -> int: return self.__value__

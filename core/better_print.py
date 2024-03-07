@@ -319,7 +319,7 @@ def color_print(*objects,
                 style: str | None = None, # type: ignore
                 justify: str | None = None,
                 width: int | None = None,
-                word_wrap: bool = True,
+                word_wrap: bool = False,
                 bg: str | None = None,
                 file: TextIO | None = None,
                 return_objects: int = False,
