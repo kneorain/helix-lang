@@ -99,6 +99,9 @@ class Token:
 
     def __iter__(self) -> Iterator[str]:
         return iter(self.__processed_line)
+    
+    def is_empty(self) -> bool:
+        return not self.__processed_line
 
 
 class Token_List(list[Token]):

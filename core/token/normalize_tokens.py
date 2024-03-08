@@ -95,7 +95,7 @@ def normalize_tokens(_lines: tuple[Token, ...], path: str) -> tuple[Token_List, 
             stack[-1] = previous_element
         panic(SyntaxError(f"<Hex(01.E20)>: Expected an indent: level of 0, but got {indent_level}"), "{", file=path, line_no=stack[-1].line_number)
     
-    def process_for_loops(index: int) -> str:
+    def process_for_loops(index: int) -> None:
         nonlocal in_for_loop, lines
         token = lines[index].line
         if token == "for":

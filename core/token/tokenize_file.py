@@ -2,6 +2,7 @@ import functools
 from core.token.normalize_tokens import normalize_tokens
 from core.token.remove_comments import remove_comment
 from core.token.tokenize_line import tokenize_line, standalone_tokenize_line
+from core.token.saftey_checks import colon_check
 from classes.Token import Token, Token_List
 import globals
 
@@ -39,6 +40,9 @@ class Tokenizer:
         else:
             tuple(map(remove_comment, lines))
             tuple(map(lambda _: tokenize_line(_, path), lines))
+            
+        lines = tuple(token for token in lines if not token.is_empty())
+        colon_check(lines)
 
         globals.CACHE[path] = normalize_tokens(lines, path)
         return globals.CACHE[path]
