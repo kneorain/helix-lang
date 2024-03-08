@@ -1046,7 +1046,7 @@ if __name__ == "__main__":
 
         # Create a temporary module to hold the imported content
         module_name = os.path.basename(file).split(".")[0]
-        helix_import = ModuleType(module_name)
+        helix_import = __import__(os.path.basename(inst.__out_file__).split('.')[0])
 
         # Set the file and name for the module
         helix_import.__file__ = inst.__out_file__
@@ -1056,7 +1056,7 @@ if __name__ == "__main__":
         sys.modules[helix_import.__name__] = helix_import
 
         # Process scope items
-        remove = ["__internal_replace_argv", "exception_handler"]
+        remove = []
         for attr, value in {
             **scope.functions,
             **scope.classes,
@@ -1064,22 +1064,17 @@ if __name__ == "__main__":
         }.items():
             if value.get("private"):
                 remove.append(attr)
-            else:
-                # Only add callable or class attributes
-                if callable(value) or isinstance(value, type):
-                    setattr(helix_import, attr, value)
 
         # Clean up private attributes
         for private in remove:
-            if hasattr(helix_import, private):
-                delattr(helix_import, private)
+            delattr(helix_import, private)
 
         return helix_import
 
 
 if __name__ == "__main__":
     try:
-        HelixProcess.factory(os.path.join(".helix", "config.toml"), profile=True)
+        HelixProcess.factory(os.path.join(".helix", "config.toml"), profile=False)
         HelixProcess.__hook_import__("syntax/test.hlx")
         #from test_hlx import subtract
         #subtract(5, 3)

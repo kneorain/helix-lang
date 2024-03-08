@@ -56,12 +56,14 @@ def tokenize_line(code: Token | str, path: str = None, ignore_errors: bool = Fal
         ]
         for match in compiled_re(ignore_strings).findall(code.token)
     ]
+    
     flattened_tokens = [
         token
         for group in tokens
         for token in group
         if token and not token.startswith(globals.COMMENT) and not token.startswith(globals.BLOCK_COMMENT) and not token.endswith(globals.BLOCK_COMMENT)
     ]
+    
     [
         panic(
             SyntaxError(f"Reserved keyword '{token}' used."),

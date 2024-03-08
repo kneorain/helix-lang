@@ -47,30 +47,33 @@ As of now, the project has the following structure and features:
 - [x] Lexer
 - [x] Parser
 - [x] Abstract Syntax Tree (AST)
+- [ ] Semi-colon Checking - *courtesy of [mbambav](https://github.com/mbambav)*
 - [x] Error Handling
-- [ ] Type Checking
-- [ ] Transpiler
+- [x] Type Checking
+- [-] Transpiler
 
 #### Language Features
-- [ ] Variables
+- [x] Variables
 - [x] Functions
-- [ ] Control Flow
-- [ ] Data Types
+- [x] Control Flow
+- [ ] User defined types
+- [x] Primitive types / Imported types
 - [x] Classes
-- [x] Generics
+- [ ] Generics
+- [x] Parameterized Types
 - [x] Inheritance
-- [ ] Operator Overloading
+- [-] Operator Overloading
 - Interop:
-  - [ ] Python
-  - [ ] C
-  - [ ] C++
-  - [ ] Rust
+  - [x] Python (CPython importing Helix and Helix importing CPython)
+  - [ ] C      (C importing Helix and Helix importing C)
+  - [ ] C++    (C++ importing Helix and Helix importing C++)
+  - [ ] Rust   (Rust importing Helix and Helix importing Rust)
 - [ ] Standard Library
 - [ ] Package Manager
 - [ ] Documentation
 - [ ] Testing
 - [ ] Benchmarking
-- [ ] Profiling
+- [x] Profiling
 - [ ] Debugging
 - [x] Error Handling
 - [ ] Memory Management
