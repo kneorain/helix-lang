@@ -61,7 +61,10 @@ class Hashing:
         try:
             return f"Hashing(hash={self.__hash.decode()}, output_path={self.__output_path})"
         except UnicodeDecodeError:
-            return f"Hashing(hash={repr(self.__hash)}, output_path={self.__output_path})"
+            return (
+                f"Hashing(hash={repr(self.__hash)}, output_path={self.__output_path})"
+            )
+
     def __repr__(self) -> str:
         return self.__str__()
 
@@ -96,7 +99,7 @@ class Hashing:
 
     def __linux_io(self, writeable: str = "") -> Optional[bytes]:
         if sys.platform in ["linux", "linux2", "darwin"]:
-            import xattr # type: ignore
+            import xattr  # type: ignore
 
             if writeable:
                 with open(self.__output_path, "wb") as file:
@@ -384,7 +387,7 @@ class HelixLanguage:
         HelixLanguage.make_folder(os.path.join(directory, "cache", "build_cache"))
         HelixLanguage.make_folder(os.path.join(directory, "include"))
 
-        HelixLanguage.make_file(os.path.join(directory, "config.json"))
+        HelixLanguage.make_file(os.path.join(directory, "config.toml"))
         HelixLanguage.make_file(os.path.join(directory, "include", "core.py"))
 
     @staticmethod
@@ -446,7 +449,9 @@ class Timer:
 class DisabledKeyboardInterrupt:
     def __enter__(self) -> None:
         self.signal_received: Optional[Tuple[int, Any]] = None
-        self.old_handler: Callable[[int, FrameType | None], Any] | int | None = signal.signal(signal.SIGINT, self.handler)
+        self.old_handler: Callable[[int, FrameType | None], Any] | int | None = (
+            signal.signal(signal.SIGINT, self.handler)
+        )
 
     def handler(self, sig: int, frame: Any) -> None:
         self.signal_received = (sig, frame)
@@ -457,7 +462,7 @@ class DisabledKeyboardInterrupt:
     def __exit__(self, type: Any, value: Any, traceback: Any) -> None:
         signal.signal(signal.SIGINT, self.old_handler)
         if self.signal_received:
-            self.old_handler(*self.signal_received) # type: ignore
+            self.old_handler(*self.signal_received)  # type: ignore
 
 
 class HelixProcess:
@@ -465,7 +470,7 @@ class HelixProcess:
 
     @classmethod
     def interpreter(cls, code: str, globals_: dict, locals_: dict) -> str:
-        inst: HelixProcess = cls(os.path.join(".helix", "config.json"), "__REPL__")
+        inst: HelixProcess = cls(os.path.join(".helix", "config.toml"), "__REPL__")
 
         tokenized_line: tuple[Token_List, ...] = Tokenizer.tokenize_line(
             code, inst.__file__, indent=1
@@ -567,9 +572,7 @@ class HelixProcess:
         self.__out_file__ = self.build_path()  # TODO: custom output file
         self.__file_hash__: Optional[Hashing] = None
         if self.__file__ != "__REPL__":
-            self.__file_hash__ = Hashing(
-                self.__file__, self.__out_file__
-            )
+            self.__file_hash__ = Hashing(self.__file__, self.__out_file__)
 
         self.__class__.config = load_config(
             self.__config_file__
@@ -811,10 +814,11 @@ import os               # type: ignore
 import sys              # type: ignore
 import types            # type: ignore
 
+sys.path.append(os.path.dirname(os.path.realpath(\"{__file__.replace("\\", "\\\\")}\")) + os.sep + ".helix")            # type: ignore
 sys.path.append(os.path.dirname(os.path.realpath(\"{__file__.replace("\\", "\\\\")}\")))            # type: ignore
 sys.path.append(os.path.dirname(os.path.realpath(os.getcwd())))                                     # type: ignore
 # trunk-ignore(ruff/F401)
-from include.core import {', '.join(get_all_importable_modules(os.path.join("include", "core.py")))}# type: ignore
+from include.core import {', '.join(get_all_importable_modules(os.path.join(".helix", "include", "core.py")))} # type: ignore
 # trunk-ignore(ruff/F401)
 # trunk-ignore(ruff/F811)
 from include.core import __import_c__, __import_cpp__, __import_py__, __import_rs__                 # type: ignore
@@ -1000,9 +1004,9 @@ if __name__ == "__main__":
         locals_: dict[str, Any] = {}
         globals_: dict[str, Any] = {}
         context: tuple[dict[str, Any], dict[str, Any]] = (globals_, locals_)
-        
-        #TODO: add auto printing, and also indentation for multiline inputs
-        
+
+        # TODO: add auto printing, and also indentation for multiline inputs
+
         with DisabledKeyboardInterrupt():
             prev_code: str = ""
             code: str = ""
@@ -1032,7 +1036,7 @@ if __name__ == "__main__":
         cls, file: str, *args: str, config_file: Optional[str] = None, **kwargs: Any
     ) -> ModuleType:
         config_file = (
-            config_file if config_file else os.path.join(".helix", "config.json")
+            config_file if config_file else os.path.join(".helix", "config.toml")
         )
 
         inst: HelixProcess = cls(config_file, file, *args, import_=True, **kwargs)
@@ -1075,13 +1079,11 @@ if __name__ == "__main__":
 
 if __name__ == "__main__":
     try:
-        HelixProcess.factory(os.path.join(".helix", "config.json"), profile=True)
-        # HelixProcess.__hook_import__("syntax/test.hlx")
-        # from test_hlx import subtract
-        # subtract(5, 3)
-        # sleep(1)
-
-        # HelixProcess.REPL()
+        HelixProcess.factory(os.path.join(".helix", "config.toml"), profile=True)
+        HelixProcess.__hook_import__("syntax/test.hlx")
+        #from test_hlx import subtract
+        #subtract(5, 3)
+        #HelixProcess.REPL()
     finally:
         gc.collect(0)
         gc.collect(1)

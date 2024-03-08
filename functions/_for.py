@@ -11,7 +11,7 @@ re = __import__(load_config().Transpiler["regex_module"])
 
 from core.panic import panic
 
-def _for(ast_list: Token_List, current_scope: Scope, parent_scope: Scope, root_scope: Scope, modifiers=None) -> str:
+def _for(ast_list: Token_List, current_scope: Scope, parent_scope: Scope, root_scope: Scope, modifiers=None) -> Processed_Line:
     output = ""
 
     if ";" in ast_list:

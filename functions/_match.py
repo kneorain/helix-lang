@@ -8,6 +8,6 @@ from core.panic import panic
 from functions._class import _class
 
 
-def _match(ast_list: Token_List, current_scope, parent_scope, root_scope, modifiers=None) -> str:
+def _match(ast_list: Token_List, current_scope, parent_scope, root_scope, modifiers=None) -> Processed_Line:
     print(ast_list)
     return Processed_Line("yessir", ast_list)

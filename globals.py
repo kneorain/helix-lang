@@ -2,7 +2,7 @@ import re
 from sys import stdout as sys_stdout
 from threading import Thread
 from types import MappingProxyType as map
-from typing import Callable, Iterable
+from typing import Callable, Iterable, Optional
 
 from classes.Token import Processed_Line, Token_List
 from classes.WorkerPool import WorkerPool
@@ -15,53 +15,59 @@ from functions._match import _match
 from functions._unless import _unless
 
 
-def dummy(line: Token_List, current_scope, parent_scope, root_scope) -> str:
-    return Processed_Line('    '*line.indent_level + ' '.join([_.token for _ in line]), line)
+def dummy(line: Token_List, current_scope, parent_scope, root_scope) -> Processed_Line:
+    return Processed_Line(
+        "    " * line.indent_level + " ".join([_.token for _ in line]), line
+    )
 
-def _no_change(line: Token_List, *args) -> str:
-    return Processed_Line('    '*line.indent_level + ' '.join([_.token for _ in line]), line)
+
+def _no_change(line: Token_List, *args) -> Processed_Line:
+    return Processed_Line(
+        "    " * line.indent_level + " ".join([_.token for _ in line]), line
+    )
+
 
 CACHE: dict[str, tuple[Token_List, ...]] = {}
 POOL: WorkerPool = WorkerPool(50)
 USE_POOL: bool = True
 
-LINE_BREAK:     str = '\x03'
-SUB_LINE_BREAK: str = '\x04'
+LINE_BREAK: str = "\x03"
+SUB_LINE_BREAK: str = "\x04"
 
 FAT_CHARACTER: list[str] = [
-    r"\=\=\=",   # ===
-    r"\!\=\=",   # !==
-    r"\.\.\.",   # ...
-    r"\=\=",     # ==
-    r"\!\=",     # !=
-    r"\-\>",     # ->
-    r"\<\-",     # <-
-    r"\<\=",     # <=
-    r"\>\=",     # >=
-    r"\&\&",     # &&
-    r"\-\-",     # --
-    r"\:\:",     # ::
-    r"\|\|",     # ||
-    r"\+\+",     # ++
-    r"\+\=",     # +=
-    r"\-\=",     # -=
-    r"\*\=",     # *=
-    r"\/\=",     # /=
-    r"\&\=",     # &=
-    r"\|\=",     # |=
-    r"\^\=",     # ^=
-    r"\%\=",     # %=
-    r"\*\*",     # **
-    r"\<\<",     # <<
-    r"\>\>",     # >>
-    r"\<\<\=",   # <<=
-    r"\>\>\=",   # >>=
-    r"\=\>",     # =>
-    r"\@\=",     # @=
-    r"\_\_",     # __
-    r"\?\?",     # ??
-    r"\?\:",     # ?:
-    r"\?\=",     # ?=
+    r"\=\=\=",  # ===
+    r"\!\=\=",  # !==
+    r"\.\.\.",  # ...
+    r"\=\=",  # ==
+    r"\!\=",  # !=
+    r"\-\>",  # ->
+    r"\<\-",  # <-
+    r"\<\=",  # <=
+    r"\>\=",  # >=
+    r"\&\&",  # &&
+    r"\-\-",  # --
+    r"\:\:",  # ::
+    r"\|\|",  # ||
+    r"\+\+",  # ++
+    r"\+\=",  # +=
+    r"\-\=",  # -=
+    r"\*\=",  # *=
+    r"\/\=",  # /=
+    r"\&\=",  # &=
+    r"\|\=",  # |=
+    r"\^\=",  # ^=
+    r"\%\=",  # %=
+    r"\*\*",  # **
+    r"\<\<",  # <<
+    r"\>\>",  # >>
+    r"\<\<\=",  # <<=
+    r"\>\>\=",  # >>=
+    r"\=\>",  # =>
+    r"\@\=",  # @=
+    r"\_\_",  # __
+    r"\?\?",  # ??
+    r"\?\:",  # ?:
+    r"\?\=",  # ?=
 ]
 
 # All Primitive Types
@@ -91,105 +97,118 @@ FAT_CHARACTER: list[str] = [
 # f64;
 # f128;
 
-IGNORE_TYPES_MAP: tuple[str, ...] = (
-    "Callable",
+IGNORE_TYPES_MAP: tuple[str, ...] = ("Callable",)
+
+PRIMITIVES_MAP: map[str, tuple[str, str]] = map(
+    {
+        # helix type : (python type, helix ir type)
+        "int": ("int", "hx_int"),
+        "string": ("str", "hx_string"),
+        "float": ("float", "hx_float"),
+        "double": ("double", "hx_double"),
+        "map": ("dict", "hx_map"),
+        "list": ("list", "hx_list"),
+        "bool": ("bool", "hx_bool"),
+        "char": ("str", "hx_char"),
+        "void": ("NoneType", "hx_void"),
+        "tuple": ("tuple", "hx_tuple"),
+        "array": ("array", "hx_array"),
+        "set": ("set", "hx_set"),
+        "unknown": ("Any", "hx_unknown"),
+        "Int": ("int", "hx_int"),
+        "String": ("str", "hx_string"),
+        "Float": ("float", "hx_float"),
+        "Double": ("double", "hx_double"),
+        "Map": ("dict", "hx_map"),
+        "List": ("list", "hx_list"),
+        "Bool": ("bool", "hx_bool"),
+        "Char": ("str", "hx_char"),
+        "Void": ("NoneType", "hx_void"),
+        "Tuple": ("tuple", "hx_tuple"),
+        "Array": ("array", "hx_array"),
+        "Set": ("set", "hx_set"),
+        "Unknown": ("Any", "hx_unknown"),
+    }
 )
-
-PRIMITIVES_MAP: map[str, tuple[str, str]] = map({
-    # helix type : (python type, helix ir type)
-    "int"          : ("int"      , "hx_int"),
-    "string"       : ("str"      , "hx_string"),
-    "float"        : ("float"    , "hx_float"),
-    "double"       : ("double"   , "hx_double"),
-    "map"          : ("dict"     , "hx_map"),
-    "list"         : ("list"     , "hx_list"),
-    "bool"         : ("bool"     , "hx_bool"),
-    "char"         : ("str"      , "hx_char"),
-    "void"         : ("NoneType" , "hx_void"),
-    "tuple"        : ("tuple"    , "hx_tuple"),
-    "array"        : ("array"    , "hx_array"),
-    "set"          : ("set"      , "hx_set"),
-    "unknown"      : ("Any"      , "hx_unknown"),
-
-    "Int"          : ("int"      , "hx_int"),
-    "String"       : ("str"      , "hx_string"),
-    "Float"        : ("float"    , "hx_float"),
-    "Double"       : ("double"   , "hx_double"),
-    "Map"          : ("dict"     , "hx_map"),
-    "List"         : ("list"     , "hx_list"),
-    "Bool"         : ("bool"     , "hx_bool"),
-    "Char"         : ("str"      , "hx_char"),
-    "Void"         : ("NoneType" , "hx_void"),
-    "Tuple"        : ("tuple"    , "hx_tuple"),
-    "Array"        : ("array"    , "hx_array"),
-    "Set"          : ("set"      , "hx_set"),
-    "Unknown"      : ("Any"      , "hx_unknown"),
-})
 
 RESERVED_KEYWORDS: tuple[str, ...] = (
-    "__dict__"    ,
-    "__setattr__" ,
-    "__init__"    ,
+    "__dict__",
+    "__setattr__",
+    "__init__",
 )
 
-EARLY_REPLACEMENTS: map[str, str] = map({ # These are replaced as soon as the tokenization is done (before normalization and transpilation)
-    "..."          : "None"        ,
-    "true"         : "True"        ,
-    "false"        : "False"       ,
-    "null"         : "None"        ,
-    "none"         : "None"        ,
-    "&&"           : "and"         ,
-    "||"           : "or"          ,
-    "!"            : "not"         ,
-    "==="          : "is"          ,
-    "!=="          : "is not"      ,
-    "stop"         : "break"       ,
-    "::"           : "."           ,
-    
-    "new"          : "__init__"    ,
-    "delete"       : "__del__"     ,
-    "enter"        : "__enter__"   ,
-    "exit"         : "__exit__"    ,
-        
-    "u8"           : "hx_u8"       ,
-    "u16"          : "hx_u16"      ,
-    "u32"          : "hx_u32"      ,
-    "u64"          : "hx_u64"      ,
-    "u128"         : "hx_u128"     ,
-    "i8"           : "hx_i8"       ,
-    "i16"          : "hx_i16"      ,
-    "i32"          : "hx_i32"      ,
-    "i64"          : "hx_i64"      ,
-    "i128"         : "hx_i128"     ,
-    "f32"          : "hx_f32"      ,
-    "f64"          : "hx_f64"      ,
-    "f128"         : "hx_f128"     ,
-})
+EARLY_REPLACEMENTS: map[str, str] = map(
+    {  # These are replaced as soon as the tokenization is done (before normalization and transpilation)
+        "...": "None",
+        "true": "True",
+        "false": "False",
+        "null": "None",
+        "none": "None",
+        "&&": "and",
+        "||": "or",
+        "!": "not",
+        "===": "is",
+        "!==": "is not",
+        "stop": "break",
+        "::": ".",
+        "new": "__init__",
+        "delete": "__del__",
+        "enter": "__enter__",
+        "exit": "__exit__",
+        "u8": "hx_u8",
+        "u16": "hx_u16",
+        "u32": "hx_u32",
+        "u64": "hx_u64",
+        "u128": "hx_u128",
+        "i8": "hx_i8",
+        "i16": "hx_i16",
+        "i32": "hx_i32",
+        "i64": "hx_i64",
+        "i128": "hx_i128",
+        "f32": "hx_f32",
+        "f64": "hx_f64",
+        "f128": "hx_f128",
+    }
+)
 
-def multi_split(string: str, *separators: str, discard: Iterable[str] = None) -> list[str]:
+
+def multi_split(
+    string: str, *separators: str, discard: Optional[Iterable[str]] = None
+) -> list[str]:
     # split the string by all the separators but keep the separators
     # so like "a + b" would become ["a", "+", "b"], if the separators are [" ", "+"]
     # Escape special regex characters in separators and join them with '|' for regex 'or'
-    if not discard: discard = []
-    
-    regex_pattern = '|'.join(re.escape(sep) for sep in separators)
-    
+    if not discard:
+        discard = []
+
+    regex_pattern = "|".join(re.escape(sep) for sep in separators)
+
     # Use re.split with a capturing group to keep separators
     return [s for s in re.split(f"({regex_pattern})", string) if s and s not in discard]
 
 
-def replace_primitive(type: str, operation: int = 0) -> str: # 0: helix ir type | python type, 1: python type, 2: helix ir type
+def replace_primitive(
+    type: str, operation: int = 0
+) -> str:  # 0: helix ir type | python type, 1: python type, 2: helix ir type
     full_type: list[str] = multi_split(type, " ", "[", "]", ",", discard=["", " "])
-    
+
     # for each type in full_type, replace it with the python type | helix ir type
     if isinstance(full_type, str):
-        return PRIMITIVES_MAP[full_type][1] if operation == 2 else PRIMITIVES_MAP[full_type][0] if operation == 0 else f"{PRIMITIVES_MAP[full_type][0]} | {PRIMITIVES_MAP[full_type][1]}"
-    
+        return (
+            PRIMITIVES_MAP[full_type][1]
+            if operation == 2
+            else (
+                PRIMITIVES_MAP[full_type][0]
+                if operation == 0
+                else f"{PRIMITIVES_MAP[full_type][0]} | {PRIMITIVES_MAP[full_type][1]}"
+            )
+        )
+
     for i, t in enumerate(full_type):
         if t in PRIMITIVES_MAP:
             match operation:
                 case 0:
-                    if (len(full_type) - i) > 1 and full_type[i+1] == "[":
+                    if (len(full_type) - i) > 1 and full_type[i + 1] == "[":
                         # get everything after the current type and keep track of the brackets, then process that again
                         # and then set a copy of the full_type to the processed type
                         # so like if the type is "list[int]" then it would become "list[hx_int|int] | hx_list[hx_int|int]"
@@ -202,13 +221,17 @@ def replace_primitive(type: str, operation: int = 0) -> str: # 0: helix ir type 
                             elif full_type[end_index] == "]":
                                 brackets -= 1
                             end_index += 1
-                        
-                        nested_type = replace_primitive(" ".join(full_type[i + 2:end_index - 1]), operation)
+
+                        nested_type = replace_primitive(
+                            " ".join(full_type[i + 2 : end_index - 1]), operation
+                        )
                         python_type = f"{PRIMITIVES_MAP[t][0]}[{nested_type}]"
                         helix_type = f"{PRIMITIVES_MAP[t][1]}[{nested_type}]"
                         full_type[i:end_index] = [f"{python_type} | {helix_type}"]
                     else:
-                        full_type[i] = f"{PRIMITIVES_MAP[t][0]} | {PRIMITIVES_MAP[t][1]}"
+                        full_type[i] = (
+                            f"{PRIMITIVES_MAP[t][0]} | {PRIMITIVES_MAP[t][1]}"
+                        )
                 case 1:
                     full_type[i] = PRIMITIVES_MAP[t][0]
                 case 2:
@@ -220,12 +243,10 @@ def replace_primitive(type: str, operation: int = 0) -> str: # 0: helix ir type 
                     raise ValueError("Invalid operation")
         elif operation == 3:
             return full_type[0]
-    
+
     return " ".join(full_type)
-    
 
-
-KEYWORDS: map[str, map[str, str | bool | Callable[..., str]]] = map({
+KEYWORDS: map[str, map[str, str | bool | Callable[..., Processed_Line]]] = map({
     # Control Flow
     "if"           : map({"internal_name": "IF"        , "parser": _unless      , "scoped": False, "body_required": True , "keyword_type": "control_flow"}),
     "elif"         : map({"internal_name": "ELSE_IF"   , "parser": _unless      , "scoped": False, "body_required": True , "keyword_type": "control_flow"}),
@@ -301,17 +322,21 @@ KEYWORDS: map[str, map[str, str | bool | Callable[..., str]]] = map({
     "await"        : map({"internal_name": "AWAIT"     , "parser": dummy        , "scoped": False, "body_required": False, "keyword_type": "asynchronous_control"}),
 })
 
-BODY_REQUIRED_KEYWORDS: map[str, str] = map({
-    keyword: KEYWORDS[keyword]["internal_name"]
-    for keyword in KEYWORDS.keys()
-    if KEYWORDS[keyword]["body_required"]
-})
+BODY_REQUIRED_KEYWORDS: map[str, str] = map(
+    {
+        keyword: str(KEYWORDS[keyword]["internal_name"])
+        for keyword in KEYWORDS.keys()
+        if KEYWORDS[keyword]["body_required"]
+    }
+)
 
-NAMESPACED_KEYWORD: map[str, str] = map({
-    keyword: KEYWORDS[keyword]["internal_name"]
-    for keyword in KEYWORDS.keys()
-    if KEYWORDS[keyword]["scoped"]
-})
+NAMESPACED_KEYWORD: map[str, str] = map(
+    {
+        keyword: str(KEYWORDS[keyword]["internal_name"])
+        for keyword in KEYWORDS.keys()
+        if KEYWORDS[keyword]["scoped"]
+    }
+)
 
 PUNCTUATION = r".,:?()[]{}<>+-*/=|&^%$#~"
 COMMENT = r"\~\~.*"
@@ -325,33 +350,23 @@ from core.cache_store import file_cache
 
 
 @file_cache
-def find_keyword(internal_name: str) -> str: return [keyword for keyword in KEYWORDS.keys() if KEYWORDS[keyword]["internal_name"] == internal_name][0]
+def find_keyword(internal_name: str) -> str:
+    return [
+        keyword
+        for keyword in KEYWORDS.keys()
+        if KEYWORDS[keyword]["internal_name"] == internal_name
+    ][0]
+
 
 def ASYNC(func):
     def wrapper(*args, **kwargs):
         Thread(target=func, args=args, kwargs=kwargs).start()
+
     return wrapper
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-#print(highlight_code("""
-#fn main() {
+# print(highlight_code("""
+# fn main() {
 #    n: int?; ~~ ? initializes to null instead of 0
 #    n: opt[int]; ~~ opt is a generic type that can be used to initialize to null
 #    n = input("Enter a positive integer ");
@@ -367,6 +382,6 @@ def ASYNC(func):
 #    for (var i = 0; i < 10; i++) {
 #        print(i);
 #    }
-#}
-#"""))
-#exit()
+# }
+# """))
+# exit()

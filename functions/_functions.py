@@ -184,7 +184,7 @@ def contains(line: Token_List, compare: tuple):
     return any([_ in line for _ in compare])
 
 # static async fn factorial(n: int) -> int {
-def function(ast_list: Token_List, current_scope: Scope, parent_scope: Scope, root_scope: Scope) -> str:
+def function(ast_list: Token_List, current_scope: Scope, parent_scope: Scope, root_scope: Scope) -> Processed_Line:
     decorators = []
     if ast_list.line[0].token == "#":
         for _ in range(ast_list.count("#")):

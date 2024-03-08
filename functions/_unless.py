@@ -9,7 +9,7 @@ re = __import__(load_config().Transpiler["regex_module"])
 
 from core.panic import panic
 
-def _unless(ast_list: Token_List, current_scope: Scope, parent_scope: Scope, root_scope: Scope, modifiers=None) -> str:
+def _unless(ast_list: Token_List, current_scope: Scope, parent_scope: Scope, root_scope: Scope, modifiers=None) -> Processed_Line:
     # unless condition:   ->   if not condition:
     # else if condition:  ->   elif condition:
     output = ""

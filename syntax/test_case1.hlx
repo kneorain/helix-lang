@@ -1,0 +1,9 @@
+fn main() {
+    print("This should be printed to the console.")
+}
+
+class Test {
+    fn <<(self, s: String) {
+        print(s);
+    }
+}

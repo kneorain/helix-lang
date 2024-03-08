@@ -9,7 +9,7 @@ re = __import__(load_config().Transpiler["regex_module"])
 from core.panic import panic
 
 
-def _let(ast_list: Token_List, current_scope, parent_scope, root_scope) -> str:
+def _let(ast_list: Token_List, current_scope, parent_scope, root_scope) -> Processed_Line:
     output = ""
     
     # so something like a = 5 would become a.set(5)

@@ -89,6 +89,10 @@ fn main(argv: list<string>) {
 }
 
 
+fn subtract(a: int, b: int) -> int {
+    return a - b;
+}
+
 private fn add(a: int, b: list<string>) -> int {
     return 2;
 }

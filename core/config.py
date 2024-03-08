@@ -4,12 +4,12 @@ from argparse import Namespace
 from core.panic import panic
 
 CACHE: dict[str, Namespace] = {}
-CONFIG_PATH = "config.toml"
+CONFIG_PATH = ".helix/config.toml"
 
 
 def save_config(config: Namespace):
     with open(CONFIG_PATH, "w") as file:
-        toml.dump(config, file)
+        toml.dump(dict(config), file)
 
 
 def load_config(path: str = CONFIG_PATH) -> Namespace:

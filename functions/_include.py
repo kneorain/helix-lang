@@ -50,7 +50,7 @@ def identify_import_type(combined_line: str, ast_list: Token_List) -> dict:
             return match
     panic(SyntaxError(f"Invalid include statement: {combined_line}"), file=ast_list.file, line_no=ast_list.line[0].line_number)
 
-def include(ast_list: Token_List, current_scope, parent_scope, root_scope) -> str:
+def include(ast_list: Token_List, current_scope, parent_scope, root_scope) -> Processed_Line:
     combined_line: str = ' '.join([_.token for _ in ast_list.line])
     match = identify_import_type(combined_line, ast_list)
 

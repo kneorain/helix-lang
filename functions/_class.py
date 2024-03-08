@@ -13,11 +13,10 @@ def generate_default_code(indent_chars: str, class_name) -> str:
     return f"""
 {indent_chars}    def __init__(self: Any, __val: '{class_name}'):
 {indent_chars}            raise NotImplementedError("Define an __init__ method for this class with the function signature new(self: Any, inst_class: '{class_name}')")
-
 """
 
 
-def _class(ast_list: Token_List, current_scope, parent_scope, root_scope, modifiers=None) -> str:
+def _class(ast_list: Token_List, current_scope, parent_scope, root_scope, modifiers=None) -> Processed_Line:
     data_structure_types = (
         parent_scope.get_keyword("INTERFACE"),
         parent_scope.get_keyword("STRUCT"),
