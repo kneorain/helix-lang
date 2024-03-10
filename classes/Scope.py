@@ -2,7 +2,7 @@ from concurrent.futures import Future
 from dataclasses import dataclass
 from threading import Thread
 from time import time
-from typing import Any
+from typing import Any, Optional
 from core.cache_store import cache
 from core.panic import panic
 from classes.Token import Token_List, Token
@@ -14,12 +14,13 @@ class Scope:
     namespace_type: str
     separate_file_namespace: bool
     children: list[Token_List]
-    indent_level: int
+    indent_level:int
     
     variables: dict[str, dict[str, Any]]
     functions: dict[str, dict[str, Any]]
     classes:   dict[str, dict[str, Any]]
     operator_functions: dict[str, dict[str, Any]]
+    transpiler_instance: Any
         
     def __init__(self, name: str, namespace_type: str, children: list, indent_level: int = 0):
         self .name = name
@@ -35,6 +36,7 @@ class Scope:
         self.classes = {}
         self.operator_functions = {}
         
+        self.transpiler_instance = None
         
 
     def make_readable(self, indent: str = "") -> str:
@@ -82,16 +84,19 @@ class Scope:
     #   indent_level: int      # The indent level of the line
     
     @classmethod
-    def get_token(cls, ast: Token):
-        return ast.token
+    def get_token(cls, ast: Token | str) -> str:
+        if not isinstance(ast, str) and isinstance(ast.token, str):
+            return str(ast.token)
+        else:
+            raise TypeError(f"Expected Token, got {type(ast)}")
     
     @classmethod
-    def contains(cls, line: Token_List, keys: tuple):
+    def contains(cls, line: Token_List | tuple[str, ...], keys: tuple):
         line = tuple(map(Scope.get_token, line))
         return any(key in line for key in keys)
     
     @classmethod
-    def get_match(cls, line: Token_List, keys: tuple = None, depth: int = 0):
+    def get_match(cls, line: Token_List, keys: Optional[tuple] = None, depth: int = 0) -> Optional[str]:
         all_keywords = tuple(globals.KEYWORDS.keys()) if not keys else keys
         matches = [ast.token for ast in line if ast.token in all_keywords]
         if len(matches) >= depth + 1:

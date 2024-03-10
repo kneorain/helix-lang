@@ -7,6 +7,7 @@ import multiprocessing
 
 from typing import (
     Literal,
+    Optional,
     TypeAlias,
     Annotated,
     Callable,
@@ -28,13 +29,12 @@ import sys
 
 # ------------------------------ Type Variables ------------------------------ #
 T = TypeVar("T")
-void = None
 # ----------------------------- Version Checking ----------------------------- #
 if sys.version_info < (3, 10):
     raise NotImplementedError(f"Python version must be 3.10 or greater to use this module, current version is {sys.version_info}")
 
 # ------------------------------ Types ----------------------------------- #
-PoolType:       TypeAlias = Annotated[Union[ThreadPool, ProcessPool], "The pool to be used for the workers"]
+PoolType:       TypeAlias = Annotated[Optional[Union[ThreadPool, ProcessPool]], "The pool to be used for the workers"]
 LockType:       TypeAlias = Annotated[Lock,               "The lock to be used for the pool to avoid parallelism issues"]
 WorkerType:     TypeAlias = Annotated[int,                "The amount of workers to create"]
 FutureType:     TypeAlias = Annotated[Future,             "Future of the appended function"]
@@ -44,7 +44,7 @@ TimeoutType:    TypeAlias = Annotated[float,              "The time out for a wo
 ShutdownType:   TypeAlias = Annotated[bool,               "If the pool has been shutdown or not"]
 PoolNameType:   TypeAlias = Annotated[str,                "The type of pool to create ('thread' or 'process')"]
 FunctionType:   TypeAlias = Annotated[Callable[..., T],   "The function to be executed in the pool, adds to execution queue, (Queue is cleared after execute method is called)"]
-InitializeType: TypeAlias = Annotated[Callable[..., void],"The initializer to be used for all the workers when the pool is created"]
+InitializeType: TypeAlias = Annotated[Callable[..., None],"The initializer to be used for all the workers when the pool is created"]
 
 # # ------------------------------ Types ----------------------------------- #
 # type PoolType       = Annotated[Union[ThreadPool, ProcessPool], "The pool to be used for the workers"] # syntax: ignore
@@ -120,7 +120,7 @@ class WorkerPool(Generic[T]):
         self.__futures     = []
         self.__time_out    = time_out
         self.__workers     = workers
-        self.__lock        = Lock()
+        self.__lock         = Lock()
         self.__shutdown    = False
         self.__pool        = None
         self.__results     = ()
@@ -165,10 +165,16 @@ class WorkerPool(Generic[T]):
         if not self.__shutdown:
             self.close()
         return False
-
+    
     def __del__(self) -> None:
         if not self.__shutdown:
             self.close()
+        del (
+            self.__pool,
+            self.__futures,
+            self.__lock
+        )
+
 
     # ------------------------------ Modifiers ------------------------------- #
     def add_worker(
@@ -309,10 +315,18 @@ class WorkerPool(Generic[T]):
     ) -> ResultsType:
         if not function_origin_is_outside(func) or self.__pool_type == "thread":
             with self.__lock:
-                return [
-                    x
-                    for x in self.__pool.map(func, *iterables, timeout=self.__time_out, chunksize=chunksize)
-                ]
+                if isinstance(self.__pool, ThreadPool):
+                    return [
+                        x
+                        for x in self.__pool.map(func, *iterables, timeout=self.__time_out, chunksize=chunksize)
+                    ]
+                elif isinstance(self.__pool, ProcessPool):
+                    return [
+                        x
+                        for x in self.__pool.map(func, *iterables, timeout=self.__time_out, chunksize=chunksize)
+                    ]
+                else:
+                    raise NotImplementedError("Cannot run non-root scoped (includes: lambda, closures, or any function in a local scope) functions in a process pool (Use a thread pool instead)")
         else:
             raise NotImplementedError("Cannot run non-root scoped (includes: lambda, closures, or any function in a local scope) functions in a process pool (Use a thread pool instead)")
             with self.__lock:
@@ -377,11 +391,6 @@ class WorkerPool(Generic[T]):
                 if not wait: self.__pool.shutdown(wait=False, cancel_futures=True)
         self.__shutdown = True
         self.clear_futures()
-        del (
-            self.__pool,
-            self.__futures,
-            self.__lock
-        )
 
     # ------------------------------- Getters -------------------------------- #
     @property

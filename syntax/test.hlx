@@ -80,10 +80,10 @@ class C_cout {
     fn <<(self, a: string) {
         print(a);
     }
-
 }
 
 fn main(argv: list<string>) {
+    do_something();
     let a: int = "12";
     print(add(a, ["a", "b", "c"]));
 }
@@ -99,15 +99,18 @@ fn add(a: int, b: int) -> int {
     return a - b
 }
 
-~*~
-fn a_cursed_fucntion(a: int)    -> FunctionType { printf("new something: %d", a); return a_cursed_fucntion }
-fn a_cursed_fucntion(a: string) -> FunctionType { let data: list = []; return "kys" }
-
 async fn do_something() {
     for (var i: int = 0; i < 10; i++) {
         print("doing something: %d", i);
     }
 }
+
+~*~
+fn a_cursed_fucntion(a: int)    -> FunctionType { printf("new something: %d", a); return a_cursed_fucntion }
+fn a_cursed_fucntion(a: string) -> FunctionType { let data: list = []; return "kys" }
+
+
+
 
 fn test_int() {
     let a: int = 21;

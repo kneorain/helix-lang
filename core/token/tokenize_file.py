@@ -34,6 +34,7 @@ class Tokenizer:
             globals.POOL.execute()
 
             _tokenize_line = functools.partial(tokenize_line, path=path)
+            
             [globals.POOL.append(_tokenize_line, line) for line in lines]
             globals.POOL.execute()
         else:

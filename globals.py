@@ -13,17 +13,27 @@ from functions._include import include as _include
 from functions._let import _let
 from functions._match import _match
 from functions._unless import _unless
+from enum import Enum, unique
 
 
-def dummy(line: Token_List, current_scope, parent_scope, root_scope) -> Processed_Line:
+def dummy(
+    line: Token_List,
+    current_scope,
+    parent_scope,
+    root_scope,
+) -> Processed_Line:
     return Processed_Line(
-        "    " * line.indent_level + " ".join([_.token for _ in line]), line
+        "    " * line.indent_level
+        + " ".join([_.token for _ in line]),
+        line,
     )
 
 
 def _no_change(line: Token_List, *args) -> Processed_Line:
     return Processed_Line(
-        "    " * line.indent_level + " ".join([_.token for _ in line]), line
+        "    " * line.indent_level
+        + " ".join([_.token for _ in line]),
+        line,
     )
 
 
@@ -96,6 +106,207 @@ FAT_CHARACTER: list[str] = [
 # f32;
 # f64;
 # f128;
+
+
+@unique
+class ERROR_CODES(Enum):
+    # Command-Line Interface Errors
+    CLI_ARGUMENT_INVALID = (
+        "[HEX-001]",
+        "Invalid command-line argument: {argument}",
+        ValueError,
+    )
+    CLI_FILE_NOT_FOUND = (
+        "[HEX-002]",
+        "Input file not found: {filename}",
+        FileNotFoundError,
+    )
+    CLI_OPTION_UNSUPPORTED = (
+        "[HEX-003]",
+        "Unsupported command-line option: {option}",
+        ValueError,
+    )
+
+    # Syntax Errors
+    SYNTAX_UNEXPECTED_TOKEN = (
+        "[HEX-100]",
+        "Unexpected token in source code: {token}",
+        SyntaxError,
+    )
+    SYNTAX_INVALID_SYNTAX = (
+        "[HEX-101]",
+        "General syntax error at {location}",
+        SyntaxError,
+    )
+    SYNTAX_MISSING_SEMICOLON = (
+        "[HEX-102]",
+        "Missing semicolon at end of statement",
+        SyntaxError,
+    )
+    SYNTAX_UNBALANCED_PARENTHESIS = (
+        "[HEX-103]",
+        "Unbalanced parenthesis",
+        SyntaxError,
+    )
+    SYNTAX_INVALID_LITERAL = (
+        "[HEX-104]",
+        "Invalid literal: {literal}",
+        ValueError,
+    )
+    SYNTAX_UNSUPPORTED_SYNTAX = (
+        "[HEX-105]",
+        "Unsupported syntax in Helix: {syntax}",
+        SyntaxError,
+    )
+
+    # Type and Declaration Errors
+    TYPE_INVALID_CAST = (
+        "[HEX-200]",
+        "Invalid type cast: {details}",
+        TypeError,
+    )
+    TYPE_UNDECLARED_VARIABLE = (
+        "[HEX-201]",
+        "Use of undeclared variable: {variable}",
+        NameError,
+    )
+    TYPE_MISMATCH = (
+        "[HEX-202]",
+        "Type mismatch in expression: {expression}",
+        TypeError,
+    )
+    TYPE_REDECLARATION = (
+        "[HEX-203]",
+        "Redeclaration of a variable or function: {identifier}",
+        SyntaxError,
+    )
+
+    # Semantic Errors
+    SEMANTIC_UNRESOLVED_REFERENCE = (
+        "[HEX-300]",
+        "Unresolved reference: {reference}",
+        NameError,
+    )
+    SEMANTIC_ARGUMENT_MISMATCH = (
+        "[HEX-301]",
+        "Function argument mismatch in {function}",
+        TypeError,
+    )
+    SEMANTIC_INFINITE_LOOP_DETECTED = (
+        "[HEX-302]",
+        "Potential infinite loop detected",
+        RuntimeError,
+    )
+    SEMANTIC_INVALID_OPERATION = (
+        "[HEX-303]",
+        "Invalid operation: {operation}",
+        ValueError,
+    )
+
+    # Linking and Dependency Errors
+    LINKING_FAILED = (
+        "[HEX-400]",
+        "Linking failed: {details}",
+        ImportError,
+    )
+    DEPENDENCY_NOT_FOUND = (
+        "[HEX-401]",
+        "Dependency not found: {dependency}",
+        ImportError,
+    )
+    DEPENDENCY_CONFLICT = (
+        "[HEX-402]",
+        "Dependency version conflict: {details}",
+        ImportError,
+    )
+
+    # File and I/O Errors
+    FILE_READ_ERROR = (
+        "[HEX-500]",
+        "Error reading file: {filename}",
+        IOError,
+    )
+    FILE_WRITE_ERROR = (
+        "[HEX-501]",
+        "Error writing file: {filename}",
+        IOError,
+    )
+    FILE_FORMAT_UNSUPPORTED = (
+        "[HEX-502]",
+        "Unsupported file format: {format}",
+        ValueError,
+    )
+    IO_PERMISSION_DENIED = (
+        "[HEX-503]",
+        "Permission denied for file operation: {filename}",
+        PermissionError,
+    )
+
+    # Resource and Memory Errors
+    RESOURCE_LIMIT_EXCEEDED = (
+        "[HEX-600]",
+        "Resource limit exceeded: {resource}",
+        MemoryError,
+    )
+    MEMORY_ALLOCATION_ERROR = (
+        "[HEX-601]",
+        "Memory allocation error",
+        MemoryError,
+    )
+    RESOURCE_LEAK_DETECTED = (
+        "[HEX-602]",
+        "Resource leak detected: {resource}",
+        ResourceWarning,
+    )
+
+    # Environment and System Errors
+    SYSTEM_ERROR = (
+        "[HEX-700]",
+        "System error encountered: {details}",
+        SystemError,
+    )
+    ENVIRONMENT_VARIABLE_NOT_FOUND = (
+        "[HEX-701]",
+        "Environment variable not found: {variable}",
+        EnvironmentError,
+    )
+    UNSUPPORTED_PLATFORM = (
+        "[HEX-702]",
+        "Unsupported operating system or platform: {platform}",
+        OSError,
+    )
+
+    # Miscellaneous Errors
+    INTERNAL_COMPILER_ERROR = (
+        "[HEX-800]",
+        "Internal compiler error: {details}",
+        RuntimeError,
+    )
+    FEATURE_NOT_IMPLEMENTED = (
+        "[HEX-801]",
+        "Feature not yet implemented: {feature}",
+        NotImplementedError,
+    )
+    UNEXPECTED_ERROR = (
+        "[HEX-802]",
+        "Unexpected error occurred: {details}",
+        RuntimeError,
+    )
+
+    def __init__(self, code, template, py_exception):
+        self.code = code
+        self.template = template
+        self.py_exception = py_exception
+
+    def format_error(self, **kwargs):
+        """Format the error message with provided arguments."""
+        formatted_message = self.template.format(**kwargs)
+        return f"{self.code} - {formatted_message}"
+
+    def raise_as_python_exception(self, **kwargs):
+        """Raise the corresponding Python exception with the formatted error message."""
+        raise self.py_exception(self.format_error(**kwargs))
+
 
 IGNORE_TYPES_MAP: tuple[str, ...] = ("Callable",)
 
@@ -173,7 +384,9 @@ EARLY_REPLACEMENTS: map[str, str] = map(
 
 
 def multi_split(
-    string: str, *separators: str, discard: Optional[Iterable[str]] = None
+    string: str,
+    *separators: str,
+    discard: Optional[Iterable[str]] = None,
 ) -> list[str]:
     # split the string by all the separators but keep the separators
     # so like "a + b" would become ["a", "+", "b"], if the separators are [" ", "+"]
@@ -181,16 +394,26 @@ def multi_split(
     if not discard:
         discard = []
 
-    regex_pattern = "|".join(re.escape(sep) for sep in separators)
+    regex_pattern = "|".join(
+        re.escape(sep) for sep in separators
+    )
 
     # Use re.split with a capturing group to keep separators
-    return [s for s in re.split(f"({regex_pattern})", string) if s and s not in discard]
+    return [
+        s
+        for s in re.split(f"({regex_pattern})", string)
+        if s and s not in discard
+    ]
 
 
 def replace_primitive(
     type: str, operation: int = 0
-) -> str:  # 0: helix ir type | python type, 1: python type, 2: helix ir type
-    full_type: list[str] = multi_split(type, " ", "[", "]", ",", discard=["", " "])
+) -> (
+    str
+):  # 0: helix ir type | python type, 1: python type, 2: helix ir type
+    full_type: list[str] = multi_split(
+        type, " ", "[", "]", ",", discard=["", " "]
+    )
 
     # for each type in full_type, replace it with the python type | helix ir type
     if isinstance(full_type, str):
@@ -208,26 +431,40 @@ def replace_primitive(
         if t in PRIMITIVES_MAP:
             match operation:
                 case 0:
-                    if (len(full_type) - i) > 1 and full_type[i + 1] == "[":
+                    if (
+                        len(full_type) - i
+                    ) > 1 and full_type[i + 1] == "[":
                         # get everything after the current type and keep track of the brackets, then process that again
                         # and then set a copy of the full_type to the processed type
                         # so like if the type is "list[int]" then it would become "list[hx_int|int] | hx_list[hx_int|int]"
                         # Process the nested type
                         end_index = i + 2
                         brackets = 1
-                        while end_index < len(full_type) and brackets:
+                        while (
+                            end_index < len(full_type)
+                            and brackets
+                        ):
                             if full_type[end_index] == "[":
                                 brackets += 1
-                            elif full_type[end_index] == "]":
+                            elif (
+                                full_type[end_index] == "]"
+                            ):
                                 brackets -= 1
                             end_index += 1
 
                         nested_type = replace_primitive(
-                            " ".join(full_type[i + 2 : end_index - 1]), operation
+                            " ".join(
+                                full_type[
+                                    i + 2 : end_index - 1
+                                ]
+                            ),
+                            operation,
                         )
                         python_type = f"{PRIMITIVES_MAP[t][0]}[{nested_type}]"
                         helix_type = f"{PRIMITIVES_MAP[t][1]}[{nested_type}]"
-                        full_type[i:end_index] = [f"{python_type} | {helix_type}"]
+                        full_type[i:end_index] = [
+                            f"{python_type} | {helix_type}"
+                        ]
                     else:
                         full_type[i] = (
                             f"{PRIMITIVES_MAP[t][0]} | {PRIMITIVES_MAP[t][1]}"
@@ -245,6 +482,7 @@ def replace_primitive(
             return full_type[0]
 
     return " ".join(full_type)
+
 
 KEYWORDS: map[str, map[str, str | bool | Callable[..., Processed_Line]]] = map({
     # Control Flow
@@ -354,13 +592,16 @@ def find_keyword(internal_name: str) -> str:
     return [
         keyword
         for keyword in KEYWORDS.keys()
-        if KEYWORDS[keyword]["internal_name"] == internal_name
+        if KEYWORDS[keyword]["internal_name"]
+        == internal_name
     ][0]
 
 
 def ASYNC(func):
     def wrapper(*args, **kwargs):
-        Thread(target=func, args=args, kwargs=kwargs).start()
+        Thread(
+            target=func, args=args, kwargs=kwargs
+        ).start()
 
     return wrapper
 

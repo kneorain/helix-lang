@@ -1,15 +1,16 @@
 # THIS TOOK ME 2 DAYS TO WRITE, I'M SO PROUD OF MYSELF
-from classes.Token import Processed_Line, Token, Token_List
 import classes.Transpiler as Transpiler
-from core.cache_store import cache
-from core.config import load_config
 import globals
 from classes.Scope import Scope
+from classes.Token import Processed_Line, Token, Token_List
+from core.cache_store import cache
+from core.config import load_config
 
 INDENT_CHAR = load_config().Formatter["indent_char"]
 re = __import__(load_config().Transpiler["regex_module"])
 
 from core.panic import panic
+
 
 def _for(ast_list: Token_List, current_scope: Scope, parent_scope: Scope, root_scope: Scope, modifiers=None) -> Processed_Line:
     output = ""
@@ -181,7 +182,7 @@ def _for(ast_list: Token_List, current_scope: Scope, parent_scope: Scope, root_s
             declarations = process_init_statement(init_statement)
             # if any vars need to be discarded
             if any([declarations[_name]["discard"] for _name in declarations]):
-                Transpiler.Transpiler.add_to_transpiled_queue.append((
+                root_scope.transpiler_instance.add_to_transpiled_queue.append((
                     Processed_Line(f"{INDENT_CHAR*ast_list.indent_level}del {', '.join([f'{_name}' for _name in declarations if declarations[_name]['discard']])}\n", ast_list),
                     current_scope
                 ))
@@ -308,7 +309,7 @@ def _for(ast_list: Token_List, current_scope: Scope, parent_scope: Scope, root_s
 
         # if any vars need to be discarded
         if any([declarations[_name]["discard"] for _name in declarations]):
-            Transpiler.Transpiler.add_to_transpiled_queue.append((
+            root_scope.transpiler_instance.add_to_transpiled_queue.append((
                 Processed_Line(f"{INDENT_CHAR*ast_list.indent_level}del {', '.join([f'{_name}' for _name in declarations if declarations[_name]['discard']])}\n", ast_list),
                 current_scope
             ))
