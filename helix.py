@@ -36,7 +36,7 @@ from core.panic import panic
 from classes.Scope import Scope
 from classes.Transpiler import Transpiler
 
-__version__: str = "0.0.2-alpha.p"
+__version__: str = "0.1.0-alpha.a"
 USE_CACHE: bool = False
 
 bar_thread = Event()
@@ -339,28 +339,28 @@ class ArgParser:
         print(
             """usage: helix [-h] [-v] [-o COMPILE] [-d] [-l LOG] [-c CONFIG] [-s] file ...
 
-Welcome to the Helix CLI, the gateway to harnessing the power and simplicity of Helix,
-a programming language designed for developers who cherish Python's ease but crave more
-robust features. This CLI tool empowers you to write, manage, and transpile Helix code
-with a range of commands and options tailored for a seamless development experience.
+            Welcome to the Helix CLI, the gateway to harnessing the power and simplicity of Helix,
+            a programming language designed for developers who cherish Python's ease but crave more
+            robust features. This CLI tool empowers you to write, manage, and transpile Helix code
+            with a range of commands and options tailored for a seamless development experience.
 
-positional arguments:
-file                  the name of the file to be executed
-doc                   the name of the documentation page to be displayed
-other                 other arguments to be passed to the file as argv
+            positional arguments:
+            file                  the name of the file to be executed
+            doc                   the name of the documentation page to be displayed
+            other                 other arguments to be passed to the file as argv
 
-options:
--h, --help                         show this help message and exit
--v, --version                      show the version number and exit
--o COMPILE, --compile COMPILE_FILE compile the file to a specific output file
--d, --debug                        enable debug mode
--l LOG, --log LOG_FILE             the name of the log file
--c CONFIG, --config CONFIG_FILE    specify or create a config file
--s, --silent                       enable silent mode
--w, --watch                        watch the file for changes and recompile
--i, --install PACKAGE_NAME         install new packages
--u, --uninstall PACKAGE_NAME       uninstall packages
--doc DOC                           the name of the documentation page to be displayed
+            options:
+            -h, --help                         show this help message and exit
+            -v, --version                      show the version number and exit
+            -o COMPILE, --compile COMPILE_FILE compile the file to a specific output file
+            -d, --debug                        enable debug mode
+            -l LOG, --log LOG_FILE             the name of the log file
+            -c CONFIG, --config CONFIG_FILE    specify or create a config file
+            -s, --silent                       enable silent mode
+            -w, --watch                        watch the file for changes and recompile
+            -i, --install PACKAGE_NAME         install new packages
+            -u, --uninstall PACKAGE_NAME       uninstall packages
+            -doc DOC                           the name of the documentation page to be displayed
         """,
             word_wrap=False,
             end="",
@@ -368,7 +368,7 @@ options:
         exit()
 
     def version_screen(self):
-        print(__version__)
+        print("🧬 " + __version__)
         exit()
 
     def __init__(
