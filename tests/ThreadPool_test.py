@@ -8,7 +8,7 @@ import unittest
 from concurrent.futures import Future
 from multiprocessing import cpu_count
 
-from classes.WorkerPool import WorkerPool
+from src.classes.WorkerPool import WorkerPool
 
 
 def test_func(x):

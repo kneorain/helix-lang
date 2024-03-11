@@ -176,7 +176,8 @@ enum dog {
 
 }
 
-or and is as use elif switch union enum unsafe 
+~~ all keywords to make sure the syntax highlighting works
+or and is as use elif switch union enum unsafe
 
 in
 auto

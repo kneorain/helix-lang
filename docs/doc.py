@@ -1,7 +1,7 @@
-from rich.markdown import Markdown
-from rich.console import Console
-from rich.style import Style
-from globals import HelixSyntaxHighlightingLexer, lexer, highlight_code, formatter
+from   rich.markdown import Markdown
+from   rich.console import Console
+from   rich.style import Style
+import src.core.base as base
 
 console = Console()
 
@@ -38,7 +38,7 @@ def doc(doc_id: str):
     from rich.syntax import Syntax
     
     
-    md = Panel(Markdown(md_file, inline_code_lexer=lexer, style=special_style, inline_code_theme="ansi_dark", code_theme="ansi_dark"), title=doc_id, border_style="yellow")
+    md = Panel(Markdown(md_file, inline_code_lexer=base.lexer, style=special_style, inline_code_theme="ansi_dark", code_theme="ansi_dark"), title=doc_id, border_style="yellow")
     # terminal width should always be greater then 40 but if it is then minus the width by 50
     if terminal_width > 70:
         console.print(md, width=100)
