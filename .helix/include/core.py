@@ -12,7 +12,7 @@ from enum import Enum
 from functools import wraps
 import inspect
 from threading import Thread
-from types import MappingProxyType as FastMap, NoneType, FunctionType, UnionType
+from types import MappingProxyType as FastMap, NoneType, FunctionType, UnionType, BuiltinFunctionType
 from beartype.typing import Any, Callable, Literal, NoReturn, Self
 from weakref import ref
 
@@ -20,7 +20,7 @@ from multimethod import DispatchError, multimeta
 from multimethod import subtype
 
 from typing import Type, TypeVar, Optional
-from core.panic import panic, standalone_tokenize_line as _H_tokenize_line__
+from src.panic import panic, standalone_tokenize_line as _H_tokenize_line__
 from time import sleep
 #from include.c_cpp import __import_c__
 
@@ -234,10 +234,29 @@ class C_For:
         )
         return self
 
-def hx__async(func):
-    def wrapper(*args, **kwargs):
-        Thread(target=func, args=args, kwargs=kwargs, daemon=True).start()
+from beartype import beartype
 
+def hx__async(func: Callable) -> Callable:
+    def run_thread(func, args, kwargs):
+        func._result = func(*args, **kwargs)
+        func._thread_started = False
+
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        if not hasattr(func, "_thread_started") or not func._thread_started:
+            func._thread = Thread(target=run_thread, args=(func, args, kwargs))
+            func._thread_started = True
+            func._thread.start()
+        return func
+
+    def join(timeout=None):
+        if hasattr(func, "_thread"):
+            func._thread.join(timeout)
+            return getattr(func, "_result", None)
+        return None
+
+    func.join = join
+    wrapper.join = join
     return wrapper
 
 class hx_void(void): pass
@@ -710,7 +729,9 @@ class hx_bytes(bytes, metaclass=multimeta):
     def __bytes__(self) -> bytes:
         return self.__value__
 
-class hx_tuple[T](tuple, metaclass=multimeta):
+T = TypeVar("T")
+
+class hx_tuple(tuple, metaclass=multimeta):
     __value__: tuple | hx_tuple | None = ()
     __generic__: subtype = None
     
@@ -792,7 +813,7 @@ class hx_tuple[T](tuple, metaclass=multimeta):
         return self.__value__[-1]
 
 # Derived Types
-class hx_list[T](list, metaclass=multimeta):
+class hx_list(list, metaclass=multimeta):
     __value__: list = None
     __generic__: subtype = None
     __initialized__ = False
@@ -821,7 +842,7 @@ class hx_list[T](list, metaclass=multimeta):
                 
     def __set_generic__(self, __o: str) -> Self:
         exec(
-            f"self.__generic__ = subtype(list{__o} | {((" | ".join(["list[" + _ + "]" for _ in [replace_primitives[_] for _ in replace_primitives if _ in __o]])) + " | ") if " | ".join(["list[" + _ + "]" for _ in [replace_primitives[_] for _ in replace_primitives if _ in __o] if _]) else ""} void {'| list' if not __o.endswith(']') else ''})"
+            f"self.__generic__ = subtype(list{__o} | {((' | '.join(['list[' + _ + ']' for _ in [replace_primitives[_] for _ in replace_primitives if _ in __o]])) + ' | ') if ' | '.join(['list[' + _ + ']' for _ in [replace_primitives[_] for _ in replace_primitives if _ in __o] if _]) else ''} void {'| list' if not __o.endswith(']') else ''})"
         )
         if self.__initialized__:
             panic(
@@ -860,7 +881,7 @@ class hx_list[T](list, metaclass=multimeta):
         self.__check_if_initialed()
         return len(self.__value__)
 
-class hx_array[T](array, metaclass=multimeta):
+class hx_array(array, metaclass=multimeta):
     __value__: list = None
     __generic__: subtype = None
     __initialized__ = False
@@ -889,7 +910,7 @@ class hx_array[T](array, metaclass=multimeta):
                 
     def __set_generic__(self, __o: str) -> Self:
         exec(
-            f"self.__generic__ = subtype(list{__o} | {((" | ".join(["list[" + _ + "]" for _ in [replace_primitives[_] for _ in replace_primitives if _ in __o]])) + " | ") if " | ".join(["array[" + _ + "]" for _ in [replace_primitives[_] for _ in replace_primitives if _ in __o] if _]) else ""} void {'| array' if not __o.endswith(']') else ''})"
+            f"self.__generic__ = subtype(list{__o} | {((' | '.join(['list[' + _ + ']' for _ in [replace_primitives[_] for _ in replace_primitives if _ in __o]])) + ' | ') if ' | '.join(['array[' + _ + ']' for _ in [replace_primitives[_] for _ in replace_primitives if _ in __o] if _]) else ''} void {'| array' if not __o.endswith(']') else ''})"
         )
         if self.__initialized__:
             panic(
@@ -927,7 +948,7 @@ class hx_array[T](array, metaclass=multimeta):
         self.__check_if_initialed()
         return len(self.__value__)
 
-class hx_set[T](set, metaclass=multimeta):
+class hx_set(set, metaclass=multimeta):
     __value__: list = None
     __generic__: subtype = None
     __initialized__ = False
@@ -956,7 +977,7 @@ class hx_set[T](set, metaclass=multimeta):
                 
     def __set_generic__(self, __o: str) -> Self:
         exec(
-            f"self.__generic__ = subtype(set{__o} | {((" | ".join(["set[" + _ + "]" for _ in [replace_primitives[_] for _ in replace_primitives if _ in __o]])) + " | ") if " | ".join(["set[" + _ + "]" for _ in [replace_primitives[_] for _ in replace_primitives if _ in __o] if _]) else ""} void {'| set' if not __o.endswith(']') else ''})"
+            f"self.__generic__ = subtype(set{__o} | {((' | '.join(['set[' + _ + ']' for _ in [replace_primitives[_] for _ in replace_primitives if _ in __o]])) + ' | ') if ' | '.join(['set[' + _ + ']' for _ in [replace_primitives[_] for _ in replace_primitives if _ in __o] if _]) else ''} void {'| set' if not __o.endswith(']') else ''})"
         )
         if self.__initialized__:
             panic(
@@ -997,7 +1018,7 @@ class hx_set[T](set, metaclass=multimeta):
     
     
     
-class hx_map[T](dict, metaclass=multimeta):
+class hx_map(dict, metaclass=multimeta):
     __value__: list = None
     __generic__: subtype = None
     __initialized__ = False

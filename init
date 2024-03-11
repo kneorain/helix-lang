@@ -5,17 +5,24 @@ command_exists () {
     type "$1" &> /dev/null ;
 }
 
-# Clone the repository
-git clone https://github.com/kneorain/helix
-cd helix/helix-lang
+# make sure python version is 3.12 or higher
 
 # Python execution logic
-if command_exists python3 ; then
-    PYTHON_CMD=python3
-elif command_exists python ; then
+if command_exists python ; then
     PYTHON_CMD=python
+elif command_exists python3 ; then
+    PYTHON_CMD=python3
 else
     echo "Python is not installed or not found in PATH"
+    exit 1
+fi
+
+echo "Using Python command: $PYTHON_CMD"
+
+version = $("$PYTHON_CMD --version")
+
+if [[ "$version" < "3.12" ]]; then
+    echo "Python version is too low. Please install Python 3.12 or higher."
     exit 1
 fi
 
