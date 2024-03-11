@@ -1,0 +1,35 @@
+#!/bin/bash
+
+# Function to check if a command exists
+command_exists () {
+    type "$1" &> /dev/null ;
+}
+
+# Clone the repository
+git clone https://github.com/kneorain/helix
+cd helix/helix-lang
+
+# Python execution logic
+if command_exists python3 ; then
+    PYTHON_CMD=python3
+elif command_exists python ; then
+    PYTHON_CMD=python
+else
+    echo "Python is not installed or not found in PATH"
+    exit 1
+fi
+
+# Creating a virtual environment
+$PYTHON_CMD -m venv .venv
+
+# Activating the virtual environment and installing requirements
+# Different commands for Windows and Unix-like systems
+if [[ "$OSTYPE" == "msys"* ]] || [[ "$OSTYPE" == "win32"* ]]; then
+    .venv\Scripts\activate
+else
+    source .venv/bin/activate
+fi
+
+pip install -r requirements.txt
+
+echo "Setup completed successfully."

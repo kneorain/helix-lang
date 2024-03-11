@@ -1,0 +1,33 @@
+<program> ::= { <class_definition> | <function_definition> | <statement> }
+<class_definition> ::= "class" <identifier> { "::" <identifier> } "{" { <class_member> } "}"
+<class_member> ::= <function_definition> | <variable_declaration>
+<function_definition> ::= ( "private" | "public" | "protected" | "async" | "final" | "static" | "unsafe" )? "fn" <identifier> "(" <parameters> ")" ( "->" <type> )? "{" <function_body> "}"
+<parameters> ::= [ <parameter> { "," <parameter> } ]
+<parameter> ::= <identifier> ":" <type>
+<function_body> ::= { <statement> | <return_statement> }
+<statement> ::= <variable_declaration> | <expression> | <control_flow> | <loop> | <import_statement> | <module_management>
+<variable_declaration> ::= ( "let" | "const" | "var" ) <identifier> ":" <type> ( "=" <expression> )? ";"
+<type> ::= <identifier> | <primitive_type> | <composite_type>
+<primitive_type> ::= "int" | "string" | "float" | "double" | "bool" | "char" | "void"
+<composite_type> ::= "list" "<" <type> ">" | "map" "<" <type> "," <type> ">"
+<control_flow> ::= "if" <expression> "{" <block> "}" { "elif" <expression> "{" <block> "}" } [ "else" "{" <block> "}" ]
+<loop> ::= "while" <expression> "{" <block> "}" | "for" "(" <variable_declaration> ";" <expression> ";" <expression> ")" "{" <block> "}"
+<block> ::= { <statement> }
+<expression> ::= <identifier> | <literal> | <binary_expression> | <function_call> | <member_access> | <static_call>
+<return_statement> ::= "return" <expression> ";"
+<import_statement> ::= "import" <identifier> ";" | "include" <string_literal> ";" | "from" <identifier> "include" "(" { <identifier> } ")" ";"
+<module_management> ::= <import_statement>
+<binary_expression> ::= <expression> <operator> <expression>
+<operator> ::= "+" | "-" | "*" | "/" | "==" | "!=" | "<" | ">" | "<=" | ">=" | "&&" | "||"
+<function_call> ::= <identifier> "(" { <expression> } ")"
+<member_access> ::= <expression> "." <identifier>
+<static_call> ::= <identifier> "::" <identifier> "(" { <expression> } ")"
+<literal> ::= <numeric_literal> | <string_literal> | <boolean_literal>
+<numeric_literal> ::= <integer_literal> | <float_literal>
+<integer_literal> ::= [ "-" ] <digit> { <digit> }
+<float_literal> ::= [ "-" ] <digit> { <digit> } "." { <digit> }
+<string_literal> ::= '"' <char> { <char> } '"'
+<boolean_literal> ::= "true" | "false"
+<identifier> ::= <letter> { <letter> | <digit> }
+<digit> ::= "0" | "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9"
+<letter> ::= "a" | "b" | "c" | "d" | "e" | "f" | "g" | "h" | "i" | "j" | "k" | "l" | "m" | "n" | "o" | "p" | "q" | "r" | "s" | "t" | "u" | "v" | "w" | "x" | "y" | "z" | "A" | "B" | "C" | "D" | "E" | "F" | "G" | "H" | "I" | "J" | "K" | "L" | "M" | "N" | "O" | "P" | "Q" | "R" | "S" | "T" | "U" | "V" | "W" | "X" | "Y" | "Z"
