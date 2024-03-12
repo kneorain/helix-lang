@@ -2,15 +2,14 @@
 # -*- coding: utf-8 -*-
 from __future__ import annotations
 
-import tracemalloc
-import atexit
-# q: what is the purpose of atexit?
-# a: atexit is a module that provides a simple interface to register functions to be called when a program is closing down.
+#import tracemalloc
+#import atexit
 
-tracemalloc.start()
-atexit.register(tracemalloc.stop)
+#tracemalloc.start()
+#atexit.register(tracemalloc.stop)
 
 import gc
+import atexit
 gc.disable() # disable garbage collection for performance
 
 import src.core.base as base
@@ -38,6 +37,7 @@ from src.core.imports import (
     Transpiler,
     FileMode, format_file_contents,
     color_print as print,
+    framework,
 )
 
 __version__: str = "0.1.0-alpha.a"
@@ -338,16 +338,6 @@ class ThreadedProcess:
 
     def __repr__(self) -> str:
         return self.__str__()
-
-
-# @ThreadedProcess
-# def test() -> None:
-#    for i in range(10):
-#        print(i)
-#        sleep(1/3)
-
-# test()
-
 
 class ArgParser:
     """
@@ -775,7 +765,7 @@ class DisabledKeyboardInterrupt:
             self.old_handler(*self.signal_received)  # type: ignore
 
 
-class Helix:
+class Helix(framework.HelixLanguage):
     """
     Main class for the Helix programming language interpreter and compiler.
 
@@ -1012,6 +1002,11 @@ class Helix:
                 style="bold",
                 border=True,
             )
+        
+        gc.collect(0)
+        gc.collect(1)
+        gc.collect(2)
+        
 
     def compile_file(
         self, file: Optional[str] = None
@@ -1534,23 +1529,31 @@ if __name__ == "__main__":
 
         return helix_import
 
-
-if __name__ == "__main__":
-    try:
-        Helix.factory(
-            os.path.join(".helix", "config.toml"),
-            profile=True,
-        )
-        #Helix.__hook_import__("syntax/test.hlx")
-        # from test_hlx import subtract
-        # subtract(5, 3)
-        # Helix.REPL()
-    finally:
-        if base.POOL.is_alive:
-            base.POOL.close()
-        
-        print("Memory Usage: ", tracemalloc.get_traced_memory()[1] / 10**6, "MB")
-        
+    def __del__(self) -> None:
         gc.collect(0)
         gc.collect(1)
         gc.collect(2)
+        
+def exit_func(*args: Any) -> None:
+    if base.POOL.is_alive:
+        base.POOL.close()
+    
+    #print("Memory Usage: ", tracemalloc.get_traced_memory()[1] / 10**6, "MB")
+    
+    gc.collect(0)
+    gc.collect(1)
+    gc.collect(2)
+
+atexit.register(exit_func)
+signal.signal(signal.SIGTERM, exit_func)
+
+if __name__ == "__main__":
+    Helix.factory(
+        os.path.join(".helix", "config.toml"),
+        profile=True,
+    )
+    #Helix.__hook_import__("syntax/test.hlx")
+    # from test_hlx import subtract
+    # subtract(5, 3)
+    # Helix.REPL()
+    

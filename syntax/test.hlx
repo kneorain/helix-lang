@@ -89,8 +89,10 @@ fn main(argv: list<string>) {
     print(add.join());
 
     do_something();
+    for (var i: int = 0; i < 10; i++) {
+        printf("doing something else eeeee: %d", i);
+    }
     do_something.join();
-    
     print("done");
     return 0;
 }

@@ -77,10 +77,7 @@ class Transpiler:
         self.ignore_main   = ignore_main
         self.root_scope.transpiler_instance = self
         
-        if base.USE_POOL:
-            base.POOL.map(self.__transpile, root_scope.children, chunksize=6)
-        else:
-            [self.__transpile(child) for child in root_scope.children]
+        [self.__transpile(child) for child in root_scope.children]
             
         self.__add_from_queue(root_scope)
             
