@@ -197,6 +197,42 @@ class void:
 DEFAULT_VALUE = void()
 
 
+#class C_For:
+#    def __init__(self, **kwargs):
+#        # Initialize loop variables
+#        self.loop_vars = kwargs
+#        # Extract condition and increment expressions
+#        self.condition = "True"
+#        self.increment = ""
+#        # Evaluate initial conditions
+#        [exec(f"{var} = {value}") for var, value in self.loop_vars.items()]
+#
+#    def __iter__(self):
+#        return self
+#
+#    def __next__(self):
+#        if not self.loop_condition_met:
+#            raise StopIteration
+#        current_values = tuple(self.loop_vars.values())
+#        exec(self.increment, None, self.loop_vars)
+#        self.loop_condition_met = eval(self.condition, None, self.loop_vars)
+#        return current_values if len(current_values) > 1 else current_values[0]
+#
+#    def set_con(self, condition):
+#        self.condition = condition
+#        self.loop_condition_met = eval(self.condition, None, self.loop_vars)
+#        return self
+#
+#    def set_inc(self, increment):
+#        self.increment = (
+#            increment.replace("++", "+= 1")
+#            .replace("--", "-= 1")
+#            .replace("+*", "*= 1")
+#            .replace("-*", "*= -1")
+#            .replace("/-", "/ -1")
+#            .replace("/*", "*= 1")
+#        )
+#        return self
 class C_For:
     def __init__(self, **kwargs):
         # Initialize loop variables
@@ -206,16 +242,18 @@ class C_For:
         self.increment = ""
         # Evaluate initial conditions
         [exec(f"{var} = {value}") for var, value in self.loop_vars.items()]
+        self.loop_condition_met = eval(self.condition, None, self.loop_vars)
 
-    def __iter__(self):
+    async def __aiter__(self):
         return self
 
-    def __next__(self):
+    async def __anext__(self):
         if not self.loop_condition_met:
-            raise StopIteration
+            raise StopAsyncIteration
         current_values = tuple(self.loop_vars.values())
         exec(self.increment, None, self.loop_vars)
         self.loop_condition_met = eval(self.condition, None, self.loop_vars)
+        await asyncio.sleep(0)  # Yield control to allow other tasks to run
         return current_values if len(current_values) > 1 else current_values[0]
 
     def set_con(self, condition):
@@ -233,6 +271,7 @@ class C_For:
             .replace("/*", "*= 1")
         )
         return self
+
 
 from beartype import beartype
 
