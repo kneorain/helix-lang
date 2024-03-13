@@ -86,13 +86,14 @@ fn main(argv: list<string>) {
     let a: int = "12";
     
     add(123, 123);
-    print(add.join());
+    print(add.await()); ~~ TODO: change to await
 
     do_something();
     for (var i: int = 0; i < 10; i++) {
         printf("doing something else eeeee: %d", i);
     }
-    do_something.join();
+    
+    print(do_something.await());
     print("done");
     return 0;
 }

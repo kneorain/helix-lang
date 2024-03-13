@@ -37,7 +37,9 @@ class Token:
 
 
     @property
-    def token(self) -> list[str] | str:
+    def token(self) -> str:
+        if isinstance(self.__processed_line, list):
+            raise ValueError("Token is a list of strings, use the line property to get the list of strings")
         return self.__processed_line
 
     @token.setter

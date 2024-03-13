@@ -2,14 +2,16 @@ import src.core.base as base
 from src.core.imports import (
     Processed_Line,
     Token_List,
+    Token,
     map,
     Scope,
     panic,
     _class,
     INDENT_CHAR,
+    Optional
 )
 
-replace_function_name = map({
+replace_function_name: map[str, str] = map({
     "=="  : "__eq__",
     "//"  : "__floordiv__",
     ">="  : "__ge__",
@@ -44,19 +46,21 @@ replace_function_name = map({
     "@"   : "__matmul__",
 })
 
-def extract_variables(ast_line: Token_List, root_scope: Scope) -> dict[str, dict[str, str]]:
+def extract_variables(ast_line: Token_List, root_scope: Scope) -> dict[Optional[str], (
+        Optional[list[str]] | Optional[str] | dict[str, dict[str, str]]
+    )]:
     allowed_untyped = (
         "self",
         "cls",
         "super"
     )
     variables: dict[str, dict[str, str]] = {}
-    # remove the fn keyword
-    line = ast_line.line[1:]
-    
-    line = line[1:]
-
+    line = ast_line.line[2:] # remove the fn keyword and the function name
     in_param = False
+    in_generic: bool = False
+    generic: str = ""
+    generic_count: int = 0
+
     if line[0].token == "(" and line[1].token == ")":
         if line[2].token == "->":
             # no parameters, just a return type
@@ -74,10 +78,6 @@ def extract_variables(ast_line: Token_List, root_scope: Scope) -> dict[str, dict
     else:
         panic(SyntaxError(f"<Hex(02.E3)>: Expected an open parenthesis after the {root_scope.get_keyword('FUNCTION')} keyword"), "(", file=ast_line.file, line_no=ast_line.find_line_number(root_scope.get_keyword('FUNCTION')))
     
-    in_generic: bool = False
-    generic: str = ""
-    generic_count: int = 0
-
     if in_param:
         while line:
             if line[0].token == ")":
@@ -133,26 +133,44 @@ def extract_variables(ast_line: Token_List, root_scope: Scope) -> dict[str, dict
                         continue
                     panic(SyntaxError(f"<Hex(02.E3)>: Expected a colon and a type after the variable name"), line[0].token, file=ast_line.file, line_no=ast_line.find_line_number(root_scope.get_keyword('FUNCTION')))
                     
-    return variables
+    return variables # type: ignore
+
+class ExtractFuncParameters:
+    allowed_untyped = ("self", "cls", "super")
+
+    def __init__(self, ast_line: Token_List, root_scope: Scope):
+        self.generic:       str     = ""
+        self.in_param:      bool    = False
+        self.generic_count: int     = 0
+        self.in_generic:    bool    = False
+        self.root_scope:    Scope   = root_scope
+        self.ast_line:      Token_List      = ast_line
+        self.return_type:   Optional[str]   = None
+        self.line:          list[Token]     = ast_line.line[2:]
+        self.variables:     dict[str, dict[str, str]]           = {}
+        self.params:        Optional[dict[str, dict[str, str]]] = None
+
+    def parse(self) -> dict[Optional[str], Optional[list[str]] | Optional[str] | dict[str, dict[str, str]]]:
+        ...
     
+    def handle_no_parameters(self) -> dict[Optional[str], dict[str, dict[str, str]]]:
+        ...
+    
+    def handle_closing_parenthesis(self) -> dict[Optional[str], dict[str, dict[str, str]]]:
+        ...
+    def process_parameter(self, in_generic: bool):
+        ...
+
+
 
 def process_modifiers(ast_list: Token_List, root_scope: Scope) -> list[str]:
-    # all modifiers are optional
-    # all allowed modifiers:
-    #   - async
-    #   - static
-    #   - public
-    #   - private
-    #   - protected
-    #   - final
-    #   - virtual
     allowed_modifiers = (
         root_scope.get_keyword('ASYNC'),
         root_scope.get_keyword('PRIVATE'),
         root_scope.get_keyword("PROTECTED"),
         root_scope.get_keyword("FINAL"),
         root_scope.get_keyword('UNSAFE'),
-        root_scope.get_keyword('STATIC')
+        root_scope.get_keyword('STATIC') # TODO: add virtual
     )
 
     modifiers = []
@@ -220,11 +238,15 @@ def _function(ast_list: Token_List, current_scope: Scope, parent_scope: Scope, r
     if not variables["params"]:
         output += ")"
     else:
+        if not isinstance(variables["params"], dict):
+            raise ValueError("The variable type is not a dictionary")
+        
         for k, v in variables["params"].items():
             if v["type"] == "void":
                 panic(SyntaxError(f"<Hex(02.E3)>: The type void is not allowed for variables"), file=ast_list.file, line_no=ast_list.find_line_number(k))
             output += f"{k}: {base.replace_primitive(v['type'], 0)}, "
             current_scope.variables[k] = v["type"]
+        
         output = output[:-2] + ")"
     
     if ast_list.line[-1].token == "<\\r1>" and ast_list.indent_level == 0:
@@ -244,6 +266,7 @@ def _function(ast_list: Token_List, current_scope: Scope, parent_scope: Scope, r
     #        else:
     #            output = (f"\n{INDENT_CHAR*ast_list.indent_level}@hx__multi_method" + output)
     # if the type of parent_sope is an abstract class
+    
     if any([i == root_scope.get_keyword("ABSTRACT") for i in parent_scope.name]):
         output = f"\n{INDENT_CHAR*ast_list.indent_level}@hx__abstract_method" + output
     # if the type of parent_sope is an interface
@@ -294,4 +317,4 @@ def _function(ast_list: Token_List, current_scope: Scope, parent_scope: Scope, r
         for _, decorator in enumerate(reversed(decorators)):
             output = f"{INDENT_CHAR*ast_list.indent_level}{decorator}\n{INDENT_CHAR*ast_list.indent_level}{output.strip()}"
 
-    return Processed_Line((f'\n{INDENT_CHAR*ast_list.indent_level}@overload_with_type_check' if not async_ else '\n') + output, ast_list)
+    return Processed_Line((f'\n{INDENT_CHAR*ast_list.indent_level}@overload_with_type_check\n' if not async_ else '\n') + output, ast_list)

@@ -368,6 +368,7 @@ EARLY_REPLACEMENTS: map[str, str] = map(
         "false": "False",
         "null": "None",
         "none": "None",
+        "await": "_await",
         "&&": "and",
         "||": "or",
         "!": "not",
