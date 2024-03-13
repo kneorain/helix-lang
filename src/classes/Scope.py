@@ -15,7 +15,7 @@ class Scope:
     children: list[Token_List]
     indent_level:int
     
-    variables: dict[str, dict[str, Any]]
+    variables: dict[str, str]
     functions: dict[str, dict[str, Any]]
     classes:   dict[str, dict[str, Any]]
     operator_functions: dict[str, dict[str, Any]]
