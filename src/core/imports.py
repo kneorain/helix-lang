@@ -46,6 +46,7 @@ from typing import (
     Iterator,
     Sequence,
     Protocol,
+    NoReturn,
 )
 
 from concurrent.futures import (

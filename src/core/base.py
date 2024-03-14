@@ -1,3 +1,4 @@
+from __future__ import annotations
 from src.core.imports import (
     re,
     map,
@@ -9,6 +10,7 @@ from src.core.imports import (
     Token_List,
     WorkerPool,
     Processed_Line,
+    NoReturn,
 
     _unless,
     _for,
@@ -19,6 +21,7 @@ from src.core.imports import (
     _include,
     file_cache,
     
+    panic,
 )
 
 
@@ -149,7 +152,7 @@ class ERROR_CODES(enum.Enum):
     )
     SYNTAX_INVALID_SYNTAX = (
         "HEX-101",
-        "General syntax error at {location}",
+        "Syntax error: {location}",
         SyntaxError,
     )
     SYNTAX_MISSING_SEMICOLON = (
@@ -172,13 +175,19 @@ class ERROR_CODES(enum.Enum):
         "Unsupported syntax in Helix: {syntax}",
         SyntaxError,
     )
-
+    SYNTAX_MISSING_EXCEPTED_TOKEN = (
+        "HEX-106",
+        "Missing expected token: {token}",
+        SyntaxError,
+    )
+    
     # Type and Declaration Errors
     TYPE_INVALID_CAST = (
         "HEX-200",
         "Invalid type cast: {details}",
         TypeError,
     )
+    
     TYPE_UNDECLARED_VARIABLE = (
         "HEX-201",
         "Use of undeclared variable: {variable}",
@@ -194,7 +203,17 @@ class ERROR_CODES(enum.Enum):
         "Redeclaration of a variable or function: {identifier}",
         SyntaxError,
     )
-
+    TYPE_UNDECLARED = (
+        "HEX-204",
+        "Type for {identifier} is undeclared",
+        TypeError,
+    )
+    TYPE_INVALID_TYPE_IN_CONTEXT = (
+        "HEX-205",
+        "Invalid type used in this location: {type}",
+        TypeError,
+    )
+    
     # Semantic Errors
     SEMANTIC_UNRESOLVED_REFERENCE = (
         "HEX-300",
@@ -307,20 +326,86 @@ class ERROR_CODES(enum.Enum):
         RuntimeError,
     )
 
-    def __init__(self, code, template, py_exception):
+    # Specific Errors
+    OPERATOR_OVERLOADING_OUTSIDE_CLASS = (
+        "HEX-900",
+        "Operator cannot be overloaded outside a class",
+        SyntaxError,
+    )
+    FUNCTION_STATIC_OUTSIDE_CLASS = (
+        "HEX-901",
+        "Static function cannot be declared outside a class",
+        SyntaxError,
+    )
+    FUNCTION_FINAL_OUTSIDE_CLASS = (
+        "HEX-902",
+        "Final function cannot be declared outside a class",
+        SyntaxError,
+    )
+    FUNCTION_INVALID_MODIFIERS = (
+        "HEX-903",
+        "Invalid modifiers for function: {modifiers}",
+        SyntaxError,
+    )
+    def __init__(self, code: str, template: str, py_exception: type[BaseException]) -> None:
         self.code = code
         self.template = template
         self.py_exception = py_exception
+        self.formatted: bool = False
 
-    def format_error(self, **kwargs):
+    def format(self, *args, **kwargs) -> ERROR_CODES:
         """Format the error message with provided arguments."""
-        formatted_message = self.template.format(**kwargs)
-        return f"{self.code} - {formatted_message}"
+        if args:
+            pattern = r"\{([^{}]*)\}"
+            vars = re.findall(pattern, self.template)
+            raise ValueError(
+                "\u001b[31m\n"
+                f"Error message '{self.template}' has {len(vars)} variables, but {len(args)} were provided.\n"
+                "did i mean\n\t" + ", ".join([f"{var}={arg}" for var, arg in zip(vars, args)]) +
+                "\u001b[0m"
+            )
 
-    def raise_as_python_exception(self, **kwargs):
-        """Raise the corresponding Python exception with the formatted error message."""
-        raise self.py_exception(self.format_error(**kwargs))
+        _prefix = kwargs.pop("_prefix", False)
+        if not _prefix:
+            kwargs = {key: ('\"' + str(value) + '\"') if value is not None else '' for key, value in kwargs.items()}
+        else:
+            # add the prefix to the first key
+            kwargs[list(kwargs.keys())[0]] = _prefix + kwargs[list(kwargs.keys())[0]]
+            kwargs = {key: (str(value)) if value is not None else '' for key, value in kwargs.items()}
+            
+        try:
+            formatted_message = self.template.format(**kwargs)
+        except KeyError:
+            pattern = r"\{([^{}]*)\}"
+            vars = re.findall(pattern, self.template)
+            if len(vars) == len(kwargs):
+                raise ValueError(
+                    "\u001b[31m\n"
+                    f"Error message '{self.template}' has {len(vars)} variables, but {len(kwargs)} were provided.\n"
+                    "did i mean\n\t" + ", ".join([f"{var}={arg}" for var, arg in zip(vars, kwargs.values())]) +
+                    "\u001b[0m"
+                )
+            raise ValueError(
+                "\u001b[31m\n"
+                f"Error message '{self.template}' has {len(vars)} variables, but {len(kwargs)} were provided.\n"
+                "did i mean\n\t" + ", ".join([f"{var}={arg}" for var, arg in zip(vars, kwargs.values())]) +
+                "\u001b[0m"
+            )
+        
+        self.template = formatted_message
+        self.formatted = True
+        return self
 
+    def panic(self, *args, **kwargs) -> NoReturn:
+        if not self.formatted and ('{' in self.template and '}' in self.template):
+            raise ValueError(
+                "Error message not formatted before panic",
+                "requirements: " + ", ".join(re.findall(r"\{([^{}]*)\}", self.template))
+            )
+        
+        panic(self.py_exception(self.template), *args, **kwargs, _code = self.code)
+        
+    
 IGNORE_TYPES_MAP: tuple[str, ...] = ("Callable",)
 
 PRIMITIVES_MAP: map[str, tuple[str, str]] = map(
