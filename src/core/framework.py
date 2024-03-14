@@ -8,8 +8,18 @@ from src.core.imports import (
     Optional,
     Processed_Line,
     Scope,
-    threading
+    threading,
+    Token_List,
 )
+
+class Translate(ABC):
+    @abstractmethod
+    def __init__(self, ast_list: Token_List, current_scope: Scope, parent_scope: Scope, root_scope: Scope):
+        pass
+    @abstractmethod
+    def parse(self) -> Processed_Line:
+        pass
+
 
 class Hashing(ABC):
     @abstractmethod

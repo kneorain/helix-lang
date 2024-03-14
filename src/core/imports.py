@@ -100,6 +100,7 @@ from src.classes.Token import (
 from   src.classes.Scope          import Scope
 from   src.classes.Transpiler     import Transpiler
 
+import src.core.framework         as     framework
 
 from src.functions._class       import _class
 from src.functions._for         import _for
@@ -109,5 +110,3 @@ from src.functions._let         import _let
 from src.functions._match       import _match
 from src.functions._unless      import _unless
 from src.functions._unmarked    import _unmarked
-
-import src.core.framework       as     framework

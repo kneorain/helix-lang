@@ -10,3 +10,4 @@ black
 beartype
 multimethod
 mypy
+types-toml
