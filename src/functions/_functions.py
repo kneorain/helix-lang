@@ -8,6 +8,7 @@ from src.core.imports import (
     _class,
     INDENT_CHAR,
     Optional,
+    framework,
 )
 
 replace_function_name: map[str, str] = map(
@@ -47,7 +48,7 @@ replace_function_name: map[str, str] = map(
 )
 
 
-class ExtractTypedParamsFromFunc:
+class ExtractTypedParamsFromFunc(framework.Translate):
     allowed_untyped = ("self", "cls", "super")
 
     def __init__(
@@ -265,46 +266,7 @@ class ExtractTypedParamsFromFunc:
             return {"return_type": None, "params": {}}
 
 
-def process_modifiers(
-    ast_list: Token_List, root_scope: Scope
-) -> list[str]:
-    allowed_modifiers = (
-        root_scope.get_keyword("ASYNC"),
-        root_scope.get_keyword("PRIVATE"),
-        root_scope.get_keyword("PROTECTED"),
-        root_scope.get_keyword("FINAL"),
-        root_scope.get_keyword("UNSAFE"),
-        root_scope.get_keyword(
-            "STATIC"
-        ),  # TODO: add virtual/kernel
-    )
-
-    modifiers = []
-    index = 0
-
-    if ast_list.line[0].token != root_scope.get_keyword(
-        "FUNCTION"
-    ):
-        line = ast_list.line.copy()
-        while line:
-            index += 1
-            if line[0].token in allowed_modifiers:
-                modifiers.append(line[0].token)
-                line = line[1:]
-            else:
-                if line[0].token != root_scope.get_keyword(
-                    "FUNCTION"
-                ):
-                    return modifiers
-                else:
-                    break
-        ast_list.line = ast_list.line[index - 1 :]
-        return modifiers
-    else:
-        return modifiers
-
-
-class Function:
+class Function(framework.Translate):
     def __init__(
         self,
         ast_list: Token_List,
@@ -331,6 +293,7 @@ class Function:
         self.variables: dict[
             str, str | dict[str, dict[str, str]] | None
         ] = {}
+        
         self.name: str = ""
         self.output: str = ""
 
