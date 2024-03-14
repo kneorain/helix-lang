@@ -80,6 +80,9 @@ class C_cout {
     fn <<(self, a: string) {
         print(a);
     }
+    fn subtract() {
+        ...
+    };
 }
 
 fn main(argv: list<string>) {
@@ -104,6 +107,7 @@ async fn add(a: int, b: int) -> int {
 }
 
 private fn subtract(a: int, b: int) -> int {
+    
     return a - b
 }
 

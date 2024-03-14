@@ -90,10 +90,6 @@ def normalize_tokens(_lines: tuple[Token, ...], path: str) -> tuple[Token_List, 
 
     frozenset((process_line(_) for _ in enumerate(lines)))
 
-    if indent_level > 0:
-        if stack[-1].indent_level == 0:
-            stack[-1] = previous_element
-        panic(SyntaxError(f"<Hex(01.E20)>: Expected an indent: level of 0, but got {indent_level}"), "{", file=path, line_no=stack[-1].line_number)
     
     def process_for_loops(index: int) -> None:
         nonlocal in_for_loop, lines
@@ -112,6 +108,13 @@ def normalize_tokens(_lines: tuple[Token, ...], path: str) -> tuple[Token_List, 
 
     lines.insert(0, Token(lines[0].original_line, "<\\t:0>", lines[0].line_number, 0))
 
+    broken_syntax  = False
+    if indent_level > 0:
+        if stack[-1].indent_level == 0:
+            stack[-1] = previous_element
+        broken_syntax = True
+        #panic(SyntaxError(f"<Hex(01.E20)>: Expected an indent: level of 0, but got {indent_level}"), "{", file=path, line_no=stack[-1].line_number)
+    
     indent_level = 0
     def process_indent_level(ast_token: Token):
         nonlocal indent_level, lines, current_line, final_lines
@@ -131,5 +134,23 @@ def normalize_tokens(_lines: tuple[Token, ...], path: str) -> tuple[Token_List, 
     if current_line:
         for i in current_line: i.indent_level = indent_level
         final_lines.append(current_line)
+        
+    if broken_syntax:
+        line = None
+        for line in final_lines:
+            if not line: continue
+            for token in line:
+                if token.token in base.BODY_REQUIRED_KEYWORDS.keys():
+                    broken_syntax = False
+                    break
+            if not broken_syntax:
+                if line[-1].token != ":":
+                    base.ERROR_CODES.SYNTAX_MISSING_EXCEPTED_TOKEN.format(token="{}").panic(
+                        file=path,
+                        line_no=line[-1].line_number
+                    )
+                broken_syntax = True
+        else:
+            base.ERROR_CODES.SYNTAX_UNBALANCED_PARENTHESIS.panic("{", file=path, line_no=stack[-1].line_number)
 
     return tuple(Token_List(_, _[0].indent_level, path) for _ in final_lines if _)
