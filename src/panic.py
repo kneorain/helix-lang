@@ -245,7 +245,7 @@ def s_u2(line: str | list) -> str:
 
 def panic(
     __error: type[BaseException] | BaseException | Exception,
-    *_mark: tuple[Any] | str,
+    *_mark: Any | str,
     file: str = "",
     line_no: int = 0,
     no_lines: bool = False,

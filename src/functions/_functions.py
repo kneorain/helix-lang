@@ -13,37 +13,50 @@ from src.core.imports import (
 
 replace_function_name: map[str, str] = map(
     {
-        "==": "__eq__",
-        "//": "__floordiv__",
-        ">=": "__ge__",
-        "<=": "__le__",
-        "<<": "__lshift__",
-        "!=": "__ne__",
-        "**": "__pow__",
-        ">>": "__rshift__",
-        "%": "__mod__",
-        "*": "__rmul__",
-        "&": "__and__",
-        "-": "__neg__",
-        "~": "__invert__",
-        ">": "__gt__",
-        "<": "__lt__",
-        "|": "__or__",
-        "-": "__sub__",
-        "/": "__truediv__",
-        "^": "__xor__",
-        "@": "__matmul__",
-        "r//": "__rfloordiv__",
-        "r**": "__rpow__",
-        "r%": "__rmod__",
-        "r*": "__mul__",
-        "r+": "__radd__",
-        "r+": "__add__",
-        "r|": "__ror__",
-        "r&": "__rand__",
-        "r-": "__rsub__",
-        "r/": "__rtruediv__",
-        "r^": "__rxor__",
+        "=="    : "__eq__",
+        "!="    : "__ne__",
+        "<"     : "__lt__",
+        "<="    : "__le__",
+        ">"     : "__gt__",
+        ">="    : "__ge__",
+        "+"     : "__add__",
+        "-"     : "__sub__",
+        "*"     : "__mul__",
+        "/"     : "__truediv__",
+        "//"    : "__floordiv__",
+        "%"     : "__mod__",
+        "**"    : "__pow__",
+        "<<"    : "__lshift__",
+        ">>"    : "__rshift__",
+        "&"     : "__and__",
+        "|"     : "__or__",
+        "^"     : "__xor__",
+        "~"     : "__invert__",
+        "@"     : "__matmul__",
+        "r+"    : "__radd__",
+        "r-"    : "__rsub__",
+        "r*"    : "__rmul__",
+        "r/"    : "__rtruediv__",
+        "r//"   : "__rfloordiv__",
+        "r%"    : "__rmod__",
+        "r**"   : "__rpow__",
+        "r<<"   : "__rlshift__",
+        "r>>"   : "__rrshift__",
+        "r&"    : "__rand__",
+        "r|"    : "__ror__",
+        "r^"    : "__rxor__",
+        "+="    : "__iadd__",
+        "-="    : "__isub__",
+        "*="    : "__imul__",
+        "/="    : "__itruediv__",
+        "//="   : "__ifloordiv__",
+        "%="    : "__imod__",
+        "**="   : "__ipow__",
+        "<<="   : "__ilshift__",
+        ">>="   : "__irshift__",
+        "&="    : "__iand__",
+        "|="    : "__ior__",
+        "^="    : "__ixor__",
     }
 )
 
@@ -306,7 +319,10 @@ class Function(framework.Translate):
         ].token != self.root_scope.get_keyword("FUNCTION"):
             self._handle_non_function()
 
-        self._process_variables()
+        self.variables = ExtractTypedParamsFromFunc(
+            self.ast_list, self.root_scope
+        ).parse()
+        self._process_name()
         self.add_to_output(
             f"def {self.name}("
             if self.name not in self.parent_scope.functions
@@ -462,10 +478,7 @@ class Function(framework.Translate):
                 (index - 1) :
             ]
 
-    def _process_variables(self) -> None:
-        self.variables = ExtractTypedParamsFromFunc(
-            self.ast_list, self.root_scope
-        ).parse()
+    def _process_name(self) -> None:
         self.name = self.ast_list.line[1].token
 
         if self.name in replace_function_name:

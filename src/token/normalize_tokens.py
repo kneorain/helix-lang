@@ -32,9 +32,9 @@ def normalize_tokens(_lines: tuple[Token, ...], path: str) -> tuple[Token_List, 
     stack:            list[Token]       = []
     current_line:     list[Token]       = []
     final_lines:      list[list[Token]] = []
-    firs_inst:        bool            = True
-    in_for_loop:      bool            = False
-    indent_level:     int             = 0
+    firs_inst:        bool              = True
+    in_for_loop:      bool              = False
+    indent_level:     int               = 0
     previous_element: Token             = Token("", "", 0, 0)
 
     # lines is expected to countian ['token', ...] for every token in the file NOT individual line
@@ -98,7 +98,7 @@ def normalize_tokens(_lines: tuple[Token, ...], path: str) -> tuple[Token_List, 
             in_for_loop = True
         if in_for_loop:
             if token == "<\\n>":
-                lines[index].line = ";"
+                lines[index].token = ";"
                 if lines[index + 1].line.startswith("<\\t:"):
                     lines[index + 1].line = ""
             elif token == ":" and (index + 1) < len(lines) and lines[index + 1].line == "<\\n>":
