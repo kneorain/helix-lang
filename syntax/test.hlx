@@ -16,7 +16,7 @@
 ~~ test_set();
 
 
-~*~
+~*
 import random
 import time
 import os
@@ -73,20 +73,24 @@ def main():
         os.system('cls' if os.name == 'nt' else 'clear')
         print(l, end='', flush=true)
         time.sleep(1 / 30)
-~*~
-
+ *~
 
 class C_cout {
+    fn new(self) {
+        ...
+    }
+
     fn <<(self, a: string) {
         print(a);
     }
-    fn subtract() {
-        ...
-    };
 }
 
 fn main(argv: list<string>) {
-    let a: int = "12";
+    let a: C_cout = C_cout();
+    let b: C_cout = a;
+    a << "hello world";
+    subtract(123, 123);
+    print(a_cursed_fucntion(23));
     
     add(123, 123);
     print(add.await()); ~~ TODO: change to await
@@ -98,6 +102,19 @@ fn main(argv: list<string>) {
     
     print(do_something.await());
     print("done");
+
+    ~~ instantiate a C_cout object
+    let cout: C_cout = C_cout();
+
+    cout << "hello world";
+
+    let a, b: int = 2;
+    print(a, b);
+
+    for (let i: int = 0, let j: int = 0; i < 10; i++, j += 3) {
+        printf("i: %d, j: %d", i, j);
+    }
+
     return 0;
 }
 
@@ -107,6 +124,32 @@ async fn add(a: int, b: int) -> int {
 }
 
 private fn subtract(a: int, b: int) -> int {
+    ~~ open("file.txt", "r") as file {
+    ~~     file.read();
+    ~~ }
+
+    let some_map: map<string, int> = { "a": 1, "b": 2, "c": 3 };
+    let some_list: list<int> = [1, 2, 3];
+    let some_set: set<int> = { 1, 2, 3 };
+    let some_tuple: tuple<int> = (1, 2, 3);
+    let some_string: string = "hello";
+    let some_char: char = 'a';
+    let some_bool: bool = true;
+    let some_float: float = 1.0 / 3.0;
+    let some_double: double = 1.0 / 3.0;
+    
+    let some_int: int = 2**9046;
+
+    print("map:", some_map);
+    print("list:", some_list);
+    print("set:", some_set);
+    print("tuple:", some_tuple);
+    print("string:", some_string);
+    print("char:", some_char);
+    print("bool:", some_bool);
+    print("float:", some_float);
+    print("double:", some_double);
+    print("int:", some_int);
     
     return a - b
 }
@@ -119,7 +162,9 @@ async fn do_something() {
 }
 
 
-fn a_cursed_fucntion(a: int)    -> FunctionType { printf("new something: %d", a); return a_cursed_fucntion }
+
+
+fn a_cursed_fucntion(a: int) -> FunctionType { return a_cursed_fucntion }
 
 ~*~
 fn test_int() {
@@ -155,7 +200,6 @@ fn test_string() {
     let b: string = "world";
     print("a + b is", a + b);
 }
-
 
 fn test_bool() {
     let a: bool = true;

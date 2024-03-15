@@ -235,6 +235,34 @@ class C_For:
             .replace("/*", "*= 1")
         )
         return self
+    
+def class_type_check_decorator(cls):
+    # Store the original __init__ for later use
+    dummy = lambda *args, **kwargs: None
+    original_init = getattr(cls, "__init__", dummy)
+
+    # Define a new __init__ that includes the type check
+    def new_init(self, *args, **kwargs):
+        if not isinstance(self, cls):
+            raise TypeError(f"Instance must be of type {cls.__name__}")
+        try:
+            if cls not in original_init.__annotations__.items():
+                # remove the calss from args
+                args = list(args)
+                for i in range(len(args)):
+                    if isinstance(args[i], cls):
+                        del args[i]
+                        break
+                args = tuple(args)
+                original_init(self, *args, **kwargs)
+            else:
+                original_init(self, *args, **kwargs)
+        except AttributeError:
+            raise TypeError(f"Can't instance class \"{cls.__name__}\", due to no 'new(self)' method present.");#"""REMOVE-STACK"""#
+
+    # Replace the class's __init__ with the new one
+    cls.__init__ = new_init
+    return cls
 
 
 def hx__async(func: Callable) -> Callable:

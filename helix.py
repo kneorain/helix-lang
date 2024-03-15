@@ -1298,13 +1298,10 @@ def exception_handler(exception_type: type[BaseException] | threading.ExceptHook
 
             if line_no == -1:
                 continue
-
-        # Check specific conditions to skip
-        if (
-            f"plum{{os.sep}}plum" in filename
-        ):
+        
+        if ";#\\"\\"\\"REMOVE-STACK\\"\\"\\"#" in linecache.getline(filename, line_no).strip():
             continue
-            
+        
         if (
             linecache.getline(filename, line_no-1).strip() == "def hx_internal_multi_method_decorator(*args, **kwargs):" # type: ignore
             and

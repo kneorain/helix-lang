@@ -1,5 +1,4 @@
 import src.core.base as base
-from src.functions._unmarked import _unmarked
 from src.core.imports import (
     Callable,
     Optional,
@@ -7,9 +6,7 @@ from src.core.imports import (
     Processed_Line,
     Token_List,
     color_print,
-    INDENT_CHAR,
 )
-
 
 class Transpiler:
     def __init__(self) -> None:
@@ -21,8 +18,8 @@ class Transpiler:
         self.transpiled:   list[Processed_Line] = []
         self.add_to_transpiled_queue: list[tuple[Processed_Line, Scope]] = []
     
-    def parse_non_keyword(self, line: Token_List, *_: Scope) -> str:
-        return _unmarked(line, self.scope_stack[-1] if len(self.scope_stack) >= 1 else self.root_scope, self.scope_stack[-2] if len(self.scope_stack) >= 2 else self.root_scope, self.root_scope, self.ignore_main)
+    def parse_non_keyword(self, line: Token_List, *_: Scope) -> Processed_Line:
+        return base._unmarked(line, self.scope_stack[-1] if len(self.scope_stack) >= 1 else self.root_scope, self.scope_stack[-2] if len(self.scope_stack) >= 2 else self.root_scope, self.root_scope, self.ignore_main)
     
     def get_match_function(self, child: Token_List) -> Callable[[Token_List, Optional[Scope], Optional[Scope], Scope], Processed_Line]:
         match = Scope.get_match(child, tuple(base.KEYWORDS.keys()))
