@@ -103,7 +103,8 @@ class Helix(framework.Helix):
 
     Methods
     -------
-    __init__(self, conf_file: Optional[str] = None, *args: str, profile: bool = False, import_: bool = False)
+    __init__(self, conf_file: Optional[str] = None, *args: str,
+             profile: bool = False, import_: bool = False)
         Initialize the Helix interpreter/compiler with configuration.
     factory(cls, config_file: str, *args: str, **kwargs: Any)
         Factory method to create Helix instances.
@@ -113,15 +114,24 @@ class Helix(framework.Helix):
         Performs cleanup operations.
     compile_file(self, file: Optional[str] = None) -> Scope
         Compiles the specified Helix file.
-    transpile(self, file: Optional[str] = None) -> tuple[Scope, list[Processed_Line]]
+    transpile(self,
+              file: Optional[str] = None) -> tuple[Scope, list[Processed_Line]]
         Transpiles the specified Helix file to another language.
     generate_line_numbers(self, transpiled: list[Processed_Line]) -> str
         Generates line numbers for the transpiled code.
-    generate_source_code(self, scope_parsed: Scope, transpiled_lines: list[Processed_Line], format_source: bool = False, is_main: bool = True, no_inject: bool = False) -> str
+    generate_source_code(self, scope_parsed: Scope,
+                         transpiled_lines: list[Processed_Line],
+                         format_source: bool = False,
+                         is_main: bool = True,
+                         no_inject: bool = False) -> str
         Generates source code from parsed scope and transpiled lines.
     REPL() -> None
         Launches the Helix Read-Eval-Print Loop.
-    __hook_import__(cls, file: str, *args: str, config_file: Optional[str] = None, **kwargs: Any) -> ModuleType
+    __hook_import__(cls,
+                    file: str,
+                    *args: str,
+                    config_file: Optional[str] = None,
+                    **kwargs: Any) -> ModuleType
         Hook method for importing modules in Helix.
     """
     config: Any
@@ -159,7 +169,11 @@ class Helix(framework.Helix):
 
         if not globals_ and not locals_:
             source_code = inject_core(
-                inst, source_code, is_main=False, __version__=__version__, __file__=__file__
+                inst,
+                source_code,
+                is_main=False,
+                __version__=__version__,
+                __file__=__file__
             )
 
         # print(source_code)
@@ -175,7 +189,7 @@ class Helix(framework.Helix):
             ".helix",
             "cache",
             "build_cache",
-            f"{os.path.basename(self.__file__).split('.')[0]}_hlx.py",
+            f"{os.path.basename(self.__file__).split('.')[0]}_hlx.hir",
         )
 
     def __init__(
@@ -261,6 +275,9 @@ class Helix(framework.Helix):
                     style="red",
                 )
 
+            import py_compile
+            py_compile.compile(self.__out_file__, cfile=self.__out_file__, optimize=2)
+            
             self.timer.start("run")
             try:
                 subprocess.Popen(
@@ -593,7 +610,7 @@ signal.signal(signal.SIGTERM, exit_func)
 if __name__ == "__main__":
     Helix.factory(
         os.path.join(".helix", "config.toml"),
-        profile=True,
+        profile=False,
     )
     #Helix.__hook_import__("syntax/test.hlx")
     # from test_hlx import subtract

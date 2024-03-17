@@ -270,7 +270,7 @@ sys.excepthook = exception_handler  # type: ignore
 threading.excepthook = functools.partial(exception_handler, thread_error=True)
 sys.argv = ["{os.path.realpath(__file__).replace(back_slash, os.sep+os.sep)}", "{os.path.realpath(_cls_ref.__file__).replace(back_slash, os.sep+os.sep)}"] + list(sys.argv)[2:]
 del os, threading, functools
-overload_with_type_check = beartype(conf=BeartypeConf(is_color=False))   # type: ignore
+overload_with_type_check = beartype(None, conf=BeartypeConf(is_color=False))   # type: ignore
 
 \x92
 
