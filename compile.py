@@ -70,5 +70,5 @@ if __name__ == "__main__":
     file_name = sys.argv[1]
     compile_file(file_name)
 
-"c:\Programing Languages\LLVM\bin\gcc.exe" -std=gnu18 -c "src\lib\src\remove_blank_lines.c"
-"c:\Programing Languages\LLVM\bin\gcc.exe" -std=gnu18 -shared -o "src\lib\remove_blank_lines.dll" -fPIC "remove_blank_lines.o"
+#"c:\Programing Languages\LLVM\bin\gcc.exe" -std=gnu18 -c "src\lib\src\remove_blank_lines.c"
+#"c:\Programing Languages\LLVM\bin\gcc.exe" -std=gnu18 -shared -o "src\lib\remove_blank_lines.dll" -fPIC "remove_blank_lines.o"
