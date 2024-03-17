@@ -2,7 +2,7 @@ from src.core.imports import (
     Processed_Line,
     Token,
     Token_List,
-    load_config,
+    CONFIG,
     INDENT_CHAR,
     re,
     panic,

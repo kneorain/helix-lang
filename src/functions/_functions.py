@@ -120,8 +120,9 @@ class ExtractTypedParamsFromFunc(framework.Translate):
                 self.line = self.line[1:]
             else:
                 self.handle_parameter()
-
+        
         del token
+        self.__del__()
         raise SyntaxError(
             f"<Hex(02.E3)>: Expected a closing parenthesis after the parameters"
         )
@@ -221,6 +222,7 @@ class ExtractTypedParamsFromFunc(framework.Translate):
                 self.variables[token] = {"type": "Any"}
                 self.line = self.line[1:]
             else:
+                del token
                 base.ERROR_CODES.TYPE_UNDECLARED.format(
                     identifier=tuple(self.variables.keys())[
                         -1
@@ -236,7 +238,17 @@ class ExtractTypedParamsFromFunc(framework.Translate):
                 )
 
         del token
-
+    
+    def __del__(self) -> None:
+        del self.line
+        del self.in_param
+        del self.variables
+        del self.generic
+        del self.in_generic
+        del self.generic_count
+        del self.root_scope
+        del self.ast_line
+    
     def handle_no_parameters(
         self,
     ) -> dict[
@@ -309,7 +321,7 @@ class Function(framework.Translate):
         
         self.name: str = ""
         self.output: str = ""
-
+    
     def parse(self) -> Processed_Line:
         self._process_decorators()
         self._process_modifiers()
@@ -414,7 +426,7 @@ class Function(framework.Translate):
             2,
         )
         self.add_to_output(decorators, 1)
-
+        
         return self._return_output()
 
     def add_to_output(
@@ -442,6 +454,9 @@ class Function(framework.Translate):
                         [__.token for __ in decorator]
                     )
                 )
+            del decorator
+            del _
+                
 
     def _process_modifiers(self) -> None:
         self.modifiers = {
@@ -450,10 +465,8 @@ class Function(framework.Translate):
             self.root_scope.get_keyword("PROTECTED"): False,
             self.root_scope.get_keyword("FINAL"): False,
             self.root_scope.get_keyword("UNSAFE"): False,
-            self.root_scope.get_keyword(
-                "STATIC"
-            ): False,  # TODO: add virtual/kernel
-        }
+            self.root_scope.get_keyword("STATIC"): False,
+        } # TODO: add virtual/kernel
         index = 0
 
         if self.ast_list.line[
@@ -474,10 +487,14 @@ class Function(framework.Translate):
                         break
                     else:
                         break
+            
+            del line
+            
             self.ast_list.line = self.ast_list.line[
                 (index - 1) :
             ]
 
+        del index
     def _process_name(self) -> None:
         self.name = self.ast_list.line[1].token
 
@@ -550,6 +567,8 @@ class Function(framework.Translate):
                 f"{k}: {base.replace_primitive(v['type'], 0)}, "
             )
             self.current_scope.variables[k] = v["type"]
+        
+        del k, v
 
     def __add_indent(
         self, output: str, offset: int = 0
@@ -671,6 +690,15 @@ class Function(framework.Translate):
             )
 
     def _return_output(self) -> Processed_Line:
+        del self.decorators
+        del self.modifiers
+        del self.not_allowed_classes
+        del self.variables
+        del self.name
+        del self.current_scope
+        del self.parent_scope
+        del self.root_scope
+        
         return Processed_Line(
             self.output,
             self.ast_list,

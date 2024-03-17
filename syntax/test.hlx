@@ -16,7 +16,7 @@
 ~~ test_set();
 
 
-~*
+~*~
 import random
 import time
 import os
@@ -73,7 +73,7 @@ def main():
         os.system('cls' if os.name == 'nt' else 'clear')
         print(l, end='', flush=true)
         time.sleep(1 / 30)
- *~
+~*~
 
 class C_cout {
     fn new(self) {
@@ -85,7 +85,17 @@ class C_cout {
     }
 }
 
+fn add(a: int, b: int) -> int {
+    printf("adding: %d + %d", a, b);
+    return a + b;
+}
+
 fn main(argv: list<string>) {
+    let _add: Infix = Infix(add);
+
+    print(2 |_add| 3);
+
+    exit();
     let a: C_cout = C_cout();
     let b: C_cout = a;
     a << "hello world";
@@ -127,6 +137,11 @@ private fn subtract(a: int, b: int) -> int {
     ~~ open("file.txt", "r") as file {
     ~~     file.read();
     ~~ }
+
+    let float_a: float = 0.1 + 0.2;
+    let float_b: double = 0.1 + 0.2;
+    print("float_a:", float_a, "\nfloat_b:", float_b);
+    
 
     let some_map: map<string, int> = { "a": 1, "b": 2, "c": 3 };
     let some_list: list<int> = [1, 2, 3];

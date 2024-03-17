@@ -9,7 +9,7 @@ from decimal import (Decimal as double, getcontext)
 from array import array
 
 from enum import Enum
-from functools import wraps
+from functools import wraps, partial
 import inspect
 from threading import Thread
 from types import MappingProxyType as FastMap, NoneType, FunctionType, UnionType, BuiltinFunctionType
@@ -49,7 +49,18 @@ def __import_py__(*args, **kwargs):
     raise NotImplementedError("Python is not supported in Helix (YET)")
 
  
-
+class Infix:
+    def __init__(self: Any, func: Callable) -> None:
+        self.func = func
+    
+    def __ror__(self: Any, a: Any) -> Any:
+        return Infix(partial(self.func, a))
+    
+    def __or__(self: Any, a: Any) -> Any:
+        return self.func(a)
+    
+    def operator(self: Any, left: Any, right: Any) -> Any:
+        return self.func(left, right)
 
 getcontext().prec = 128
 replace_primitives = {

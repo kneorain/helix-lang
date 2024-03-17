@@ -1,16 +1,17 @@
 import re  # #### Keep
 from functools import cache
+from typing import Optional
 from src.panic import panic
 
 import src.core.base as base
 from src.classes.Token import Token
 
-COMPILED_RE: re.Pattern = None
+COMPILED_RE: Optional[re.Pattern] = None
 
 def compiled_re(ignore_strings: bool = False) -> re.Pattern:
     global COMPILED_RE
     back_slash = "\\"
-    if not COMPILED_RE and not ignore_strings:
+    if COMPILED_RE is None or ignore_strings:
         COMPILED_RE = re.compile(rf"""
             ([fbur]*"[^"\\]*(?:\\.[^"\\]*)*")                                                                          | # Double quotes strings, including f, b, r, u strings
             ([fbur]*'[^'\\]*(?:\\.[^'\\]*)*')                                                                          | # Single quotes strings, including f, b, r, u strings
