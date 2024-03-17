@@ -6,6 +6,7 @@ from src.classes.Token import Token, Token_List
 import src.core.base as base
 
 
+
 class Tokenizer:
     _ = "Do not change; License: CC0 1.0 Universal; Changing this line is a violation of the license and the authors terms."
 
@@ -22,27 +23,23 @@ class Tokenizer:
         """
 
         if path in base.CACHE:
-            return base.CACHE[path]
+                return base.CACHE[path]
 
-        lines: tuple[Token, ...] = tuple(
-            Token(line, "", index + 1, 0)
-            for index, line in enumerate(open(path, "r").readlines())
-        )
+        with open(path, "r") as file:
+            lines = tuple(Token(line, "", index + 1, 0) for index, line in enumerate(file))
 
-        if base.USE_POOL:
-            [base.POOL.append(remove_comment, line) for line in lines]
-            base.POOL.execute()
-
+        if base.USE_POOL and len(lines) > 1000:
+            # Using multiprocessing.Pool or similar
+            base.POOL.map(remove_comment, lines)  # Batch operation
             _tokenize_line = functools.partial(tokenize_line, path=path)
-            
-            [base.POOL.append(_tokenize_line, line) for line in lines]
-            base.POOL.execute()
+            base.POOL.map(_tokenize_line, lines)  # Batch operation
         else:
             tuple(map(remove_comment, lines))
-            tuple(map(lambda _: tokenize_line(_, path), lines))
+            tuple(map(lambda line: tokenize_line(line, path), lines))
             
-        base.CACHE[path] = normalize_tokens(lines, path)
-        return base.CACHE[path]
+        normalized_tokens = normalize_tokens(lines, path)
+        base.CACHE[path] = normalized_tokens
+        return normalized_tokens
 
     @staticmethod
     def tokenize_line(line: str, path: str, indent: int = 0, line_no: int = 0) -> tuple[Token_List, ...]:

@@ -75,11 +75,41 @@ def _no_change(line: Token_List, *args) -> Processed_Line:
         line,
     )
 
+def clean_docstring(docstring: str) -> str:
+    """
+    Cleans up the given docstring by removing unnecessary whitespace and newlines.
+
+    Parameters
+    ----------
+    docstring : str
+        The docstring to be cleaned.
+
+    Returns
+    -------
+    str
+        The cleaned docstring.
+    """
+    if not docstring:
+        return ""
+
+    indentation_level: int = 0
+    for char in docstring.splitlines()[1]:
+        if not char.isspace():
+            break
+        indentation_level += 1
+        
+    return "\n".join(
+        [
+            line[indentation_level:]
+            for line in docstring.splitlines()
+        ]
+    )
 
 
 CACHE: dict[str, tuple[Token_List, ...]] = {}
 POOL: WorkerPool = WorkerPool(50)
 USE_POOL: bool = True
+USE_CACHE: bool = True
 
 LINE_BREAK: str = "\x03"
 SUB_LINE_BREAK: str = "\x04"
@@ -114,6 +144,8 @@ FAT_CHARACTER = [
     r"\*\*\=",  # **=
     r"\<\<\=",  # <<=
     r"\>\>\=",  # >>=
+    r"\?\?",    # ??
+    r"\|\:",    # ?:
     r"\=\=",    # ==
     r"\!\=",    # !=
     r"\<\=",    # <=
@@ -151,8 +183,6 @@ FAT_CHARACTER = [
     r"\|\|",    # ||
     r"\+\+",    # ++
     r"\_\_",    # __
-    r"\?\?",    # ??
-    r"\?\:",    # ?:
     r"\?\=",    # ?=
 ]
 
@@ -481,6 +511,8 @@ RESERVED_KEYWORDS: tuple[str, ...] = (
 EARLY_REPLACEMENTS: map[str, str] = map(
     {  # These are replaced as soon as the tokenization is done (before normalization and transpilation)
         "...": "None",
+        "??" : "if",
+        "|:"   : "else",
         "true": "True",
         "false": "False",
         "null": "None",

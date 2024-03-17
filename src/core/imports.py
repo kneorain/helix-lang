@@ -10,12 +10,15 @@ import re
 import sys
 import json
 import enum
+import mmap
 import signal
+import ctypes
 import shutil
 import hashlib
 import functools
 import threading
 import subprocess
+import dataclasses
 
 from multiprocessing import cpu_count
 from inspect         import CO_NESTED
@@ -102,18 +105,18 @@ from black       import (
 
 # src - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  #
 
+from src.config                 import CONFIG
 from src.cache_store            import (
     cache,
     file_cache
 )
 from src.panic                  import panic
 from src.better_print           import color_print
-from src.config                 import load_config
 
 # variables  - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
 
-INDENT_CHAR = load_config().Formatter["indent_char"]
-re          = __import__(load_config().Transpiler["regex_module"])
+INDENT_CHAR = CONFIG.Formatter.indent_size * " "
+re          = __import__(CONFIG.Transpiler.regex_module)
 
 # src.token  - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
 
@@ -134,6 +137,11 @@ from   src.classes.Transpiler     import Transpiler
 from   src.classes.WorkerPool     import WorkerPool
 import src.core.framework         as     framework
 
+from   src.classes.Hashing        import Hashing
+from   src.classes.ArgParser      import ArgParser
+from   src.classes.Timer          import Timer
+from   src.classes.HelixLanguage  import HelixLanguage
+
 # src.functions  - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
 
 from src.functions._for         import _for
@@ -144,5 +152,6 @@ from src.functions._unless      import _unless
 from src.functions._include     import _include
 from src.functions._functions   import _function
 from src.functions._unmarked    import _unmarked
+from src.functions.inject_core  import inject_core
 
 # ------------------------------ End of Imports ------------------------------ #

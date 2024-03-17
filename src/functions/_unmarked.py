@@ -31,7 +31,12 @@ class UnmarkedTranslator:
         self._validate_multiple_assignments()
         variables = self._extract_variables_before_equal()
         self._parse_assignment_values(variables)
-        output = self._generate_assignment_output(variables)
+
+        # output = self._generate_assignment_output(variables)
+        # TODO: Fix the above code
+        _output: list[str] = [f"{name} = {value}" for name, value in variables.items()]
+        output = "\n".join([f"{INDENT_CHAR * self.ast_list.indent_level}{i}" for i in _output])
+        del variables, _output
         return Processed_Line(output, self.ast_list)
 
     def _process_non_assignment(self) -> Processed_Line:
@@ -109,6 +114,7 @@ class UnmarkedTranslator:
             if not self._is_variable_defined(name):
                 continue
             output += f"{INDENT_CHAR * self.ast_list.indent_level}{name} = {value}\n"
+        
         return output
 
     def _is_variable_defined(self, name: str) -> bool:

@@ -11,3 +11,5 @@ beartype
 multimethod
 mypy
 types-toml
+serde
+tomli_w

@@ -1,9 +1,9 @@
 import ast
 from functools import cache
 
-from src.config import load_config
+from src.config import CONFIG
 
-re = __import__(load_config().Transpiler["regex_module"])
+re = __import__(CONFIG.Transpiler.regex_module)
 from src.classes.Token import Token
 import src.core.base as base
 
