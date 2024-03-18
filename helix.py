@@ -32,6 +32,7 @@ from src.core.imports import (
     ModuleType,
     subprocess,
     Transpiler,
+    py_compile,
     inject_core,
     HelixLanguage,
     format_file_contents,
@@ -275,8 +276,8 @@ class Helix(framework.Helix):
                     style="red",
                 )
 
-            import py_compile
-            py_compile.compile(self.__out_file__, cfile=self.__out_file__, optimize=2)
+            if base.COMPILE:
+                py_compile.compile(self.__out_file__, cfile=self.__out_file__, optimize=2)
             
             self.timer.start("run")
             try:
@@ -610,7 +611,7 @@ signal.signal(signal.SIGTERM, exit_func)
 if __name__ == "__main__":
     Helix.factory(
         os.path.join(".helix", "config.toml"),
-        profile=False,
+        profile=True,
     )
     #Helix.__hook_import__("syntax/test.hlx")
     # from test_hlx import subtract

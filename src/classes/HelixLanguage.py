@@ -6,6 +6,7 @@ from src.core.imports import (
     color_print as print,
     framework,
     ctypes,
+    shutil
 )
 
 # --- c imports --- #
@@ -138,8 +139,15 @@ class HelixLanguage(framework.HelixLanguage):
 
     @staticmethod
     def remove_blank_lines(
-        file: str, hash: Optional[Hashing] # type: ignore
+        file: str, hash: Hashing | None
     ) -> None:
-        c_remove_blank_lines(ctypes.c_char_p(file.encode("utf-8")))
+        with open(file, "r") as read_file, open(
+            file + ".tmp", "w"
+        ) as write_file:
+            for line in read_file:
+                if line.strip():
+                    write_file.write(line)
+
+        shutil.move(file + ".tmp", file)
         if hash:
             hash.create_hash_only()

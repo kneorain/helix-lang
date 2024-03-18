@@ -85,17 +85,8 @@ class C_cout {
     }
 }
 
-fn add(a: int, b: int) -> int {
-    printf("adding: %d + %d", a, b);
-    return a + b;
-}
 
 fn main(argv: list<string>) {
-    let _add: Infix = Infix(add);
-
-    print(2 |_add| 3);
-
-    exit();
     let a: C_cout = C_cout();
     let b: C_cout = a;
     a << "hello world";
@@ -109,7 +100,7 @@ fn main(argv: list<string>) {
     for (var i: int = 0; i < 10; i++) {
         printf("doing something else eeeee: %d", i);
     }
-    
+    ~~ TODO: i broke something here await is not working
     print(do_something.await());
     print("done");
 
