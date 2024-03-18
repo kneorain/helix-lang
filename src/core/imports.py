@@ -18,6 +18,7 @@ import hashlib
 import functools
 import threading
 import subprocess
+import py_compile
 import dataclasses
 
 from multiprocessing import cpu_count

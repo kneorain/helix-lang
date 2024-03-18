@@ -38,15 +38,15 @@ def normalize_tokens(_lines: tuple[Token, ...], path: str) -> tuple[Token_List, 
     previous_element: Token             = Token("", "", 0, 0)
 
     # lines is expected to countian ['token', ...] for every token in the file NOT individual line
-    def process_line(index: int):
-        index = index[0]
+    def process_line(index: int | tuple[int, Token]) -> None:
+        index = index[0] if isinstance(index, tuple) else index
         nonlocal stack, indent_level, firs_inst, previous_element
 
-        token = lines[index].line
-        if token in base.BODY_REQUIRED_KEYWORDS.keys() and lines[index-1].line not in (base.find_keyword("ELSE"), ):
+        token = lines[index].token
+        if token in base.BODY_REQUIRED_KEYWORDS.keys() and lines[index-1].token not in (base.find_keyword("ELSE"), ):
             # append the line to the stack
             for i in range(index, len(lines)):
-                if lines[i].line == "{":
+                if lines[i].token == "{":
                     break
             stack.append(lines[i])
             indent_level += 1
@@ -55,15 +55,15 @@ def normalize_tokens(_lines: tuple[Token, ...], path: str) -> tuple[Token_List, 
             if not firs_inst:
                 indent_level += 1
             if len(stack) == indent_level:
-                lines[index].line = ":"
+                lines[index].token = ":"
                 lines.insert(index + 1, Token(lines[index].original_line, "<\\n>", lines[index].line_number, lines[index].indent_level + 1))
                 firs_inst = False
-            if lines[index + 2].line == "}":
-                lines[index + 2].line = "}"
+            if lines[index + 2].token == "}":
+                lines[index + 2].token = "}"
                 lines.insert(index + 3, Token(lines[index].original_line, "<\\r>", lines[index].line_number, lines[index].indent_level + 1))
         elif token == "}":
             if len(stack) == indent_level:
-                lines[index].line = "<\\n>"
+                lines[index].token = "<\\n>"
                 indent_level -= 1
                 try:
                     previous_element = stack.pop()
@@ -72,36 +72,36 @@ def normalize_tokens(_lines: tuple[Token, ...], path: str) -> tuple[Token_List, 
             else:
                 indent_level -= 1
         if token == "<\\r>":
-            lines[index - 5].line = "<\\r1>"
+            lines[index - 5].token = "<\\r1>"
         if token == ";":
-            lines[index].line = "<\\n>"
-        if lines[index].line == "<\\n>":
+            lines[index].token = "<\\n>"
+        if lines[index].token == "<\\n>":
             lines.insert(index + 1, Token(lines[index].original_line, f"<\\t:{indent_level}>", lines[index].line_number, lines[index].indent_level + 1))
-        if token == "..." and not lines[index + 1].line == "<\\n>":
+        if token == "..." and not lines[index + 1].token == "<\\n>":
             lines.insert(index + 1, Token(lines[index].original_line, "<\\n>", lines[index].line_number, lines[index].indent_level + 1))
         if token == "<\\r>":
             for i in range(index, -1, -1):
-                if lines[i].line == "<\\r1>":
+                if lines[i].token == "<\\r1>":
                     break
                 else:
-                    lines[i].line = ""
+                    lines[i].token = ""
         if token == ";":
-            lines[index].line = "<\\n>"
+            lines[index].token = "<\\n>"
 
     frozenset((process_line(_) for _ in enumerate(lines)))
 
     
     def process_for_loops(index: int) -> None:
         nonlocal in_for_loop, lines
-        token = lines[index].line
+        token = lines[index].token
         if token == "for":
             in_for_loop = True
         if in_for_loop:
             if token == "<\\n>":
                 lines[index].token = ";"
-                if lines[index + 1].line.startswith("<\\t:"):
-                    lines[index + 1].line = ""
-            elif token == ":" and (index + 1) < len(lines) and lines[index + 1].line == "<\\n>":
+                if lines[index + 1].token.startswith("<\\t:"):
+                    lines[index + 1].token = ""
+            elif token == ":" and (index + 1) < len(lines) and lines[index + 1].token == "<\\n>":
                 in_for_loop = False
 
     frozenset((process_for_loops(_) for _ in range(len(lines))))
@@ -118,7 +118,7 @@ def normalize_tokens(_lines: tuple[Token, ...], path: str) -> tuple[Token_List, 
     indent_level = 0
     def process_indent_level(ast_token: Token):
         nonlocal indent_level, lines, current_line, final_lines
-        token = ast_token.line
+        token = ast_token.token
         if token.startswith("<\\t:"):
             indent_level = int(token[4:-1])
             return
@@ -129,7 +129,7 @@ def normalize_tokens(_lines: tuple[Token, ...], path: str) -> tuple[Token_List, 
         else:
             current_line.append(ast_token)
 
-    frozenset((process_indent_level(_) for _ in [_ for _ in lines if _.line]))
+    frozenset((process_indent_level(_) for _ in [_ for _ in lines if _.token]))
 
     if current_line:
         for i in current_line: i.indent_level = indent_level

@@ -295,8 +295,8 @@ def hx__async(func: Callable) -> Callable:
             return getattr(func, "_result", None)
         return None
 
-    func._await = _await
     wrapper._await = _await
+    func._await = _await
     return wrapper
 
 class hx_void(void): pass
