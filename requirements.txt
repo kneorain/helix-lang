@@ -9,3 +9,4 @@ argparse
 black
 beartype
 multimethod
+mypy

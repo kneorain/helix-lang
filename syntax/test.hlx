@@ -83,35 +83,40 @@ class C_cout {
 }
 
 fn main(argv: list<string>) {
-    do_something();
     let a: int = "12";
-    print(add(a, ["a", "b", "c"]));
+    
+    add(123, 123);
+    print(add.join());
+
+    do_something();
+    for (var i: int = 0; i < 10; i++) {
+        printf("doing something else eeeee: %d", i);
+    }
+    do_something.join();
+    print("done");
+    return 0;
 }
 
+async fn add(a: int, b: int) -> int {
+    printf("adding: %d + %d", a, b);
+    return a + b;
+}
 
 private fn subtract(a: int, b: int) -> int {
     return a - b
 }
 
-fn add(a: int, b: int) -> int {
-    let a: Type = 10;
-    print(a);
-    return a - b
-}
 
 async fn do_something() {
     for (var i: int = 0; i < 10; i++) {
-        print("doing something: %d", i);
+        printf("doing something: %d", i);
     }
 }
 
-~*~
+
 fn a_cursed_fucntion(a: int)    -> FunctionType { printf("new something: %d", a); return a_cursed_fucntion }
-fn a_cursed_fucntion(a: string) -> FunctionType { let data: list = []; return "kys" }
 
-
-
-
+~*~
 fn test_int() {
     let a: int = 21;
     let b: int = 42;
