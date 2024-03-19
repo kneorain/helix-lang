@@ -1,0 +1,908 @@
+def transpose_test_obj.__get__(__mypyc_self__, instance, owner):
+    __mypyc_self__, instance, owner, r0 :: object
+    r1 :: bit
+    r2, r3 :: object
+L0:
+    r0 = load_address _Py_NoneStruct
+    r1 = instance == r0
+    if r1 goto L1 else goto L2 :: bool
+L1:
+    inc_ref __mypyc_self__
+    return __mypyc_self__
+L2:
+    r2 = PyMethod_New(__mypyc_self__, instance)
+    if is_error(r2) goto L4 else goto L3
+L3:
+    return r2
+L4:
+    r3 = <error> :: object
+    return r3
+
+def transpose_test_obj.__call__(__mypyc_self__, matrix):
+    __mypyc_self__ :: test.transpose_test_obj
+    matrix :: list
+    r0 :: test.test_env
+    r1 :: list
+    r2 :: object
+    r3 :: list
+    r4 :: ptr
+    r5 :: native_int
+    r6, r7 :: short_int
+    i :: int
+    r8 :: bit
+    r9 :: list
+    r10 :: ptr
+    r11 :: native_int
+    r12, r13 :: short_int
+    j :: int
+    r14 :: bit
+    r15 :: object
+    r16 :: list
+    r17 :: object
+    r18 :: int
+    r19 :: object
+    r20 :: i32
+    r21 :: bit
+    r22 :: short_int
+    r23 :: i32
+    r24 :: bit
+    r25 :: short_int
+    r26 :: list
+L0:
+    r0 = __mypyc_self__.__mypyc_env__
+    if is_error(r0) goto L18 (error at transpose:4) else goto L19
+L1:
+    r1 = PyList_New(0)
+    if is_error(r1) goto L18 (error at transpose:5) else goto L2
+L2:
+    r2 = CPyList_GetItemShortBorrow(matrix, 0)
+    if is_error(r2) goto L20 (error at transpose:5) else goto L3
+L3:
+    r3 = borrow cast(list, r2)
+    if is_error(r3) goto L20 (error at transpose:5) else goto L4
+L4:
+    r4 = get_element_ptr r3 ob_size :: PyVarObject
+    r5 = load_mem r4 :: native_int*
+    r6 = r5 << 1
+    r7 = 0
+    i = r7
+L5:
+    r8 = r7 < r6 :: signed
+    if r8 goto L6 else goto L21 :: bool
+L6:
+    r9 = PyList_New(0)
+    if is_error(r9) goto L22 (error at transpose:5) else goto L7
+L7:
+    r10 = get_element_ptr matrix ob_size :: PyVarObject
+    r11 = load_mem r10 :: native_int*
+    r12 = r11 << 1
+    r13 = 0
+    j = r13
+L8:
+    r14 = r13 < r12 :: signed
+    if r14 goto L9 else goto L23 :: bool
+L9:
+    r15 = CPyList_GetItemBorrow(matrix, j)
+    if is_error(r15) goto L24 (error at transpose:5) else goto L10
+L10:
+    r16 = borrow cast(list, r15)
+    if is_error(r16) goto L24 (error at transpose:5) else goto L11
+L11:
+    r17 = CPyList_GetItem(r16, i)
+    if is_error(r17) goto L24 (error at transpose:5) else goto L12
+L12:
+    r18 = unbox(int, r17)
+    dec_ref r17
+    if is_error(r18) goto L24 (error at transpose:5) else goto L13
+L13:
+    dec_ref j :: int
+    r19 = box(int, r18)
+    r20 = PyList_Append(r9, r19)
+    dec_ref r19
+    r21 = r20 >= 0 :: signed
+    if not r21 goto L25 (error at transpose:5) else goto L14 :: bool
+L14:
+    r22 = r13 + 2
+    r13 = r22
+    j = r22
+    goto L8
+L15:
+    r23 = PyList_Append(r1, r9)
+    dec_ref r9
+    r24 = r23 >= 0 :: signed
+    if not r24 goto L20 (error at transpose:5) else goto L16 :: bool
+L16:
+    r25 = r7 + 2
+    r7 = r25
+    i = r25
+    goto L5
+L17:
+    return r1
+L18:
+    r26 = <error> :: list
+    return r26
+L19:
+    dec_ref r0
+    goto L1
+L20:
+    dec_ref r1
+    goto L18
+L21:
+    dec_ref i :: int
+    goto L17
+L22:
+    dec_ref r1
+    dec_ref i :: int
+    goto L18
+L23:
+    dec_ref i :: int
+    dec_ref j :: int
+    goto L15
+L24:
+    dec_ref r1
+    dec_ref i :: int
+    dec_ref r9
+    dec_ref j :: int
+    goto L18
+L25:
+    dec_ref r1
+    dec_ref i :: int
+    dec_ref r9
+    goto L18
+
+def multiply_matrix_test_obj.__get__(__mypyc_self__, instance, owner):
+    __mypyc_self__, instance, owner, r0 :: object
+    r1 :: bit
+    r2, r3 :: object
+L0:
+    r0 = load_address _Py_NoneStruct
+    r1 = instance == r0
+    if r1 goto L1 else goto L2 :: bool
+L1:
+    inc_ref __mypyc_self__
+    return __mypyc_self__
+L2:
+    r2 = PyMethod_New(__mypyc_self__, instance)
+    if is_error(r2) goto L4 else goto L3
+L3:
+    return r2
+L4:
+    r3 = <error> :: object
+    return r3
+
+def multiply_matrix_test_obj.__call__(__mypyc_self__, matrix1, matrix2):
+    __mypyc_self__ :: test.multiply_matrix_test_obj
+    matrix1, matrix2 :: list
+    r0 :: test.test_env
+    r1 :: ptr
+    r2 :: native_int
+    r3 :: list
+    r4 :: short_int
+    r5 :: ptr
+    r6 :: native_int
+    r7 :: short_int
+    r8 :: bit
+    r9 :: object
+    r10, X_row, r11 :: list
+    r12 :: object
+    r13 :: str
+    r14 :: object
+    r15 :: list
+    r16 :: object
+    r17 :: tuple
+    r18 :: dict
+    r19, r20, r21 :: object
+    r22, Y_col :: tuple
+    r23 :: int
+    r24, r25 :: short_int
+    r26 :: ptr
+    r27 :: native_int
+    r28 :: short_int
+    r29 :: bit
+    r30 :: ptr
+    r31 :: native_int
+    r32 :: short_int
+    r33 :: bit
+    r34 :: object
+    r35, a :: int
+    r36, b, r37, r38, r39, r40 :: object
+    r41 :: int
+    r42, r43 :: short_int
+    r44 :: object
+    r45 :: i32
+    r46, r47, r48 :: bit
+    r49 :: short_int
+    r50 :: list
+L0:
+    r0 = __mypyc_self__.__mypyc_env__
+    if is_error(r0) goto L30 (error at multiply_matrix:9) else goto L31
+L1:
+    r1 = get_element_ptr matrix1 ob_size :: PyVarObject
+    r2 = load_mem r1 :: native_int*
+    r3 = PyList_New(r2)
+    if is_error(r3) goto L30 (error at multiply_matrix:10) else goto L2
+L2:
+    r4 = 0
+L3:
+    r5 = get_element_ptr matrix1 ob_size :: PyVarObject
+    r6 = load_mem r5 :: native_int*
+    r7 = r6 << 1
+    r8 = r4 < r7 :: signed
+    if r8 goto L4 else goto L29 :: bool
+L4:
+    r9 = CPyList_GetItemUnsafe(matrix1, r4)
+    r10 = cast(list, r9)
+    if is_error(r10) goto L32 (error at multiply_matrix:10) else goto L5
+L5:
+    X_row = r10
+    r11 = PyList_New(0)
+    if is_error(r11) goto L33 (error at multiply_matrix:10) else goto L6
+L6:
+    r12 = builtins :: module
+    r13 = 'zip'
+    r14 = CPyObject_GetAttr(r12, r13)
+    if is_error(r14) goto L34 (error at multiply_matrix:10) else goto L7
+L7:
+    r15 = PyList_New(0)
+    if is_error(r15) goto L35 (error at multiply_matrix:10) else goto L8
+L8:
+    r16 = CPyList_Extend(r15, matrix2)
+    if is_error(r16) goto L36 (error at multiply_matrix:10) else goto L37
+L9:
+    r17 = PyList_AsTuple(r15)
+    dec_ref r15
+    if is_error(r17) goto L35 (error at multiply_matrix:10) else goto L10
+L10:
+    r18 = PyDict_New()
+    if is_error(r18) goto L38 (error at multiply_matrix:10) else goto L11
+L11:
+    r19 = PyObject_Call(r14, r17, r18)
+    dec_ref r14
+    dec_ref r17
+    dec_ref r18
+    if is_error(r19) goto L34 (error at multiply_matrix:10) else goto L12
+L12:
+    r20 = PyObject_GetIter(r19)
+    dec_ref r19
+    if is_error(r20) goto L34 (error at multiply_matrix:10) else goto L13
+L13:
+    r21 = PyIter_Next(r20)
+    if is_error(r21) goto L39 else goto L14
+L14:
+    r22 = cast(tuple, r21)
+    if is_error(r22) goto L40 (error at multiply_matrix:10) else goto L15
+L15:
+    Y_col = r22
+    r23 = 0
+    r24 = 0
+    r25 = 0
+L16:
+    r26 = get_element_ptr X_row ob_size :: PyVarObject
+    r27 = load_mem r26 :: native_int*
+    r28 = r27 << 1
+    r29 = r24 < r28 :: signed
+    if r29 goto L17 else goto L41 :: bool
+L17:
+    r30 = get_element_ptr Y_col ob_size :: PyVarObject
+    r31 = load_mem r30 :: native_int*
+    r32 = r31 << 1
+    r33 = r25 < r32 :: signed
+    if r33 goto L18 else goto L41 :: bool
+L18:
+    r34 = CPyList_GetItemUnsafe(X_row, r24)
+    r35 = unbox(int, r34)
+    dec_ref r34
+    if is_error(r35) goto L42 (error at multiply_matrix:10) else goto L19
+L19:
+    a = r35
+    r36 = CPySequenceTuple_GetItem(Y_col, r25)
+    if is_error(r36) goto L43 (error at multiply_matrix:10) else goto L20
+L20:
+    b = r36
+    r37 = box(int, a)
+    r38 = PyNumber_Multiply(r37, b)
+    dec_ref r37
+    dec_ref b
+    if is_error(r38) goto L42 (error at multiply_matrix:10) else goto L21
+L21:
+    r39 = box(int, r23)
+    r40 = PyNumber_Add(r39, r38)
+    dec_ref r39
+    dec_ref r38
+    if is_error(r40) goto L44 (error at multiply_matrix:-1) else goto L22
+L22:
+    r41 = unbox(int, r40)
+    dec_ref r40
+    if is_error(r41) goto L44 (error at multiply_matrix:-1) else goto L23
+L23:
+    r23 = r41
+L24:
+    r42 = r24 + 2
+    r24 = r42
+    r43 = r25 + 2
+    r25 = r43
+    goto L16
+L25:
+    r44 = box(int, r23)
+    r45 = PyList_Append(r11, r44)
+    dec_ref r44
+    r46 = r45 >= 0 :: signed
+    if not r46 goto L40 (error at multiply_matrix:10) else goto L13 :: bool
+L26:
+    r47 = CPy_NoErrOccured()
+    if not r47 goto L45 (error at multiply_matrix:10) else goto L27 :: bool
+L27:
+    r48 = CPyList_SetItemUnsafe(r3, r4, r11)
+    if not r48 goto L32 (error at multiply_matrix:10) else goto L28 :: bool
+L28:
+    r49 = r4 + 2
+    r4 = r49
+    goto L3
+L29:
+    return r3
+L30:
+    r50 = <error> :: list
+    return r50
+L31:
+    dec_ref r0
+    goto L1
+L32:
+    dec_ref r3
+    goto L30
+L33:
+    dec_ref r3
+    dec_ref X_row
+    goto L30
+L34:
+    dec_ref r3
+    dec_ref X_row
+    dec_ref r11
+    goto L30
+L35:
+    dec_ref r3
+    dec_ref X_row
+    dec_ref r11
+    dec_ref r14
+    goto L30
+L36:
+    dec_ref r3
+    dec_ref X_row
+    dec_ref r11
+    dec_ref r14
+    dec_ref r15
+    goto L30
+L37:
+    dec_ref r16
+    goto L9
+L38:
+    dec_ref r3
+    dec_ref X_row
+    dec_ref r11
+    dec_ref r14
+    dec_ref r17
+    goto L30
+L39:
+    dec_ref X_row
+    dec_ref r20
+    goto L26
+L40:
+    dec_ref r3
+    dec_ref X_row
+    dec_ref r11
+    dec_ref r20
+    goto L30
+L41:
+    dec_ref Y_col
+    goto L25
+L42:
+    dec_ref r3
+    dec_ref X_row
+    dec_ref r11
+    dec_ref r20
+    dec_ref Y_col
+    dec_ref r23 :: int
+    goto L30
+L43:
+    dec_ref r3
+    dec_ref X_row
+    dec_ref r11
+    dec_ref r20
+    dec_ref Y_col
+    dec_ref r23 :: int
+    dec_ref a :: int
+    goto L30
+L44:
+    dec_ref r3
+    dec_ref X_row
+    dec_ref r11
+    dec_ref r20
+    dec_ref Y_col
+    goto L30
+L45:
+    dec_ref r3
+    dec_ref r11
+    goto L30
+
+def test():
+    r0 :: test.test_env
+    r1 :: list
+    r2, r3, r4 :: object
+    r5, r6, r7, r8 :: ptr
+    r9 :: list
+    r10, r11, r12 :: object
+    r13, r14, r15, r16 :: ptr
+    r17 :: list
+    r18, r19, r20 :: object
+    r21, r22, r23, r24 :: ptr
+    r25 :: list
+    r26, r27, r28, r29 :: ptr
+    mat1 :: object
+    r30 :: list
+    r31, r32, r33 :: object
+    r34, r35, r36, r37 :: ptr
+    r38 :: list
+    r39, r40, r41 :: object
+    r42, r43, r44, r45 :: ptr
+    r46 :: list
+    r47, r48, r49 :: object
+    r50, r51, r52, r53 :: ptr
+    r54 :: list
+    r55, r56, r57, r58 :: ptr
+    mat2 :: object
+    r59 :: test.transpose_test_obj
+    r60 :: bool
+    transpose :: object
+    r61 :: object[1]
+    r62 :: object_ptr
+    r63, r64 :: object
+    r65 :: str
+    r66 :: object
+    r67 :: object[1]
+    r68 :: object_ptr
+    r69 :: object
+    r70 :: test.multiply_matrix_test_obj
+    r71 :: bool
+    multiply_matrix :: object
+    r72 :: object[2]
+    r73 :: object_ptr
+    r74, r75 :: object
+    r76 :: str
+    r77 :: object
+    r78 :: object[1]
+    r79 :: object_ptr
+    r80, r81, r82 :: object
+L0:
+    r0 = test_env()
+    if is_error(r0) goto L20 (error at test:1) else goto L1
+L1:
+    r1 = PyList_New(3)
+    if is_error(r1) goto L21 (error at test:2) else goto L2
+L2:
+    r2 = object 1
+    r3 = object 2
+    r4 = object 3
+    r5 = get_element_ptr r1 ob_item :: PyListObject
+    r6 = load_mem r5 :: ptr*
+    inc_ref r2
+    set_mem r6, r2 :: builtins.object*
+    r7 = r6 + 8
+    inc_ref r3
+    set_mem r7, r3 :: builtins.object*
+    r8 = r6 + 16
+    inc_ref r4
+    set_mem r8, r4 :: builtins.object*
+    r9 = PyList_New(3)
+    if is_error(r9) goto L22 (error at test:2) else goto L3
+L3:
+    r10 = object 4
+    r11 = object 5
+    r12 = object 6
+    r13 = get_element_ptr r9 ob_item :: PyListObject
+    r14 = load_mem r13 :: ptr*
+    inc_ref r10
+    set_mem r14, r10 :: builtins.object*
+    r15 = r14 + 8
+    inc_ref r11
+    set_mem r15, r11 :: builtins.object*
+    r16 = r14 + 16
+    inc_ref r12
+    set_mem r16, r12 :: builtins.object*
+    r17 = PyList_New(3)
+    if is_error(r17) goto L23 (error at test:2) else goto L4
+L4:
+    r18 = object 7
+    r19 = object 8
+    r20 = object 9
+    r21 = get_element_ptr r17 ob_item :: PyListObject
+    r22 = load_mem r21 :: ptr*
+    inc_ref r18
+    set_mem r22, r18 :: builtins.object*
+    r23 = r22 + 8
+    inc_ref r19
+    set_mem r23, r19 :: builtins.object*
+    r24 = r22 + 16
+    inc_ref r20
+    set_mem r24, r20 :: builtins.object*
+    r25 = PyList_New(3)
+    if is_error(r25) goto L24 (error at test:2) else goto L5
+L5:
+    r26 = get_element_ptr r25 ob_item :: PyListObject
+    r27 = load_mem r26 :: ptr*
+    set_mem r27, r1 :: builtins.object*
+    r28 = r27 + 8
+    set_mem r28, r9 :: builtins.object*
+    r29 = r27 + 16
+    set_mem r29, r17 :: builtins.object*
+    mat1 = r25
+    r30 = PyList_New(3)
+    if is_error(r30) goto L25 (error at test:3) else goto L6
+L6:
+    r31 = object 1
+    r32 = object 2
+    r33 = object 3
+    r34 = get_element_ptr r30 ob_item :: PyListObject
+    r35 = load_mem r34 :: ptr*
+    inc_ref r31
+    set_mem r35, r31 :: builtins.object*
+    r36 = r35 + 8
+    inc_ref r32
+    set_mem r36, r32 :: builtins.object*
+    r37 = r35 + 16
+    inc_ref r33
+    set_mem r37, r33 :: builtins.object*
+    r38 = PyList_New(3)
+    if is_error(r38) goto L26 (error at test:3) else goto L7
+L7:
+    r39 = object 4
+    r40 = object 5
+    r41 = object 6
+    r42 = get_element_ptr r38 ob_item :: PyListObject
+    r43 = load_mem r42 :: ptr*
+    inc_ref r39
+    set_mem r43, r39 :: builtins.object*
+    r44 = r43 + 8
+    inc_ref r40
+    set_mem r44, r40 :: builtins.object*
+    r45 = r43 + 16
+    inc_ref r41
+    set_mem r45, r41 :: builtins.object*
+    r46 = PyList_New(3)
+    if is_error(r46) goto L27 (error at test:3) else goto L8
+L8:
+    r47 = object 7
+    r48 = object 8
+    r49 = object 9
+    r50 = get_element_ptr r46 ob_item :: PyListObject
+    r51 = load_mem r50 :: ptr*
+    inc_ref r47
+    set_mem r51, r47 :: builtins.object*
+    r52 = r51 + 8
+    inc_ref r48
+    set_mem r52, r48 :: builtins.object*
+    r53 = r51 + 16
+    inc_ref r49
+    set_mem r53, r49 :: builtins.object*
+    r54 = PyList_New(3)
+    if is_error(r54) goto L28 (error at test:3) else goto L9
+L9:
+    r55 = get_element_ptr r54 ob_item :: PyListObject
+    r56 = load_mem r55 :: ptr*
+    set_mem r56, r30 :: builtins.object*
+    r57 = r56 + 8
+    set_mem r57, r38 :: builtins.object*
+    r58 = r56 + 16
+    set_mem r58, r46 :: builtins.object*
+    mat2 = r54
+    r59 = transpose_test_obj()
+    if is_error(r59) goto L29 (error at test:4) else goto L10
+L10:
+    inc_ref r0
+    r59.__mypyc_env__ = r0; r60 = is_error
+    if not r60 goto L30 (error at test:4) else goto L11 :: bool
+L11:
+    transpose = r59
+    r61 = [mat1]
+    r62 = load_address r61
+    r63 = _PyObject_Vectorcall(transpose, r62, 1, 0)
+    dec_ref transpose
+    if is_error(r63) goto L29 (error at test:7) else goto L12
+L12:
+    r64 = builtins :: module
+    r65 = 'print'
+    r66 = CPyObject_GetAttr(r64, r65)
+    if is_error(r66) goto L31 (error at test:7) else goto L13
+L13:
+    r67 = [r63]
+    r68 = load_address r67
+    r69 = _PyObject_Vectorcall(r66, r68, 1, 0)
+    dec_ref r66
+    if is_error(r69) goto L31 (error at test:7) else goto L32
+L14:
+    dec_ref r63
+    r70 = multiply_matrix_test_obj()
+    if is_error(r70) goto L29 (error at test:9) else goto L15
+L15:
+    r70.__mypyc_env__ = r0; r71 = is_error
+    if not r71 goto L33 (error at test:9) else goto L16 :: bool
+L16:
+    multiply_matrix = r70
+    r72 = [mat1, mat2]
+    r73 = load_address r72
+    r74 = _PyObject_Vectorcall(multiply_matrix, r73, 2, 0)
+    dec_ref multiply_matrix
+    if is_error(r74) goto L34 (error at test:12) else goto L17
+L17:
+    dec_ref mat1
+    dec_ref mat2
+    r75 = builtins :: module
+    r76 = 'print'
+    r77 = CPyObject_GetAttr(r75, r76)
+    if is_error(r77) goto L35 (error at test:12) else goto L18
+L18:
+    r78 = [r74]
+    r79 = load_address r78
+    r80 = _PyObject_Vectorcall(r77, r79, 1, 0)
+    dec_ref r77
+    if is_error(r80) goto L35 (error at test:12) else goto L36
+L19:
+    dec_ref r74
+    r81 = box(None, 1)
+    inc_ref r81
+    return r81
+L20:
+    r82 = <error> :: object
+    return r82
+L21:
+    dec_ref r0
+    goto L20
+L22:
+    dec_ref r0
+    dec_ref r1
+    goto L20
+L23:
+    dec_ref r0
+    dec_ref r1
+    dec_ref r9
+    goto L20
+L24:
+    dec_ref r0
+    dec_ref r1
+    dec_ref r9
+    dec_ref r17
+    goto L20
+L25:
+    dec_ref r0
+    dec_ref mat1
+    goto L20
+L26:
+    dec_ref r0
+    dec_ref mat1
+    dec_ref r30
+    goto L20
+L27:
+    dec_ref r0
+    dec_ref mat1
+    dec_ref r30
+    dec_ref r38
+    goto L20
+L28:
+    dec_ref r0
+    dec_ref mat1
+    dec_ref r30
+    dec_ref r38
+    dec_ref r46
+    goto L20
+L29:
+    dec_ref r0
+    dec_ref mat1
+    dec_ref mat2
+    goto L20
+L30:
+    dec_ref r0
+    dec_ref mat1
+    dec_ref mat2
+    dec_ref r59
+    goto L20
+L31:
+    dec_ref r0
+    dec_ref mat1
+    dec_ref mat2
+    dec_ref r63
+    goto L20
+L32:
+    dec_ref r69
+    goto L14
+L33:
+    dec_ref mat1
+    dec_ref mat2
+    dec_ref r70
+    goto L20
+L34:
+    dec_ref mat1
+    dec_ref mat2
+    goto L20
+L35:
+    dec_ref r74
+    goto L20
+L36:
+    dec_ref r80
+    goto L19
+
+def __top_level__():
+    r0, r1 :: object
+    r2 :: bit
+    r3 :: str
+    r4 :: object
+    r5 :: object_ptr
+    r6 :: object_ptr[1]
+    r7 :: c_ptr
+    r8 :: native_int[1]
+    r9 :: c_ptr
+    r10 :: object
+    r11 :: dict
+    r12, r13 :: str
+    r14 :: bit
+    r15 :: object
+    r16 :: str
+    r17, r18 :: object
+    r19 :: int
+    r20 :: dict
+    r21 :: str
+    r22 :: object
+    r23 :: i32
+    r24 :: bit
+    r25, r26 :: object
+    r27 :: str
+    r28, r29 :: object
+    r30 :: int
+    r31 :: dict
+    r32 :: str
+    r33 :: object
+    r34 :: i32
+    r35 :: bit
+    r36 :: str
+    r37 :: dict
+    r38 :: str
+    r39 :: object
+    r40 :: int
+    r41 :: dict
+    r42 :: str
+    r43 :: object
+    r44, r45 :: int
+    r46, r47, r48 :: str
+    r49 :: object
+    r50 :: str
+    r51 :: object
+    r52 :: object[1]
+    r53 :: object_ptr
+    r54 :: object
+    r55 :: None
+L0:
+    r0 = builtins :: module
+    r1 = load_address _Py_NoneStruct
+    r2 = r0 != r1
+    if r2 goto L3 else goto L1 :: bool
+L1:
+    r3 = 'builtins'
+    r4 = PyImport_Import(r3)
+    if is_error(r4) goto L22 (error at <module>:-1) else goto L2
+L2:
+    builtins = r4 :: module
+    dec_ref r4
+L3:
+    r5 = load_address time :: module
+    r6 = [r5]
+    r7 = load_address r6
+    r8 = [14]
+    r9 = load_address r8
+    r10 = (('time', 'time', 'time'),)
+    r11 = test.globals :: static
+    r12 = 'test.py'
+    r13 = '<module>'
+    r14 = CPyImport_ImportMany(r10, r7, r11, r12, r13, r9)
+    if not r14 goto L22 else goto L4 :: bool
+L4:
+    r15 = time :: module
+    r16 = 'perf_counter_ns'
+    r17 = CPyObject_GetAttr(r15, r16)
+    if is_error(r17) goto L22 (error at <module>:15) else goto L5
+L5:
+    r18 = _PyObject_Vectorcall(r17, 0, 0, 0)
+    dec_ref r17
+    if is_error(r18) goto L22 (error at <module>:15) else goto L6
+L6:
+    r19 = unbox(int, r18)
+    dec_ref r18
+    if is_error(r19) goto L22 (error at <module>:15) else goto L7
+L7:
+    r20 = test.globals :: static
+    r21 = 'start'
+    r22 = box(int, r19)
+    r23 = CPyDict_SetItem(r20, r21, r22)
+    dec_ref r22
+    r24 = r23 >= 0 :: signed
+    if not r24 goto L22 (error at <module>:15) else goto L8 :: bool
+L8:
+    r25 = test()
+    if is_error(r25) goto L22 (error at <module>:16) else goto L23
+L9:
+    r26 = time :: module
+    r27 = 'perf_counter_ns'
+    r28 = CPyObject_GetAttr(r26, r27)
+    if is_error(r28) goto L22 (error at <module>:17) else goto L10
+L10:
+    r29 = _PyObject_Vectorcall(r28, 0, 0, 0)
+    dec_ref r28
+    if is_error(r29) goto L22 (error at <module>:17) else goto L11
+L11:
+    r30 = unbox(int, r29)
+    dec_ref r29
+    if is_error(r30) goto L22 (error at <module>:17) else goto L12
+L12:
+    r31 = test.globals :: static
+    r32 = 'end'
+    r33 = box(int, r30)
+    r34 = CPyDict_SetItem(r31, r32, r33)
+    dec_ref r33
+    r35 = r34 >= 0 :: signed
+    if not r35 goto L22 (error at <module>:17) else goto L13 :: bool
+L13:
+    r36 = 'Time: '
+    r37 = test.globals :: static
+    r38 = 'end'
+    r39 = CPyDict_GetItem(r37, r38)
+    if is_error(r39) goto L22 (error at <module>:18) else goto L14
+L14:
+    r40 = unbox(int, r39)
+    dec_ref r39
+    if is_error(r40) goto L22 (error at <module>:18) else goto L15
+L15:
+    r41 = test.globals :: static
+    r42 = 'start'
+    r43 = CPyDict_GetItem(r41, r42)
+    if is_error(r43) goto L24 (error at <module>:18) else goto L16
+L16:
+    r44 = unbox(int, r43)
+    dec_ref r43
+    if is_error(r44) goto L24 (error at <module>:18) else goto L17
+L17:
+    r45 = CPyTagged_Subtract(r40, r44)
+    dec_ref r40 :: int
+    dec_ref r44 :: int
+    r46 = CPyTagged_Str(r45)
+    dec_ref r45 :: int
+    if is_error(r46) goto L22 (error at <module>:18) else goto L18
+L18:
+    r47 = 'ns'
+    r48 = CPyStr_Build(3, r36, r46, r47)
+    dec_ref r46
+    if is_error(r48) goto L22 (error at <module>:18) else goto L19
+L19:
+    r49 = builtins :: module
+    r50 = 'print'
+    r51 = CPyObject_GetAttr(r49, r50)
+    if is_error(r51) goto L25 (error at <module>:18) else goto L20
+L20:
+    r52 = [r48]
+    r53 = load_address r52
+    r54 = _PyObject_Vectorcall(r51, r53, 1, 0)
+    dec_ref r51
+    if is_error(r54) goto L25 (error at <module>:18) else goto L26
+L21:
+    dec_ref r48
+    return 1
+L22:
+    r55 = <error> :: None
+    return r55
+L23:
+    dec_ref r25
+    goto L9
+L24:
+    dec_ref r40 :: int
+    goto L22
+L25:
+    dec_ref r48
+    goto L22
+L26:
+    dec_ref r54
+    goto L21

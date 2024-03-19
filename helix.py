@@ -1,40 +1,44 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 from __future__ import annotations
-from datetime import datetime
+
+#import tracemalloc
+#import atexit
+
+#tracemalloc.start()
+#atexit.register(tracemalloc.stop)
 
 import gc
+import atexit
+gc.disable() # disable garbage collection for performance
 
-gc.disable()
-
-import os
-import signal
-import sys
-import shutil
-import hashlib
-import threading
-import subprocess
-import functools
-from sys import exit
-from threading import Event
-from io import TextIOWrapper
-from types import FrameType, ModuleType
-from typing import Any, Callable, Iterable, Optional, Tuple
-from argparse import Namespace, ArgumentParser
-from time import perf_counter_ns as time
-
-from black import FileMode, format_file_contents
-
-# from black.parsing import InvalidInput
-from classes.Token import Processed_Line, Token_List
-
-from globals import POOL, EARLY_REPLACEMENTS
-from core.better_print import color_print as print
-from core.token.tokenize_file import Tokenizer
-from core.config import load_config
-from core.panic import panic
-from classes.Scope import Scope
-from classes.Transpiler import Transpiler
+import src.core.base as base
+from src.core.imports import (
+    os,
+    signal,
+    sys,
+    shutil,
+    hashlib,
+    threading,
+    subprocess,
+    functools,
+    datetime,
+    exit,
+    Event,
+    Any, Callable, Iterable, Optional, Tuple, FrameType, ModuleType,
+    Namespace, ArgumentParser,
+    perf_counter_ns as time,
+    TextIOWrapper,
+    Processed_Line, Token_List,
+    Tokenizer,
+    load_config,
+    panic,
+    Scope,
+    Transpiler,
+    FileMode, format_file_contents,
+    color_print as print,
+    framework,
+)
 
 __version__: str = "0.1.0-alpha.a"
 USE_CACHE: bool = False
@@ -222,6 +226,36 @@ def watch_processes() -> None:
                 del ThreadedProcess.__processes_queue__[pid]
 
 
+def clean_docstring(docstring: str) -> str:
+    """
+    Cleans up the given docstring by removing unnecessary whitespace and newlines.
+
+    Parameters
+    ----------
+    docstring : str
+        The docstring to be cleaned.
+
+    Returns
+    -------
+    str
+        The cleaned docstring.
+    """
+    if not docstring:
+        return ""
+
+    indentation_level: int = 0
+    for char in docstring.splitlines()[1]:
+        if not char.isspace():
+            break
+        indentation_level += 1
+        
+    return "\n".join(
+        [
+            line[indentation_level:]
+            for line in docstring.splitlines()
+        ]
+    )
+
 class ThreadedProcess:
     """
     Manages threaded execution of processes.
@@ -305,16 +339,6 @@ class ThreadedProcess:
     def __repr__(self) -> str:
         return self.__str__()
 
-
-# @ThreadedProcess
-# def test() -> None:
-#    for i in range(10):
-#        print(i)
-#        sleep(1/3)
-
-# test()
-
-
 class ArgParser:
     """
     Parses command-line arguments for the Helix language application.
@@ -336,8 +360,8 @@ class ArgParser:
         Returns the namespace of parsed command-line arguments.
     """
     def help_screen(self):
-        print(
-            """usage: helix [-h] [-v] [-o COMPILE] [-d] [-l LOG] [-c CONFIG] [-s] file ...
+        print(clean_docstring("""
+            usage: helix [-h] [-v] [-o COMPILE] [-d] [-l LOG] [-c CONFIG] [-s] file ...
 
             Welcome to the Helix CLI, the gateway to harnessing the power and simplicity of Helix,
             a programming language designed for developers who cherish Python's ease but crave more
@@ -361,7 +385,7 @@ class ArgParser:
             -i, --install PACKAGE_NAME         install new packages
             -u, --uninstall PACKAGE_NAME       uninstall packages
             -doc DOC                           the name of the documentation page to be displayed
-        """,
+        """),
             word_wrap=False,
             end="",
         )
@@ -741,7 +765,7 @@ class DisabledKeyboardInterrupt:
             self.old_handler(*self.signal_received)  # type: ignore
 
 
-class Helix:
+class Helix(framework.HelixLanguage):
     """
     Main class for the Helix programming language interpreter and compiler.
 
@@ -917,6 +941,25 @@ class Helix:
                 )
 
             self.timer.start("run")
+            #_locals = {}
+            #_globals = {}
+            #try:
+            #    exec(
+            #        compile(
+            #            open(self.__out_file__).read(),
+            #            self.__out_file__,
+            #            "exec",
+            #        ),
+            #        _globals,
+            #        _locals,
+            #    )
+            #except Exception as e:
+            #    panic(
+            #        "THIS NEEDS TO BE CHANGED TO A CUSTOM EXCEPTION",
+            #        file=self.__out_file__,
+            #        line_no=1,
+            #        no_lines=True,
+            #    )
             try:
                 subprocess.Popen(
                     [sys.executable, self.__out_file__]
@@ -959,6 +1002,11 @@ class Helix:
                 style="bold",
                 border=True,
             )
+        
+        gc.collect(0)
+        gc.collect(1)
+        gc.collect(2)
+        
 
     def compile_file(
         self, file: Optional[str] = None
@@ -1237,7 +1285,7 @@ def exception_handler(exception_type: type[BaseException] | threading.ExceptHook
     current_exception = exception
     relevant_frames = []
 
-    early_replacements = dict((v, k) for k, v in {EARLY_REPLACEMENTS}.items())
+    early_replacements = dict((v, k) for k, v in {base.EARLY_REPLACEMENTS}.items())
 
     # First loop: filter out irrelevant frames
     index = 0
@@ -1481,21 +1529,31 @@ if __name__ == "__main__":
 
         return helix_import
 
-
-if __name__ == "__main__":
-    try:
-        Helix.factory(
-            os.path.join(".helix", "config.toml"),
-            profile=True,
-        )
-        Helix.__hook_import__("syntax/test.hlx")
-        # from test_hlx import subtract
-        # subtract(5, 3)
-        # Helix.REPL()
-    finally:
-        if POOL.is_alive:
-            POOL.close()
-            
+    def __del__(self) -> None:
         gc.collect(0)
         gc.collect(1)
         gc.collect(2)
+        
+def exit_func(*args: Any) -> None:
+    if base.POOL.is_alive:
+        base.POOL.close()
+    
+    #print("Memory Usage: ", tracemalloc.get_traced_memory()[1] / 10**6, "MB")
+    
+    gc.collect(0)
+    gc.collect(1)
+    gc.collect(2)
+
+atexit.register(exit_func)
+signal.signal(signal.SIGTERM, exit_func)
+
+if __name__ == "__main__":
+    Helix.factory(
+        os.path.join(".helix", "config.toml"),
+        profile=True,
+    )
+    #Helix.__hook_import__("syntax/test.hlx")
+    # from test_hlx import subtract
+    # subtract(5, 3)
+    # Helix.REPL()
+    
