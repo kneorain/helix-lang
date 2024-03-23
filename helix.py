@@ -2,722 +2,49 @@
 # -*- coding: utf-8 -*-
 from __future__ import annotations
 
-#import tracemalloc
-#import atexit
-
-#tracemalloc.start()
-#atexit.register(tracemalloc.stop)
-
 import gc
-import atexit
 gc.disable() # disable garbage collection for performance
+
+import atexit
 
 import src.core.base as base
 from src.core.imports import (
     os,
-    signal,
     sys,
-    shutil,
-    hashlib,
-    threading,
-    subprocess,
-    functools,
-    datetime,
-    exit,
-    Event,
-    Any, Callable, Iterable, Optional, Tuple, FrameType, ModuleType,
-    Namespace, ArgumentParser,
-    perf_counter_ns as time,
-    TextIOWrapper,
-    Processed_Line, Token_List,
-    Tokenizer,
-    load_config,
+    Any,
+    Tuple,
     panic,
+    Event,
+    Timer,
     Scope,
-    Transpiler,
-    FileMode, format_file_contents,
-    color_print as print,
+    signal,
+    shutil,
+    CONFIG,
+    Hashing,
+    Callable,
+    FileMode,
+    Optional,
+    Namespace,
+    FrameType,
+    Tokenizer,
+    ArgParser,
     framework,
+    ModuleType,
+    subprocess,
+    Transpiler,
+    py_compile,
+    inject_core,
+    HelixLanguage,
+    format_file_contents,
+    color_print as print,
+    perf_counter_ns as time,
+    Processed_Line, Token_List,
 )
 
 __version__: str = "0.1.0-alpha.a"
-USE_CACHE: bool = False
-
 bar_thread = Event()
 
-class Hashing:
-    """
-    Provides functionality for hashing and comparing hashes of code files.
-
-    Attributes
-    ----------
-    file_path : str
-        The path to the file to be hashed.
-    output_path : str
-        The path where the hash output should be stored.
-
-    Methods
-    -------
-    __init__(self, file_path: str, output_path: str)
-        Initializes the Hashing object with file paths.
-    compute_hash(code: str) -> bytes
-        Computes and returns the hash of the given code.
-    create_hash_only(self)
-        Creates a hash of the file at file_path and stores it at output_path.
-    get_mount(path)
-        Retrieves the mount point for the given path.
-    create_file(self, code: str)
-        Creates a file with the given code and hashes it.
-    is_code_altered(self) -> bool
-        Checks if the code has been altered compared to its stored hash.
-    get_hash(self) -> bytes | None
-        Retrieves the hash of the file if it exists.
-    """
-    def __init__(self, file_path: str, output_path: str):
-        file: TextIOWrapper = open(file_path, "r")
-        self.__hash = Hashing.compute_hash(file.read())
-
-        file.close()
-        del file
-
-        self.__output_path = output_path
-
-    def __str__(self) -> str:
-        try:
-            return f"Hashing(hash={self.__hash.decode()}, output_path={self.__output_path})"
-        except UnicodeDecodeError:
-            return f"Hashing(hash={repr(self.__hash)}, output_path={self.__output_path})"
-
-    def __repr__(self) -> str:
-        return self.__str__()
-
-    def __int__(self) -> int:
-        return int.from_bytes(self.__hash, "big")
-
-    @staticmethod
-    def compute_hash(code: str) -> bytes:
-        return hashlib.md5(code.encode("utf-8")).digest()
-
-    def create_hash_only(self) -> None:
-        open(self.__output_path + ":hash", "wb").write(
-            self.__hash
-        )
-
-    @staticmethod
-    def get_mount(path):
-        path = os.path.realpath(os.path.abspath(path))
-        while path != os.path.sep:
-            if os.path.ismount(path):
-                return path
-            path = os.path.abspath(
-                os.path.join(path, os.pardir)
-            )
-
-        return path
-
-    def __windows_io(
-        self, writeable: str = ""
-    ) -> Optional[bytes]:
-        if writeable:
-            with open(
-                self.__output_path, "wb"
-            ) as file, open(
-                self.__output_path + ":hash", "wb"
-            ) as ads:
-                file.write(writeable.encode("utf-8"))
-                ads.write(self.__hash)
-        return open(
-            self.__output_path + ":hash", "rb"
-        ).read()
-
-    def __linux_io(
-        self, writeable: str = ""
-    ) -> Optional[bytes]:
-        if sys.platform in ["linux", "linux2", "darwin"]:
-            import xattr  # type: ignore
-
-            if writeable:
-                with open(self.__output_path, "wb") as file:
-                    file.write(writeable.encode("utf-8"))
-
-                attr = xattr.xattr(self.__output_path)
-                attr.set("user.hash", self.__hash)
-
-            attr = xattr.xattr(self.__output_path)
-            return attr.get("user.hash")
-        return None
-
-    def __io(self, writeable: str = "") -> Optional[bytes]:
-        if sys.platform == "win32":
-            return self.__windows_io(writeable)
-
-        elif sys.platform in ["linux", "linux2", "darwin"]:
-            return self.__linux_io(writeable)
-
-        else:
-            raise ImportError(
-                "xattr library is required on Linux and macOS for setting extended attributes."
-            )
-
-    def create_file(self, code: str) -> None:
-        try:
-            self.__io(code)
-
-        except ImportError:
-            raise ImportError(
-                "xattr library is required on Linux and macOS for setting extended attributes."
-            )
-
-        except PermissionError:
-            raise PermissionError(
-                "You do not have permission to write to the file."
-            )
-
-        except FileNotFoundError:
-            raise FileNotFoundError(
-                "The file does not exist."
-            )
-
-    def is_code_altered(self) -> bool:
-        if not USE_CACHE:
-            return True
-
-        if not os.path.exists(self.__output_path) or (
-            os.path.exists(self.__output_path + ":hash")
-            if sys.platform in ["linux", "linux2", "darwin"]
-            else False
-        ):
-            return (
-                True  # Hash file doesn't exist or is empty
-            )
-
-        existing_hash = self.get_hash()
-        if self.__hash != existing_hash:
-            return True
-
-        return False
-
-    def get_hash(self) -> bytes | None:
-        try:
-            return self.__io()
-        except FileNotFoundError:
-            open(self.__output_path + ":hash", "wb").write(
-                self.__hash
-            )
-        return None
-
-
-def watch_processes() -> None:
-    """
-    Monitors and manages active processes in the Helix language environment.
-
-    This function watches all active processes and performs necessary actions
-    like cleanup or logging based on their status and outcomes.
-    """
-    while True:
-        for (
-            pid,
-            thread,
-        ) in ThreadedProcess.__processes_queue__.items():
-            if not thread.is_alive():
-                ThreadedProcess.__processes_queue__[
-                    pid
-                ].join(1 / 1000)
-                del ThreadedProcess.__processes_queue__[pid]
-
-
-def clean_docstring(docstring: str) -> str:
-    """
-    Cleans up the given docstring by removing unnecessary whitespace and newlines.
-
-    Parameters
-    ----------
-    docstring : str
-        The docstring to be cleaned.
-
-    Returns
-    -------
-    str
-        The cleaned docstring.
-    """
-    if not docstring:
-        return ""
-
-    indentation_level: int = 0
-    for char in docstring.splitlines()[1]:
-        if not char.isspace():
-            break
-        indentation_level += 1
-        
-    return "\n".join(
-        [
-            line[indentation_level:]
-            for line in docstring.splitlines()
-        ]
-    )
-
-class ThreadedProcess:
-    """
-    Manages threaded execution of processes.
-
-    Attributes
-    ----------
-    __processes_queue__ : dict[int, threading.Thread]
-        Queue of processes managed by this class.
-
-    Methods
-    -------
-    __new__(cls, func: Callable[..., None])
-        Creates a new instance of ThreadedProcess.
-    __init__(self, func: Callable[..., None])
-        Initializes the ThreadedProcess with a function.
-    processes(self) -> dict[int, threading.Thread]
-        Returns the current queue of processes.
-    __call__(self, *args, **kwargs)
-        Executes the function in a separate thread.
-    """
-    # TODO: GET DONE
-    # this is supposed to be a threaded process decorator to be applied to fucntions
-    # that are supposed to be run in a separate thread. the process can not have a return
-    __processes_queue__: dict[int, threading.Thread] = {}
-
-    def __new__(cls, func: Callable[..., None]):
-        threading.Thread(
-            target=watch_processes, daemon=True
-        ).start()
-        return super().__new__(cls)
-
-    def __init__(self, func: Callable[..., None]):
-        self.__func__ = func
-        functools.update_wrapper(self, func)
-
-    def __call__(self, *args, **kwargs):
-        def thread_target():
-            try:
-                self.__func__(*args, **kwargs)
-            finally:
-                try:
-                    ThreadedProcess.__processes_queue__[
-                        self.__pid__
-                    ].join(1 / 1000)
-                except RuntimeError:
-                    pass
-                del ThreadedProcess.__processes_queue__[
-                    self.__pid__
-                ]
-
-        self.__pid__ = id(self.__func__)
-        self.__thread__ = threading.Thread(
-            target=thread_target
-        )
-        self.__thread__.start()
-        self.__class__.__processes_queue__[self.__pid__] = (
-            self.__thread__
-        )
-
-        if not self.__thread__.is_alive():
-            try:
-                ThreadedProcess.__processes_queue__[
-                    self.__pid__
-                ].join(1 / 1000)
-            except RuntimeError:
-                pass
-            del ThreadedProcess.__processes_queue__[
-                self.__pid__
-            ]
-            raise Exception(
-                "Thread has stopped unexpectedly."
-            )
-
-    @property
-    def processes(self) -> dict[int, threading.Thread]:
-        return self.__class__.__processes_queue__
-
-    def __str__(self) -> str:
-        return f"ThreadedProcess(func={self.__func__.__name__})"
-
-    def __repr__(self) -> str:
-        return self.__str__()
-
-class ArgParser:
-    """
-    Parses command-line arguments for the Helix language application.
-
-    Attributes
-    ----------
-    __args__ : Incomplete
-        Parsed arguments from the command line.
-
-    Methods
-    -------
-    help_screen(self) -> None
-        Displays the help screen with usage instructions.
-    version_screen(self) -> None
-        Displays the version information of the Helix language.
-    __init__(self, argv: Optional[Iterable[str]] = None)
-        Initializes the argument parser with command-line arguments.
-    args(self) -> Namespace
-        Returns the namespace of parsed command-line arguments.
-    """
-    def help_screen(self):
-        print(clean_docstring("""
-            usage: helix [-h] [-v] [-o COMPILE] [-d] [-l LOG] [-c CONFIG] [-s] file ...
-
-            Welcome to the Helix CLI, the gateway to harnessing the power and simplicity of Helix,
-            a programming language designed for developers who cherish Python's ease but crave more
-            robust features. This CLI tool empowers you to write, manage, and transpile Helix code
-            with a range of commands and options tailored for a seamless development experience.
-
-            positional arguments:
-            file                  the name of the file to be executed
-            doc                   the name of the documentation page to be displayed
-            other                 other arguments to be passed to the file as argv
-
-            options:
-            -h, --help                         show this help message and exit
-            -v, --version                      show the version number and exit
-            -o COMPILE, --compile COMPILE_FILE compile the file to a specific output file
-            -d, --debug                        enable debug mode
-            -l LOG, --log LOG_FILE             the name of the log file
-            -c CONFIG, --config CONFIG_FILE    specify or create a config file
-            -s, --silent                       enable silent mode
-            -w, --watch                        watch the file for changes and recompile
-            -i, --install PACKAGE_NAME         install new packages
-            -u, --uninstall PACKAGE_NAME       uninstall packages
-            -doc DOC                           the name of the documentation page to be displayed
-        """),
-            word_wrap=False,
-            end="",
-        )
-        exit()
-
-    def version_screen(self):
-        print("🧬 " + __version__)
-        exit()
-
-    def __init__(
-        self, argv: Optional[Iterable[str]] = None
-    ):
-        parser = ArgumentParser(
-            description="Welcome to the Helix CLI, the gateway to harnessing the power and simplicity of Helix,"
-            "a programming language designed for developers who cherish Python's ease but crave more"
-            "robust features. This CLI tool empowers you to write, manage, and transpile Helix code"
-            "with a range of commands and options tailored for a seamless development experience."
-        )
-
-        # Positional arguments
-        parser.add_argument(
-            "file",
-            nargs="?",
-            help="the name of the file to be executed",
-        )
-        parser.add_argument(
-            "other",
-            nargs="*",
-            help="other arguments to be passed to the file as argv",
-        )
-
-        # Optional arguments
-        parser.add_argument(
-            "-v",
-            "--version",
-            action="store_true",
-            help="show the version number and exit",
-        )
-        parser.add_argument(
-            "-d",
-            "--debug",
-            action="store_true",
-            help="enable debug mode",
-        )
-        parser.add_argument(
-            "-w",
-            "--watch",
-            action="store_true",
-            help="watch the file for changes and recompile",
-        )
-        parser.add_argument(
-            "-s",
-            "--silent",
-            action="store_true",
-            help="enable silent mode",
-        )
-        parser.add_argument(
-            "-r",
-            "--run",
-            action="store_true",
-            help="run the file",
-        )
-        parser.add_argument(
-            "-o",
-            "--compile",
-            dest="compile_file",
-            help="compile the file to a specific output file",
-        )
-        parser.add_argument(
-            "-l",
-            "--log",
-            dest="log_file",
-            help="the name of the log file",
-        )
-        parser.add_argument(
-            "-c",
-            "--config",
-            dest="config_file",
-            help="specify or create a config file",
-        )
-        parser.add_argument(
-            "-i",
-            "--install",
-            dest="install_package",
-            help="install new packages",
-        )
-        parser.add_argument(
-            "-u",
-            "--uninstall",
-            dest="uninstall_package",
-            help="uninstall packages",
-        )
-        parser.add_argument(
-            "-doc",
-            dest="store_true",
-            help="the name of the documentation page to be displayed",
-        )
-
-        self.__args__ = parser.parse_args(argv)  # type: ignore
-
-        # Handling version flag
-        if self.__args__.version:
-            self.version_screen()
-
-        # Handling doc flag
-        try:
-            if self.__args__.doc:
-                from docs.doc import doc
-
-                doc(self.__args__.doc)
-                exit()
-        except AttributeError:
-            pass
-
-        if not self.__args__.file and not any(
-            vars(self.__args__).values()
-        ):
-            self.help_screen()
-
-    @property
-    def args(self) -> Namespace:
-        return self.__args__
-
-
-class HelixLanguage:
-    """
-    Represents the core functionality for managing and executing Helix language operations.
-
-    This class encapsulates methods for various tasks like folder and file management,
-    setting up the Helix environment, and handling installations and configurations.
-
-    Methods
-    -------
-    __init__(self, *args: str, **kwargs: str)
-        Initialize the HelixLanguage instance with given arguments.
-    make_folder(directory: str) -> None
-        Creates a folder at the specified directory path.
-    make_file(file: str) -> None
-        Creates a file at the specified file path.
-    generate_folder_structure(directory: str = ...)
-        Generates the necessary folder structure for a given directory.
-    install_helix(config: dict) -> None
-        Installs and configures the Helix environment based on the provided configuration.
-
-    Examples
-    --------
-    >>> hl = HelixLanguage()
-    >>> hl.make_folder('path/to/directory')
-    >>> hl.install_helix({'option': 'value'})
-
-    Notes
-    -----
-    The class is designed to be flexible and handle various aspects of the Helix language
-    setup and management. More detailed methods and attributes can be added as per the
-    development needs of the Helix language.
-    """
-    def __init__(self, *args: str, **kwargs: str):
-        raise NotImplementedError(
-            "Cannot instantiate HelixLanguage."
-        )
-
-    @staticmethod
-    def make_folder(directory: str) -> None:
-        if not os.path.isdir(directory):
-            os.mkdir(directory)
-
-    @staticmethod
-    def make_file(file: str) -> None:
-        if not os.path.exists(file):
-            with open(file, "w", encoding="utf-8") as _:
-                return
-
-    @staticmethod
-    def generate_folder_structure(
-        directory: str = os.path.expanduser("~")
-        + os.sep
-        + ".helix",
-    ):
-        if (
-            os.path.isdir(directory)
-            and os.listdir(directory) != []
-        ):
-            return
-
-        HelixLanguage.make_folder(directory)
-        HelixLanguage.make_folder(
-            os.path.join(directory, "intl_libs")
-        )
-        HelixLanguage.make_folder(
-            os.path.join(directory, "intl_libs", "helix")
-        )
-        HelixLanguage.make_folder(
-            os.path.join(directory, "intl_libs", "c++")
-        )
-        HelixLanguage.make_folder(
-            os.path.join(directory, "intl_libs", "c")
-        )
-        HelixLanguage.make_folder(
-            os.path.join(directory, "intl_libs", "python")
-        )
-        HelixLanguage.make_folder(
-            os.path.join(directory, "intl_libs", "rust")
-        )
-
-        HelixLanguage.make_folder(
-            os.path.join(directory, "logs")
-        )
-        HelixLanguage.make_folder(
-            os.path.join(directory, "temp")
-        )
-        HelixLanguage.make_folder(
-            os.path.join(directory, "cache")
-        )
-        HelixLanguage.make_folder(
-            os.path.join(directory, "cache", "build_cache")
-        )
-        HelixLanguage.make_folder(
-            os.path.join(directory, "include")
-        )
-
-        HelixLanguage.make_file(
-            os.path.join(directory, "config.toml")
-        )
-        HelixLanguage.make_file(
-            os.path.join(directory, "include", "core.py")
-        )
-
-    @staticmethod
-    def install_helix(config: dict) -> None:
-        if (
-            config["core_location"]
-            != os.path.expanduser("~") + os.sep + ".helix"
-        ):
-            HelixLanguage.generate_folder_structure(
-                config["core_location"]
-            )
-        else:
-            HelixLanguage.generate_folder_structure()
-
-        if config["add_to_path"]:
-            # permanently add to path
-            print("Not yet implemented.")
-
-        if config["add_to_desktop"]:
-            # add to desktop
-            print("Not yet implemented.")
-
-    @staticmethod
-    def remove_blank_lines(
-        file: str, hash: Hashing | None
-    ) -> None:
-        with open(file, "r") as read_file, open(
-            file + ".tmp", "w"
-        ) as write_file:
-            for line in read_file:
-                if line.strip():
-                    write_file.write(line)
-
-        shutil.move(file + ".tmp", file)
-        if hash:
-            hash.create_hash_only()
-
-
-class Timer:
-    """
-    A utility class for timing code execution in the Helix language environment.
-
-    Methods
-    -------
-    __init__(self)
-        Initializes the Timer object.
-    start(self, name: str) -> None
-        Starts a timer with the given name.
-    end(self, name: str) -> None
-        Ends the timer with the given name and logs the elapsed time.
-    get_time(self, name: str) -> float
-        Retrieves the elapsed time for the timer with the given name.
-    decorator(self, func: Callable) -> Callable
-        Decorator method for timing functions.
-    """
-    def __init__(self):
-        self.__times: dict[
-            str, tuple[float, float, int]
-        ] = {}  # name: (start, end, level)
-        self.__active_timers = (
-            []
-        )  # Stack to keep track of active timers
-
-    def start(self, name: str) -> None:
-        self.__times[name] = (
-            time(),
-            0,
-            len(self.__active_timers),
-        )
-        self.__active_timers.append(name)
-
-    def end(self, name: str) -> None:
-        self.__times[name] = (
-            self.__times[name][0],
-            time(),
-            self.__times[name][2],
-        )
-        self.__active_timers.remove(name)
-
-    def get_time(self, name: str) -> float:  # in ms
-        start, end, _ = self.__times[name]
-        return (end - start) / 1_000_000
-
-    def __str__(self) -> str:
-        result = []
-        for name in self.__times:
-            indent = "|    " * self.__times[name][2]
-            result.append(
-                f'{indent}"{name}" took {self.get_time(name):.2f}ms'
-            )
-        return "\n".join(result)
-
-    def __repr__(self) -> str:
-        return self.__str__()
-
-    def decorator(self, func: Callable) -> Callable:
-        @functools.wraps(func)
-        def wrapper(*args, **kwargs) -> Any:
-            self.start(func.__name__)
-            result = func(*args, **kwargs)
-            self.end(func.__name__)
-            return result
-
-        return wrapper
-
-
-class DisabledKeyboardInterrupt:
+class DisabledKeyboardInterrupt(framework.DisabledKeyboardInterrupt):
     """
     Context manager for temporarily disabling KeyboardInterrupt exceptions.
 
@@ -764,8 +91,7 @@ class DisabledKeyboardInterrupt:
         if self.signal_received:
             self.old_handler(*self.signal_received)  # type: ignore
 
-
-class Helix(framework.HelixLanguage):
+class Helix(framework.Helix):
     """
     Main class for the Helix programming language interpreter and compiler.
 
@@ -778,7 +104,8 @@ class Helix(framework.HelixLanguage):
 
     Methods
     -------
-    __init__(self, conf_file: Optional[str] = None, *args: str, profile: bool = False, import_: bool = False)
+    __init__(self, conf_file: Optional[str] = None, *args: str,
+             profile: bool = False, import_: bool = False)
         Initialize the Helix interpreter/compiler with configuration.
     factory(cls, config_file: str, *args: str, **kwargs: Any)
         Factory method to create Helix instances.
@@ -788,20 +115,27 @@ class Helix(framework.HelixLanguage):
         Performs cleanup operations.
     compile_file(self, file: Optional[str] = None) -> Scope
         Compiles the specified Helix file.
-    transpile(self, file: Optional[str] = None) -> tuple[Scope, list[Processed_Line]]
+    transpile(self,
+              file: Optional[str] = None) -> tuple[Scope, list[Processed_Line]]
         Transpiles the specified Helix file to another language.
     generate_line_numbers(self, transpiled: list[Processed_Line]) -> str
         Generates line numbers for the transpiled code.
-    generate_source_code(self, scope_parsed: Scope, transpiled_lines: list[Processed_Line], format_source: bool = False, is_main: bool = True, no_inject: bool = False) -> str
+    generate_source_code(self, scope_parsed: Scope,
+                         transpiled_lines: list[Processed_Line],
+                         format_source: bool = False,
+                         is_main: bool = True,
+                         no_inject: bool = False) -> str
         Generates source code from parsed scope and transpiled lines.
-    inject_core(self, code: Optional[str] = None, is_main: bool = True) -> str
-        Injects core Helix functionality into the transpiled code.
     REPL() -> None
         Launches the Helix Read-Eval-Print Loop.
-    __hook_import__(cls, file: str, *args: str, config_file: Optional[str] = None, **kwargs: Any) -> ModuleType
+    __hook_import__(cls,
+                    file: str,
+                    *args: str,
+                    config_file: Optional[str] = None,
+                    **kwargs: Any) -> ModuleType
         Hook method for importing modules in Helix.
     """
-    config: Namespace
+    config: Any
 
     @classmethod
     def interpreter(
@@ -835,8 +169,12 @@ class Helix(framework.HelixLanguage):
         )
 
         if not globals_ and not locals_:
-            source_code = inst.inject_core(
-                source_code, is_main=False
+            source_code = inject_core(
+                inst,
+                source_code,
+                is_main=False,
+                __version__=__version__,
+                __file__=__file__
             )
 
         # print(source_code)
@@ -852,7 +190,7 @@ class Helix(framework.HelixLanguage):
             ".helix",
             "cache",
             "build_cache",
-            f"{os.path.basename(self.__file__).split('.')[0]}_hlx.py",
+            f"{os.path.basename(self.__file__).split('.')[0]}_hlx.hir",
         )
 
     def __init__(
@@ -870,9 +208,9 @@ class Helix(framework.HelixLanguage):
         self.timer.start("parse_args")
 
         if args and not import_:
-            _args = ArgParser(args).args
+            _args = ArgParser(args, __version__).args
         elif not args and not import_:
-            _args = ArgParser().args
+            _args = ArgParser(version=__version__).args
         else:
             _args = Namespace()
             _args.file = args[0]
@@ -912,9 +250,7 @@ class Helix(framework.HelixLanguage):
                 self.__file__, self.__out_file__
             )
 
-        self.__class__.config = load_config(
-            self.__config_file__
-        )  # TODO: INTERGRATE CONFIG FILE
+        self.__class__.config = CONFIG
 
         self.timer.end("init")
 
@@ -940,26 +276,10 @@ class Helix(framework.HelixLanguage):
                     style="red",
                 )
 
+            if base.COMPILE:
+                py_compile.compile(self.__out_file__, cfile=self.__out_file__, optimize=2)
+            
             self.timer.start("run")
-            #_locals = {}
-            #_globals = {}
-            #try:
-            #    exec(
-            #        compile(
-            #            open(self.__out_file__).read(),
-            #            self.__out_file__,
-            #            "exec",
-            #        ),
-            #        _globals,
-            #        _locals,
-            #    )
-            #except Exception as e:
-            #    panic(
-            #        "THIS NEEDS TO BE CHANGED TO A CUSTOM EXCEPTION",
-            #        file=self.__out_file__,
-            #        line_no=1,
-            #        no_lines=True,
-            #    )
             try:
                 subprocess.Popen(
                     [sys.executable, self.__out_file__]
@@ -1094,8 +414,8 @@ class Helix(framework.HelixLanguage):
         _line_numbers: list[str] = str("\n".join(
             [
                 "-1" if line != "\x92" else "\x92"
-                for line in self.inject_core(
-                    None, is_main=not self.import_
+                for line in inject_core(
+                    self, None, is_main=not self.import_, __version__=__version__, __file__=__file__
                 ).splitlines()
                 if line.strip()
             ]
@@ -1167,271 +487,12 @@ class Helix(framework.HelixLanguage):
         self.timer.end("generate_source_code")
 
         return (
-            self.inject_core(
-                transpiled_code, is_main=is_main
+            inject_core(
+                self, transpiled_code, is_main=is_main, __version__=__version__, __file__=__file__
             )
             if not no_inject
             else transpiled_code
         )
-
-    def inject_core(
-        self,
-        code: Optional[str] = None,
-        is_main: bool = True,
-    ) -> str:
-        def get_all_importable_modules(
-            path: str,
-        ) -> list[str]:
-            import inspect
-            import importlib.util
-
-            # Load the module specified by the path
-            module_spec = (
-                importlib.util.spec_from_file_location(
-                    "module.name", path
-                )
-            )
-            if module_spec and module_spec.loader:
-                module = importlib.util.module_from_spec(
-                    module_spec
-                )
-                module_spec.loader.exec_module(module)
-
-                # Inspect the module and list all classes, functions, and variables
-                importable_items = []
-                for name, obj in inspect.getmembers(module):
-                    if (
-                        inspect.isfunction(obj)
-                        or inspect.isclass(obj)
-                        or (not name.startswith("_"))
-                    ):
-                        if not name.startswith("_H_"):
-                            importable_items.append(name)
-                return importable_items
-            else:
-                return (
-                    []
-                )  # or raise an exception if the module can't be loaded
-        back_slash = "\\"
-        inject_code = f"""# trunk-ignore-all(black)
-# trunk-ignore-all(isort)
-# --------------------------------------------------------------------------------
-#                                 GENERATED FILE
-# --------------------------------------------------------------------------------
-# Filename: {os.path.basename(self.__file__)}
-# Generation Date: {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}
-# Generator: Helix Transpiler
-# --------------------------------------------------------------------------------
-# WARNING: This file is AUTO-GENERATED by the Helix Transpiler. Any modifications
-# made directly to this file may be OVERWRITTEN during future compilations. To
-# introduce changes, please modify the source files and recompile.
-# --------------------------------------------------------------------------------
-# Licensed under the Creative Commons Attribution 4.0 International License (CC BY 4.0)
-# SPDX-License-Identifier: CC-BY-4.0
-# License Details: https://creativecommons.org/licenses/by/4.0/
-#
-# By using this file, you agree to the Terms and Conditions of the License.
-# --------------------------------------------------------------------------------
-# Helix Version: {__version__}
-# Repository: https://github.com/kneorain/helix
-# Documentation: https://kneorain.github.io/helix/
-# For further assistance, contact the development team or refer to project documentation.
-# --------------------------------------------------------------------------------
-from __future__ import annotations # type: ignore
-
-from beartype.door import is_bearable as is_typeof, is_subhint as is_sub_typeof # type: ignore
-from beartype import beartype, BeartypeConf # type: ignore
-###### from include.plum.plum import dispatch as overload_with_type_check
-
-import os               # type: ignore
-import sys              # type: ignore
-import types            # type: ignore
-
-sys.path.append(os.path.dirname(os.path.realpath(\"{__file__.replace(back_slash, os.sep+os.sep)}\")) + os.sep + ".helix")            # type: ignore
-sys.path.append(os.path.dirname(os.path.realpath(\"{__file__.replace(back_slash, os.sep+os.sep)}\")))            # type: ignore
-sys.path.append(os.path.dirname(os.path.realpath(os.getcwd())))                                     # type: ignore
-# trunk-ignore(ruff/F401)
-from include.core import {', '.join(get_all_importable_modules(os.path.join(".helix", "include", "core.py")))} # type: ignore
-# trunk-ignore(ruff/F401)
-# trunk-ignore(ruff/F811)
-from include.core import __import_c__, __import_cpp__, __import_py__, __import_rs__                 # type: ignore
-
-import threading  # type: ignore
-import functools  # type: ignore
-
-__lock = threading.Lock()
-__file__ = "{os.path.realpath(self.__file__).replace(back_slash, os.sep+os.sep)}"
-# trunk-ignore(ruff/F821)
-def exception_handler(exception_type: type[BaseException] | threading.ExceptHookArgs, exception: Optional[Exception] = None, tb: Optional[types.TracebackType] = None, debug_hook: bool = False, thread_error: bool = False):
-    import traceback
-    import linecache
-    import os
-
-    from include.core import _H_tokenize_line__
-    from beartype.roar import BeartypeException
-    
-    print()
-
-    thread_name = None
-    if thread_error and exception_type is not None:
-        thread_name = exception_type.thread.name  # type: ignore
-        exception = exception_type.exc_value      # type: ignore
-        tb = exception_type.exc_traceback         # type: ignore
-        exception_type = exception_type.exc_type  # type: ignore
-
-    stack = traceback.extract_tb(tb)
-    stack = traceback.StackSummary([frame for frame in stack if not frame.filename.startswith("<@beartype(")])
-    exception = TypeError(str(exception).replace("type hint", "type")) if isinstance(exception, BeartypeException) else exception
-    current_exception = exception
-    relevant_frames = []
-
-    early_replacements = dict((v, k) for k, v in {base.EARLY_REPLACEMENTS}.items())
-
-    # First loop: filter out irrelevant frames
-    index = 0
-    for frame in stack:
-        filename = frame.filename
-        line_no = frame.lineno
-        if "_hlx" in os.path.basename(filename):
-            filename = __file__
-            line_no = int(open(frame.filename + ".lines", "r").readlines()[line_no-1]) # type: ignore
-
-            if line_no == -1:
-                continue
-
-        # Check specific conditions to skip
-        if (
-            f"plum{{os.sep}}plum" in filename
-        ):
-            continue
-            
-        if (
-            linecache.getline(filename, line_no-1).strip() == "def hx_internal_multi_method_decorator(*args, **kwargs):" # type: ignore
-            and
-            linecache.getline(filename, line_no-3).strip() == "def hx__multi_method(func: Callable) -> Callable:" # type: ignore
-        ):
-            continue
-            
-        relevant_frames.append((index, frame))
-        index += 1
-
-    if len(relevant_frames) > 1:
-        __lock.acquire(blocking=True, timeout=1.2)
-        for frame_info in relevant_frames:
-            index, frame = frame_info
-            filename = frame.filename
-            line_no = frame.lineno
-
-            if "_hlx" in os.path.basename(filename):
-                filename = __file__
-                line_no = int(open(frame.filename + ".lines", "r").readlines()[line_no-1]) # type: ignore
-
-            # Attempt to find the marked part in the error message
-            # see if the frame contains colno and end_colno
-            marks = None
-            if hasattr(frame, "colno") and hasattr(frame, "end_colno"): # type: ignore
-                marks = list(_H_tokenize_line__(frame._line[frame.colno:frame.end_colno])) # type: ignore
-            try:
-                file_ext =  os.path.basename(filename).split('.')[1] # type: ignore
-            except IndexError:
-                file_ext = "py"
-            if marks:
-                panic(
-                    current_exception,  # type: ignore
-                    *marks,
-                    file=filename,
-                    line_no=line_no,  # type: ignore
-                    multi_frame=True,
-                    pos=0 if index == 0 else 1 if index < len(relevant_frames) - 1 else 2,
-                    replacements=early_replacements,
-                    follow_marked_order=True,
-                    mark_start=frame.colno,
-                    thread_name=thread_name,
-                    lang=file_ext
-                )
-            else:
-                panic(
-                    current_exception,  # type: ignore
-                    file=filename,
-                    line_no=line_no,  # type: ignore
-                    replacements=early_replacements,
-                    multi_frame=True,
-                    pos=0 if index == 0 else 1 if index < len(relevant_frames) - 1 else 2,
-                    thread_name=thread_name,
-                    lang=file_ext
-                )
-            current_exception = current_exception.__cause__ if current_exception.__cause__ else current_exception  # type: ignore
-        else:
-            __lock.release()
-            exit(1)
-    else:
-        __lock.acquire(blocking=True, timeout=0.1)
-        index, frame = relevant_frames[0]
-        filename = frame.filename
-        line_no = frame.lineno
-
-        if "_hlx" in filename:
-            filename = __file__
-            line_no = int(open(frame.filename + ".lines", "r").readlines()[line_no-1]) # type: ignore
-
-        # Attempt to find the marked part in the error message
-        # see if the frame contains colno and end_colno
-        marks = None
-        if hasattr(frame, "colno") and hasattr(frame, "end_colno"):
-            marks = list(_H_tokenize_line__(frame._line[frame.colno:frame.end_colno])) # type: ignore
-
-        try:
-            file_ext =  os.path.basename(filename).split('.')[1]
-        except IndexError:
-            file_ext = "py"
-        if marks:
-            panic(
-                current_exception, # type: ignore
-                *marks,
-                file=filename,
-                line_no=line_no, # type: ignore
-                replacements=early_replacements,
-                follow_marked_order=True,
-                mark_start=frame.colno,
-                thread_name=thread_name,
-                lang=file_ext
-            )
-        else:
-            panic(
-                current_exception, # type: ignore
-                file=filename,
-                line_no=line_no, # type: ignore
-                replacements=early_replacements,
-                thread_name=thread_name,
-                lang=file_ext
-            )
-
-        __lock.release()
-        exit(1)
-
-sys.excepthook = exception_handler  # type: ignore
-threading.excepthook = functools.partial(exception_handler, thread_error=True)
-sys.argv = ["{os.path.realpath(__file__).replace(back_slash, os.sep+os.sep)}", "{os.path.realpath(self.__file__).replace(back_slash, os.sep+os.sep)}"] + list(sys.argv)[2:]
-del os, threading, functools
-overload_with_type_check = beartype(conf=BeartypeConf(is_color=False))   # type: ignore
-
-\x92
-
-if __name__ == "__main__":
-    try:
-        main() # type: ignore
-    except (KeyError, TypeError):
-        main(sys.argv)
-"""
-        if not is_main:
-            return inject_code.split("\x92")[0] + (
-                code if code else "\x92"
-            )
-
-        if code is not None:
-            return inject_code.replace("\x92", code)
-        else:
-            return inject_code
 
     @staticmethod
     def REPL() -> None:
@@ -1520,7 +581,7 @@ if __name__ == "__main__":
             **scope.classes,
             **scope.variables,
         }.items():
-            if value.get("private"):
+            if "private" in value: # CHANGED from: if value.get("private", False):
                 remove.append(attr)
 
         # Clean up private attributes

@@ -9,7 +9,7 @@ from decimal import (Decimal as double, getcontext)
 from array import array
 
 from enum import Enum
-from functools import wraps
+from functools import wraps, partial
 import inspect
 from threading import Thread
 from types import MappingProxyType as FastMap, NoneType, FunctionType, UnionType, BuiltinFunctionType
@@ -20,6 +20,8 @@ from multimethod import DispatchError, multimeta
 from multimethod import subtype
 
 from typing import Type, TypeVar, Optional
+
+from beartype import beartype
 from src.panic import panic, standalone_tokenize_line as _H_tokenize_line__
 from time import sleep
 #from include.c_cpp import __import_c__
@@ -47,7 +49,18 @@ def __import_py__(*args, **kwargs):
     raise NotImplementedError("Python is not supported in Helix (YET)")
 
  
-
+class Infix:
+    def __init__(self: Any, func: Callable) -> None:
+        self.func = func
+    
+    def __ror__(self: Any, a: Any) -> Any:
+        return Infix(partial(self.func, a))
+    
+    def __or__(self: Any, a: Any) -> Any:
+        return self.func(a)
+    
+    def operator(self: Any, left: Any, right: Any) -> Any:
+        return self.func(left, right)
 
 getcontext().prec = 128
 replace_primitives = {
@@ -197,42 +210,6 @@ class void:
 DEFAULT_VALUE = void()
 
 
-#class C_For:
-#    def __init__(self, **kwargs):
-#        # Initialize loop variables
-#        self.loop_vars = kwargs
-#        # Extract condition and increment expressions
-#        self.condition = "True"
-#        self.increment = ""
-#        # Evaluate initial conditions
-#        [exec(f"{var} = {value}") for var, value in self.loop_vars.items()]
-#
-#    def __iter__(self):
-#        return self
-#
-#    def __next__(self):
-#        if not self.loop_condition_met:
-#            raise StopIteration
-#        current_values = tuple(self.loop_vars.values())
-#        exec(self.increment, None, self.loop_vars)
-#        self.loop_condition_met = eval(self.condition, None, self.loop_vars)
-#        return current_values if len(current_values) > 1 else current_values[0]
-#
-#    def set_con(self, condition):
-#        self.condition = condition
-#        self.loop_condition_met = eval(self.condition, None, self.loop_vars)
-#        return self
-#
-#    def set_inc(self, increment):
-#        self.increment = (
-#            increment.replace("++", "+= 1")
-#            .replace("--", "-= 1")
-#            .replace("+*", "*= 1")
-#            .replace("-*", "*= -1")
-#            .replace("/-", "/ -1")
-#            .replace("/*", "*= 1")
-#        )
-#        return self
 class C_For:
     def __init__(self, **kwargs):
         # Initialize loop variables
@@ -242,18 +219,16 @@ class C_For:
         self.increment = ""
         # Evaluate initial conditions
         [exec(f"{var} = {value}") for var, value in self.loop_vars.items()]
-        self.loop_condition_met = eval(self.condition, None, self.loop_vars)
 
-    async def __aiter__(self):
+    def __iter__(self):
         return self
 
-    async def __anext__(self):
+    def __next__(self):
         if not self.loop_condition_met:
-            raise StopAsyncIteration
+            raise StopIteration
         current_values = tuple(self.loop_vars.values())
         exec(self.increment, None, self.loop_vars)
         self.loop_condition_met = eval(self.condition, None, self.loop_vars)
-        await asyncio.sleep(0)  # Yield control to allow other tasks to run
         return current_values if len(current_values) > 1 else current_values[0]
 
     def set_con(self, condition):
@@ -271,9 +246,35 @@ class C_For:
             .replace("/*", "*= 1")
         )
         return self
+    
+def class_type_check_decorator(cls):
+    # Store the original __init__ for later use
+    dummy = lambda *args, **kwargs: None
+    original_init = getattr(cls, "__init__", dummy)
 
+    # Define a new __init__ that includes the type check
+    def new_init(self, *args, **kwargs):
+        if not isinstance(self, cls):
+            raise TypeError(f"Instance must be of type {cls.__name__}")
+        try:
+            if cls not in original_init.__annotations__.items():
+                # remove the calss from args
+                args = list(args)
+                for i in range(len(args)):
+                    if isinstance(args[i], cls):
+                        del args[i]
+                        break
+                args = tuple(args)
+                original_init(self, *args, **kwargs)
+            else:
+                original_init(self, *args, **kwargs)
+        except AttributeError:
+            raise TypeError(f"Can't instance class \"{cls.__name__}\", due to no 'new(self)' method present.");#"""REMOVE-STACK"""#
 
-from beartype import beartype
+    # Replace the class's __init__ with the new one
+    cls.__init__ = new_init
+    return cls
+
 
 def hx__async(func: Callable) -> Callable:
     def run_thread(func, args, kwargs):
@@ -288,14 +289,14 @@ def hx__async(func: Callable) -> Callable:
             func._thread.start()
         return func
 
-    def join(timeout=None):
+    def _await(timeout=None):
         if hasattr(func, "_thread"):
             func._thread.join(timeout)
             return getattr(func, "_result", None)
         return None
 
-    func.join = join
-    wrapper.join = join
+    wrapper._await = _await
+    func._await = _await
     return wrapper
 
 class hx_void(void): pass
