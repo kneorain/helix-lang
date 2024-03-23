@@ -39,7 +39,7 @@ struct TokenList {
     file: &'static str,
 }
 impl TokenList {
-    pub fn new(line: Vec<Token>, indent_level: u16, file: &'static str) -> Self {
+    #[allow(dead_code)] #[allow(dead_code)] pub fn new(line: Vec<Token>, indent_level: u16, file: &'static str) -> Self {
         Self {
             line: line,
             indent_level: indent_level,
@@ -47,19 +47,19 @@ impl TokenList {
         }
     }
 
-    pub fn line(&self) -> &Vec<Token> {
+    #[allow(dead_code)] pub fn line(&self) -> &Vec<Token> {
         &self.line
     }
 
-    pub fn indent_level(&self) -> u16 {
+    #[allow(dead_code)] pub fn indent_level(&self) -> u16 {
         self.indent_level
     }
 
-    pub fn file(&self) -> &'static str {
+    #[allow(dead_code)] pub fn file(&self) -> &'static str {
         self.file
     }
 
-    pub fn copy(&self) -> Self {
+    #[allow(dead_code)] pub fn copy(&self) -> Self {
         Self {
             line: self.line.clone(),
             indent_level: self.indent_level,
@@ -67,7 +67,7 @@ impl TokenList {
         }
     }
 
-    pub fn find_line_number(&self, token: &str) -> i32 {
+    #[allow(dead_code)] pub fn find_line_number(&self, token: &str) -> i32 {
         for line in &self.line {
             if token == line.value().get_token() {
                 return line.line_number();
@@ -76,11 +76,11 @@ impl TokenList {
         return -1;
     }
 
-    pub fn contains(&self, key: &Token) -> bool {
+    #[allow(dead_code)] pub fn contains(&self, key: &Token) -> bool {
         self.line.iter().any(|token| token.contains(key))
     }
 
-    pub fn contains_from(&self, key: &Token) -> Vec<Token> {
+    #[allow(dead_code)] pub fn contains_from(&self, key: &Token) -> Vec<Token> {
         self.line
             .iter()
             .filter(|token| token.contains(key))
@@ -88,7 +88,7 @@ impl TokenList {
             .collect()
     }
 
-    pub fn full_line(&self, token: &str) -> Vec<Token> {
+    #[allow(dead_code)] pub fn full_line(&self, token: &str) -> Vec<Token> {
         let mut found = false;
         self.line
             .iter()
@@ -104,7 +104,7 @@ impl TokenList {
             .collect()
     }
 
-    pub fn get_all_after(&self, token: &str) -> Vec<Token> {
+    #[allow(dead_code)] pub fn get_all_after(&self, token: &str) -> Vec<Token> {
         let mut found = false;
         self.line
             .iter()
@@ -120,7 +120,7 @@ impl TokenList {
             .collect()
     }
 
-    pub fn get_all_before(&self, token: &str) -> Vec<Token> {
+    #[allow(dead_code)] pub fn get_all_before(&self, token: &str) -> Vec<Token> {
         let mut found = false;
         self.line
             .iter()
@@ -136,7 +136,7 @@ impl TokenList {
             .collect()
     }
 
-    pub fn get_between(&self, start: &str, end: &str) -> Vec<Token> {
+    #[allow(dead_code)] pub fn get_between(&self, start: &str, end: &str) -> Vec<Token> {
         let mut start_index = 0;
         let mut end_index = 0;
         let mut count = 0;
@@ -163,7 +163,7 @@ impl TokenList {
             .collect()
     }
 
-    pub fn count(&self, value: &str) -> usize {
+    #[allow(dead_code)] pub fn count(&self, value: &str) -> usize {
         let mut count = 0;
         for token in &self.line {
             if value == token.value().get_token() {
@@ -174,7 +174,7 @@ impl TokenList {
         return count;
     }
 
-    pub fn split(&self, value: &str) -> Vec<TokenList> {
+    #[allow(dead_code)] pub fn split(&self, value: &str) -> Vec<TokenList> {
         let mut output = Vec::new();
         let mut temp = Vec::new();
         for token in &self.line {
@@ -191,17 +191,17 @@ impl TokenList {
         return output;
     }
 
-    pub fn splice(&self, start: usize, end: Option<usize>) -> TokenList {
+    #[allow(dead_code)] pub fn splice(&self, start: usize, end: Option<usize>) -> TokenList {
         let mut temp = self.copy();
         temp.line = temp.line[start..end.unwrap_or(temp.line.len())].to_vec();
         return temp;
     }
 
-    pub fn append(&mut self, value: Token) {
+    #[allow(dead_code)] pub fn append(&mut self, value: Token) {
         self.line.push(value);
     }
 
-    pub fn replace(&mut self, old: &str, new: &str) {
+    #[allow(dead_code)] pub fn replace(&mut self, old: &str, new: &str) {
         self.line.iter_mut().for_each(|token| {
             if old == token.value().get_token() {
                 token.set_token(new.to_string());
@@ -209,34 +209,34 @@ impl TokenList {
         });
     }
 
-    pub fn remove(&mut self, value: &str) {
+    #[allow(dead_code)] pub fn remove(&mut self, value: &str) {
         self.line.retain(|token| value != token.value().get_token());
     }
 
-    pub fn index(&self, value: &str) -> usize {
+    #[allow(dead_code)] pub fn index(&self, value: &str) -> usize {
         self.line
             .iter()
             .position(|token| value == token.value().get_token())
             .unwrap()
     }
 
-    pub fn len(&self) -> usize {
+    #[allow(dead_code)] pub fn len(&self) -> usize {
         self.line.len()
     }
 
-    pub fn get(&self, index: usize) -> Token {
+    #[allow(dead_code)] pub fn get(&self, index: usize) -> Token {
         self.line[index].clone()
     }
 
-    pub fn set(&mut self, index: usize, value: Token) {
+    #[allow(dead_code)] pub fn set(&mut self, index: usize, value: Token) {
         self.line[index] = value;
     }
 
-    pub fn iter(&self) -> std::slice::Iter<Token> {
+    #[allow(dead_code)] pub fn iter(&self) -> std::slice::Iter<Token> {
         self.line.iter()
     }
 
-    pub fn iter_mut(&mut self) -> std::slice::IterMut<Token> {
+    #[allow(dead_code)] pub fn iter_mut(&mut self) -> std::slice::IterMut<Token> {
         self.line.iter_mut()
     }
 }
