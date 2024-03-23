@@ -1,9 +1,9 @@
 import ast
 from functools import cache
 
-from src.config import load_config
+from src.config import CONFIG
 
-re = __import__(load_config().Transpiler["regex_module"])
+import re
 from src.classes.Token import Token
 import src.core.base as base
 
@@ -38,4 +38,4 @@ def remove_comment(_code: Token):
     if in_block_comment:
         code = ""
 
-    _code.line = code
+    _code.token = code

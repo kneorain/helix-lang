@@ -11,10 +11,7 @@ CLASS_EXTENSION = "::"
 SEPARATOR_FOR_CLASSES = "+"
 
 def generate_default_code(indent_chars: str, class_name) -> str:
-    return f"""
-{indent_chars}    def __init__(self: Any, __val: '{class_name}'):
-{indent_chars}            raise NotImplementedError("Define an __init__ method for this class with the function signature new(self: Any, inst_class: '{class_name}')")
-"""
+    return f""""""
 
 def _class(ast_list: Token_List, current_scope, parent_scope, root_scope, modifiers=None) -> Processed_Line:
     data_structure_types = (
@@ -32,7 +29,7 @@ def _class(ast_list: Token_List, current_scope, parent_scope, root_scope, modifi
         class_name: str = ast_list.splice(0, len(ast_list.get_all_before(":"))).splice(1).full_line().replace("<", "[").replace(">", "]")
         
     class_extends: list[Token]  = [i for i in ast_list.get_all_after(CLASS_EXTENSION) if i.token != SEPARATOR_FOR_CLASSES and i.token != ":" and i.token != "(" and i.token != ")"] if ast_list[2].token == CLASS_EXTENSION else []
-    class_decorators: list[str] = []
+    class_decorators: list[str] = ["@class_type_check_decorator"]
     unsafe: bool = False
 
     if any([i in ast_list for i in data_structure_types]):

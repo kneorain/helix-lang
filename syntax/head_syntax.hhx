@@ -1,10 +1,17 @@
 use "syntax.hlx";
 
-if sys::is_windows() {
-    define set_something(int value) -> void;
-} else {
-    define set_something_else(int value) -> void;
+
+if (defined(__cplusplus)) {
+    #define void auto
+    #define None auto
 }
+else {
+    #define auto void
+    #define None void
+}
+set_something(value: int) -> void;
+
+set_something_else(value: int) -> void;
 
 namespace python {
     fn set_something(value: int) -> None;
