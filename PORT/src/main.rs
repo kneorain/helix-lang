@@ -4,8 +4,9 @@ use pyo3::{types::PyModule, PyResult, Python};
 pub mod python;
 pub mod rust;
 
+
 //pub mod cpp;
-use crate::python::shared::unknown_int::IntOrUint;
+use crate::python::shared::unknown_int::NumericType;
 use backtrace::{Backtrace, BacktraceFrame};
 use std::fs::read_to_string;
 use std::io;
@@ -79,7 +80,7 @@ fn better_panic(panic_info: &panic::PanicInfo) {
             panic_payload,
             None,
             file = filename,
-            line_no = IntOrUint::Uint(line_no),
+            line_no = NumericType::Uint(line_no),
             multi_frame = if relevant_frames.len() > 1 {true} else {false},
             pos = pos as i8,
             thread_name = if thread_name != "main" {
@@ -157,12 +158,14 @@ fn filter_relevant_frames(frames: &[BacktraceFrame]) -> Vec<&BacktraceFrame> {
 fn main() {
     python::init_python();
     //cpp::lamo();
-    
-    let _ = python::test::hello_from_python();
+    let config = rust::config::get_config();
+    println!("{:?}", config);
+    let _ = python::test::test_kwargs(1, 2, None);
+    println!("{:?}", python::test::test_args(1, 2));
     
     panic::set_hook(Box::new(better_panic));//"""REMOVE-STACK"""//
     
-    let handler = thread::Builder::new().name("Fish".into()).spawn(|| {
+    let _handler = thread::Builder::new().name("Fish".into()).spawn(|| {
         panic!("Fish died...");
     });
     
@@ -172,7 +175,7 @@ fn main() {
 }
 
 
-
+#[allow(dead_code)]
 #[derive(Debug)]
 enum HelixError {
    PythonError(String),

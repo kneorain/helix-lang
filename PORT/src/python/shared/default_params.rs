@@ -1,9 +1,9 @@
-use super::unknown_int::IntOrUint;
+use super::unknown_int::NumericType;
 use std::collections::HashMap;
 
 pub struct PanicParams<'a> {
     pub file: Option<&'a str>,
-    pub line_no: Option<IntOrUint>,
+    pub line_no: Option<NumericType>,
     pub no_lines: Option<bool>,
     pub multi_frame: Option<bool>,
     pub pos: Option<i8>,

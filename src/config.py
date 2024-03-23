@@ -4,9 +4,6 @@ import toml
 import dataclasses
 from typing import Any, Optional
 
-
-# TODO: ADD PANIC's here
-
 @dataclasses.dataclass
 class HelixConfig:
     @dataclasses.dataclass
