@@ -157,7 +157,6 @@ fn filter_relevant_frames(frames: &[BacktraceFrame]) -> Vec<&BacktraceFrame> {
 
 fn main() {
     python::init_python();
-    //cpp::lamo();
     let config = rust::config::get_config();
     println!("{:?}", config);
     let _ = python::test::test_kwargs(1, 2, None);
