@@ -57,11 +57,10 @@ pub fn init_python() {
 
         sys_path.insert(0, "Z:/devolopment/helix/helix-lang/.venv/Scripts")
             .expect("Failed to insert .venv/Scripts to sys.path");
-        // list the file at port_path
-        py.run("import os; print(os.getcwd())", None, None).unwrap();
     });
 }
  
+#[macro_use]
 #[macro_export]
 macro_rules! __panic__ {
     ($error:expr, $mark:expr $(, line_no = $line_no:expr)?) => {
