@@ -19,13 +19,15 @@ pyo3 = "0.20.3"
 regex = "1.10.3"
 syn = "2.0.53"
 cxx = "1.0"
-miette = "5"
+miette = "7.1.0"
 toml = "0.8.12"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0.114"
+log = "0.4.21"
+pretty_env_logger = "0.5.0"
 # helix-macros = { path = "./macros" }
 
 [build-dependencies]
 cxx-build = "1.0.120"
 autocxx-build = "0.26.0"
-miette = { version = "5", features = ["fancy"] } # optional but gives nicer error messages!
+miette = { version = "7.1.0", features = ["fancy"] }

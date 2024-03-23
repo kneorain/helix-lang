@@ -59,7 +59,7 @@ macro_rules! repr_python {
                     .expect("Failed to get Python function");
                 
                 let args = ($($arg_name,)*);
-                let kwargs = PyDict::new(py);
+                let kwargs = PyDict::new(py); // Fix: Declare PyDict
                 $(
                     if let Some(value) = $kwarg_name {
                         kwargs.set_item(stringify!($kwarg_name), value).expect("Failed to set keyword argument");
