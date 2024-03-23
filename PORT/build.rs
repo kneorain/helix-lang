@@ -1,6 +1,3 @@
-use std::fs;
-use std::path::PathBuf;
-
 fn main() -> miette::Result<()> {
     // let _user = std::env::current_dir().unwrap();
     // let mut build = cc::Build::new();
@@ -12,7 +9,7 @@ fn main() -> miette::Result<()> {
 
 
     cxx_build::bridge("src/cpp/mod.rs")
-        .file("src/cpp/greeting.cpp")
+        .file("src/cpp/src/greeting.cpp")
         //.compiler("clang++")
         //.include("C:\\Programing Languages\\LLVM\\include")
         .include("C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Tools\\MSVC\\14.39.33519\\include")

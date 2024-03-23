@@ -1,6 +1,7 @@
 pub use cpp::*;
 
 mod private;
+pub mod shared;
 
 #[cxx::bridge]
 mod cpp {

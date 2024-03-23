@@ -7,15 +7,19 @@ use pyo3::{
 pub mod shared;
 mod private;
 
-pub use crate::python::shared::unknown_int::IntOrUint;
+pub use crate::python::shared::unknown_int::NumericType;
 pub use private::python_import;
 use private::python_import::repr_python;
+use std::env;
 pub use crate::__panic__;
 
 // --------------------------- BEGIN PYTHON IMPORTS ----------------------------
 pub mod test {
     use super::*;
-    repr_python!(test, hello_from_python);
+
+    repr_python!("test21", fn hello_from_python());
+    repr_python!("test21", fn test_args(a: i32, b: i32) -> i32);
+    repr_python!("test21", fn test_kwargs(a: i32, b: i32; c: Option<i32> = None) -> i32);
 }
 
 // ---------------------------- END PYTHON IMPORTS -----------------------------
@@ -26,23 +30,35 @@ pub fn init_python() {
 
     Python::with_gil(|py| {
         let sys = PyModule::import(py, "sys")
-                .expect("Failed to import sys")
-            .getattr("path")
+                .expect("Failed to import sys");
+        
+        let sys_path = sys.getattr("path")
                 .expect("Failed to get sys.path")
                 .downcast::<PyList>()
                     .expect("sys.path is not a PyList");
-        sys.insert(0, "PORT/src/python")
+
+        let mut port_path = env::current_dir().expect("Failed to get current directory");
+        if port_path.ends_with("PORT") {
+            port_path.push("src\\python\\src");
+        } else if port_path.ends_with("helix-lang") {
+            port_path.push("PORT\\src\\python\\src");
+        } else {
+            panic!("Failed to find the PORT directory");
+        }
+        
+        sys_path.insert(0, port_path)
             .expect("Failed to insert src/python to sys.path");
         
-        sys.insert(0, "Z:/devolopment/helix/helix-lang/.venv/Lib/site-packages")
+        sys_path.insert(0, "Z:/devolopment/helix/helix-lang/.venv/Lib/site-packages")
             .expect("Failed to insert .venv/Lib/site-packages to sys.path");
 
-        sys.insert(0, "Z:/devolopment/helix/helix-lang/.venv/Lib")
+        sys_path.insert(0, "Z:/devolopment/helix/helix-lang/.venv/Lib")
             .expect("Failed to insert .venv/Lib to sys.path");
 
-        sys.insert(0, "Z:/devolopment/helix/helix-lang/.venv/Scripts")
+        sys_path.insert(0, "Z:/devolopment/helix/helix-lang/.venv/Scripts")
             .expect("Failed to insert .venv/Scripts to sys.path");
-
+        // list the file at port_path
+        py.run("import os; print(os.getcwd())", None, None).unwrap();
     });
 }
  
@@ -51,8 +67,7 @@ macro_rules! __panic__ {
     ($error:expr, $mark:expr $(, line_no = $line_no:expr)?) => {
         {
             let mut params = $crate::python::shared::default_params::PanicParams::default();
-            $(params.line_no = Some($crate::IntOrUint::Int($line_no));)*
-            // ... other fields ...
+            $(params.line_no = Some($crate::NumericType::Int($line_no));)*
             $crate::python::__panic__impl($error, $mark, params)
         }
     };
