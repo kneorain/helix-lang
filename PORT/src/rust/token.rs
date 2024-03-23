@@ -1,6 +1,6 @@
-from __future__ import annotations
-from typing import Optional
-from src.core.imports import (
+use std::borrow::Cow;
+
+/*from src.core.imports import (
     json,
     subtype,
     Iterable,
@@ -10,7 +10,7 @@ from  beartype.door import is_bearable
 
 class Token:
     _: str = "Helix Token"
-
+    
     # ---------------------------- Constructor ------------------------------- #
     def __init__(self,
         original_line: Optional[str],
@@ -257,26 +257,84 @@ class Token_List(list[Token]):
     def replace(self, __old: str, __new: str) -> 'Token_List':
         self.line = [token if token.token != __old else token.set_token(__new) for token in self.line]
         return self
+*/
+use pyo3::prelude::*;
+use super::Label;
+/// Helix Token
+#[pyclass]
+#[repr(C)]
+#[derive(Clone,Debug,Hash)]
+struct Token {
+    // CAN be shared between tokens (doesn't mean it will ALWAYS be shared)
+    original_line:  Option<String>,
+    line_number:    i32,
+    indent_level:   u16,
+
+    line:  Vec<String>, // becomes None after a token is processed
+    token: String,
+
+    identifier: String, // change to enum
+    attributes: HashMap<String, String>,
+}
+
+struct RawToken {
+    
+}
 
 
-class Processed_Line:
-    def __init__(self, line: str, non_parsed_line: Token_List):
-        self.line = line
-        self.non_parsed_line = non_parsed_line
 
-    def __str__(self):
-        return self.line
+impl Token {
+    
+    pub fn new(original_line:Option<String>,line:Option<Vec<String>>,line_number:Option<i32>,token:Option<char>,indent_level:Option<u16>) -> Self {
+        Self {
+            original_line,
+            line,
+            token,
+            line_number,
+            indent_level,
+        }
+    }
 
-    def __repr__(self):
-        return repr(self.line.rstrip())
+    pub fn set_original_line(&mut self, original_line:String){
+        self.original_line = Some(original_line);
+    }
 
-    def to_code(self) -> str:
-        return self.line
+    pub fn original_line<'a>(&self)-> &Option<String>{
+        &self.original_line
+    }
 
-    def to_line_number(self) -> str:
-        # get the most commen line num in self.non_parsed_line.line not the largest
-        from collections import Counter
-        if len(self.line.splitlines()) > 1:
-            return (str(Counter([str(_.line_number) for _ in self.non_parsed_line.line]).most_common(1)[0][0]) + "\n") * len([_ for _ in self.line.splitlines() if _.strip()])
+    pub fn line(&self)-> &mut [String] {
+        &self.line
+    }
 
-        return str(Counter([str(_.line_number) for _ in self.non_parsed_line.line]).most_common(1)[0][0])
+    //pub fn set_
+}
+
+
+
+
+
+impl Label for Token {
+    fn label()-> &'static str {
+        "Helix Token"
+    }
+}
+#[pyclass]
+#[repr(C)]
+#[derive(Clone,Debug)]
+struct RawLines {
+
+}
+
+
+impl Label for RawLines {
+    fn label()-> &'static str {
+        "Helix Rawlines"
+    
+    }
+}
+
+
+
+
+

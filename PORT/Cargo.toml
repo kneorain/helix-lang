@@ -1,0 +1,28 @@
+[package]
+name = "helix-compiler"
+version = "0.1.0"
+edition = "2021"
+
+[[bin]]
+name = "port"
+path = "src/main.rs"
+
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+autocxx = "0.26.0"
+backtrace = "0.3.70"
+fxhash = "0.2.1"
+lazy_static = "1.4.0"
+pyo3 = "0.20.3"
+regex = "1.10.3"
+syn = "2.0.53"
+cxx = "1.0"
+miette = "5"
+# helix-macros = { path = "./macros" }
+
+[build-dependencies]
+cxx-build = "1.0.120"
+autocxx-build = "0.26.0"
+miette = { version = "5", features = ["fancy"] } # optional but gives nicer error messages!

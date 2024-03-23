@@ -1,0 +1,14 @@
+CompileFlags: # Tweak the parse settings, example directory given to show format
+  Add:
+    - "-IC:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Tools\\MSVC\\14.39.33519\\include"
+    - "-IC:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Tools\\MSVC\\14.39.33519\\ATLMFC\\include"
+    - "-IC:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Auxiliary\\VS\\include"
+    - "-IC:\\Program Files (x86)\\Windows Kits\\10\\include\\10.0.22621.0\\ucrt"
+    - "-IC:\\Program Files (x86)\\Windows Kits\\10\\include\\10.0.22621.0\\um"
+    - "-IC:\\Program Files (x86)\\Windows Kits\\10\\include\\10.0.22621.0\\shared"
+    - "-IC:\\Program Files (x86)\\Windows Kits\\10\\include\\10.0.22621.0\\winrt"
+    - "-IC:\\Program Files (x86)\\Windows Kits\\10\\include\\10.0.22621.0\\cppwinrt"
+    - "-IC:\\Program Files (x86)\\Windows Kits\\NETFXSDK\\4.8\\include\\um"
+    - "-IZ:\\devolopment\\helix\\helix-lang\\target\\debug\\build\\helix-compiler-c4af7e19530dfe15\\out\\cxxbridge\\include"
+    - "-IZ:\\devolopment\\helix\\helix-lang\\target\\debug\\build\\helix-compiler-c4af7e19530dfe15\\out\\cxxbridge\\crate"
+  
