@@ -1,8 +1,7 @@
-use std::fmt::Display;
+use super::token::Token;
+use pyo3::prelude::*;
 use std::hash::Hash;
 use std::sync::Arc;
-use pyo3::prelude::*;
-use super::token::Token;
 
 // TODO: use super::Label;
 
@@ -34,21 +33,20 @@ def append(self, __value: Token | str) -> None:
 def replace(self, __old: str, __new: str) -> 'Token_List':
 */
 
-
 #[pyclass]
 #[repr(C)]
-#[derive(Clone, Debug,Hash,PartialEq,Eq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 struct TokenList {
     line: Vec<Token>,
     indent_level: u16,
     file: Arc<str>,
 }
 // TODO: If this is all just in-place getting of betweens this can easily be all done inplace with a single iterator getting chunked up,
-// all of the functions that return using .collect can return a Filter or FilterMap (depending of use case) 
+// all of the functions that return using .collect can return a Filter or FilterMap (depending of use case)
 // as it would be more efficient and less memory intensive than collecting into a vector and then returning that vector
 // leading to less unnecessary allocations and deallocations
 // contains_from, full_line, get_all_after,get_all_before,get_between
-// can all be converted to this format 
+// can all be converted to this format
 
 #[allow(dead_code)]
 impl TokenList {
@@ -63,7 +61,7 @@ impl TokenList {
     pub fn line(&self) -> &[Token] {
         &self.line
     }
-    
+
     pub fn indent_level(&self) -> u16 {
         self.indent_level
     }
@@ -88,8 +86,10 @@ impl TokenList {
     pub fn contains_from(&self, key: &Token) -> Vec<Token> {
         self.line
             .iter()
-            .filter(|token| token.contains(key))
-            .cloned()
+            .filter_map(|token| match token.contains(key) {
+                true => Some(token.clone()),
+                false => None,
+            })
             .collect()
     }
 
@@ -98,13 +98,14 @@ impl TokenList {
         self.line
             .iter()
             .filter_map(|line| {
-                if token == line.value().get_token() {
-                    found = true;
-                }
-                if found {
-                    return Some(line.clone());
-                }
-                return None;
+                match found {
+                    true=> Some(line.clone()),
+                    false if token == line.value().get_token()=> {
+                        found = true;
+                        return Some(line.clone());
+                    }
+                    false => None,
+                } 
             })
             .collect()
     }
@@ -114,14 +115,13 @@ impl TokenList {
         self.line
             .iter()
             .filter_map(|line| {
-                if found {
-                    return Some(line.clone());
+                match found {
+                    true => return Some(line.clone()), // find a way to return a reference
+                    false if token == line.value().get_token() => {found = true;None},
+                    _ => None
                 }
-                if token == line.value().get_token() {
-                    found = true;
-                }
-                return None;
-            }).collect()
+            })
+            .collect()
     }
 
     pub fn get_all_before(&self, token: &str) -> Vec<Token> {
@@ -129,13 +129,14 @@ impl TokenList {
         self.line
             .iter()
             .filter_map(|line| {
-                if token == line.value().get_token() {
-                    found = true;
+                match found {
+                    true => Some(line.clone()), // find a way to return a reference
+                    false if token == line.value().get_token() => {
+                        found = true;
+                        return None;
+                    }
+                    false => None,
                 }
-                if found {
-                    return Some(line.clone());
-                }
-                return None;
             })
             .collect()
     }
@@ -149,12 +150,26 @@ impl TokenList {
             .iter()
             .enumerate()
             .filter_map(|(i, line)| {
+
+                // match start == line.value().get_token() && count == 0 {
+                //     true => {
+                //         start_index = i;
+                //         count += 1;
+                //     }
+                //     false if start == line.value().get_token() && count > 0 => {
+                //         count += 1;
+                //     }
+                //     false => {}
+                // }
+
+
                 if start == line.value().get_token() && count == 0 {
                     start_index = i;
                     count += 1;
                 } else if start == line.value().get_token() && count > 0 {
                     count += 1;
                 }
+
                 if end == line.value().get_token() {
                     count -= 1;
                     if count == 0 {
@@ -244,7 +259,6 @@ impl TokenList {
         self.line.iter_mut()
     }
 }
-
 
 impl IntoIterator for TokenList {
     type Item = Token;

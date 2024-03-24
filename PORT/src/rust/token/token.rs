@@ -1,9 +1,12 @@
 use std::mem;
 use std::num::{NonZeroI32, NonZeroU16};
+use std::panic::panic_any;
 use std::sync::Arc;
 use std::{ collections::HashMap, fmt::Display };
 use std::hash::Hash;
 use pyo3::prelude::*;
+use crate::panic_name;
+
 use super::token_value::TokenValue;
 
 // TODO: use super::Label;
@@ -36,7 +39,7 @@ def is_empty(self) -> bool:
 pub struct Token {
     // ------- Information about the token itself ------- //
     // CAN be shared between tokens (doesn't mean it will ALWAYS be shared)
-    original_line: Option<String>,
+    original_line: Option<String>, // Arc ?
     line_number: i32,
     indent_level: u16, 
     column: u16,
@@ -49,6 +52,8 @@ pub struct Token {
 
     // ------- Information about the token ------- //
     identifier: String, // change to enum
+
+    // TODO: Make the keys into an enum
     attributes: Vec<(String, String)>,
 }
 
@@ -63,16 +68,16 @@ impl Token {
         attributes: Vec<(String, String)>
     ) -> Self {
         Self {
-            original_line: original_line,
+            original_line,
             // When an option is None, it is 0 within memory so this is safe,
             // as when using non zero values, the value will never be 0, so the 
             // Option here is the same size as the value it holds
             line_number:unsafe {std::mem::transmute::<Option<NonZeroI32>,i32>(line_number)},
             column: unsafe {std::mem::transmute::<Option<NonZeroU16>,u16>(column)},
-            file_name: file_name,
-            value: value,
-            identifier: identifier,
-            attributes: attributes,
+            file_name,
+            value,
+            identifier,
+            attributes,
             indent_level: 0,
         }
     }
@@ -133,15 +138,23 @@ impl Token {
         &self.attributes
     }
 
-    pub fn set_attributes(&mut self, key: String, value: String) {
+    pub fn set_attr(&mut self, key: String, value: String) {
         for (k, v) in self.attributes.iter_mut() {
             if *k == key {
                 *v = value;
                 return;
             }
         }
-
         self.attributes.push((key, value));
+    }
+
+    pub fn get_attr(&self, key: &str) -> Option<&str> {
+        for (k, v) in self.attributes.iter() {
+            if k == key {
+                return Some(v);
+            }
+        }
+        None
     }
 
     pub fn set_token(&mut self, token: String) {
@@ -172,7 +185,7 @@ impl IntoIterator for Token {
         // return the iter only if the token is a line else panic
         match self.value {
             TokenValue::Line(line) => line.into_iter(),
-            _ => panic!("{}", TokenError::TokenIsNotLine),
+            _ => panic_any(TokenError::TokenIsNotLine),
         }
     }
 }
