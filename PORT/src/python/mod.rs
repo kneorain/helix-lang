@@ -92,8 +92,8 @@ pub fn __panic__impl<T: Display>(__error: T, _mark: Option<Vec<&str>>, params: s
         let module = PyModule::import(py, "panic").expect("Failed to import PANIC");
         
         let kwargs = PyDict::new(py);
-        kwargs.set_item("file", params.file.unwrap_or_else(|| "")).expect("broke.");
-        kwargs.set_item("line_no", params.line_no.unwrap_or_default()).expect("broke.");
+        kwargs.set_item("_file", params.file.unwrap_or_else(|| "")).expect("broke.");
+        kwargs.set_item("_line_no", params.line_no.unwrap_or_default()).expect("broke.");
         kwargs.set_item("no_lines", params.no_lines.unwrap_or_default()).expect("broke.");
         kwargs.set_item("multi_frame", params.multi_frame.unwrap_or_default()).expect("broke.");
         
