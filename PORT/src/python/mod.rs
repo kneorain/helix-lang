@@ -59,8 +59,7 @@ pub fn init_python() {
             .expect("Failed to insert .venv/Scripts to sys.path");
     });
 }
- 
-#[macro_use]
+
 #[macro_export]
 macro_rules! __panic__ {
     ($error:expr, $mark:expr $(, line_no = $line_no:expr)?) => {
