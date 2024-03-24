@@ -101,7 +101,6 @@ pub enum Target {
 // This is input validation
 #[derive(Debug, Deserialize_repr, Serialize_repr, PartialEq)]
 #[repr(u8)]
-#[serde(rename_all = "snake_case")]
 enum OptimizationLevel {
     Zero = 0,
     One = 1,
