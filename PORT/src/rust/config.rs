@@ -12,6 +12,8 @@ trait Merge {
 }
 
 
+// -------------------------------------- HelixConfig -------------------------------------- //
+
 // TODO: Add a phantom generic to the HelixConfig struct that stipulates what mode is being used, e.g. Debug, Release, etc.
 
 #[derive(Debug, Default, Deserialize, Serialize, PartialEq)]
@@ -24,6 +26,46 @@ pub struct HelixConfig {
     environment: Environment,
 }
 
+
+impl HelixConfig {
+    const DEFAULT_FILE_NAME: &'static str = "helix.toml";
+
+    pub fn load_from_file(path: &Path) -> Result<Self, ConfigError> {
+        let contents = fs::read_to_string(path).map_err(ConfigError::FailedToLoadFile)?;
+
+        toml::from_str(&contents).map_err(ConfigError::ParseError)
+    }
+
+    pub fn save_to_file(&self, path: &Path) -> Result<(), ConfigError> {
+        let toml_string = toml::to_string_pretty(self).map_err(ConfigError::SerializationError)?;
+
+        fs::write(path, toml_string).map_err(ConfigError::FailedToSave)
+    }
+
+    pub fn load() -> Result<Self, ConfigError> {
+        let mut default_config = HelixConfig::default();
+
+        let project_config_path = std::env::current_dir()
+            .map_err(ConfigError::FailedToLoadFile)?
+            .join(HelixConfig::DEFAULT_FILE_NAME);
+
+        let project_config = HelixConfig::load_from_file(&project_config_path)?;
+
+        default_config.merge(project_config);
+
+        // Load the global config and merge it with the project config
+        if let Ok(s) = std::env::var("HELIX_CONFIG") {
+            let path = Path::new(&s);
+
+            let global_config = HelixConfig::load_from_file(&path)?;
+
+            default_config.merge(global_config);
+        };
+
+        return Ok(default_config);
+    }
+}
+
 impl Merge for HelixConfig {
     fn merge(&mut self, other: Self) {
         self.core.merge(other.core);
@@ -34,6 +76,8 @@ impl Merge for HelixConfig {
         self.environment.merge(other.environment);
     }
 }
+
+// -------------------------------------- Core -------------------------------------- //
 
 #[derive(Debug, Deserialize, Serialize, PartialEq)]
 pub struct Core {
@@ -56,6 +100,8 @@ impl Merge for Core {
         self.auto_update = other.auto_update;
     }
 }
+
+// -------------------------------------- Transpiler -------------------------------------- //
 
 #[derive(Debug, Deserialize, Serialize, PartialEq)]
 pub struct Transpiler {
@@ -225,46 +271,6 @@ impl Merge for Environment {
         self.env_vars.extend(other.env_vars)
     }
 }
-
-impl HelixConfig {
-    const DEFAULT_FILE_NAME: &'static str = "helix.toml";
-
-    pub fn load_from_file(path: &Path) -> Result<Self, ConfigError> {
-        let contents = fs::read_to_string(path).map_err(ConfigError::FailedToLoadFile)?;
-
-        toml::from_str(&contents).map_err(ConfigError::ParseError)
-    }
-
-    pub fn save_to_file(&self, path: &Path) -> Result<(), ConfigError> {
-        let toml_string = toml::to_string_pretty(self).map_err(ConfigError::SerializationError)?;
-
-        fs::write(path, toml_string).map_err(ConfigError::FailedToSave)
-    }
-
-    pub fn load() -> Result<Self, ConfigError> {
-        let mut default_config = HelixConfig::default();
-
-        let project_config_path = std::env::current_dir()
-            .map_err(ConfigError::FailedToLoadFile)?
-            .join(HelixConfig::DEFAULT_FILE_NAME);
-
-        let project_config = HelixConfig::load_from_file(&project_config_path)?;
-
-        default_config.merge(project_config);
-
-        // Load the global config and merge it with the project config
-        if let Ok(s) = std::env::var("HELIX_CONFIG") {
-            let path = Path::new(&s);
-
-            let global_config = HelixConfig::load_from_file(&path)?;
-
-            default_config.merge(global_config);
-        };
-
-        return Ok(default_config);
-    }
-}
-
 
 #[derive(Debug)]
 pub enum ConfigError {
