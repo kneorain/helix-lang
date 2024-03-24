@@ -10,7 +10,7 @@ use std::thread_local;
 use crate::__panic__;
 
 #[macro_export]
-macro_rules! panic_any {
+macro_rules! panic_name {
     ($arg:expr) => {
         // extract the typeof and the messge, if the typeof is str then only the message is passed
         let r#typeof = std::any::type_name_of_val(&$arg);

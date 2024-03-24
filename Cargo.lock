@@ -417,6 +417,7 @@ dependencies = [
  "serde",
  "serde_json",
  "serde_repr",
+ "smallvec",
  "syn 2.0.53",
  "toml",
 ]

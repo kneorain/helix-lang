@@ -64,7 +64,7 @@ fn main() {
 }
 
 fn fun_name() {
-    panic_any!(HelixError::PythonError("hello world".to_string()));
+    panic_name!(HelixError::PythonError("hello world".to_string()));
 }
 
 #[allow(dead_code)]

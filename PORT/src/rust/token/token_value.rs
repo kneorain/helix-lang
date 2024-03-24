@@ -1,7 +1,7 @@
 use std::fmt::Display;
 use std::hash::Hash;
 use std::ops::{Index, IndexMut,};
-
+use std::panic::panic_any;
 // TODO: use super::Label;
 
 // TODO: Make into SmallVec
@@ -27,7 +27,7 @@ impl TokenValue {
             return line;
         }
         
-        panic!("{}",TokenError::IllegalAccess);
+        panic_any(TokenError::IllegalAccess);
     }
     
     pub fn get_line_mut(&mut self) -> &mut Vec<String> {
@@ -35,7 +35,7 @@ impl TokenValue {
             return line;
         }
         
-        panic!("{}",TokenError::IllegalAccess);
+        panic_any(TokenError::IllegalAccess);
     }
 
     pub fn len (&self) -> usize {
@@ -50,13 +50,13 @@ impl TokenValue {
             return token;
         }
         
-        panic!("{}",TokenError::IllegalAccess);
+        panic_any(TokenError::IllegalAccess);
     }
 
     pub fn set_line(&mut self, line: Vec<String>) {
         *self = Line(line);
     }
-
+    
     pub fn set_token(&mut self, token: String) {
         *self = Token(token);
     }
@@ -86,7 +86,7 @@ impl Index<usize> for TokenValue {
             return &line[index];
         }
 
-        panic!("{}", TokenError::IllegalAccess);
+        panic_any(TokenError::IllegalAccess);
     }
 }
 
@@ -96,7 +96,7 @@ impl IndexMut<usize> for TokenValue {
             return &mut line[index];
         }
 
-        panic!("{}", TokenError::IllegalAccess);
+        panic_any(TokenError::IllegalAccess);
     }
 }
 
