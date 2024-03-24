@@ -1,12 +1,13 @@
 import inspect
 import os
 import re
+
 from sys import exit
 from sys import stdout as sys_stdout
+
 from types import FrameType
 from typing import Any, NoReturn, Optional
 from weakref import ref
-
 from pygments import highlight  # type: ignore
 from pygments.formatters import (  # type: ignore
     Terminal256Formatter,
@@ -296,7 +297,7 @@ def __panic__(
 ):  # type: ignore
     lock.acquire(blocking=True, timeout=0.2)
 
-    does_support_colors: bool = True
+    does_support_colors: bool = sys_stdout.isatty()
     use_border: bool = False
     final_output: str = ""
     single_frame: bool = False
