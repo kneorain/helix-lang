@@ -37,26 +37,33 @@ pub fn init_python() {
                 .downcast::<PyList>()
                     .expect("sys.path is not a PyList");
 
-        let mut port_path = env::current_dir().expect("Failed to get current directory");
-        if port_path.ends_with("PORT") {
-            port_path.push("src/python/src");
-        } else if port_path.ends_with("helix-lang") {
-            port_path.push("PORT/src/python/src");
+        if env::current_dir().expect("Failed to get current directory").ends_with("PORT") {
+            sys_path.insert(0, "src/python/src")
+                .expect("Failed to insert src/python to sys.path");
+        
+            sys_path.insert(0, "../.venv/Lib/site-packages")
+                .expect("Failed to insert .venv/Lib/site-packages to sys.path");
+            
+            sys_path.insert(0, "../.venv/Lib")
+                .expect("Failed to insert .venv/Lib to sys.path");
+
+            sys_path.insert(0, "../.venv/Scripts")
+                .expect("Failed to insert .venv/Scripts to sys.path");
+        } else if env::current_dir().expect("Failed to get current directory").ends_with("helix-lang") {
+            sys_path.insert(0, "PORT/src/python/src")
+                .expect("Failed to insert src/python to sys.path");
+            
+            sys_path.insert(0, ".venv/Lib/site-packages")
+                .expect("Failed to insert .venv/Lib/site-packages to sys.path");
+            
+            sys_path.insert(0, ".venv/Lib")
+                .expect("Failed to insert .venv/Lib to sys.path");
+
+            sys_path.insert(0, ".venv/Scripts")
+                .expect("Failed to insert .venv/Scripts to sys.path");
         } else {
             panic!("Failed to find the PORT directory");
         }
-        
-        sys_path.insert(0, port_path)
-            .expect("Failed to insert src/python to sys.path");
-        
-        sys_path.insert(0, "PORT/.venv/Lib/site-packages")
-            .expect("Failed to insert .venv/Lib/site-packages to sys.path");
-
-        sys_path.insert(0, "PORT/.venv/Lib")
-            .expect("Failed to insert .venv/Lib to sys.path");
-
-        sys_path.insert(0, "PORT/.venv/Scripts")
-            .expect("Failed to insert .venv/Scripts to sys.path");
     });
 }
 
