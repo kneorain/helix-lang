@@ -51,15 +51,19 @@ fn main() {
     pretty_env_logger::init(); // TO SEE LOGS run `set RUST_LOG=debug` in terminal
     rust::init_rust();
     python::init_python();
-
+    
     test_threads();
-
+    
     python::test::test_kwargs(1, 2, None);
     println!("{:?}", python::test::test_args(1, 2));
-
+    
     cpp::c("hello from Rust");
     println!("Result: {}", cpp::add_sum(2, 62)); // 2^62 is the max value for i64
+    
+    fun_name();
+}
 
+fn fun_name() {
     panic_any!(HelixError::PythonError("hello world".to_string()));
 }
 

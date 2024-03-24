@@ -39,10 +39,10 @@ pub fn better_panic(panic_info: &panic::PanicInfo) {
         }
         
         warn!("panic lock acquired");
+        info!("took {}ms to acquire lock @ thread~{}", start.elapsed().as_millis(), thread::current().name().unwrap_or("no-name"));
         unsafe {
             PANIC_LOCK.store(true, std::sync::atomic::Ordering::SeqCst);
         }
-        info!("took {}ms to acquire lock @ thread~{}", start.elapsed().as_millis(), thread::current().name().unwrap_or("no-name"));
 
         let backtrace = Backtrace::new();//"""REMOVE-STACK"""//
         let current_thread = thread::current();
