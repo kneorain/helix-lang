@@ -66,16 +66,6 @@ pub struct Transpiler {
     regex_module: String,
 }
 
-// This is input validation
-#[derive(Debug, Deserialize_repr, Serialize_repr, PartialEq)]
-#[repr(u8)]
-#[serde(rename_all = "snake_case")]
-enum OptimizationLevel {
-    Zero = 0,
-    One = 1,
-    Two = 2,
-    Three = 3,
-}
 
 impl Default for Transpiler {
     fn default() -> Self {
@@ -106,6 +96,18 @@ impl Merge for Transpiler {
 pub enum Target {
     #[serde(rename = "python", alias = "py")]
     Python,
+}
+
+
+// This is input validation
+#[derive(Debug, Deserialize_repr, Serialize_repr, PartialEq)]
+#[repr(u8)]
+#[serde(rename_all = "snake_case")]
+enum OptimizationLevel {
+    Zero = 0,
+    One = 1,
+    Two = 2,
+    Three = 3,
 }
 
 #[derive(Debug, Deserialize, Serialize, PartialEq)]
@@ -304,6 +306,8 @@ impl std::fmt::Display for ConfigError {
 
 #[cfg(test)]
 mod test {
+
+    use super::*;
     #[test]
     fn test_parse() {
         // TODO: Use an include macro here
