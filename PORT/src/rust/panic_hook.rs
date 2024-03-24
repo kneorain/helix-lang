@@ -34,7 +34,7 @@ pub fn better_panic(panic_info: &panic::PanicInfo) {
         let start = start.borrow_mut();
         while unsafe { PANIC_LOCK.load(std::sync::atomic::Ordering::SeqCst) } {
             std::thread::sleep(time::Duration::from_millis(10));
-            warn!("waiting for panic to be released");
+            warn!("{} waiting for panic to release", thread::current().name().unwrap_or("no-name"));
             info!("time elapsed: {}ms", start.elapsed().as_millis());
         }
         

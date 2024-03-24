@@ -12,6 +12,7 @@ fn main() -> miette::Result<()> {
         .file("src/cpp/src/greeting.cpp")
         //.compiler("clang++")
         //.include("C:\\Programing Languages\\LLVM\\include")
+        .std("c++20")
         .include("C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Tools\\MSVC\\14.39.33519\\include")
         .include("C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Tools\\MSVC\\14.39.33519\\ATLMFC\\include")
         .include("C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Auxiliary\\VS\\include")
