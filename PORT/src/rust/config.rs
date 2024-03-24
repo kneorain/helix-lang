@@ -1,3 +1,4 @@
+use serde::de;
 use serde::{de::Error, Deserialize, Serialize};
 use serde_repr::*;
 use std::fs;
@@ -13,7 +14,7 @@ trait Merge {
 
 // TODO: Add a phantom generic to the HelixConfig struct that stipulates what mode is being used, e.g. Debug, Release, etc.
 
-#[derive(Debug, Deserialize, Serialize, PartialEq)]
+#[derive(Debug, Default, Deserialize, Serialize, PartialEq)]
 pub struct HelixConfig {
     core: Core,
     transpiler: Transpiler,
@@ -63,19 +64,17 @@ pub struct Transpiler {
     verbose: bool,
     threads: u8,
     optimization: OptimizationLevel,
-    regex_module: String,
 }
 
 
 impl Default for Transpiler {
     fn default() -> Self {
         Self {
-            target: Target::Python,
+            target: Target::default(),
             warnings: true,
             verbose: false,
             threads: 8,
             optimization: OptimizationLevel::Three,
-            regex_module: "re".to_string(),
         }
     }
 }
@@ -87,13 +86,13 @@ impl Merge for Transpiler {
         self.verbose = other.verbose;
         self.threads = other.threads;
         self.optimization = other.optimization;
-        self.regex_module = other.regex_module;
     }
 }
 
-#[derive(Debug, Deserialize, Serialize, PartialEq)]
+#[derive(Debug, Default,Deserialize, Serialize, PartialEq)]
 #[serde(rename_all = "snake_case")]
 pub enum Target {
+    #[default]
     #[serde(rename = "python", alias = "py")]
     Python,
 }
@@ -123,6 +122,21 @@ pub struct Compiler {
     flags_rust: String,
 }
 
+impl Default for Compiler {
+    fn default() -> Self {
+        Self {
+            py: std::env::var("PYTHON").unwrap_or_else(|_| "python".to_string()),
+            c: "gcc".to_string(),
+            cpp: "g++".to_string(),
+            rust: "rustc".to_string(),
+            flags_py: "-OO".to_string(),
+            flags_cpp: "-std=c++17".to_string(),
+            flags_c: "-std=c18".to_string(),
+            flags_rust: "--edition=2021".to_string(),
+        }
+    }
+}
+
 impl Merge for Compiler {
     fn merge(&mut self, other: Self) {
         self.py = other.py;
@@ -137,7 +151,7 @@ impl Merge for Compiler {
     }
 }
 
-#[derive(Debug, Deserialize, Serialize, PartialEq)]
+#[derive(Debug,Default, Deserialize, Serialize, PartialEq)]
 pub struct Linker {
     c_cpp_include_dirs: Vec<PathBuf>,
     rs_include_dirs: Vec<PathBuf>,
@@ -165,9 +179,19 @@ impl Merge for Linker {
 
 #[derive(Debug, Deserialize, Serialize, PartialEq)]
 pub struct Formatter {
-    indent_size: u16,
+    indent_size: u8,
     formatter: FormatterType,
     always_format: bool,
+}
+
+impl Default for Formatter {
+    fn default() -> Self {
+        Self {
+            indent_size: 4,
+            formatter: FormatterType::default(),
+            always_format: false,
+        }
+    }
 }
 
 impl Merge for Formatter {
@@ -179,13 +203,14 @@ impl Merge for Formatter {
 }
 
 // TODO: Add more formatters here,
-#[derive(Debug, Deserialize, Serialize, PartialEq)]
+#[derive(Debug, Default,Deserialize, Serialize, PartialEq)]
 #[serde(rename_all = "snake_case")]
 enum FormatterType {
+    #[default]
     Black,
 }
 
-#[derive(Debug, Deserialize, Serialize, PartialEq)]
+#[derive(Debug, Default, Deserialize, Serialize, PartialEq)]
 struct Environment {
     env_vars: HashMap<String, String>,
 }
@@ -235,50 +260,6 @@ impl HelixConfig {
     }
 }
 
-impl Default for HelixConfig {
-    fn default() -> Self {
-        Self {
-            core: Core {
-                core_location: ".helix".to_string(),
-                auto_update: true,
-            },
-            transpiler: Transpiler {
-                target: Target::Python,
-                warnings: true,
-                verbose: false,
-                // This makes more sense for a default value
-                threads: 8,
-                optimization: OptimizationLevel::Three,
-                regex_module: "re".to_string(),
-            },
-            compiler: Compiler {
-                py: std::env::var("PYTHON").unwrap_or_else(|_| "python".to_string()),
-                c: "gcc".to_string(),
-                cpp: "g++".to_string(),
-                rust: "rustc".to_string(),
-                flags_py: "-OO".to_string(),
-                flags_cpp: "-std=c++17".to_string(),
-                flags_c: "-std=c18".to_string(),
-                flags_rust: "--edition=2021".to_string(),
-            },
-            linker: Linker {
-                c_cpp_include_dirs: Vec::new(),
-                rs_include_dirs: Vec::new(),
-                py_include_dirs: Vec::new(),
-                lib_dirs: Vec::new(),
-                link_static: false,
-            },
-            formatter: Formatter {
-                indent_size: 4,
-                formatter: FormatterType::Black,
-                always_format: false,
-            },
-            environment: Environment {
-                env_vars: HashMap::new(),
-            },
-        }
-    }
-}
 
 #[derive(Debug)]
 pub enum ConfigError {
