@@ -110,7 +110,7 @@ CACHE: dict[str, tuple[Token_List, ...]] = {}
 POOL: WorkerPool = WorkerPool(50)
 USE_POOL: bool = True
 USE_CACHE: bool = True
-COMPILE: bool = True # 1 DOWNSIDE: precision error marking is not possible
+COMPILE: bool = False # 1 DOWNSIDE: precision error marking is not possible
 
 LINE_BREAK: str = "\x03"
 SUB_LINE_BREAK: str = "\x04"

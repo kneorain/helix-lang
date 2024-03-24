@@ -28,8 +28,7 @@ class ArgParser(framework.ArgParser):
         Returns the namespace of parsed command-line arguments.
     """
     def help_screen(self):
-        print(base.clean_docstring("""
-            usage: helix [-h] [-v] [-o COMPILE] [-d] [-l LOG] [-c CONFIG] [-s] file ...
+        print(base.clean_docstring("""usage: helix [-h] [-v] [-o COMPILE] [-d] [-l LOG] [-c CONFIG] [-s] file ...
 
             Welcome to the Helix CLI, the gateway to harnessing the power and simplicity of Helix,
             a programming language designed for developers who cherish Python's ease but crave more
@@ -53,6 +52,17 @@ class ArgParser(framework.ArgParser):
             -i, --install PACKAGE_NAME         install new packages
             -u, --uninstall PACKAGE_NAME       uninstall packages
             -doc DOC                           the name of the documentation page to be displayed
+            The internal repl environment does not work at the moment.
+            \u001b[32m
+            WARN: This version of Helix is being \u001b[1;91mDeprecated.\u001b[0m\u001b[32m
+            NOTE: This entire language is being rewritten with some key changes:
+            \t- Syntax (.hlx) will remain the same as the current version.
+            \t- The language will no longer be transpiled it will be compiled.
+            \t- The compiler will be written in C++, Rust and Python.
+            \t- The language will be more powerful and more robust.
+            \t- The language will be faster.
+            \t- The language will be more secure.
+            \u001b[0m
         """),
             word_wrap=False,
             end="",
@@ -176,6 +186,7 @@ class ArgParser(framework.ArgParser):
             vars(self.__args__).values()
         ):
             self.help_screen()
+            
 
     @property
     def args(self) -> Namespace:
