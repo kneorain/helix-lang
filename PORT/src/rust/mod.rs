@@ -3,7 +3,7 @@ pub mod config;
 pub mod panic_hook;
 use panic_hook::better_panic;
 
-//todo make proc macro
+// TODO: Make this into a proc-macro.
 pub trait Label {
     fn label() -> &'static str;
 }
