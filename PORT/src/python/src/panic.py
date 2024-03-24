@@ -26,6 +26,7 @@ from pygments.token import (  # type: ignore
     Whitespace,
 )
 
+
 class HelixSyntaxHighlightingLexer(RegexLexer):
     name = "Helix"
     aliases = ["Helix"]
@@ -187,10 +188,44 @@ def standalone_tokenize_line(line: str, preserve_spaces: bool = False) -> list[s
     # Pattern for ANSI color escape sequences
     color_escape_pattern = r"(\x1b\[[0-9;]*m)"
 
-    double_character_operators = ['\\=\\=\\=', '\\!\\=\\=', '\\.\\.\\.', '\\=\\=', '\\!\\=', '\\-\\>', '\\<\\-', '\\<\\=', '\\>\\=', '\\&\\&', '\\-\\-', '\\:\\:', '\\|\\|', '\\+\\+', '\\+\\=', '\\-\\=', '\\*\\=', '\\/\\=', '\\&\\=', '\\|\\=', '\\^\\=', '\\%\\=', '\\*\\*', '\\<\\<', '\\>\\>', '\\<\\<\\=', '\\>\\>\\=', '\\=\\>', '\\@\\=', '\\_\\_', '\\?\\?', '\\?\\:', '\\?\\=']
+    double_character_operators = [
+        "\\=\\=\\=",
+        "\\!\\=\\=",
+        "\\.\\.\\.",
+        "\\=\\=",
+        "\\!\\=",
+        "\\-\\>",
+        "\\<\\-",
+        "\\<\\=",
+        "\\>\\=",
+        "\\&\\&",
+        "\\-\\-",
+        "\\:\\:",
+        "\\|\\|",
+        "\\+\\+",
+        "\\+\\=",
+        "\\-\\=",
+        "\\*\\=",
+        "\\/\\=",
+        "\\&\\=",
+        "\\|\\=",
+        "\\^\\=",
+        "\\%\\=",
+        "\\*\\*",
+        "\\<\\<",
+        "\\>\\>",
+        "\\<\\<\\=",
+        "\\>\\>\\=",
+        "\\=\\>",
+        "\\@\\=",
+        "\\_\\_",
+        "\\?\\?",
+        "\\?\\:",
+        "\\?\\=",
+    ]
     comment_pattern = r"\~\~.*"
     multi_line_comment_pattern = r"\~\*\~"
-    
+
     pattern = re.compile(
         rf"""
             {color_escape_pattern}                                                                                      | # ANSI color escape sequences
@@ -246,8 +281,8 @@ def s_u2(line: str | list) -> str:
 def __panic__(
     __error: type[BaseException] | BaseException | Exception,
     *_mark: Any | str,
-    file: str = "",
-    line_no: int = 0,
+    _file: str = "",
+    _line_no: int = 0,
     no_lines: bool = False,
     multi_frame: bool = False,
     pos: int = 0,
@@ -258,35 +293,32 @@ def __panic__(
     no_exit: bool = False,
     lang: str = "",
     _code: Optional[str] = None,
-): # type: ignore
+):  # type: ignore
     lock.acquire(blocking=True, timeout=0.2)
-    
+
     use_border: bool = False
     final_output: str = ""
     single_frame: bool = False
-    
-    
+
     if thread_name and not multi_frame:
         multi_frame = True
         single_frame = True
-    
+
     _mark = () if len(_mark) == 1 and _mark[0] == None else _mark
     lines_to_print: int = 5
     mark: list[str] = [item.__str__() for item in _mark]
 
-    name: str = __error.__class__.__name__
+    name: str = getattr(__error.__class__, "__name__", "error")
 
     if name and name == "str":
         name = "rs::std::panic!"
-    
-        
+
     message: str = s_u2(s_u(str(__error)))
 
     if "\r\0\r\0\r\r\0" in message:
         name = "rs::" + message.split("\r\0\r\0\r\r\0")[0]
         message = "\r\0\r\0\r\r\0".join(message.split("\r\0\r\0\r\r\0")[1:])
 
-    
     if name == "KeyboardInterrupt" and message.strip() == "":
         message = "KeyboardInterrupt was raised."
 
@@ -319,8 +351,8 @@ def __panic__(
 
     frame: FrameType | None = inspect.currentframe()
     if frame is not None:
-        line_no: int = frame.f_back.f_back.f_lineno if not line_no else line_no  # type: ignore
-        file: str = frame.f_back.f_code.co_filename if not file else file  # type: ignore
+        line_no: int = frame.f_back.f_back.f_lineno if not _line_no else _line_no  # type: ignore
+        file: str = frame.f_back.f_code.co_filename if not _file else _file  # type: ignore
         try:
             lines: list[str] = open(file, "r").readlines()[
                 (
@@ -403,17 +435,21 @@ def __panic__(
         "cxx": "cpp",
         "c++": "cpp",
     }
-    
+
     does_support_colors: bool = sys_stdout.isatty()
 
     if not lang:
-        lines = [(highlight_code(line) if does_support_colors else line) for line in lines[:-1]] + [lines[-1]]
+        lines = [
+            (highlight_code(line) if does_support_colors else line)
+            for line in lines[:-1]
+        ] + [lines[-1]]
+        lang = "helix"
     else:
-        lines = [(highlight_code(line, lang_dict[lang]) if does_support_colors else line) for line in lines[:-1]] + [
-            lines[-1]
-        ]
+        lines = [
+            (highlight_code(line, lang_dict[lang]) if does_support_colors else line)
+            for line in lines[:-1]
+        ] + [lines[-1]]
 
-    
     chars = {
         "dash": "─",
         "b-left": "╰",
@@ -422,7 +458,7 @@ def __panic__(
         "t-left": "╭",
         "t-right": "╮",
     }
-    
+
     if not use_border:
         chars = {
             "dash": " ",
@@ -434,7 +470,6 @@ def __panic__(
         }
 
     import sys
-
 
     base_color: str = "31" if not thread_name else "34"
     second_color: str = "93" if not thread_name else "96"
@@ -459,6 +494,7 @@ def __panic__(
 
     if (len_of_halfs) < 2:
         import os
+
         try:
             file = "." + os.sep + os.path.relpath(file)
         except ValueError:
@@ -487,7 +523,7 @@ def __panic__(
         ][len(str(line_no)) :]
         + reset
     )
-    
+
     def calculate_skip_ammout(line: str) -> int:
         output: int = 0
         if line[0] == "│":
@@ -518,7 +554,7 @@ def __panic__(
         return output + (1 if does_support_colors else 0)
 
     def mark_all(line: str, mark_line: str, mark_start: Optional[int] = None) -> str:
-        
+
         tokenized_line: list[str] = standalone_tokenize_line(line, preserve_spaces=True)
         skip = 9 if use_border else 8
         if not tokenized_line[skip].isspace():
@@ -531,30 +567,45 @@ def __panic__(
         color_escape_pattern = re.compile(r"(\x1b|\u001b)\[\d*(;\d+)*m")
         mark_line += " ┴ " if not use_border else "   "
         total_char_so_far: int = 0
-        line_end = len(standalone_tokenize_line(line, preserve_spaces=True)[:-(((4 if use_border else 3) if tokenized_line[skip].isspace() else (5 if use_border else 4)))]) if does_support_colors else ((len(standalone_tokenize_line(line, preserve_spaces=True))-1))
+        line_end = (
+            len(
+                standalone_tokenize_line(line, preserve_spaces=True)[
+                    : -(
+                        (
+                            (4 if use_border else 3)
+                            if tokenized_line[skip].isspace()
+                            else (5 if use_border else 4)
+                        )
+                    )
+                ]
+            )
+            if does_support_colors
+            else ((len(standalone_tokenize_line(line, preserve_spaces=True)) - 1))
+        )
 
         max_skip: int = 0
         max_start_with_start_space: int = skip
         for token in tokenized_line[:skip]:
             if token.isspace():
                 max_start_with_start_space += 1
-        max_start_with_start_space -= (3 if tokenized_line[skip].isspace() else 4) if does_support_colors else 4
-        
+        max_start_with_start_space -= (
+            (3 if tokenized_line[skip].isspace() else 4) if does_support_colors else 4
+        )
+
         for token in tokenized_line[:skip]:
             max_skip += len(token)
-        
-        if not does_support_colors:
-            mark_line += " " * (len(tokenized_line[5])-1)
 
-    
+        if not does_support_colors:
+            mark_line += " " * (len(tokenized_line[5]) - 1)
+
         if not does_support_colors:
             return (
-            "".join(tokenized_line)
-            # (len(tokenized_line[skip-10:])-1)) + length of the middle part of the line
-            + (mark_line + "^" + (" " * (len(''.join(tokenized_line[6:-1]))-1)))
-            + f"{chars['straight']}{reset}"
-        )
-        
+                "".join(tokenized_line)
+                # (len(tokenized_line[skip-10:])-1)) + length of the middle part of the line
+                + (mark_line + "^" + (" " * (len("".join(tokenized_line[6:-1])) - 1)))
+                + f"{chars['straight']}{reset}"
+            )
+
         if follow_marked_order:
             if not mark:
                 raise ValueError("mark cannot be empty if follow_marked_order is True")
@@ -566,7 +617,7 @@ def __panic__(
                 total_char_so_far += len(token) if index >= skip else 0
                 if index < skip:
                     continue
-                                
+
                 if mark_start and (total_char_so_far - len(token)) + 1 <= (mark_start):
                     if (mark_index < len(mark) and token == mark[mark_index]) and mark[
                         mark_index
@@ -576,9 +627,13 @@ def __panic__(
                         mark_line += f"{secondary_error_color}{'~'*len(token)}{reset}"
                         mark_index += 1
                     else:
-                        tokenized_line[index] = highlight_code(
-                            token, lang_dict[lang] if lang else "helix"
-                        ).strip() if does_support_colors else token
+                        tokenized_line[index] = (
+                            highlight_code(
+                                token, lang_dict[lang] if lang else "helix"
+                            ).strip()
+                            if does_support_colors
+                            else token
+                        )
                         mark_line += " " * len(token)
                     continue
 
@@ -598,9 +653,13 @@ def __panic__(
                 ):
                     mark_line += f"{secondary_error_color}{'^'*len(token)}{reset}"
                 else:
-                    tokenized_line[index] = highlight_code(
-                        token, lang_dict[lang] if lang else "helix"
-                    ).strip() if does_support_colors else token
+                    tokenized_line[index] = (
+                        highlight_code(
+                            token, lang_dict[lang] if lang else "helix"
+                        ).strip()
+                        if does_support_colors
+                        else token
+                    )
                     mark_line += " " * len(token)
         else:
             if not mark:
@@ -631,24 +690,16 @@ def __panic__(
                         tokenized_line[index] = f"{primary_error_color}{token}{reset}"
                         mark_line += f"{secondary_error_color}{'^'*len(token)}{reset}"
                     else:
-                        tokenized_line[index] = highlight_code(
-                            token, lang_dict[lang] if lang else "helix"
-                        ).strip()  if does_support_colors else token
+                        tokenized_line[index] = (
+                            highlight_code(
+                                token, lang_dict[lang] if lang else "helix"
+                            ).strip()
+                            if does_support_colors
+                            else token
+                        )
                         mark_line += " " * len(token)
         tokenized_line[-2] = border_color + s_u2(tokenized_line[-2]) + reset
-        ## try:
-        ##     end_marking = 0
-        ##     segment1 = ""
-        ##     for index, token in enumerate("".join(tokenized_line)[max_skip:]):
-        ##         if token.startswith('\x1b'): break
-        ##         segment1 += token
-        ##         end_marking += len(token)
-        ##     end_marking += len("".join(tokenized_line)[:max_skip])
-        ##     segment1 = "".join(tokenized_line)[:max_skip] + highlight_code(segment1).strip()
-        ##     segment2 = "".join(tokenized_line)[end_marking:]
-        ##     return segment1 + segment2 + mark_line[:-1] + f"{border_color}{chars['straight']}{reset}"
-        ## except Exception:
-        ##     return "".join(tokenized_line) + mark_line[:-1] + f"{border_color}{chars['straight']}{reset}"
+
         return (
             "".join(tokenized_line)
             + (mark_line[:-1] if use_border else mark_line.rstrip())
@@ -667,10 +718,14 @@ def __panic__(
         # add spaces to the end of the line until it reaches the terminal width
         # print(repr(line))
         if len(s_u2(line)) > (terminal_width - 1):
-            line = ''.join(standalone_tokenize_line(line, preserve_spaces=True)[:terminal_width + (22 if does_support_colors else 15)])
-            if len(s_u2(line)+"...") > (terminal_width - 1):
+            line = "".join(
+                standalone_tokenize_line(line, preserve_spaces=True)[
+                    : terminal_width + (22 if does_support_colors else 15)
+                ]
+            )
+            if len(s_u2(line) + "...") > (terminal_width - 1):
                 line = line[:terminal_width]
-            line +=  "..." if not s_u2(line).strip().endswith('|') else "  ..."
+            line += "..." if not s_u2(line).strip().endswith("|") else "  ..."
 
         line = (
             line
@@ -678,52 +733,80 @@ def __panic__(
             + f"{border_color}{chars['straight']}{reset}"
         )
         return line
+
     import os
+
     if not multi_frame:
         top_section: str = (
-            f"{border_color}{chars['t-left']}{chars['dash']}{reset} {((('~' * len(str(line_no)))+ ' | ') if not use_border else '')}{primary_error_color}{name} ▼ {(f"{green}at {file}:{line_no}".replace(os.getcwd(), ".").replace(os.path.expanduser("~"), "~")) if not use_border else ''}{border_color}{(chars['dash'] * (terminal_width-2-len(name)-5)) if use_border else ''}{reset}{border_color}{chars['t-right']}{reset}"
+            f"{border_color}{chars['t-left']}{chars['dash']}{reset} {((('~' * len(str(line_no)))+ ' | ') if not use_border else '')}{primary_error_color}{name} ▼ {(f'{green}at {file}:{line_no}'.replace(os.getcwd(), '.').replace(os.path.expanduser('~'), '~')) if not use_border else ''}{border_color}{(chars['dash'] * (terminal_width-2-len(name)-5)) if use_border else ''}{reset}{border_color}{chars['t-right']}{reset}"
         )
     elif multi_frame and pos == 0:
         trace_title: str = (
             (
                 f"{primary_error_color} {'Stack Trace'} {border_color}".center(
-                    (((terminal_width - 2) + 12) if does_support_colors else terminal_width-2), chars["dash"]
-                ) if use_border else f"{primary_error_color}{'Stack Trace'} {border_color}"
+                    (
+                        ((terminal_width - 2) + 12)
+                        if does_support_colors
+                        else terminal_width - 2
+                    ),
+                    chars["dash"],
+                )
+                if use_border
+                else f"{primary_error_color}{'Stack Trace'} {border_color}"
             )
             if not thread_name
             else (
                 f"{thread_error_color} Stack Trace @ {thread_name} {border_color}".center(
-                    (((terminal_width - 2) + 12) if does_support_colors else terminal_width-2), chars["dash"]
-                ) if use_border else f"{thread_error_color}Stack Trace @ {thread_name} {border_color}"
+                    (
+                        ((terminal_width - 2) + 12)
+                        if does_support_colors
+                        else terminal_width - 2
+                    ),
+                    chars["dash"],
+                )
+                if use_border
+                else f"{thread_error_color}Stack Trace @ {thread_name} {border_color}"
             )
         )
         final_output += (
             f"{border_color}{chars['t-left']}{trace_title}{reset}{border_color}{chars['t-right']}{reset}"
         ) + "\n"
-        top_section: str = f"{border_color}{chars['straight']} {reset}{((('~' * len(str(line_no)))+ ' | ') if not use_border else '')}{primary_error_color}{name} ▼ {(f"{green}at {file}:{line_no}".replace(os.getcwd(), ".").replace(os.path.expanduser("~"), "~")) if not use_border else ''}{border_color}{(chars['dash'] * (terminal_width-2-len(name)-5)) if use_border else ''} {reset}{border_color}{chars['straight']}{reset}"  # type: ignore
+        top_section: str = f"{border_color}{chars['straight']} {reset}{((('~' * len(str(line_no)))+ ' | ') if not use_border else '')}{primary_error_color}{name} ▼ {(f'{green}at {file}:{line_no}'.replace(os.getcwd(), '.').replace(os.path.expanduser('~'), '~')) if not use_border else ''}{border_color}{(chars['dash'] * (terminal_width-2-len(name)-5)) if use_border else ''} {reset}{border_color}{chars['straight']}{reset}"  # type: ignore
     else:
         if not use_border:
             final_output += (
                 f"{border_color}{chars['straight']}{' '*(terminal_width-2)}{chars['straight']}{reset}"
             ) + "\n"
-            __temp = (gray + " Propagated from the following " + border_color if pos == 1 else gray + " Propagation Caused by " + border_color)
-            __temp2 = ((terminal_width - 4 - (len(name) if len(name) % 2 == 0 else len(name) - 1)) - 2)
-            propagation: str = (__temp.center(__temp2 + 8, chars["dash"]) if use_border else f"{green} at {f"{file}:{line_no}".replace(os.getcwd(), ".").replace(os.path.expanduser("~"), "~")}") + reset  # type: ignore
+            __temp = (
+                gray + " Propagated from the following " + border_color
+                if pos == 1
+                else gray + " Propagation Caused by " + border_color
+            )
+            __temp2 = (
+                terminal_width
+                - 4
+                - (len(name) if len(name) % 2 == 0 else len(name) - 1)
+            ) - 2
+            propagation: str = (__temp.center(__temp2 + 8, chars["dash"]) if use_border else f"{green} at {f'{file}:{line_no}'.replace(os.getcwd(), '.').replace(os.path.expanduser('~'), '~')}") + reset  # type: ignore
             top_section: str = f"{border_color}{chars['straight']} {reset}{((('~' * len(str(line_no)))+ ' | ') if not use_border else '')}{primary_error_color}{name} ▼{reset}{border_color}{' ' if (len(propagation)+len(name)+5) % 2 != 0 else ''}{propagation} {border_color}{chars['straight']}{reset}"  # type: ignore
         else:
             final_output += (
                 f"{border_color}{chars['straight']}{' '*(terminal_width-2)}{chars['straight']}{reset}"
             ) + "\n"
-            __temp = ((terminal_width - 1 - (len(name) if len(name) % 2 == 0 else len(name) - 1)) - 8)
-            __temp2 = (" Propagated from the following " if pos == 1 else " Caused by ")
-            propagation: str = (__temp2.center(__temp, chars["dash"]) if use_border else __temp2.ljust(__temp, chars["dash"])) + reset  # type: ignore
+            __Itemp = (
+                terminal_width
+                - 1
+                - (len(name) if len(name) % 2 == 0 else len(name) - 1)
+            ) - 8
+            __Stemp2 = " Propagated from the following " if pos == 1 else " Caused by "
+            propagation: str = (__Stemp2.center(__Itemp, chars["dash"]) if use_border else __Stemp2.ljust(__Itemp, chars["dash"])) + reset  # type: ignore
             top_section: str = f"{border_color}{chars['straight']} {reset}{primary_error_color}{name} ▼{gray}{'  ' if (len(propagation)+len(name)+5) % 2 != 0 else '  '} {propagation} {border_color}{chars['straight']}{reset}"  # type: ignore
 
     final_output += ((top_section) if use_border else (top_section.strip())) + "\n"
     mid_section = [process_lines(line, index) for index, line in enumerate(lines)]
 
     if not no_lines:
-        final_output += ("\n".join(mid_section[:-1]) + "\n") if line_no != 1 else ''
+        final_output += ("\n".join(mid_section[:-1]) + "\n") if line_no != 1 else ""
         final_output += (
             mark_all(
                 mid_section[-1],
@@ -731,15 +814,26 @@ def __panic__(
                 mark_start=mark_start,
             ).strip()
         ) + "\n"
-        final_output += ((
-            f"{border_color}{chars['straight']}{' '*(terminal_width-2)}{chars['straight']}{reset}"
-        ) + "\n") if use_border else f"{primary_error_color} ERROR:{reset}" if pos == 2 or single_frame else ''
+        final_output += (
+            (
+                (
+                    f"{border_color}{chars['straight']}{' '*(terminal_width-2)}{chars['straight']}{reset}"
+                )
+                + "\n"
+            )
+            if use_border
+            else (
+                f"{primary_error_color} ERROR:{reset}"
+                if pos == 2 or single_frame
+                else ""
+            )
+        )
 
     # hex codes look like this: <Hex(x...)>
-    
-    hex_code: str | (re.Match[str] | None) = re.search(
-        r"<Hex\((\d+)\.(\w+)\)>", message
-    ) if not _code else None
+
+    hex_code: str | (re.Match[str] | None) = (
+        re.search(r"<Hex\((\d+)\.(\w+)\)>", message) if not _code else None
+    )
     _hex_code = hex_code
 
     if hex_code:
@@ -762,7 +856,11 @@ def __panic__(
             )
 
     if (not multi_frame or (multi_frame and pos == 2)) and not no_lines or single_frame:
-        final_output += (somewhat_middle + "\n") if use_border else f"{primary_error_color} {hex_code}:{reset}" if hex_code else ''
+        final_output += (
+            (somewhat_middle + "\n")
+            if use_border
+            else f"{primary_error_color} {hex_code}:{reset}" if hex_code else ""
+        )
 
     def process_message(message: str) -> list[str]:
         # wrap message into lines that fit the terminal width
@@ -771,33 +869,43 @@ def __panic__(
         import textwrap
 
         if not does_support_colors:
-            message = "WARNING: Line marking unavailable since the terminal does not support colors.\n--- error ---\n" + message
-        
+            message = (
+                "WARNING: Line marking unavailable since the terminal does not support colors.\n--- error ---\n"
+                + message
+            )
+
         for line in message.split("\n"):
             for line2 in textwrap.wrap(line, terminal_width - 4):
                 output.append(
                     f"{border_color}{chars['straight']}{reset} {line2.ljust(terminal_width-4)} {border_color}{chars['straight']}{reset}"
                 )
-        
+
         _temp_msg: str = ""
         if hex_code:
             _temp_msg = f"If this is your first time seeing this error, and you are not sure how to fix it, type 'helix doc {_hex_code.group(1)}.{_hex_code.group(2)}'."  # type: ignore
         elif _code:
             _temp_msg = f"If this is your first time seeing this error, and you are not sure how to fix it, type 'helix doc {_code}'."
-    
+
         if _temp_msg:
-            output.append(f"{border_color}{chars['straight']}{reset} {' '*(terminal_width-4)} {border_color}{chars['straight']}{reset}")
-            
+            output.append(
+                f"{border_color}{chars['straight']}{reset} {' '*(terminal_width-4)} {border_color}{chars['straight']}{reset}"
+            )
+
             for line in textwrap.wrap(_temp_msg, terminal_width - 4):
                 output.append(
                     f"{border_color}{chars['straight']}{reset} {line.ljust(terminal_width-4)} {border_color}{chars['straight']}{reset}"
                 )
-            
-        
+
         if hex_code:
-            output[-1] = output[-1].replace(f"'helix doc {_hex_code.group(1)}.{_hex_code.group(2)}'", f"{secondary_error_color}'helix doc {_hex_code.group(1)}.{_hex_code.group(2)}'{reset}")
+            output[-1] = output[-1].replace(
+                f"'helix doc {getattr(_hex_code, 'group')(1)}.{getattr(_hex_code, 'group')(2)}'",
+                f"{secondary_error_color}'helix doc {getattr(_hex_code, 'group')(1)}.{getattr(_hex_code, 'group')(2)}'{reset}",
+            )
         elif _code:
-            output[-1] = output[-1].replace(f"'helix doc {_code}'", f"{secondary_error_color}'helix doc {_code}'{reset}")
+            output[-1] = output[-1].replace(
+                f"'helix doc {_code}'",
+                f"{secondary_error_color}'helix doc {_code}'{reset}",
+            )
         return output
 
     if not multi_frame or (multi_frame and pos == 2) or single_frame:
@@ -814,10 +922,13 @@ def __panic__(
                 final_output += (
                     f"{border_color}{chars['straight']} {final_line[6:-11]} {chars['straight']}{reset}"
                 ) + "\n"
-                final_output += ("\n".join(process_message(message)) + "\n") if (pos == 2) else ''
-            
+                final_output += (
+                    ("\n".join(process_message(message)) + "\n") if (pos == 2) else ""
+                )
+
     print(final_output + reset, sep="\n", end="", flush=True)
-    
+
     lock.release()
-    #if not no_exit:
-    #    exit(1) if not multi_frame or (multi_frame and pos == 2) else None
+    
+    if not no_exit and (lang == "helix" or lang == "py"):
+       exit(1) if not multi_frame or (multi_frame and pos == 2) else None
