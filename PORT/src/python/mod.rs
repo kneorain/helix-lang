@@ -39,9 +39,9 @@ pub fn init_python() {
 
         let mut port_path = env::current_dir().expect("Failed to get current directory");
         if port_path.ends_with("PORT") {
-            port_path.push("src\\python\\src");
+            port_path.push("src/python/src");
         } else if port_path.ends_with("helix-lang") {
-            port_path.push("PORT\\src\\python\\src");
+            port_path.push("PORT/src/python/src");
         } else {
             panic!("Failed to find the PORT directory");
         }
@@ -49,13 +49,13 @@ pub fn init_python() {
         sys_path.insert(0, port_path)
             .expect("Failed to insert src/python to sys.path");
         
-        sys_path.insert(0, "Z:/devolopment/helix/helix-lang/.venv/Lib/site-packages")
+        sys_path.insert(0, "PORT/.venv/Lib/site-packages")
             .expect("Failed to insert .venv/Lib/site-packages to sys.path");
 
-        sys_path.insert(0, "Z:/devolopment/helix/helix-lang/.venv/Lib")
+        sys_path.insert(0, "PORT/.venv/Lib")
             .expect("Failed to insert .venv/Lib to sys.path");
 
-        sys_path.insert(0, "Z:/devolopment/helix/helix-lang/.venv/Scripts")
+        sys_path.insert(0, "PORT/.venv/Scripts")
             .expect("Failed to insert .venv/Scripts to sys.path");
     });
 }

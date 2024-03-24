@@ -401,11 +401,13 @@ def __panic__(
         "cxx": "cpp",
         "c++": "cpp",
     }
+    
+    does_support_colors: bool = sys_stdout.isatty()
 
     if not lang:
-        lines = [highlight_code(line) for line in lines[:-1]] + [lines[-1]]
+        lines = [(highlight_code(line) if does_support_colors else line) for line in lines[:-1]] + [lines[-1]]
     else:
-        lines = [highlight_code(line, lang_dict[lang]) for line in lines[:-1]] + [
+        lines = [(highlight_code(line, lang_dict[lang]) if does_support_colors else line) for line in lines[:-1]] + [
             lines[-1]
         ]
 
@@ -420,7 +422,6 @@ def __panic__(
 
     import sys
 
-    does_support_colors: bool = sys.stdout.isatty()
 
     base_color: str = "31" if not thread_name else "34"
     second_color: str = "93" if not thread_name else "96"
@@ -470,6 +471,7 @@ def __panic__(
         return output + (1 if does_support_colors else 0)
 
     def mark_all(line: str, mark_line: str, mark_start: Optional[int] = None) -> str:
+        
         tokenized_line: list[str] = standalone_tokenize_line(line, preserve_spaces=True)
         skip = 9
         if not tokenized_line[skip].isspace():
@@ -482,20 +484,30 @@ def __panic__(
         color_escape_pattern = re.compile(r"(\x1b|\u001b)\[\d*(;\d+)*m")
         mark_line += "   "
         total_char_so_far: int = 0
-        line_end = len(standalone_tokenize_line(line, preserve_spaces=True)[:-(4 if tokenized_line[skip].isspace() else 5)])
+        line_end = len(standalone_tokenize_line(line, preserve_spaces=True)[:-((4 if tokenized_line[skip].isspace() else 5))]) if does_support_colors else ((len(standalone_tokenize_line(line, preserve_spaces=True))-1))
 
         max_skip: int = 0
         max_start_with_start_space: int = skip
         for token in tokenized_line[:skip]:
             if token.isspace():
                 max_start_with_start_space += 1
-        max_start_with_start_space -= (3 if tokenized_line[skip].isspace() else 4)
+        max_start_with_start_space -= (3 if tokenized_line[skip].isspace() else 4) if does_support_colors else 4
         
         for token in tokenized_line[:skip]:
             max_skip += len(token)
         
+        if not does_support_colors:
+            mark_line += " " * (len(tokenized_line[5])-1)
 
-
+    
+        if not does_support_colors:
+            return (
+            "".join(tokenized_line)
+            # (len(tokenized_line[skip-10:])-1)) + length of the middle part of the line
+            + (mark_line + "^" + (" " * (len(''.join(tokenized_line[6:-1]))-1)))
+            + f"{chars['straight']}{reset}"
+        )
+        
         if follow_marked_order:
             if not mark:
                 raise ValueError("mark cannot be empty if follow_marked_order is True")
@@ -507,7 +519,7 @@ def __panic__(
                 total_char_so_far += len(token) if index >= skip else 0
                 if index < skip:
                     continue
-
+                                
                 if mark_start and (total_char_so_far - len(token)) + 1 <= (mark_start):
                     if (mark_index < len(mark) and token == mark[mark_index]) and mark[
                         mark_index
@@ -519,7 +531,7 @@ def __panic__(
                     else:
                         tokenized_line[index] = highlight_code(
                             token, lang_dict[lang] if lang else "helix"
-                        ).strip()  ####
+                        ).strip() if does_support_colors else token
                         mark_line += " " * len(token)
                     continue
 
@@ -541,7 +553,7 @@ def __panic__(
                 else:
                     tokenized_line[index] = highlight_code(
                         token, lang_dict[lang] if lang else "helix"
-                    ).strip()  ####
+                    ).strip() if does_support_colors else token
                     mark_line += " " * len(token)
         else:
             if not mark:
@@ -574,7 +586,7 @@ def __panic__(
                     else:
                         tokenized_line[index] = highlight_code(
                             token, lang_dict[lang] if lang else "helix"
-                        ).strip()  #####
+                        ).strip()  if does_support_colors else token
                         mark_line += " " * len(token)
         tokenized_line[-2] = border_color + s_u2(tokenized_line[-2]) + reset
         ## try:
@@ -608,11 +620,14 @@ def __panic__(
         # add spaces to the end of the line until it reaches the terminal width
         # print(repr(line))
         if len(s_u2(line)) > (terminal_width - 1):
-            line = line[: terminal_width + (9 if does_support_colors else -5)] + "..."
+            line = ''.join(standalone_tokenize_line(line, preserve_spaces=True)[:terminal_width + (22 if does_support_colors else 15)])
+            if len(s_u2(line)+"...") > (terminal_width - 1):
+                line = line[:terminal_width]
+            line +=  "..." if not s_u2(line).strip().endswith('|') else "  ..."
 
         line = (
             line
-            + (" " * (terminal_width - (len(s_u2(line)) + 1)))
+            + (" " * (terminal_width - (len(s_u2(line))) - 1))
             + f"{border_color}{chars['straight']}{reset}"
         )
         return line
@@ -625,13 +640,13 @@ def __panic__(
         trace_title: str = (
             (
                 f"{primary_error_color} {'Stack Trace'} {border_color}".center(
-                    (terminal_width - 2) + 12, chars["dash"]
+                    (((terminal_width - 2) + 12) if does_support_colors else terminal_width-2), chars["dash"]
                 )
             )
             if not thread_name
             else (
                 f"{thread_error_color} Stack Trace @ {thread_name} {border_color}".center(
-                    (terminal_width - 2) + 12, chars["dash"]
+                    (((terminal_width - 2) + 12) if does_support_colors else terminal_width-2), chars["dash"]
                 )
             )
         )
@@ -661,7 +676,7 @@ def __panic__(
         print(
             mark_all(
                 mid_section[-1],
-                f"{border_color}│ {gray}{'~'*len(str(line_no).center(len(str(line_no+(lines_to_print-1)))))}{reset}",
+                f"\n{border_color}│ {gray}{'~'*len(str(line_no).center(len(str(line_no+(lines_to_print-1)))))}{reset}",
                 mark_start=mark_start,
             )
         )
@@ -704,6 +719,9 @@ def __panic__(
         output: list[str] = []
         import textwrap
 
+        if not does_support_colors:
+            message = "WARNING: Line marking unavailable since the terminal does not support colors.\n--- error ---\n" + message
+        
         for line in message.split("\n"):
             for line2 in textwrap.wrap(line, terminal_width - 4):
                 output.append(
