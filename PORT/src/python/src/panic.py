@@ -296,6 +296,7 @@ def __panic__(
 ):  # type: ignore
     lock.acquire(blocking=True, timeout=0.2)
 
+    does_support_colors: bool = True
     use_border: bool = False
     final_output: str = ""
     single_frame: bool = False
@@ -436,8 +437,6 @@ def __panic__(
         "c++": "cpp",
     }
 
-    does_support_colors: bool = sys_stdout.isatty()
-
     if not lang:
         lines = [
             (highlight_code(line) if does_support_colors else line)
@@ -462,11 +461,11 @@ def __panic__(
     if not use_border:
         chars = {
             "dash": " ",
-            "b-left": " ",
-            "b-right": " ",
+            "b-left": "",
+            "b-right": "",
             "straight": "",
-            "t-left": " ",
-            "t-right": " ",
+            "t-left": "",
+            "t-right": "",
         }
 
     import sys
@@ -565,7 +564,7 @@ def __panic__(
             # remove the space that was added
             tokenized_line = tokenized_line[:skip] + tokenized_line[(skip + 1) :]
         color_escape_pattern = re.compile(r"(\x1b|\u001b)\[\d*(;\d+)*m")
-        mark_line += " ┴ " if not use_border else "   "
+        mark_line += " ┴ " if (not use_border and (pos == 2 or single_frame)) else "   " if use_border else " | "
         total_char_so_far: int = 0
         line_end = (
             len(
@@ -812,7 +811,7 @@ def __panic__(
                 mid_section[-1],
                 f"\n{border_color}{chars['straight']} {gray}{'~'*len(str(line_no).center(len(str(line_no+(lines_to_print-1)))))}{reset}",
                 mark_start=mark_start,
-            ).strip()
+            ).rstrip()
         ) + "\n"
         final_output += (
             (
@@ -926,7 +925,26 @@ def __panic__(
                     ("\n".join(process_message(message)) + "\n") if (pos == 2) else ""
                 )
 
-    print(final_output + reset, sep="\n", end="", flush=True)
+    
+    if not use_border:
+        final_output2: list[str] = final_output.splitlines()
+        for index, line in enumerate(final_output2):
+            if not use_border:
+                final_output2[index] = line.rstrip()
+                
+            if index == 1 and not does_support_colors:
+                final_output2[index] = " " + line
+            
+            if index != 0:
+                final_output2[index] = " " + line
+            
+                
+        final_output2 = [line for line in final_output2 if line.strip() != ""]
+
+        final_output = "\n".join(final_output2)
+        print(("\n" if (single_frame or pos == 0) and not does_support_colors else '') + final_output + reset, end="\n", flush=True)
+    else:
+        print(final_output + reset, end="", flush=True)
 
     lock.release()
     
