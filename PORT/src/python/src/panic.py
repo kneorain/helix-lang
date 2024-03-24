@@ -261,6 +261,8 @@ def __panic__(
 ): # type: ignore
     lock.acquire(blocking=True, timeout=0.2)
     
+    use_border: bool = False
+    final_output: str = ""
     single_frame: bool = False
     
     
@@ -411,6 +413,7 @@ def __panic__(
             lines[-1]
         ]
 
+    
     chars = {
         "dash": "─",
         "b-left": "╰",
@@ -419,6 +422,16 @@ def __panic__(
         "t-left": "╭",
         "t-right": "╮",
     }
+    
+    if not use_border:
+        chars = {
+            "dash": " ",
+            "b-left": " ",
+            "b-right": " ",
+            "straight": "",
+            "t-left": " ",
+            "t-right": " ",
+        }
 
     import sys
 
@@ -441,6 +454,40 @@ def __panic__(
     green = f"\u001b[{second_color}m" if (does_support_colors) else ""
     thread_error_color = "\u001b[34;1m" if (does_support_colors) else ""
 
+    len_of_file: int = len(file + ":" + str(line_no))
+    len_of_halfs = int(((terminal_width - 4) / 2 - len_of_file / 2))
+
+    if (len_of_halfs) < 2:
+        import os
+        try:
+            file = "." + os.sep + os.path.relpath(file)
+        except ValueError:
+            file = "~" + file.replace(os.path.expanduser("~"), "")
+        len_of_file = len(file + ":" + str(line_no))
+        len_of_halfs = int(((terminal_width - 4) / 2 - len_of_file / 2))
+
+    final_line: str = (
+        chars["b-left"]
+        + f" {file}:{line_no} ".center(terminal_width - 2, chars["dash"])
+        + chars["b-right"]
+    )
+    final_line = f"{border_color}{final_line}{reset}"
+    final_line = (
+        final_line.split(file)[0]
+        + green
+        + file
+        + reset
+        + gray
+        + ":"
+        + green
+        + str(line_no)
+        + border_color
+        + final_line.split(":")[
+            (1 if ":\\" != ":" + final_line.split(":")[1][0] else 2)
+        ][len(str(line_no)) :]
+        + reset
+    )
+    
     def calculate_skip_ammout(line: str) -> int:
         output: int = 0
         if line[0] == "│":
@@ -473,7 +520,7 @@ def __panic__(
     def mark_all(line: str, mark_line: str, mark_start: Optional[int] = None) -> str:
         
         tokenized_line: list[str] = standalone_tokenize_line(line, preserve_spaces=True)
-        skip = 9
+        skip = 9 if use_border else 8
         if not tokenized_line[skip].isspace():
             tokenized_line = standalone_tokenize_line(
                 "".join(tokenized_line[:skip] + [" "] + tokenized_line[skip:]),
@@ -482,9 +529,9 @@ def __panic__(
             # remove the space that was added
             tokenized_line = tokenized_line[:skip] + tokenized_line[(skip + 1) :]
         color_escape_pattern = re.compile(r"(\x1b|\u001b)\[\d*(;\d+)*m")
-        mark_line += "   "
+        mark_line += " ┴ " if not use_border else "   "
         total_char_so_far: int = 0
-        line_end = len(standalone_tokenize_line(line, preserve_spaces=True)[:-((4 if tokenized_line[skip].isspace() else 5))]) if does_support_colors else ((len(standalone_tokenize_line(line, preserve_spaces=True))-1))
+        line_end = len(standalone_tokenize_line(line, preserve_spaces=True)[:-(((4 if use_border else 3) if tokenized_line[skip].isspace() else (5 if use_border else 4)))]) if does_support_colors else ((len(standalone_tokenize_line(line, preserve_spaces=True))-1))
 
         max_skip: int = 0
         max_start_with_start_space: int = skip
@@ -604,7 +651,7 @@ def __panic__(
         ##     return "".join(tokenized_line) + mark_line[:-1] + f"{border_color}{chars['straight']}{reset}"
         return (
             "".join(tokenized_line)
-            + mark_line[:-1]
+            + (mark_line[:-1] if use_border else mark_line.rstrip())
             + f"{border_color}{chars['straight']}{reset}"
         )
 
@@ -631,58 +678,62 @@ def __panic__(
             + f"{border_color}{chars['straight']}{reset}"
         )
         return line
-
+    import os
     if not multi_frame:
         top_section: str = (
-            f"{border_color}{chars['t-left']}{chars['dash']}{reset} {primary_error_color}{name} ▼ {border_color}{chars['dash'] * (terminal_width-2-len(name)-5)}{reset}{border_color}{chars['t-right']}{reset}"
+            f"{border_color}{chars['t-left']}{chars['dash']}{reset} {((('~' * len(str(line_no)))+ ' | ') if not use_border else '')}{primary_error_color}{name} ▼ {(f"{green}at {file}:{line_no}".replace(os.getcwd(), ".").replace(os.path.expanduser("~"), "~")) if not use_border else ''}{border_color}{(chars['dash'] * (terminal_width-2-len(name)-5)) if use_border else ''}{reset}{border_color}{chars['t-right']}{reset}"
         )
     elif multi_frame and pos == 0:
         trace_title: str = (
             (
                 f"{primary_error_color} {'Stack Trace'} {border_color}".center(
                     (((terminal_width - 2) + 12) if does_support_colors else terminal_width-2), chars["dash"]
-                )
+                ) if use_border else f"{primary_error_color}{'Stack Trace'} {border_color}"
             )
             if not thread_name
             else (
                 f"{thread_error_color} Stack Trace @ {thread_name} {border_color}".center(
                     (((terminal_width - 2) + 12) if does_support_colors else terminal_width-2), chars["dash"]
-                )
+                ) if use_border else f"{thread_error_color}Stack Trace @ {thread_name} {border_color}"
             )
         )
-        print(
+        final_output += (
             f"{border_color}{chars['t-left']}{trace_title}{reset}{border_color}{chars['t-right']}{reset}"
-        )
-        top_section: str = f"{border_color}{chars['straight']} {reset}{primary_error_color}{name} ▼ {border_color}{chars['dash'] * (terminal_width-2-len(name)-5)} {reset}{border_color}{chars['straight']}{reset}"  # type: ignore
+        ) + "\n"
+        top_section: str = f"{border_color}{chars['straight']} {reset}{((('~' * len(str(line_no)))+ ' | ') if not use_border else '')}{primary_error_color}{name} ▼ {(f"{green}at {file}:{line_no}".replace(os.getcwd(), ".").replace(os.path.expanduser("~"), "~")) if not use_border else ''}{border_color}{(chars['dash'] * (terminal_width-2-len(name)-5)) if use_border else ''} {reset}{border_color}{chars['straight']}{reset}"  # type: ignore
     else:
-        if False:
-            print(
+        if not use_border:
+            final_output += (
                 f"{border_color}{chars['straight']}{' '*(terminal_width-2)}{chars['straight']}{reset}"
-            )
-            propagation: str = (gray + " Propagated from the following " + border_color if pos == 1 else gray + " Propagation Caused by " + border_color).center(((terminal_width - 4 - (len(name) if len(name) % 2 == 0 else len(name) - 1)) - 2) + 8, chars["dash"]) + reset  # type: ignore
-            top_section: str = f"{border_color}{chars['straight']} {reset}{primary_error_color}{name} ▼{reset}{border_color}{' ' if (len(propagation)+len(name)+5) % 2 != 0 else ''} {propagation} {border_color}{chars['straight']}{reset}"  # type: ignore
+            ) + "\n"
+            __temp = (gray + " Propagated from the following " + border_color if pos == 1 else gray + " Propagation Caused by " + border_color)
+            __temp2 = ((terminal_width - 4 - (len(name) if len(name) % 2 == 0 else len(name) - 1)) - 2)
+            propagation: str = (__temp.center(__temp2 + 8, chars["dash"]) if use_border else f"{green} at {f"{file}:{line_no}".replace(os.getcwd(), ".").replace(os.path.expanduser("~"), "~")}") + reset  # type: ignore
+            top_section: str = f"{border_color}{chars['straight']} {reset}{((('~' * len(str(line_no)))+ ' | ') if not use_border else '')}{primary_error_color}{name} ▼{reset}{border_color}{' ' if (len(propagation)+len(name)+5) % 2 != 0 else ''}{propagation} {border_color}{chars['straight']}{reset}"  # type: ignore
         else:
-            print(
+            final_output += (
                 f"{border_color}{chars['straight']}{' '*(terminal_width-2)}{chars['straight']}{reset}"
-            )
-            propagation: str = (" Propagated from the following " if pos == 1 else " Caused by ").center(((terminal_width - 1 - (len(name) if len(name) % 2 == 0 else len(name) - 1)) - 8), chars["dash"]) + reset  # type: ignore
+            ) + "\n"
+            __temp = ((terminal_width - 1 - (len(name) if len(name) % 2 == 0 else len(name) - 1)) - 8)
+            __temp2 = (" Propagated from the following " if pos == 1 else " Caused by ")
+            propagation: str = (__temp2.center(__temp, chars["dash"]) if use_border else __temp2.ljust(__temp, chars["dash"])) + reset  # type: ignore
             top_section: str = f"{border_color}{chars['straight']} {reset}{primary_error_color}{name} ▼{gray}{'  ' if (len(propagation)+len(name)+5) % 2 != 0 else '  '} {propagation} {border_color}{chars['straight']}{reset}"  # type: ignore
 
-    print(top_section)
+    final_output += ((top_section) if use_border else (top_section.strip())) + "\n"
     mid_section = [process_lines(line, index) for index, line in enumerate(lines)]
 
     if not no_lines:
-        print("\n".join(mid_section[:-1])) if line_no != 1 else None
-        print(
+        final_output += ("\n".join(mid_section[:-1]) + "\n") if line_no != 1 else ''
+        final_output += (
             mark_all(
                 mid_section[-1],
-                f"\n{border_color}│ {gray}{'~'*len(str(line_no).center(len(str(line_no+(lines_to_print-1)))))}{reset}",
+                f"\n{border_color}{chars['straight']} {gray}{'~'*len(str(line_no).center(len(str(line_no+(lines_to_print-1)))))}{reset}",
                 mark_start=mark_start,
-            )
-        )
-        print(
+            ).strip()
+        ) + "\n"
+        final_output += ((
             f"{border_color}{chars['straight']}{' '*(terminal_width-2)}{chars['straight']}{reset}"
-        )
+        ) + "\n") if use_border else f"{primary_error_color} ERROR:{reset}" if pos == 2 or single_frame else ''
 
     # hex codes look like this: <Hex(x...)>
     
@@ -711,7 +762,7 @@ def __panic__(
             )
 
     if (not multi_frame or (multi_frame and pos == 2)) and not no_lines or single_frame:
-        print(somewhat_middle)
+        final_output += (somewhat_middle + "\n") if use_border else f"{primary_error_color} {hex_code}:{reset}" if hex_code else ''
 
     def process_message(message: str) -> list[str]:
         # wrap message into lines that fit the terminal width
@@ -750,55 +801,23 @@ def __panic__(
         return output
 
     if not multi_frame or (multi_frame and pos == 2) or single_frame:
-        print("\n".join(process_message(message)))
-
-    len_of_file: int = len(file + ":" + str(line_no))
-    len_of_halfs = int(((terminal_width - 4) / 2 - len_of_file / 2))
-
-    if (len_of_halfs) < 2:
-        import os
-        try:
-            file = "." + os.sep + os.path.relpath(file)
-        except ValueError:
-            file = "~" + file.replace(os.path.expanduser("~"), "")
-        len_of_file = len(file + ":" + str(line_no))
-        len_of_halfs = int(((terminal_width - 4) / 2 - len_of_file / 2))
-
-    final_line: str = (
-        chars["b-left"]
-        + f" {file}:{line_no} ".center(terminal_width - 2, chars["dash"])
-        + chars["b-right"]
-    )
-    final_line = f"{border_color}{final_line}{reset}"
-    final_line = (
-        final_line.split(file)[0]
-        + green
-        + file
-        + reset
-        + gray
-        + ":"
-        + green
-        + str(line_no)
-        + border_color
-        + final_line.split(":")[
-            (1 if ":\\" != ":" + final_line.split(":")[1][0] else 2)
-        ][len(str(line_no)) :]
-        + reset
-    )
+        final_output += ("\n".join(process_message(message))) + "\n"
 
     # check if terminal width is even
-    if not multi_frame or (multi_frame and pos == 2):
-        print(final_line)
-    else:
-        if single_frame:
-            print(final_line)
+    if use_border:
+        if not multi_frame or (multi_frame and pos == 2):
+            final_output += (final_line) + "\n"
         else:
-            print(
-                f"{border_color}{chars['straight']} {final_line[6:-11]} {chars['straight']}{reset}"
-            )
-            print("\n".join(process_message(message))) if (pos == 2) else None
-        
-        
+            if single_frame:
+                final_output += (final_line) + "\n"
+            else:
+                final_output += (
+                    f"{border_color}{chars['straight']} {final_line[6:-11]} {chars['straight']}{reset}"
+                ) + "\n"
+                final_output += ("\n".join(process_message(message)) + "\n") if (pos == 2) else ''
+            
+    print(final_output + reset, sep="\n", end="", flush=True)
+    
     lock.release()
     #if not no_exit:
     #    exit(1) if not multi_frame or (multi_frame and pos == 2) else None
