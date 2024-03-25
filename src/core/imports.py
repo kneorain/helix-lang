@@ -87,7 +87,6 @@ from time import (
 
 import toml
 from multimethod import subtype
-import src.lib.subinterpreter as subinterpreter
 
 # multi imports  - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
 
@@ -153,3 +152,4 @@ from src.functions._unmarked    import _unmarked
 from src.functions.inject_core  import inject_core
 
 # ------------------------------ End of Imports ------------------------------ #
+
