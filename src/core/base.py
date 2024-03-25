@@ -15,7 +15,6 @@ from src.core.imports import (
 
     _unless,
     _for,
-    _match,
     _function,
     _class,
     _let,
@@ -563,7 +562,7 @@ KEYWORDS: map[str, map[str, str | bool | Callable[..., Processed_Line]]] = map({
     "case"         : map({"internal_name": "CASE"      , "parser": dummy        , "scoped": False, "body_required": True , "keyword_type": "case_control"}),
     "default"      : map({"internal_name": "DEFAULT"   , "parser": dummy        , "scoped": False, "body_required": True , "keyword_type": "case_control"}),
     "switch"       : map({"internal_name": "SWITCH"    , "parser": dummy        , "scoped": False, "body_required": False, "keyword_type": "case_control"}),
-    "match"        : map({"internal_name": "MATCH"     , "parser": _match       , "scoped": False, "body_required": False, "keyword_type": "case_control"}),
+    "match"        : map({"internal_name": "MATCH"     , "parser": dummy       , "scoped": False, "body_required": False, "keyword_type": "case_control"}),
 
     # Function
     "fn"           : map({"internal_name": "FUNCTION"  , "parser": _function    , "scoped": True , "body_required": True , "keyword_type": "function_declaration"}),
