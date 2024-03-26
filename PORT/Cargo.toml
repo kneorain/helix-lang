@@ -11,19 +11,12 @@ path = "src/main.rs"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-<<<<<<< HEAD
 regex = "1.10.4"
-=======
->>>>>>> fed93f743123d8cdb181c5b3c7637f6f41f04435
 autocxx = "0.26.0"
 backtrace = "0.3.70"
 fxhash = "0.2.1"
 lazy_static = "1.4.0"
 pyo3 = "0.20.3"
-<<<<<<< HEAD
-=======
-regex = "1.10.3"
->>>>>>> fed93f743123d8cdb181c5b3c7637f6f41f04435
 syn = "2.0.53"
 cxx = "1.0"
 miette = "7.1.0"
