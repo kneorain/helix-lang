@@ -48,233 +48,95 @@
 "await"        : map({"internal_name": "AWAIT"     , "parser": dummy        , "scoped": False, "body_required": False, "keyword_type": "asynchronous_control"}),
 */
 
-
 #[repr(C)]
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
-pub enum Keyword {
-    // Control Flow
-    IF { is_scoped: bool },
-    ELIF { is_scoped: bool },
-    ELSE { is_scoped: bool },
-    UNLESS { is_scoped: bool },
-    WHILE { is_scoped: bool },
-    FOR { is_scoped: bool },
-    CASE { is_scoped: bool },
-    DEFAULT { is_scoped: bool },
-    SWITCH { is_scoped: bool },
-    MATCH { is_scoped: bool },
-    // Functions
-    FN { is_scoped: bool },
-    LAMBDA { is_scoped: bool },
-    // Threads
-    THREAD { is_scoped: bool },
-    // Macros
-    MACRO { is_scoped: bool },
-    // Async
-    ASYNC { is_scoped: bool },
-    // Return
-    RETURN { is_scoped: bool },
-    // Classes
-    CLASS { is_scoped: bool },
-    INTERFACE { is_scoped: bool },
-    STRUCT { is_scoped: bool },
-    UNION { is_scoped: bool },
-    ENUM { is_scoped: bool },
-    // Abstract
-    ABSTRACT { is_scoped: bool },
-    // Error Handling
-    TRY { is_scoped: bool },
-    CATCH { is_scoped: bool },
-    EXCEPT { is_scoped: bool },
-    FINALLY { is_scoped: bool },
-    THROW { is_scoped: bool },
-    // Loops
-    BREAK { is_scoped: bool },
-    CONTINUE { is_scoped: bool },
-    // Delegate
-    DELEGATE { is_scoped: bool },
-    // With
-    WITH { is_scoped: bool },
-    // Access Modifiers
-    PRIVATE { is_scoped: bool },
-    PROTECTED { is_scoped: bool },
-    PUBLIC { is_scoped: bool },
-    FINAL { is_scoped: bool },
-    STATIC { is_scoped: bool },
-    UNSAFE { is_scoped: bool },
-    // Variables
-    LET { is_scoped: bool },
-    CONST { is_scoped: bool },
-    VAR { is_scoped: bool },
-    // Imports
-    INCLUDE { is_scoped: bool },
-    IMPORT { is_scoped: bool },
-    USING { is_scoped: bool },
-    FROM { is_scoped: bool },
-    YIELD { is_scoped: bool },
-    AWAIT { is_scoped: bool },
-}
-
-impl Keyword {
-    pub fn from_str(s: &str) -> Option<Self> {
-        match s {
-            "if"        => Some(Keyword::IF         { is_scoped: false  }),
-            "elif"      => Some(Keyword::ELIF       { is_scoped: false  }),
-            "else"      => Some(Keyword::ELSE       { is_scoped: false  }),
-            "unless"    => Some(Keyword::UNLESS     { is_scoped: false  }),
-            "while"     => Some(Keyword::WHILE      { is_scoped: false  }),
-            "for"       => Some(Keyword::FOR        { is_scoped: true }),
-            "case"      => Some(Keyword::CASE       { is_scoped: false  }),
-            "default"   => Some(Keyword::DEFAULT    { is_scoped: false  }),
-            "switch"    => Some(Keyword::SWITCH     { is_scoped: false  }),
-            "match"     => Some(Keyword::MATCH      { is_scoped: false  }),
-            "fn"        => Some(Keyword::FN         { is_scoped: true }),
-            "lambda"    => Some(Keyword::LAMBDA     { is_scoped: false  }),
-            "thread"    => Some(Keyword::THREAD     { is_scoped: true }),
-            "macro"     => Some(Keyword::MACRO      { is_scoped: true }),
-            "async"     => Some(Keyword::ASYNC      { is_scoped: false  }),
-            "return"    => Some(Keyword::RETURN     { is_scoped: false  }),
-            "class"     => Some(Keyword::CLASS      { is_scoped: true }),
-            "interface" => Some(Keyword::INTERFACE  { is_scoped: true }),
-            "struct"    => Some(Keyword::STRUCT     { is_scoped: true }),
-            "union"     => Some(Keyword::UNION      { is_scoped: true }),
-            "enum"      => Some(Keyword::ENUM       { is_scoped: true }),
-            "abstract"  => Some(Keyword::ABSTRACT   { is_scoped: true }),
-            "try"       => Some(Keyword::TRY        { is_scoped: false  }),
-            "catch"     => Some(Keyword::CATCH      { is_scoped: false  }),
-            "except"    => Some(Keyword::EXCEPT     { is_scoped: false  }),
-            "finally"   => Some(Keyword::FINALLY    { is_scoped: false  }),
-            "throw"     => Some(Keyword::THROW      { is_scoped: false  }),
-            "break"     => Some(Keyword::BREAK      { is_scoped: false  }),
-            "continue"  => Some(Keyword::CONTINUE   { is_scoped: false  }),
-            "delegate"  => Some(Keyword::DELEGATE   { is_scoped: false  }),
-            "with"      => Some(Keyword::WITH       { is_scoped: false  }),
-            "private"   => Some(Keyword::PRIVATE    { is_scoped: false  }),
-            "protected" => Some(Keyword::PROTECTED  { is_scoped: false  }),
-            "public"    => Some(Keyword::PUBLIC     { is_scoped: false  }),
-            "final"     => Some(Keyword::FINAL      { is_scoped: false  }),
-            "static"    => Some(Keyword::STATIC     { is_scoped: false  }),
-            "unsafe"    => Some(Keyword::UNSAFE     { is_scoped: false  }),
-            "let"       => Some(Keyword::LET        { is_scoped: false  }),
-            "const"     => Some(Keyword::CONST      { is_scoped: false  }),
-            "var"       => Some(Keyword::VAR        { is_scoped: false  }),
-            "include"   => Some(Keyword::INCLUDE    { is_scoped: false  }),
-            "import"    => Some(Keyword::IMPORT     { is_scoped: false  }),
-            "using"     => Some(Keyword::USING      { is_scoped: false  }),
-            "from"      => Some(Keyword::FROM       { is_scoped: false  }),
-            "yield"     => Some(Keyword::YIELD      { is_scoped: false  }),
-            "await"     => Some(Keyword::AWAIT      { is_scoped: false  }),
-            _           => None,
-        }
-    }
-
-    pub fn to_str(&self) -> &str {
-        match self {
-            Keyword::IF         { is_scoped: _ } => "if",
-            Keyword::ELIF       { is_scoped: _ } => "elif",
-            Keyword::ELSE       { is_scoped: _ } => "else",
-            Keyword::UNLESS     { is_scoped: _ } => "unless",
-            Keyword::WHILE      { is_scoped: _ } => "while",
-            Keyword::FOR        { is_scoped: _ } => "for",
-            Keyword::CASE       { is_scoped: _ } => "case",
-            Keyword::DEFAULT    { is_scoped: _ } => "default",
-            Keyword::SWITCH     { is_scoped: _ } => "switch",
-            Keyword::MATCH      { is_scoped: _ } => "match",
-            Keyword::FN         { is_scoped: _ } => "fn",
-            Keyword::LAMBDA     { is_scoped: _ } => "lambda",
-            Keyword::THREAD     { is_scoped: _ } => "thread",
-            Keyword::MACRO      { is_scoped: _ } => "macro",
-            Keyword::ASYNC      { is_scoped: _ } => "async",
-            Keyword::RETURN     { is_scoped: _ } => "return",
-            Keyword::CLASS      { is_scoped: _ } => "class",
-            Keyword::INTERFACE  { is_scoped: _ } => "interface",
-            Keyword::STRUCT     { is_scoped: _ } => "struct",
-            Keyword::UNION      { is_scoped: _ } => "union",
-            Keyword::ENUM       { is_scoped: _ } => "enum",
-            Keyword::ABSTRACT   { is_scoped: _ } => "abstract",
-            Keyword::TRY        { is_scoped: _ } => "try",
-            Keyword::CATCH      { is_scoped: _ } => "catch",
-            Keyword::EXCEPT     { is_scoped: _ } => "except",
-            Keyword::FINALLY    { is_scoped: _ } => "finally",
-            Keyword::THROW      { is_scoped: _ } => "throw",
-            Keyword::BREAK      { is_scoped: _ } => "break",
-            Keyword::CONTINUE   { is_scoped: _ } => "continue",
-            Keyword::DELEGATE   { is_scoped: _ } => "delegate",
-            Keyword::WITH       { is_scoped: _ } => "with",
-            Keyword::PRIVATE    { is_scoped: _ } => "private",
-            Keyword ::PROTECTED { is_scoped: _ } => "protected",
-            Keyword::PUBLIC     { is_scoped: _ } => "public",
-            Keyword::FINAL      { is_scoped: _ } => "final",
-            Keyword::STATIC     { is_scoped: _ } => "static",
-            Keyword::UNSAFE     { is_scoped: _ } => "unsafe",
-            Keyword::LET        { is_scoped: _ } => "let",
-            Keyword::CONST      { is_scoped: _ } => "const",
-            Keyword::VAR        { is_scoped: _ } => "var",
-            Keyword::INCLUDE    { is_scoped: _ } => "include",
-            Keyword::IMPORT     { is_scoped: _ } => "import",
-            Keyword::USING      { is_scoped: _ } => "using",
-            Keyword::FROM       { is_scoped: _ } => "from",
-            Keyword::YIELD      { is_scoped: _ } => "yield",
-            Keyword::AWAIT      { is_scoped: _ } => "await",
-        }
-    }
-
-    pub fn to_string(&self) -> String {
-        return self.to_str().to_string();
-    }
+pub struct Keyword {
+    pub str: &'static str,
+    pub scoped: bool,
+    pub body_required: bool, // deprecate this field
 }
 
 
 
-pub fn get_all_keywords() -> &'static [Keyword; 46] {
-    static KEYWORDS: [Keyword; 46] = [
-        Keyword::IF         { is_scoped: false },
-        Keyword::ELIF       { is_scoped: false },
-        Keyword::ELSE       { is_scoped: false },
-        Keyword::UNLESS     { is_scoped: false },
-        Keyword::WHILE      { is_scoped: false },
-        Keyword::FOR        { is_scoped: true },
-        Keyword::CASE       { is_scoped: false },
-        Keyword::DEFAULT    { is_scoped: false },
-        Keyword::SWITCH     { is_scoped: false },
-        Keyword::MATCH      { is_scoped: false },
-        Keyword::FN         { is_scoped: true },
-        Keyword::LAMBDA     { is_scoped: false },
-        Keyword::THREAD     { is_scoped: true },
-        Keyword::MACRO      { is_scoped: true },
-        Keyword::ASYNC      { is_scoped: false },
-        Keyword::RETURN     { is_scoped: false },
-        Keyword::CLASS      { is_scoped: true },
-        Keyword::INTERFACE  { is_scoped: true },
-        Keyword::STRUCT     { is_scoped: true },
-        Keyword::UNION      { is_scoped: true },
-        Keyword::ENUM       { is_scoped: true },
-        Keyword::ABSTRACT   { is_scoped: true },
-        Keyword::TRY        { is_scoped: false },
-        Keyword::CATCH      { is_scoped: false },
-        Keyword::EXCEPT     { is_scoped: false },
-        Keyword::FINALLY    { is_scoped: false },
-        Keyword::THROW      { is_scoped: false },
-        Keyword::BREAK      { is_scoped: false },
-        Keyword::CONTINUE   { is_scoped: false },
-        Keyword::DELEGATE   { is_scoped: false },
-        Keyword::WITH       { is_scoped: false },
-        Keyword::PRIVATE    { is_scoped: false },
-        Keyword::PROTECTED  { is_scoped: false },
-        Keyword::PUBLIC     { is_scoped: false },
-        Keyword::FINAL      { is_scoped: false },
-        Keyword::STATIC     { is_scoped: false },
-        Keyword::UNSAFE     { is_scoped: false },
-        Keyword::LET        { is_scoped: false },
-        Keyword::CONST      { is_scoped: false },
-        Keyword::VAR        { is_scoped: false },
-        Keyword::INCLUDE    { is_scoped: false },
-        Keyword::IMPORT     { is_scoped: false },
-        Keyword::USING      { is_scoped: false },
-        Keyword::FROM       { is_scoped: false },
-        Keyword::YIELD      { is_scoped: false },
-        Keyword::AWAIT      { is_scoped: false },
-    ];
+const IF:           Keyword = Keyword { str: "if",        scoped: false,    body_required: true };
+const ELIF:         Keyword = Keyword { str: "elif",      scoped: false,    body_required: true };
+const ELSE:         Keyword = Keyword { str: "else",      scoped: false,    body_required: true };
+const UNLESS:       Keyword = Keyword { str: "unless",    scoped: false,    body_required: true };
+const WHILE:        Keyword = Keyword { str: "while",     scoped: false,    body_required: true };
+const FOR:          Keyword = Keyword { str: "for",       scoped: true,     body_required:true };
+const CASE:         Keyword = Keyword { str: "case",      scoped: false,    body_required: true };
+const DEFAULT:      Keyword = Keyword { str: "default",   scoped: false,    body_required: true };
+const SWITCH:       Keyword = Keyword { str: "switch",    scoped: false,    body_required: true };
+const MATCH:        Keyword = Keyword { str: "match",     scoped: false,    body_required: true };
+// Functions
+const FN:           Keyword = Keyword { str: "fn",        scoped: true,     body_required: true };
+const LAMBDA:       Keyword = Keyword { str: "lambda",    scoped: false,    body_required: true };
+// Threads
+const THREAD:       Keyword = Keyword { str: "thread",    scoped: true,     body_required: true };
+// Macros
+const MACRO:        Keyword = Keyword { str: "macro",     scoped: true,     body_required: true };
+// Async
+const ASYNC:        Keyword = Keyword { str: "async",     scoped: false,    body_required: true };
+// Return
+const RETURN:       Keyword = Keyword { str: "return",    scoped: false,    body_required: true };
+// Classes
+const CLASS:        Keyword = Keyword { str: "class",     scoped: true,     body_required: true };
+const INTERFACE:    Keyword = Keyword { str: "interface", scoped: true,     body_required: true };
+const STRUCT:       Keyword = Keyword { str: "struct",    scoped: true,     body_required: true };
+const UNION:        Keyword = Keyword { str: "union",     scoped: true,     body_required: true };
+const ENUM:         Keyword = Keyword { str: "enum",      scoped: true,     body_required: true };
+// Abstract
+const ABSTRACT:     Keyword = Keyword { str: "abstract",  scoped: true,     body_required: true };
+// Error Handling
+const TRY:          Keyword = Keyword { str: "try",       scoped: false,    body_required: true };
+const CATCH:        Keyword = Keyword { str: "catch",     scoped: false,    body_required: true };
+const EXCEPT:       Keyword = Keyword { str: "except",    scoped: false,    body_required: true };
+const FINALLY:      Keyword = Keyword { str: "finally",   scoped: false,    body_required: true };
+const THROW:        Keyword = Keyword { str: "throw",     scoped: false,    body_required: true };
+// Loops
+const BREAK:        Keyword = Keyword { str: "break",     scoped: false,    body_required: false };
+const CONTINUE:     Keyword = Keyword { str: "continue",  scoped: false,    body_required: false };
+// Delegate
+const DELEGATE:     Keyword = Keyword { str: "delegate",  scoped: false,    body_required: false };
+// With
+const WITH:         Keyword = Keyword { str: "with",      scoped: false,    body_required: true };
+// Access Modifiers
+const PRIVATE:      Keyword = Keyword { str: "private",   scoped: false,    body_required: false };
+const PROTECTED:    Keyword = Keyword { str: "protected", scoped: false,    body_required: false };
+const PUBLIC:       Keyword = Keyword { str: "public",    scoped: false,    body_required: false };
+const FINAL:        Keyword = Keyword { str: "final",     scoped: false,    body_required: false };
+const STATIC:       Keyword = Keyword { str: "static",    scoped: false,    body_required: false };
+const UNSAFE:       Keyword = Keyword { str: "unsafe",    scoped: false,    body_required: false };
+// Variables
+const LET:          Keyword = Keyword { str: "let",       scoped: false,    body_required: false };
+const CONST:        Keyword = Keyword { str: "const",     scoped: false,    body_required: false };
+const VAR:          Keyword = Keyword { str: "var",       scoped: false,    body_required: false };
+// Imports
+const INCLUDE:      Keyword = Keyword { str: "include",   scoped: false,    body_required: false };
+const IMPORT:       Keyword = Keyword { str: "import",    scoped: false,    body_required: false };
+const USING:        Keyword = Keyword { str: "using",     scoped: false,    body_required: false };
+const FROM:         Keyword = Keyword { str: "from",      scoped: false,    body_required: false };
+const YIELD:        Keyword = Keyword { str: "yield",     scoped: false,    body_required: false };
+const AWAIT:        Keyword = Keyword { str: "await",     scoped: false,    body_required: false };
 
-    return &KEYWORDS;
+pub const KEYWORDS: [&Keyword; 42] = [
+    &IF,   &ELIF,   &ELSE,   &UNLESS,   &WHILE,  &FOR,    &CASE,     &DEFAULT,
+    &FN,   &LAMBDA, &THREAD, &MACRO,    &ASYNC,  &RETURN, &CLASS,    &INTERFACE,
+    &TRY,  &CATCH,  &EXCEPT, &FINALLY,  &THROW,  &BREAK,  &CONTINUE, &DELEGATE,
+    &LET,  &CONST,  &AWAIT,  &INCLUDE,  &IMPORT, &USING,  &FROM,     &YIELD,
+    &WITH, &MATCH,  &SWITCH, &ABSTRACT, &ENUM,   &STRUCT, &PRIVATE,  &PROTECTED,
+    &VAR,  &PUBLIC, &FINAL,  &STATIC,   &UNSAFE, &UNION,
+];
+
+static pub fn get_keyword(keyword: &str) -> &Keyword {
+    for kw in KEYWORDS.iter() {
+        if kw.str == keyword {
+            return &kw;
+        }
+    }
+    panic!("Keyword not found: {}", keyword);
+}
+
+static pub fn get_all_keywords() -> &'static [&'static Keyword] {
+    &KEYWORDS
 }
