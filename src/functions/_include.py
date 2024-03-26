@@ -1,4 +1,3 @@
-from typing import Optional
 from src.core.imports import (
     Processed_Line,
     Token_List,
@@ -47,7 +46,6 @@ def identify_import_type(combined_line: str, ast_list: Token_List) -> dict:
             match["type"] = match["type"].upper()
             return match
     panic(SyntaxError(f"Invalid include statement: {combined_line}"), file=ast_list.file, line_no=ast_list.line[0].line_number)
-    return {}
 
 def _include(ast_list: Token_List, current_scope, parent_scope, root_scope) -> Processed_Line:
     combined_line: str = ' '.join([_.token for _ in ast_list.line])
@@ -55,8 +53,7 @@ def _include(ast_list: Token_List, current_scope, parent_scope, root_scope) -> P
 
     type: str            = match["type"]
     path: str            = match["path"]
-    alias: Optional[str]           = match["alias"]
-    alias = alias.strip() if alias else None
+    alias: str           = match["alias"].strip() if match["alias"] else False
     modules: list[str]   = match["modules"]
 
     import_statement = ""

@@ -136,6 +136,26 @@ def _let(ast_list: Token_List, current_scope, parent_scope, root_scope) -> Proce
         current_scope.variables[name] = value["type"].full_line().strip() if not isinstance(value["type"], str) else value["type"]
         
         value["type"] = (type if type.full_line().strip() else panic(SyntaxError("You must specify the type of the variable"), "=", file=ast_list.file, line_no=ast_list[0].line_number)) if not value["type"] else value["type"]
+        #value["value"] = (
+        #    (
+        #        ' '.join([_.token for _ in value["type"].get_all_before("[")]) if "[" in value["type"]
+        #        else value["type"].full_line()
+        #    )
+        #    + "(" + (
+        #        value["value"].full_line() if value["value"]
+        #        else "None"
+        #
+        #        if null_value
+        #        else null_value
+        #    )
+        #    + ")" + (
+        #        (".__set_generic__(\"[" + mass_replace(extract_generics_from_type(value["type"]).full_line().strip(), cleaning) + ']")')
+        #        if "[" in value["type"]
+        #        else ""
+        #    )
+        #) if not value["type"] else value["value"].full_line()
+        
+        
         value["value"] = (
             (value["value"].full_line()
             ) if (

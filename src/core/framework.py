@@ -1,5 +1,4 @@
 from abc import ABC, abstractmethod
-import ctypes
 from src.core.imports import (
     Any,
     Callable,
@@ -9,18 +8,8 @@ from src.core.imports import (
     Optional,
     Processed_Line,
     Scope,
-    threading,
-    Token_List,
+    threading
 )
-
-class Translate(ABC):
-    @abstractmethod
-    def __init__(self, ast_list: Token_List, current_scope: Scope, parent_scope: Scope, root_scope: Scope):
-        pass
-    @abstractmethod
-    def parse(self) -> Processed_Line:
-        pass
-
 
 class Hashing(ABC):
     @abstractmethod
@@ -50,7 +39,7 @@ class Hashing(ABC):
     def get_hash(self) -> bytes | None:
         pass
 
-class ThreadedProcess(ABC):
+class ThreadedProcess:
     __processes_queue__: dict[int, threading.Thread]
     @abstractmethod
     def __new__(cls, func: Callable[..., None]):
@@ -66,7 +55,7 @@ class ThreadedProcess(ABC):
     def processes(self) -> dict[int, threading.Thread]:
         pass
 
-class ArgParser(ABC):
+class ArgParser:
     @abstractmethod
     def help_screen(self) -> None:
         pass
@@ -81,7 +70,7 @@ class ArgParser(ABC):
     def args(self) -> Namespace:
         pass
 
-class HelixLanguage(ABC):
+class HelixLanguage:
     @abstractmethod
     def __init__(self, *args: str, **kwargs: str) -> None:
         pass
@@ -103,10 +92,10 @@ class HelixLanguage(ABC):
         pass
     @staticmethod
     @abstractmethod
-    def remove_blank_lines(file: str, hash: Optional[Hashing]) -> None:
+    def remove_blank_lines(file: str, hash: Hashing | None) -> None:
         pass
 
-class Timer(ABC):
+class Timer:
     @abstractmethod
     def __init__(self) -> None:
         pass
@@ -123,7 +112,7 @@ class Timer(ABC):
     def decorator(self, func: Callable) -> Callable:
         pass
 
-class DisabledKeyboardInterrupt(ABC):
+class DisabledKeyboardInterrupt:
     @abstractmethod
     def __enter__(self) -> None:
         pass
@@ -134,7 +123,7 @@ class DisabledKeyboardInterrupt(ABC):
     def __exit__(self, type: Any, value: Any, traceback: Any) -> None:
         pass
 
-class Helix(ABC):
+class Helix:
     @classmethod
     @abstractmethod
     def interpreter(cls, code: str, globals_: dict, locals_: dict) -> str:
@@ -167,6 +156,9 @@ class Helix(ABC):
     @abstractmethod
     def generate_source_code(self, scope_parsed: Scope, transpiled_lines: list[Processed_Line], format_source: bool = False, is_main: bool = True, no_inject: bool = False) -> str:
         pass
+    @abstractmethod
+    def inject_core(self, code: Optional[str] = None, is_main: bool = True) -> str:
+        pass
     @staticmethod
     @abstractmethod
     def REPL() -> None:
@@ -174,33 +166,4 @@ class Helix(ABC):
     @classmethod
     @abstractmethod
     def __hook_import__(cls, file: str, *args: str, config_file: Optional[str] = None, **kwargs: Any) -> ModuleType:
-        pass
-
-
-class Interop(ABC):
-    cache_dir: str
-    input_file: str
-    output_file: str
-    hash: Hashing
-
-    @abstractmethod
-    def __init__(self, input_file: str, *attrs: str) -> None:
-        pass
-    @abstractmethod
-    def __getattr__(self, attr: str) -> Any:
-        pass
-    @abstractmethod
-    def __setattr__(self, attr: str, value: Any) -> None:
-        raise AttributeError("Cannot set attribute")
-    @abstractmethod
-    def __delattr__(self, attr: str) -> None:
-        pass
-    @abstractmethod
-    def __compile__(self) -> None:
-        pass
-    @abstractmethod
-    def get(self) -> tuple[ctypes.CDLL._FuncPtr, ...]:
-        pass
-    @abstractmethod
-    def __del__(self) -> None:
         pass

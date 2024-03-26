@@ -2,715 +2,296 @@ import src.core.base as base
 from src.core.imports import (
     Processed_Line,
     Token_List,
-    Token,
     map,
     Scope,
+    panic,
     _class,
     INDENT_CHAR,
-    Optional,
-    framework,
 )
 
-replace_function_name: map[str, str] = map(
-    {
-        "=="    : "__eq__",
-        "!="    : "__ne__",
-        "<"     : "__lt__",
-        "<="    : "__le__",
-        ">"     : "__gt__",
-        ">="    : "__ge__",
-        "+"     : "__add__",
-        "-"     : "__sub__",
-        "*"     : "__mul__",
-        "/"     : "__truediv__",
-        "//"    : "__floordiv__",
-        "%"     : "__mod__",
-        "**"    : "__pow__",
-        "<<"    : "__lshift__",
-        ">>"    : "__rshift__",
-        "&"     : "__and__",
-        "|"     : "__or__",
-        "^"     : "__xor__",
-        "~"     : "__invert__",
-        "@"     : "__matmul__",
-        "r+"    : "__radd__",
-        "r-"    : "__rsub__",
-        "r*"    : "__rmul__",
-        "r/"    : "__rtruediv__",
-        "r//"   : "__rfloordiv__",
-        "r%"    : "__rmod__",
-        "r**"   : "__rpow__",
-        "r<<"   : "__rlshift__",
-        "r>>"   : "__rrshift__",
-        "r&"    : "__rand__",
-        "r|"    : "__ror__",
-        "r^"    : "__rxor__",
-        "+="    : "__iadd__",
-        "-="    : "__isub__",
-        "*="    : "__imul__",
-        "/="    : "__itruediv__",
-        "//="   : "__ifloordiv__",
-        "%="    : "__imod__",
-        "**="   : "__ipow__",
-        "<<="   : "__ilshift__",
-        ">>="   : "__irshift__",
-        "&="    : "__iand__",
-        "|="    : "__ior__",
-        "^="    : "__ixor__",
-    }
-)
+replace_function_name = map({
+    "=="  : "__eq__",
+    "//"  : "__floordiv__",
+    ">="  : "__ge__",
+    "<="  : "__le__",
+    "<<"  : "__lshift__",
+    "!="  : "__ne__",
+    "**"  : "__pow__",
+    "//"  : "__rfloordiv__",
+    ">>"  : "__rshift__",
+    "**"  : "__rpow__",
+    "%"   : "__rmod__",
+    "%"   : "__mod__",
+    "*"   : "__rmul__",
+    "&"   : "__and__",
+    "*"   : "__mul__",
+    "+"   : "__radd__",
+    "+"   : "__add__",
+    "-"   : "__neg__",
+    "|"   : "__ror__",
+    "~"   : "__invert__",
+    "+"   : "__pos__",
+    ">"   : "__gt__",
+    "&"   : "__rand__",
+    "<"   : "__lt__",
+    "-"   : "__rsub__",
+    "/"   : "__rtruediv__",
+    "|"   : "__or__",
+    "^"   : "__rxor__",
+    "-"   : "__sub__",
+    "/"   : "__truediv__",
+    "^"   : "__xor__",
+    "@"   : "__matmul__",
+})
 
+def extract_variables(ast_line: Token_List, root_scope: Scope) -> dict[str, dict[str, str]]:
+    allowed_untyped = (
+        "self",
+        "cls",
+        "super"
+    )
+    variables: dict[str, dict[str, str]] = {}
+    # remove the fn keyword
+    line = ast_line.line[1:]
+    
+    line = line[1:]
 
-class ExtractTypedParamsFromFunc(framework.Translate):
-    allowed_untyped = ("self", "cls", "super")
-
-    def __init__(
-        self, ast_line: Token_List, root_scope: Scope
-    ):
-        self.line_copy: Token_List = ast_line.copy()
-        self.generic: str = ""
-        self.in_param: bool = False
-        self.generic_count: int = 0
-        self.in_generic: bool = False
-        self.root_scope: Scope = root_scope
-        self.ast_line: Token_List = ast_line
-        self.return_type: Optional[str] = None
-        self.line: list[Token] = ast_line.line[2:]
-        self.variables: dict[str, dict[str, str]] = {}
-        self.params: Optional[dict[str, dict[str, str]]] = (
-            None
-        )
-
-    def parse(
-        self,
-    ) -> dict[
-        str, Optional[str] | dict[str, dict[str, str]]
-    ]:
-        token: str = self.line[0].token
-
-        if token == "(" and self.line[1].token == ")":
-            return self.handle_no_parameters()
-        elif token == "(":
-            self.in_param = True
-            self.line = self.line[1:]
-        else:
-            base.ERROR_CODES.SYNTAX_MISSING_EXCEPTED_TOKEN.format(
-                token="("
-            ).panic(
-                ")",
-                file=self.ast_line.file,
-                line_no=self.ast_line.find_line_number(
-                    self.root_scope.get_keyword("FUNCTION")
-                ),
-            )
-
-        while self.in_param and self.line:
-            token = self.line[0].token
-
-            if token == ")":
-                del token
-                return self.handle_end_of_parameters()
-            elif token == "<":
-                self.handle_generic_start()
-            elif token == ">":
-                self.handle_generic_end()
-            elif self.in_generic:
-                self.handle_generic_content()
-            elif token == ",":
-                self.line = self.line[1:]
-            else:
-                self.handle_parameter()
-        
-        del token
-        self.__del__()
-        raise SyntaxError(
-            f"<Hex(02.E3)>: Expected a closing parenthesis after the parameters"
-        )
-
-    def handle_end_of_parameters(
-        self,
-    ) -> dict[
-        str, Optional[str | dict[str, dict[str, str]]]
-    ]:
-        if self.line[1].token == "->":
+    in_param = False
+    if line[0].token == "(" and line[1].token == ")":
+        if line[2].token == "->":
             # no parameters, just a return type
-            if (
-                self.line[2].token == ":"
-                or self.line[2].token == "<\\r1>"
-            ):
-                base.ERROR_CODES.SYNTAX_MISSING_EXCEPTED_TOKEN.format(
-                    token="->"
-                ).panic(
-                    "->",
-                    file=self.ast_line.file,
-                    line_no=self.ast_line.find_line_number(
-                        self.root_scope.get_keyword(
-                            "FUNCTION"
-                        )
-                    ),
-                )
-            return {
-                "return_type": self.line[2].token,
-                "params": self.variables,
-            }
+            if line[3].token == ":" or line[3].token == "<\\r1>":
+                panic(SyntaxError(f"<Hex(02.E3)>: Expected a return type after the {root_scope.get_keyword('FUNCTION')} keyword"), "->", file=ast_line.file, line_no=ast_line.find_line_number(root_scope.get_keyword('FUNCTION')))
+            return {"return_type": line[3].token, "params": {}}
         else:
             # no parameters, no return type
-            if (
-                self.line[1].token != ":"
-                and self.line[1].token != "<\\r1>"
-            ):
-                base.ERROR_CODES.SYNTAX_MISSING_EXCEPTED_TOKEN.format(
-                    token="{}"
-                ).panic(
-                    "fn",
-                    file=self.ast_line.file,
-                    line_no=self.ast_line.find_line_number(
-                        self.root_scope.get_keyword(
-                            "FUNCTION"
-                        )
-                    ),
-                )
-            return {
-                "return_type": None,
-                "params": self.variables,
-            }
-
-    def handle_generic_start(self) -> None:
-        self.generic_count += 1
-        self.in_generic = True
-        self.generic += "[" + " "
-        self.line = self.line[1:]
-
-    def handle_generic_end(self) -> None:
-        self.generic_count -= 1
-        self.in_generic = self.generic_count > 0
-        self.generic += " " + "]"
-
-        if not self.in_generic:
-            self.variables[
-                tuple(self.variables.keys())[-1]
-            ]["type"] += self.generic
-            self.generic = ""
-            self.line = self.line[1:]
-
-    def handle_generic_content(self) -> None:
-        self.generic += self.line[0].token
-        self.line = self.line[1:]
-
-    def handle_parameter(self) -> None:
-        token: str = self.line[0].token
-
-        if self.line[1].token == ":":
-            self.variables[token] = {
-                "type": self.line[2].token
-            }
-            self.line = self.line[3:]
-        else:
-            if token == "=":
-                base.ERROR_CODES.SYNTAX_UNSUPPORTED_SYNTAX.format(
-                    syntax="="
-                ).panic(
-                    token,
-                    file=self.ast_line.file,
-                    line_no=self.ast_line.find_line_number(
-                        self.root_scope.get_keyword(
-                            "FUNCTION"
-                        )
-                    ),
-                )
-            if token in self.allowed_untyped:
-                self.variables[token] = {"type": "Any"}
-                self.line = self.line[1:]
-            else:
-                del token
-                base.ERROR_CODES.TYPE_UNDECLARED.format(
-                    identifier=tuple(self.variables.keys())[
-                        -1
-                    ]
-                ).panic(
-                    tuple(self.variables.keys())[-1],
-                    file=self.ast_line.file,
-                    line_no=self.ast_line.find_line_number(
-                        self.root_scope.get_keyword(
-                            "FUNCTION"
-                        )
-                    ),
-                )
-
-        del token
-    
-    def __del__(self) -> None:
-        del self.line
-        del self.in_param
-        del self.variables
-        del self.generic
-        del self.in_generic
-        del self.generic_count
-        del self.root_scope
-        del self.ast_line
-    
-    def handle_no_parameters(
-        self,
-    ) -> dict[
-        str, Optional[str] | dict[str, dict[str, str]]
-    ]:
-        if self.line[2].token == "->":
-            # no parameters, just a return type
-            if (
-                self.line[3].token == ":"
-                or self.line[3].token == "<\\r1>"
-            ):
-                base.ERROR_CODES.SYNTAX_MISSING_EXCEPTED_TOKEN.format(
-                    token="->"
-                ).panic(
-                    "->",
-                    file=self.ast_line.file,
-                    line_no=self.ast_line.line[
-                        0
-                    ].line_number,
-                )
-            return {
-                "return_type": self.line[3].token,
-                "params": {},
-            }
-        else:
-            # no parameters, no return type
-            if (
-                self.line[2].token != ":"
-                and self.line[2].token != "<\\r1>"
-            ):
-                base.ERROR_CODES.SYNTAX_MISSING_EXCEPTED_TOKEN.format(
-                    token="{}"
-                ).panic(
-                    "fn",
-                    file=self.ast_line.file,
-                    line_no=self.ast_line.line[
-                        0
-                    ].line_number,
-                )
+            if line[2].token != ":" and line[2].token != "<\\r1>":
+                panic(SyntaxError(f"<Hex(02.E3)>: Expected a colon after the parameters"), ":", file=ast_line.file, line_no=ast_line.find_line_number(root_scope.get_keyword('FUNCTION')))
             return {"return_type": None, "params": {}}
-
-
-class Function(framework.Translate):
-    def __init__(
-        self,
-        ast_list: Token_List,
-        current_scope: Scope,
-        parent_scope: Scope,
-        root_scope: Scope,
-    ):
-        self.ast_list: Token_List = ast_list
-        self.current_scope: Scope = current_scope
-        self.parent_scope: Scope = parent_scope
-        self.root_scope: Scope = root_scope
-        self.decorators: list[str] = []
-        self.modifiers: dict[str, bool] = {}
-        self.not_allowed_classes: tuple[str, ...] = (
-            parent_scope.get_keyword("CLASS"),
-            parent_scope.get_keyword("INTERFACE"),
-            parent_scope.get_keyword("STRUCT"),
-            parent_scope.get_keyword("UNION"),
-            parent_scope.get_keyword("ENUM"),
-            parent_scope.get_keyword("ABSTRACT"),
-            parent_scope.get_keyword("UNSAFE"),
-        )
-
-        self.variables: dict[
-            str, str | dict[str, dict[str, str]] | None
-        ] = {}
-        
-        self.name: str = ""
-        self.output: str = ""
+    elif line[0].token == "(":
+        in_param = True
+        line = line[1:]
+    else:
+        panic(SyntaxError(f"<Hex(02.E3)>: Expected an open parenthesis after the {root_scope.get_keyword('FUNCTION')} keyword"), "(", file=ast_line.file, line_no=ast_line.find_line_number(root_scope.get_keyword('FUNCTION')))
     
-    def parse(self) -> Processed_Line:
-        self._process_decorators()
-        self._process_modifiers()
+    in_generic: bool = False
+    generic: str = ""
+    generic_count: int = 0
 
-        if self.ast_list.line[
-            0
-        ].token != self.root_scope.get_keyword("FUNCTION"):
-            self._handle_non_function()
-
-        self.variables = ExtractTypedParamsFromFunc(
-            self.ast_list, self.root_scope
-        ).parse()
-        self._process_name()
-        self.add_to_output(
-            f"def {self.name}("
-            if self.name not in self.parent_scope.functions
-            else f"def _("
-        )
-
-        self._process_params()
-        self._process_return_type()
-        self.add_to_output(
-            self.__add_indent(self.output), 2
-        )
-
-        if any(
-            [
-                i == self.root_scope.get_keyword("ABSTRACT")
-                for i in self.parent_scope.name
-            ]
-        ) or any(
-            [
-                i
-                == self.root_scope.get_keyword("INTERFACE")
-                for i in self.parent_scope.name
-            ]
-        ):
-            self.decorators.append("@hx__abstract_method")
-
-        self._process_modifiers_step_2()
-
-        self.parent_scope.functions[self.name] = {
-            "type": self.variables["return_type"],
-            "params": self.variables["params"],
-            self.root_scope.get_keyword(
-                "STATIC"
-            ): self.modifiers.get(
-                self.root_scope.get_keyword("STATIC"), False
-            ),
-            self.root_scope.get_keyword(
-                "ASYNC"
-            ): self.modifiers.get(
-                self.root_scope.get_keyword("ASYNC"), False
-            ),
-            self.root_scope.get_keyword(
-                "PRIVATE"
-            ): self.modifiers.get(
-                self.root_scope.get_keyword("PRIVATE"),
-                False,
-            ),
-            self.root_scope.get_keyword(
-                "UNSAFE"
-            ): self.modifiers.get(
-                self.root_scope.get_keyword("UNSAFE"), False
-            ),
-            self.root_scope.get_keyword(
-                "FINAL"
-            ): self.modifiers.get(
-                self.root_scope.get_keyword("FINAL"), False
-            ),
-        }
-
-        if "unknown" in self.output:
-            self.output = self.output
-
-        (
-            self.decorators.append(
-                "@overload_with_type_check"
-            )
-            if (
-                not self.modifiers.get(
-                    self.root_scope.get_keyword("ASYNC"),
-                    False,
-                )
-            )
-            else (None)
-        )
-
-        decorators: str = ""
-        if self.decorators:
-            for _, decorator in enumerate(
-                reversed(self.decorators)
-            ):
-                decorators += self.__add_indent(decorator)
-
-        self.add_to_output(
-            self.__add_indent(
-                self.output.replace(
-                    "unknown", "Any"
-                ).strip()
-            ),
-            2,
-        )
-        self.add_to_output(decorators, 1)
-        
-        return self._return_output()
-
-    def add_to_output(
-        self, output: str, side: int = 0
-    ) -> None:
-        if side == 0:
-            self.output += output
-        elif side == 1:
-            self.output = output + self.output
-        else:
-            self.output = output
-
-    def _process_decorators(self) -> None:
-        if self.ast_list.line[0].token == "#":
-            for _ in range(self.ast_list.count("#")):
-                decorator = self.ast_list.get_between(
-                    "[", "]"
-                )
-                self.ast_list.line = self.ast_list.line[
-                    len(decorator) + 3 :
-                ]
-                self.decorators.append(
-                    "@"
-                    + " ".join(
-                        [__.token for __ in decorator]
-                    )
-                )
-            del decorator
-            del _
-                
-
-    def _process_modifiers(self) -> None:
-        self.modifiers = {
-            self.root_scope.get_keyword("ASYNC"): False,
-            self.root_scope.get_keyword("PRIVATE"): False,
-            self.root_scope.get_keyword("PROTECTED"): False,
-            self.root_scope.get_keyword("FINAL"): False,
-            self.root_scope.get_keyword("UNSAFE"): False,
-            self.root_scope.get_keyword("STATIC"): False,
-        } # TODO: add virtual/kernel
-        index = 0
-
-        if self.ast_list.line[
-            0
-        ].token != self.root_scope.get_keyword("FUNCTION"):
-            line = self.ast_list.line.copy()
-            while line:
-                index += 1
-                if line[0].token in self.modifiers.keys():
-                    self.modifiers[line[0].token] = True
-                    line = line[1:]
+    if in_param:
+        while line:
+            if line[0].token == ")":
+                if line[1].token == "->":
+                    # no parameters, just a return type
+                    if line[2].token == ":" or line[2].token == "<\\r1>":
+                        panic(SyntaxError(f"<Hex(02.E3)>: Expected a return type after the {root_scope.get_keyword('FUNCTION')} keyword"), "->", file=ast_line.file, line_no=ast_line.find_line_number(root_scope.get_keyword('FUNCTION')))
+                    return {"return_type": line[2].token, "params": variables}
                 else:
-                    if line[
-                        0
-                    ].token != self.root_scope.get_keyword(
-                        "FUNCTION"
-                    ):
-                        break
-                    else:
-                        break
+                    # no parameters, no return type
+                    if line[1].token != ":" and line[1].token != "<\\r1>":
+                        panic(SyntaxError(f"<Hex(02.E3)>: Expected a colon after the parameters"), ":", file=ast_line.file, line_no=ast_line.find_line_number(root_scope.get_keyword('FUNCTION')))
+                    return {"return_type": None, "params": variables}
+            if line[0].token == "<":
+                generic_count += 1
+                in_generic = True if generic_count > 0 else False
+                if not in_generic:
+                    in_generic = False
+                    variables[tuple(variables.keys())[-1]] = {"type": variables[tuple(variables.keys())[-1]]["type"] + generic}
+                    line = line[1:]
+                    continue
+                generic += "[" + " "
+                line = line[1:]
+            elif line[0].token == ">":
+                generic_count -= 1
+                in_generic = True if generic_count > 0 else False
+                generic += " " + "]"
+                if not in_generic:
+                    in_generic = False
+                    variables[tuple(variables.keys())[-1]] = {"type": variables[tuple(variables.keys())[-1]]["type"] + generic}
+                    line = line[1:]
+                    continue
+                line = line[1:]
+            elif in_generic:
+                generic += line[0].token
+                line = line[1:]
+            elif line[0].token == ",":
+                line = line[1:]
+            else:
+                if line[1].token == ":":
+                    variables[line[0].token] = {"type": line[2].token}
+                    line = line[3:]
+                else:
+                    if line[0].token == "=":
+                        panic(SyntaxError(f"<Hex(02.E3)>: Default values are not allowed in function parameters"), line[0].token, file=ast_line.file, line_no=ast_line.find_line_number(root_scope.get_keyword('FUNCTION')))
+                    if line[0].token == "<":
+                        in_generic = True
+                        generic = ""
+                        continue
+                    if line[0].token in allowed_untyped:
+                        variables[line[0].token] = {"type": "Any"}
+                        line = line[1:]
+                        continue
+                    panic(SyntaxError(f"<Hex(02.E3)>: Expected a colon and a type after the variable name"), line[0].token, file=ast_line.file, line_no=ast_line.find_line_number(root_scope.get_keyword('FUNCTION')))
+                    
+    return variables
+    
+
+def process_modifiers(ast_list: Token_List, root_scope: Scope) -> list[str]:
+    # all modifiers are optional
+    # all allowed modifiers:
+    #   - async
+    #   - static
+    #   - public
+    #   - private
+    #   - protected
+    #   - final
+    #   - virtual
+    allowed_modifiers = (
+        root_scope.get_keyword('ASYNC'),
+        root_scope.get_keyword('PRIVATE'),
+        root_scope.get_keyword("PROTECTED"),
+        root_scope.get_keyword("FINAL"),
+        root_scope.get_keyword('UNSAFE'),
+        root_scope.get_keyword('STATIC')
+    )
+
+    modifiers = []
+    index = 0
+    
+    if ast_list.line[0].token != root_scope.get_keyword('FUNCTION'):
+        line = ast_list.line.copy()
+        while line:
+            index += 1
+            if line[0].token in allowed_modifiers:
+                modifiers.append(line[0].token)
+                line = line[1:]
+            else:
+                if line[0].token != root_scope.get_keyword('FUNCTION'):
+                    return modifiers
+                else:
+                    break
+        ast_list.line = ast_list.line[index-1:]
+        return modifiers
+    else:
+        return modifiers
+
+
+def contains(line: Token_List, compare: tuple):
+    # check if any of the tokens in compare are in line and
+    return any([_ in line for _ in compare])
+
+# static async fn factorial(n: int) -> int {
+def _function(ast_list: Token_List, current_scope: Scope, parent_scope: Scope, root_scope: Scope) -> Processed_Line:
+    decorators = []
+    if ast_list.line[0].token == "#":
+        for _ in range(ast_list.count("#")):
+            decorator = ast_list.get_between("[", "]")
+            ast_list.line = ast_list.line[len(decorator)+3:]
+            decorators.append('@' + ' '.join([__.token for __ in decorator]))
             
-            del line
-            
-            self.ast_list.line = self.ast_list.line[
-                (index - 1) :
-            ]
-
-        del index
-    def _process_name(self) -> None:
-        self.name = self.ast_list.line[1].token
-
-        if self.name in replace_function_name:
-            if not any(
-                [
-                    i in self.not_allowed_classes
-                    for i in self.parent_scope.name
-                ]
-            ):
-                base.ERROR_CODES.OPERATOR_OVERLOADING_OUTSIDE_CLASS.panic(
-                    self.name,
-                    file=self.ast_list.file,
-                    line_no=self.ast_list.find_line_number(
-                        self.name
-                    ),
-                )
-            self.name = replace_function_name[self.name]
-
-    def _handle_non_function(self) -> Processed_Line:
-        if (
-            self.ast_list.line[0].token
-            in self.not_allowed_classes
-        ):
-            return _class(
-                self.ast_list.splice(len(self.modifiers)),
-                self.current_scope,
-                self.parent_scope,
-                self.root_scope,
-                self.modifiers,
-            )
-
-        base.ERROR_CODES.SYNTAX_MISSING_EXCEPTED_TOKEN.format(
-            token=self.root_scope.get_keyword("FUNCTION")
-        ).panic(
-            self.ast_list[1].token,
-            file=self.ast_list.file,
-            line_no=self.ast_list[0].line_number,
-        )
-
-    def _process_params(self) -> None:
-        if not self.variables["params"]:
-            self.add_to_output(")")
-        else:
-            self._process_params_internal()
-            self.add_to_output(self.output[:-2] + ")", 2)
-
-    def _process_params_internal(self):
-        if not self.variables["params"]:
-            raise ValueError(
-                "The variable type is not a dictionary"
-            )
-        if not isinstance(self.variables["params"], dict):
-            raise ValueError(
-                "The variable type is not a dictionary"
-            )
-
-        for k, v in self.variables["params"].items():
+    modifiers = process_modifiers(ast_list, root_scope)
+        
+    not_allowed_classes = (
+        parent_scope.get_keyword("CLASS"),
+        parent_scope.get_keyword("INTERFACE"),
+        parent_scope.get_keyword("STRUCT"),
+        parent_scope.get_keyword("UNION"),
+        parent_scope.get_keyword("ENUM"),
+        parent_scope.get_keyword("ABSTRACT"),
+        parent_scope.get_keyword("UNSAFE"),
+    )
+    
+    if ast_list.line[0].token != root_scope.get_keyword('FUNCTION'):
+        if ast_list.splice(len(modifiers))[0] in not_allowed_classes:
+            return _class(ast_list.splice(len(modifiers)), current_scope, parent_scope, root_scope, modifiers)
+    
+        panic(SyntaxError(f"<Hex(02.E3)>: Expected the {root_scope.get_keyword('FUNCTION')} keyword"), ast_list[1].token, file=ast_list.file, line_no=ast_list[0].line_number)
+    
+    variables = extract_variables(ast_list, root_scope)
+    name = ast_list.line[1].token
+    
+    if name in replace_function_name:
+        if not any([i in not_allowed_classes for i in parent_scope.name]):
+            panic(SyntaxError(f"<Hex(02.E3)>: Cannot overload a unary operator outside a class"), name, file=ast_list.file, line_no=ast_list.find_line_number(name))
+        name = replace_function_name[name]
+    
+    output = f"def {name}(" if name not in parent_scope.functions else f"def _("
+    
+    if not variables["params"]:
+        output += ")"
+    else:
+        for k, v in variables["params"].items():
             if v["type"] == "void":
-                base.ERROR_CODES.TYPE_INVALID_TYPE_IN_CONTEXT.format(
-                    type="void"
-                ).panic(
-                    "void",
-                    file=self.ast_list.file,
-                    line_no=self.ast_list.find_line_number(
-                        k
-                    ),
-                )
-            self.add_to_output(
-                f"{k}: {base.replace_primitive(v['type'], 0)}, "
-            )
-            self.current_scope.variables[k] = v["type"]
+                panic(SyntaxError(f"<Hex(02.E3)>: The type void is not allowed for variables"), file=ast_list.file, line_no=ast_list.find_line_number(k))
+            output += f"{k}: {base.replace_primitive(v['type'], 0)}, "
+            current_scope.variables[k] = v["type"]
+        output = output[:-2] + ")"
+    
+    if ast_list.line[-1].token == "<\\r1>" and ast_list.indent_level == 0:
+        panic(SyntaxError(f"<Hex(02.E3)>: Cannot have a blank function in the global scope"), file=ast_list.file, line_no=ast_list.find_line_number(name))
+    
+    if variables["return_type"]:
+        output += f" -> {variables['return_type']}:" if ast_list.line[-1].token != "<\\r1>" else f" -> {variables['return_type']}\n{INDENT_CHAR*(ast_list.indent_level+1)}pass"
+    else:
+        output += ":" if ast_list.line[-1].token != "<\\r1>" else f":\n{INDENT_CHAR*(ast_list.indent_level+1)}pass"
+    
+    output = f"\n{INDENT_CHAR*ast_list.indent_level}{output}"
+    
+    #if not any([i in not_allowed_classes for i in parent_scope.name]):
+    #    if not root_scope.get_keyword('ASYNC') in modifiers and not root_scope.get_keyword('UNSAFE') in modifiers:
+    #        if name in parent_scope.functions:
+    #            output = (f"\n{INDENT_CHAR*ast_list.indent_level}@{name}.register" + output)
+    #        else:
+    #            output = (f"\n{INDENT_CHAR*ast_list.indent_level}@hx__multi_method" + output)
+    # if the type of parent_sope is an abstract class
+    if any([i == root_scope.get_keyword("ABSTRACT") for i in parent_scope.name]):
+        output = f"\n{INDENT_CHAR*ast_list.indent_level}@hx__abstract_method" + output
+    # if the type of parent_sope is an interface
+    if any([i == root_scope.get_keyword("INTERFACE") for i in parent_scope.name]):
+        output = f"\n{INDENT_CHAR*ast_list.indent_level}@hx__abstract_method" + output
+
+    static:  bool = False
+    async_:  bool = False
+    private: bool = False
+    unsafe:  bool = False
+    
+    if root_scope.get_keyword('STATIC') in modifiers:
+        if not any([i in not_allowed_classes for i in parent_scope.name]):
+            panic(SyntaxError(f"<Hex(02.E3)>: The {root_scope.get_keyword('STATIC')} modifier cannot be used outside a class"), root_scope.get_keyword("STATIC"), file=ast_list.file, line_no=ast_list[0].line_number)
         
-        del k, v
+        output = f"\n{INDENT_CHAR*ast_list.indent_level}@staticmethod{output}"
+        static = True
+    
+    if root_scope.get_keyword('ASYNC') in modifiers:
+        output = f"\n{INDENT_CHAR*ast_list.indent_level}@hx__async{output}"
+        async_ = True
 
-    def __add_indent(
-        self, output: str, offset: int = 0
-    ) -> str:
-        return f"\n{INDENT_CHAR*(self.ast_list.indent_level+offset)}{output}"
+    if root_scope.get_keyword('PRIVATE') in modifiers:
+        private = True
 
-    def _process_return_type(self) -> None:
-        if (
-            self.ast_list.line[-1].token == "<\\r1>"
-            and self.ast_list.indent_level == 0
-        ):
-            base.ERROR_CODES.SYNTAX_INVALID_SYNTAX.format(
-                location="noop function at the global scope is not allowed, "
-                         "use {...} to create an empty block function",
-            ).panic(
-                "fn",
-                file=self.ast_list.file,
-                line_no=self.ast_list.find_line_number(
-                    self.name
-                ),
-            )
-
-        if self.variables["return_type"]:
-            self.add_to_output(
-                f" -> {self.variables['return_type']}:"
-                if self.ast_list.line[-1].token != "<\\r1>"
-                else f" -> {self.variables['return_type']}:"
-                     f"{self.__add_indent('pass', 1)}"
-            )
-        else:
-            self.add_to_output(
-                ":"
-                if self.ast_list.line[-1].token != "<\\r1>"
-                else f":{self.__add_indent('pass', 1)}"
-            )
-
-    def _process_modifiers_step_2(self) -> None:
-        if self.modifiers[
-            self.root_scope.get_keyword("STATIC")
-        ]:
-            if not any(
-                [
-                    i in self.not_allowed_classes
-                    for i in self.parent_scope.name
-                ]
-            ):
-                base.ERROR_CODES.FUNCTION_INVALID_MODIFIERS.format(
-                    modifiers="static",
-                ).panic(
-                    self.root_scope.get_keyword("STATIC"),
-                    file=self.ast_list.file,
-                    line_no=self.ast_list.line[
-                        0
-                    ].line_number,
-                )
-
-            self.decorators.append(f"@staticmethod")
-
-        if self.modifiers[
-            self.root_scope.get_keyword("ASYNC")
-        ]:
-            self.decorators.append(f"@hx__async")
-
-        if self.modifiers[
-            self.root_scope.get_keyword("PRIVATE")
-        ]:
-            # TODO: ADD A DECORATOR FOR PRIVATE TO MARK THE TYPE OF THE FUNCTION AS PRIVATE
-            self.modifiers[
-                self.root_scope.get_keyword("PRIVATE")
-            ] = True
-
-        if self.modifiers[
-            self.root_scope.get_keyword("FINAL")
-        ]:
-            self.decorators.append(f"@final")
-
-        if self.modifiers[
-            self.root_scope.get_keyword("UNSAFE")
-        ]:
-            # TODO: ADD A DECORATOR FOR UNSAFE TO MARK THE TYPE OF THE FUNCTION AS UNSAFE
-            self.modifiers[
-                self.root_scope.get_keyword("UNSAFE")
-            ] = True
-
-        if (
-            self.modifiers[
-                self.root_scope.get_keyword("PRIVATE")
-            ]
-            and self.modifiers[
-                self.root_scope.get_keyword("STATIC")
-            ]
-        ):
-            base.ERROR_CODES.FUNCTION_INVALID_MODIFIERS.format(
-                modifiers="private and static",
-            ).panic(
-                self.root_scope.get_keyword("PRIVATE"),
-                self.root_scope.get_keyword("STATIC"),
-                file=self.ast_list.file,
-                line_no=self.ast_list.line[0].line_number,
-            )
-
-        if (
-            self.modifiers[
-                self.root_scope.get_keyword("ASYNC")
-            ]
-            and self.modifiers[
-                self.root_scope.get_keyword("UNSAFE")
-            ]
-        ):
-            base.ERROR_CODES.FUNCTION_INVALID_MODIFIERS.format(
-                modifiers="async and unsafe",
-            ).panic(
-                self.root_scope.get_keyword("ASYNC"),
-                self.root_scope.get_keyword("UNSAFE"),
-                file=self.ast_list.file,
-                line_no=self.ast_list.find_line_number(
-                    self.root_scope.get_keyword("STATIC")
-                ),
-            )
-
-    def _return_output(self) -> Processed_Line:
-        del self.decorators
-        del self.modifiers
-        del self.not_allowed_classes
-        del self.variables
-        del self.name
-        del self.current_scope
-        del self.parent_scope
-        del self.root_scope
+    # if root_scope.get_keyword("PROTECTED") in modifiers:
+    #     output = output.replace("def ", "def _")
         
-        return Processed_Line(
-            self.output,
-            self.ast_list,
-        )
+    if root_scope.get_keyword("FINAL") in modifiers:
+        output = f"{INDENT_CHAR*ast_list.indent_level}@final{output}"
+        
+    if root_scope.get_keyword('UNSAFE') in modifiers:
+        unsafe = True
 
+    if private and static:
+        panic(SyntaxError(f"<Hex(02.E3)>: The {root_scope.get_keyword('PRIVATE')} and {root_scope.get_keyword('STATIC')} modifiers cannot be used together"), file=ast_list.file, line_no=ast_list.find_line_number(root_scope.get_keyword('STATIC')))
+        
+    if async_ and unsafe:
+        panic(SyntaxError(f"<Hex(02.E3)>: The {root_scope.get_keyword('ASYNC')} and {root_scope.get_keyword('UNSAFE')} modifiers cannot be used together"), file=ast_list.file, line_no=ast_list.find_line_number(root_scope.get_keyword('STATIC')))
+        
+    parent_scope.functions[name] = {"type": variables["return_type"], "params": variables["params"], root_scope.get_keyword('STATIC'): static, root_scope.get_keyword('ASYNC'): async_, root_scope.get_keyword('PRIVATE'): private, root_scope.get_keyword('UNSAFE'): unsafe}
+        
+    if "unknown" in output:
+        output = output.replace("unknown", "Any")
+    
+    #print(output)
+    if decorators:
+        for _, decorator in enumerate(reversed(decorators)):
+            output = f"{INDENT_CHAR*ast_list.indent_level}{decorator}\n{INDENT_CHAR*ast_list.indent_level}{output.strip()}"
 
-def _function(
-    ast_list: Token_List,
-    current_scope: Scope,
-    parent_scope: Scope,
-    root_scope: Scope,
-) -> Processed_Line:
-    return Function(
-        ast_list, current_scope, parent_scope, root_scope
-    ).parse()
+    return Processed_Line((f'\n{INDENT_CHAR*ast_list.indent_level}@overload_with_type_check' if not async_ else '\n') + output, ast_list)

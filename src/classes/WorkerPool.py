@@ -1,7 +1,10 @@
-from src.core.imports import (
+from concurrent.futures import (
     Future,
     ProcessPoolExecutor as ProcessPool,
     ThreadPoolExecutor  as ThreadPool,
+)
+
+from typing import (
     Literal,
     Optional,
     TypeAlias,
@@ -14,12 +17,14 @@ from src.core.imports import (
     TypeVar,
     Union,
     Self,
-    Any,
-    cpu_count,
-    CO_NESTED,
-    Lock,
-    sys,
+    Any
 )
+
+from multiprocessing import cpu_count
+from inspect         import CO_NESTED
+from threading       import Lock
+
+import sys
 
 # ------------------------------ Type Variables ------------------------------ #
 T = TypeVar("T")
@@ -55,17 +60,17 @@ InitializeType: TypeAlias = Annotated[Callable[..., None],"The initializer to be
 
 
 # ------------------------------- Functions ---------------------------------- #
-def start_all_threads(x: Any = None) -> NoReturn: # type: ignore
+def start_all_threads(x: Any = None) -> NoReturn:
     pass
 
-__process_worker_function: Callable[..., T] = None # type: ignore
+__process_worker_function: Callable[..., T] = None
 
 def set_process_worker_function(func: Callable[..., T]) -> None:
     global __process_worker_function
     __process_worker_function = func
     
 def run_process_worker_function(*args: T) -> T:
-    return __process_worker_function(*args) # type: ignore
+    return __process_worker_function(*args)
 
 def function_origin_is_outside(func):
     def check1(func):
@@ -117,7 +122,7 @@ class WorkerPool(Generic[T]):
         self.__lock         = Lock()
         self.__shutdown    = False
         self.__pool        = None
-        self.__results     = () # type: ignore
+        self.__results     = ()
         self.__pool_type   = ((
             "thread" if pool_type else "process"
         ) if isinstance(pool_type, bool) else (
@@ -131,7 +136,7 @@ class WorkerPool(Generic[T]):
         self,
         by: Annotated[int, "The amount of workers to add or remove from the pool (< 0 to remove, > 0 to add)"] = 0,
         non_main_origin: Annotated[bool, "If the function is not from the main module or is a lambda"] = False,
-        non_main_origin_function: Annotated[Callable, "The function to add to a workers namespace"] = None # type: ignore
+        non_main_origin_function: Annotated[Callable, "The function to add to a workers namespace"] = None
     ) -> None:
         if by != 0:
             self.__workers += by
@@ -186,8 +191,8 @@ class WorkerPool(Generic[T]):
             self.__structure_pool(-workers)
 
     # ------------------------------ Appenders ------------------------------- #
-    def add_to_futures(self, *parm: FuturesType) -> None:
-        self.__futures += [parm[0]] if len(parm) == 1 else parm # type: ignore
+    def add_to_futures(self, *parm: T) -> None:
+        self.__futures += [parm[0]] if len(parm) == 1 else parm
     
     def clear_futures(self) -> None:
         self.__futures.clear()
@@ -202,7 +207,7 @@ class WorkerPool(Generic[T]):
         with self.__lock:
             if not isinstance(future, Future):
                 raise TypeError("Future must be of type Future")
-            self.add_to_futures(future) # type: ignore
+            self.add_to_futures(future)
 
     def append_futures(
         self,
@@ -221,7 +226,7 @@ class WorkerPool(Generic[T]):
     ) -> FutureType:
         if not function_origin_is_outside(func) or self.__pool_type == "thread":
             with self.__lock:
-                self.add_to_futures(self.__pool.submit(func, *args, **kwargs)) # type: ignore
+                self.add_to_futures(self.__pool.submit(func, *args, **kwargs))
                 return self.__futures[-1]
         else:
             raise NotImplementedError("Cannot run non-root scoped (includes: lambda, closures, or any function in a local scope) functions in a process pool (Use a thread pool instead)")
@@ -239,7 +244,7 @@ class WorkerPool(Generic[T]):
     ) -> None:
         if not function_origin_is_outside(func) or self.__pool_type == "thread":
             with self.__lock:
-                self.add_to_futures(self.__pool.submit(func, *args, **kwargs)) # type: ignore
+                self.add_to_futures(self.__pool.submit(func, *args, **kwargs))
                 self.__futures[-1].add_done_callback(post_func)
         else:
             raise NotImplementedError("Cannot run non-root scoped (includes: lambda, closures, or any function in a local scope) functions in a process pool (Use a thread pool instead)")
@@ -257,7 +262,7 @@ class WorkerPool(Generic[T]):
         if not function_origin_is_outside(func) or self.__pool_type == "thread":
             with self.__lock:
                 [
-                    self.add_to_futures(self.__pool.submit(func, *args)) # type: ignore
+                    self.add_to_futures(self.__pool.submit(func, *args))
                     for args in zip(*iterables)
                 ]
         else:
@@ -279,12 +284,12 @@ class WorkerPool(Generic[T]):
         if not function_origin_is_outside(func) or self.__pool_type == "thread":
             with self.__lock:
                 [
-                    self.add_to_futures(self.__pool.submit(func, *args)) # type: ignore
+                    self.add_to_futures(self.__pool.submit(func, *args))
                     for args in zip(*iterables)
                 ]
                 [
                     future.add_done_callback(post_func)
-                    for future in self.iter_futures()[-len(iterables):] # type: ignore
+                    for future in self.iter_futures()[-len(iterables):]
                 ]
         else:
             raise NotImplementedError("Cannot run non-root scoped (includes: lambda, closures, or any function in a local scope) functions in a process pool (Use a thread pool instead)")
@@ -358,7 +363,7 @@ class WorkerPool(Generic[T]):
 
 
         return [
-            future.result(timeout=self.__time_out) # type: ignore
+            future.result(timeout=self.__time_out)
             for future in futures
         ]
 
@@ -372,7 +377,7 @@ class WorkerPool(Generic[T]):
         if function_origin_is_outside(func) and self.__pool_type != "thread":
             raise NotImplementedError("Cannot run non-root scoped (includes: lambda, closures, or any function in a local scope) functions in a process pool (Use a thread pool instead)")
         
-        return self.__pool.submit(func, *args, **kwargs) # type: ignore
+        return self.__pool.submit(func, *args, **kwargs)
 
     # ------------------------------- Shutdown ------------------------------- #
     def close(
@@ -422,7 +427,7 @@ class WorkerPool(Generic[T]):
                 raise TypeError("All items in futures must be of type Future")
             self.clear_futures()
             [
-                self.add_to_futures(future) # type: ignore
+                self.add_to_futures(future)
                 for future in value
             ]
 
