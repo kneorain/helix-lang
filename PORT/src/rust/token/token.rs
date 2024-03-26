@@ -1,15 +1,72 @@
-use std::mem;
+use std::{mem, ops};
 use std::num::{NonZeroI32, NonZeroU16};
 use std::panic::panic_any;
 use std::sync::Arc;
 use std::{ collections::HashMap, fmt::Display };
 use std::hash::Hash;
 use pyo3::prelude::*;
+use regex::Regex;
+use super::keywords::{Keyword, get_all_keywords};
 use crate::panic_name;
 
 use super::token_value::TokenValue;
 
 // TODO: use super::Label;
+
+
+#[repr(C)]
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+pub enum TokenType {
+    STRING,
+    CHARACTER,
+    NUMERIC,
+    KEYWORD,
+    IDENTIFIER,
+    DELIMITER,
+    OPERATOR,
+    COMMENT,
+    OTHER,
+}
+
+//impl TokenType {
+//    pub fn from_str(s: &str) -> Self {
+//        if let
+//            Some(token) = get_all_keywords()
+//            .into_iter()
+//            .find(|keyword| s == keyword
+//                .to_str())
+//            .map(|_| TokenType::KEYWORD)
+//        {
+//            return token;
+//        }
+//
+//        let string_re     = Regex::new(r#"([fbur]*"[^"\\]*(?:\\.[^"\\]*)*")"#).unwrap();
+//        let character_re  = Regex::new(r#"([fbur]*'[^'\\]*(?:\\.[^'\\]*)*')"#).unwrap();
+//        let numeric_re    = Regex::new(r#"(\b\d+\.\d+\b|\b\d+[fdui]?\b)"#).unwrap();
+//        let identifier_re = Regex::new(r#"(\b[a-zA-Z][a-zA-Z0-9_]*\b)"#).unwrap();
+//        let delimiter_re  = Regex::new(r#"([\(\)\{\}\[\];,])"#).unwrap();
+//        let operator_re   = Regex::new(r#"([+\-*/%=&|!<>^])"#).unwrap();
+//        let comment_re    = Regex::new(r#"((?://[^\n]*)|(/\*[\s\S]*?\*/))"#).unwrap();
+//
+//        if string_re.is_match(s) {
+//            return TokenType::STRING;
+//        } else if character_re.is_match(s) {
+//            return TokenType::CHARACTER;
+//        } else if numeric_re.is_match(s) {
+//            return TokenType::NUMERIC;
+//        } else if identifier_re.is_match(s) {
+//            return TokenType::IDENTIFIER;
+//        } else if delimiter_re.is_match(s) {
+//            return TokenType::DELIMITER;
+//        } else if operator_re.is_match(s) {
+//            return TokenType::OPERATOR;
+//        } else if comment_re.is_match(s) {
+//            return TokenType::COMMENT;
+//        } else {
+//            return TokenType::OTHER;
+//        }
+//    }
+//}
 
 /*
 ported from python to rust ---------
@@ -20,8 +77,8 @@ def line(self) -> list[str]:
 def line(self, value: list[str]) -> None:
 def token(self) -> str:
 def token(self, value: str) -> None:
-def line_number(self) -> int:
-def line_number(self, value: int) -> None:
+def row(self) -> int:
+def row(self, value: int) -> None:
 def indent_level(self) -> int:
 def indent_level(self, value: int) -> None:
 def set_token(self, value: str) -> 'Token':
@@ -37,144 +94,122 @@ def is_empty(self) -> bool:
 #[repr(C)]
 #[derive(Clone, Debug,PartialEq, Eq, Hash)]
 pub struct Token {
-    // ------- Information about the token itself ------- //
-    // CAN be shared between tokens (doesn't mean it will ALWAYS be shared)
-    original_line: Option<String>, // Arc ?
-    line_number: i32,
-    indent_level: u16, 
-    column: u16,
-
-    file_name: Arc<str>, // WILL be shared between tokens
-    // (from the same origin token created by the lexer (stage 1))
-
-    // ------- Information about the token to be used by the builder ------- //
-    value: TokenValue,
-
+    // ------- Meta about the token ------- //
+    original_line: Arc<str>,
+    file_name:     Arc<str>,
+    
+    row:  i32,
+    col:  u16,
+    
     // ------- Information about the token ------- //
-    identifier: String, // change to enum
-
+    identifier: TokenType,
+    token:      String,
+    
     // TODO: Make the keys into an enum
-    attributes: Vec<(String, String)>,
+    // ------- Parsed at a later stage ------- //
+    attributes:    Vec<(String, String)>,
+    indent_level:  u16,
 }
 
 impl Token {
     pub fn new(
-        original_line: Option<String>,
-        line_number: Option<NonZeroI32>,
-        column: Option<NonZeroU16>,
-        file_name: Arc<str>,
-        value: TokenValue,
-        identifier: String,
-        attributes: Vec<(String, String)>
+        original_line: Arc<str>,
+        file_name:     Arc<str>,
+        row:           i32,
+        col:           u16,
+        token:         String,
+        identifier:    TokenType,
     ) -> Self {
         Self {
             original_line,
-            // When an option is None, it is 0 within memory so this is safe,
-            // as when using non zero values, the value will never be 0, so the 
-            // Option here is the same size as the value it holds
-            line_number:unsafe {std::mem::transmute::<Option<NonZeroI32>,i32>(line_number)},
-            column: unsafe {std::mem::transmute::<Option<NonZeroU16>,u16>(column)},
+            row: row, // changed from NonZero since the tokenizer will be a lexer and not a parser
+            col: col,
             file_name,
-            value,
+            token,
             identifier,
-            attributes,
             indent_level: 0,
+            attributes: Vec::new(),
         }
     }
 
-    pub fn original_line(&self) -> Option<&str> {
-        self.original_line.as_deref()
+    // ========= Getters ========= //
+    pub fn original_line(&self) -> &str {
+        return self.original_line.as_ref();
     }
 
-    pub fn set_original_line(&mut self, original_line: Option<String>) {
-        self.original_line = original_line;
-    }
-
-    pub fn line_number(&self) -> i32 {
-        self.line_number
-    }
-
-    pub fn set_line_number(&mut self, line_number: i32) {
-        self.line_number = line_number;
-    }
-
-    pub fn indent_level(&self) -> u16 {
-        self.indent_level
-    }
-
-    pub fn set_indent_level(&mut self, indent_level: u16) {
-        self.indent_level = indent_level;
-    }
-
-    pub fn column(&self) -> u16 {
-        self.column
-    }
-
-    pub fn set_column(&mut self, column: u16) {
-        self.column = column;
+    pub fn row(&self) -> i32 {
+        return self.row;
     }
 
     pub fn file_name(&self) -> &str{
         self.file_name.as_ref()
     }
 
-    pub fn set_file_name(&mut self, file_name: &str) {
-        self.file_name = Arc::from(file_name);
+    pub fn col(&self) -> u16 {
+        return self.col;
     }
 
-    pub fn value(&self) -> &TokenValue {
-        &self.value
+    pub fn identifier(&self) -> &TokenType {
+        return &self.identifier;
     }
-
-    pub fn identifier(&self) -> &str {
-        &self.identifier
+    
+    pub fn token(&self) -> &String {
+        return &self.token;
     }
-
-    pub fn set_identifier(&mut self, identifier: String) {
-        self.identifier = identifier;
-    }
-
-    pub fn attributes(&self) -> &[(String, String)] {
-        &self.attributes
-    }
-
-    pub fn set_attr(&mut self, key: String, value: String) {
-        for (k, v) in self.attributes.iter_mut() {
-            if *k == key {
-                *v = value;
-                return;
-            }
-        }
-        self.attributes.push((key, value));
-    }
-
+    
     pub fn get_attr(&self, key: &str) -> Option<&str> {
         for (k, v) in self.attributes.iter() {
             if k == key {
                 return Some(v);
             }
         }
-        None
+        return None;
+    }
+
+    pub fn indent_level(&self) -> u16 {
+        return self.indent_level;
+    }
+
+    // ========= Setters ========= //
+    pub fn set_indent_level(&mut self, indent_level: u16) {
+        self.indent_level = indent_level;
+    }
+
+    pub fn set_attr(&mut self, key: String, token: String) {
+        for (k, v) in self.attributes.iter_mut() {
+            if *k == key {
+                *v = token;
+                return;
+            }
+        }
+        self.attributes.push((key, token));
     }
 
     pub fn set_token(&mut self, token: String) {
-        self.value = TokenValue::new_token(token);
+        self.token = token;
     }
 
-
-    pub fn set_line(&mut self, line: Vec<String>) {
-        self.value = TokenValue::new_line(line);
+    pub fn set_identifier(&mut self, identifier: TokenType) {
+        self.identifier = identifier;
     }
 
+    // ========= Methods ========= //
     pub fn is_empty(&self) -> bool {
-        self.value.is_line() && self.value.get_line().is_empty()
+        return self.token.is_empty();
     }
 
-    pub fn contains(&self, key: &Token) -> bool {
-        self.value == key.value
+    pub fn equals_str(&self, other: &str) -> bool {
+        return self.token == other;
+    }
+
+    pub fn equals_token(&self, other: &Token) -> bool {
+        return self.token == other.token;
+    }
+
+    pub fn contains(&self, key: &str) -> bool {
+        return self.token.contains(key);
     }
 }
-
 
 
 impl IntoIterator for Token {
@@ -182,14 +217,10 @@ impl IntoIterator for Token {
     type IntoIter = std::vec::IntoIter<Self::Item>;
 
     fn into_iter(self) -> Self::IntoIter {
-        // return the iter only if the token is a line else panic
-        match self.value {
-            TokenValue::Line(line) => line.into_iter(),
-            _ => panic_any(TokenError::TokenIsNotLine),
-        }
+        panic_any(TokenError::TokenIsNotLine);
     }
 }
-// "Token has been accessed in a illegal way"
+
 
 #[derive(Debug)]
 pub enum TokenError {
