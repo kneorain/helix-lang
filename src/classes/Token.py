@@ -1,20 +1,33 @@
 from __future__ import annotations
+<<<<<<< HEAD
+=======
+from typing import Optional
+>>>>>>> 5b3e87180733de6321e2707e5feed733434b5ce5
 from src.core.imports import (
     json,
     subtype,
     Iterable,
     Iterator,
 )
+<<<<<<< HEAD
+=======
+from  beartype.door import is_bearable
+>>>>>>> 5b3e87180733de6321e2707e5feed733434b5ce5
 
 class Token:
     _: str = "Helix Token"
     
     # ---------------------------- Constructor ------------------------------- #
-    def __init__(self, original_line: str, processed_line: str, line_number: int, indent_level: int):
-        self.__original_line:  str             = original_line
-        self.__processed_line: list[str] | str = processed_line
-        self.__line_number:    int             = line_number
-        self.__indent_level:   int             = indent_level
+    def __init__(self,
+        original_line: Optional[str],
+        processed_line: Optional[str],
+        line_number: Optional[int],
+        indent_level: Optional[int]
+    ):
+        self.__original_line:  str             = original_line if original_line is not None else ""
+        self.__processed_line: list[str] | str = processed_line if processed_line is not None else ""
+        self.__line_number:    int             = line_number if line_number is not None else -1
+        self.__indent_level:   int             = indent_level if indent_level is not None else 0
 
     # ------------------------------- Getters -------------------------------- #
 
@@ -28,7 +41,9 @@ class Token:
 
 
     @property
-    def line(self) -> list[str] | str:
+    def line(self) -> list[str]:
+        if isinstance(self.__processed_line, str):
+            raise ValueError("Line is a string, use the token property to get the string")
         return self.__processed_line
 
     @line.setter
@@ -37,7 +52,9 @@ class Token:
 
 
     @property
-    def token(self) -> list[str] | str:
+    def token(self) -> str:
+        if isinstance(self.__processed_line, list):
+            raise ValueError("Token is a list of strings, use the line property to get the list of strings")
         return self.__processed_line
 
     @token.setter
@@ -115,9 +132,12 @@ class Token_List(list[Token]):
         self.file = file
 
     def __str__(self):
-        return json.dumps({"line_indent_level": self.indent_level, "joined_line": ' '.join([_.token for _ in self.line])})
-        #f"\"Token_List\": {{\"line_indent_level\": {self.indent_level}, \"joined_line\": \"{(' '.join([_.token for _ in self.line])).replace('\"', '\\\"').replace('\'', '\\\'')}\"}}"
-
+        return (f"Token_List("
+            f"line = {self.line}, "
+            f"indent_level = {self.indent_level}, "
+            f"file = {self.file}"
+        ")")
+    
     def __iter__(self) -> Iterator[Token]:
         return iter(self.line)
 
@@ -156,17 +176,18 @@ class Token_List(list[Token]):
         return -1
 
     def __contains__(self, __key: object | Iterable[Token_List]) -> bool:
-        if isinstance(__key, subtype(Iterable[Token_List])):
-            return any([token in __key for token in self.line])
+        if isinstance(__key, subtype(Iterable[Token_List])): # type: ignore
+            return any([token in __key for token in self.line]) # type: ignore
         if isinstance(__key, tuple):
             return any([token in __key for token in self.line])
         return any([token == __key for token in self.line])
 
 
     def contains_from(self, __key: object | Iterable[Token_List]) -> str:
-        if isinstance(__key, subtype(Iterable[Token_List])):
-            return [[token for token in self.line if token in __key]+[False]][0]
-        return [[token for token in self.line if token == __key]+[False]][0]
+        if isinstance(__key, subtype(Iterable[Token_List])): # type: ignore
+            return [[token for token in self.line if token in __key]+[False]][0] # type: ignore
+        return [[token for token in self.line if token == __key]+[False]][0] # type: ignore
+    # TODO: switch isinstance to is_bearable
 
     def full_line(self) -> str:
         return ' '.join([_.token for _ in self.line])
@@ -228,7 +249,7 @@ class Token_List(list[Token]):
         return output
 
     # add support for the splicing so [1:2] works or any other slicing
-    def splice(self, start: int = 0, end: int = None) -> 'Token_List':
+    def splice(self, start: int = 0, end: Optional[int] = None) -> 'Token_List':
         temp = self.copy()
         temp.line = temp.line[start:end]
         return temp

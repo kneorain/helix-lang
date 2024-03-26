@@ -1,16 +1,20 @@
 import re  # #### Keep
 from functools import cache
+<<<<<<< HEAD
+=======
+from typing import Optional
+>>>>>>> 5b3e87180733de6321e2707e5feed733434b5ce5
 from src.panic import panic
 
 import src.core.base as base
 from src.classes.Token import Token
 
-COMPILED_RE: re.Pattern = None
+COMPILED_RE: Optional[re.Pattern] = None
 
 def compiled_re(ignore_strings: bool = False) -> re.Pattern:
     global COMPILED_RE
     back_slash = "\\"
-    if not COMPILED_RE and not ignore_strings:
+    if COMPILED_RE is None or ignore_strings:
         COMPILED_RE = re.compile(rf"""
             ([fbur]*"[^"\\]*(?:\\.[^"\\]*)*")                                                                          | # Double quotes strings, including f, b, r, u strings
             ([fbur]*'[^'\\]*(?:\\.[^'\\]*)*')                                                                          | # Single quotes strings, including f, b, r, u strings
@@ -35,7 +39,7 @@ def compiled_re(ignore_strings: bool = False) -> re.Pattern:
     else: return COMPILED_RE
 
 @cache
-def tokenize_line(code: Token | str, path: str = None, ignore_errors: bool = False, ignore_strings: bool = False) -> list[str]:
+def tokenize_line(code: Token | str, path: Optional[str] = None, ignore_errors: bool = False, ignore_strings: bool = False) -> Optional[list[str]]:
     """
     Tokenize a line of code.
     
@@ -64,6 +68,9 @@ def tokenize_line(code: Token | str, path: str = None, ignore_errors: bool = Fal
         if token and not token.startswith(base.COMMENT) and not token.startswith(base.BLOCK_COMMENT) and not token.endswith(base.BLOCK_COMMENT)
     ]
     
+    if path is None:
+        raise ValueError("The path must be specified. Internal error")
+    
     [
         panic(
             SyntaxError(f"Reserved keyword '{token}' used."),
@@ -85,7 +92,11 @@ def tokenize_line(code: Token | str, path: str = None, ignore_errors: bool = Fal
     ] if flattened_tokens else []
     
     if ignore_errors:
+        if not isinstance(code, list):
+            raise ValueError("The code must be a list. Internal error")
+        
         return code.line
+    
 
 def standalone_tokenize_line(line: str | Token) -> list[str]:
     import re

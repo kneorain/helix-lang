@@ -1,6 +1,6 @@
 import sys, helix, subprocess, os
-BUILD: bool = False
-AUTO_BUILD: bool = False
+BUILD: bool = True
+AUTO_BUILD: bool = True
 
 BUILD_REV = open("build_rev.txt", "r").readlines()[0].strip()
 RUN_COUNT = int(open("build_rev.txt", "r").readlines()[1].strip())
@@ -35,10 +35,10 @@ def build():
             },
             
         },
-        
         executables=[
             Executable(
                 "helix.py",
+                base='Console',
                 icon="helix.ico",
                 
             )
@@ -82,9 +82,9 @@ if "build_exe" in sys.argv or "build" in sys.argv:
     
     
     try: build()
-    except:
+    except Exception as e:
         print("\u001b[92m" + center("─", f" Build '{BUILD_REV}' Failed", terminal_width) + "\u001b[0m")
-        sys.exit(1)
+        raise e
     
     if exit_code := subprocess.call(f"build{os.sep}exe.win-amd64-3.12{os.sep}helix.exe", shell=True):
         print("\u001b[91m" + center("─", f" Build Test Run '{BUILD_REV}' Failed, With Exit ({exit_code})", terminal_width) + "\u001b[0m")
@@ -97,5 +97,3 @@ if "build_exe" in sys.argv or "build" in sys.argv:
     shutil.make_archive(f"build{os.sep}helix-{BUILD_REV}", "zip", f"build{os.sep}exe.win-amd64-3.12")
     
     sys.exit(0)
-
-helix.start()

@@ -1,5 +1,13 @@
-DISABLED: bool = False
+import src.core.base as base
+from src.core.imports import (
+    dump, load,
+    wraps,
+    Callable, Tuple, Union, Any,
+    lru_cache,
+    os, CONFIG
+)
 
+<<<<<<< HEAD
 from src.core.imports import (
     dump, load,
     wraps,
@@ -15,13 +23,22 @@ if not os.path.isdir(CACHE_DIR):
     os.mkdir(CACHE_DIR)
 
 def async_cache(path: str, args: tuple, result: any) -> None:
+=======
+CACHE_DIR: str = os.path.join(os.path.dirname(os.path.dirname(__file__)), "cache")
+local_cache: dict[str, Any] = {}
+
+if not os.path.isdir(CACHE_DIR):
+    os.mkdir(CACHE_DIR)
+
+def async_cache(path: str, args: tuple, result: Any) -> None:
+>>>>>>> 5b3e87180733de6321e2707e5feed733434b5ce5
     global local_cache
     
-    local_cache[args] = result
+    local_cache[str(args)] = result
     with open(path, "wb") as file:
         dump(local_cache, file)
 
-def get_cache(path: str, args: tuple) -> Union[any, None]:
+def get_cache(path: str, args: tuple) -> Union[Any, None]:
     global local_cache
     
     if os.path.isfile(path):
@@ -39,8 +56,8 @@ def cache(func: Callable) -> Callable:
 
 def file_cache(func: Callable) -> Callable:
     @wraps(func)
-    def wrapper(*args: Tuple[any, ...], **kwargs: dict[str, any]) -> any:
-        if DISABLED: return func(*args, **kwargs)
+    def wrapper(*args: Tuple[Any, ...], **kwargs: dict[str, Any]) -> Any:
+        if not base.USE_CACHE: return func(*args, **kwargs)
         
         global local_cache
         
@@ -53,7 +70,7 @@ def file_cache(func: Callable) -> Callable:
             if result:
                 return result
         
-        result: any = func(*args, **kwargs)
+        result: Any = func(*args, **kwargs)
         async_cache(cache_file_path, args, result)
         
         return result

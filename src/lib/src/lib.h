@@ -1,0 +1,1 @@
+int remove_blank_lines(const char *file_path);

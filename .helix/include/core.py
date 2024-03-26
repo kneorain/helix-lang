@@ -9,7 +9,7 @@ from decimal import (Decimal as double, getcontext)
 from array import array
 
 from enum import Enum
-from functools import wraps
+from functools import wraps, partial
 import inspect
 from threading import Thread
 from types import MappingProxyType as FastMap, NoneType, FunctionType, UnionType, BuiltinFunctionType
@@ -20,6 +20,11 @@ from multimethod import DispatchError, multimeta
 from multimethod import subtype
 
 from typing import Type, TypeVar, Optional
+<<<<<<< HEAD
+=======
+
+from beartype import beartype
+>>>>>>> 5b3e87180733de6321e2707e5feed733434b5ce5
 from src.panic import panic, standalone_tokenize_line as _H_tokenize_line__
 from time import sleep
 #from include.c_cpp import __import_c__
@@ -47,7 +52,18 @@ def __import_py__(*args, **kwargs):
     raise NotImplementedError("Python is not supported in Helix (YET)")
 
  
-
+class Infix:
+    def __init__(self: Any, func: Callable) -> None:
+        self.func = func
+    
+    def __ror__(self: Any, a: Any) -> Any:
+        return Infix(partial(self.func, a))
+    
+    def __or__(self: Any, a: Any) -> Any:
+        return self.func(a)
+    
+    def operator(self: Any, left: Any, right: Any) -> Any:
+        return self.func(left, right)
 
 getcontext().prec = 128
 replace_primitives = {
@@ -271,7 +287,13 @@ class C_For:
             .replace("/*", "*= 1")
         )
         return self
+    
+def class_type_check_decorator(cls):
+    # Store the original __init__ for later use
+    dummy = lambda *args, **kwargs: None
+    original_init = getattr(cls, "__init__", dummy)
 
+<<<<<<< HEAD
 
 from beartype import beartype
 
@@ -289,13 +311,58 @@ def hx__async(func: Callable) -> Callable:
         return func
 
     def join(timeout=None):
+=======
+    # Define a new __init__ that includes the type check
+    def new_init(self, *args, **kwargs):
+        if not isinstance(self, cls):
+            raise TypeError(f"Instance must be of type {cls.__name__}")
+        try:
+            if cls not in original_init.__annotations__.items():
+                # remove the calss from args
+                args = list(args)
+                for i in range(len(args)):
+                    if isinstance(args[i], cls):
+                        del args[i]
+                        break
+                args = tuple(args)
+                original_init(self, *args, **kwargs)
+            else:
+                original_init(self, *args, **kwargs)
+        except AttributeError:
+            raise TypeError(f"Can't instance class \"{cls.__name__}\", due to no 'new(self)' method present.");#"""REMOVE-STACK"""#
+
+    # Replace the class's __init__ with the new one
+    cls.__init__ = new_init
+    return cls
+
+
+def hx__async(func: Callable) -> Callable:
+    def run_thread(func, args, kwargs):
+        func._result = func(*args, **kwargs)
+        func._thread_started = False
+
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        if not hasattr(func, "_thread_started") or not func._thread_started:
+            func._thread = Thread(target=run_thread, args=(func, args, kwargs))
+            func._thread_started = True
+            func._thread.start()
+        return func
+
+    def _await(timeout=None):
+>>>>>>> 5b3e87180733de6321e2707e5feed733434b5ce5
         if hasattr(func, "_thread"):
             func._thread.join(timeout)
             return getattr(func, "_result", None)
         return None
 
+<<<<<<< HEAD
     func.join = join
     wrapper.join = join
+=======
+    wrapper._await = _await
+    func._await = _await
+>>>>>>> 5b3e87180733de6321e2707e5feed733434b5ce5
     return wrapper
 
 class hx_void(void): pass

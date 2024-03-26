@@ -9,4 +9,11 @@ argparse
 black
 beartype
 multimethod
+<<<<<<< HEAD
 mypy
+=======
+mypy
+types-toml
+serde
+tomli_w
+>>>>>>> 5b3e87180733de6321e2707e5feed733434b5ce5

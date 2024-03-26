@@ -4,7 +4,11 @@ import re
 from sys import exit
 from sys import stdout as sys_stdout
 from types import FrameType
+<<<<<<< HEAD
 from typing import Any, Optional
+=======
+from typing import Any, NoReturn, Optional
+>>>>>>> 5b3e87180733de6321e2707e5feed733434b5ce5
 from weakref import ref
 
 from pygments import highlight  # type: ignore
@@ -244,8 +248,8 @@ def s_u2(line: str | list) -> str:
 
 
 def panic(
-    __error: Exception,
-    *_mark: tuple[Any] | str,
+    __error: type[BaseException] | BaseException | Exception,
+    *_mark: Any | str,
     file: str = "",
     line_no: int = 0,
     no_lines: bool = False,
@@ -257,9 +261,10 @@ def panic(
     thread_name: Optional[str] = None,
     no_exit: bool = False,
     lang: str = "",
-):
+    _code: Optional[str] = None,
+): # type: ignore
     lock.acquire(blocking=True, timeout=0.5)
-
+    
     lines_to_print: int = 5
 
     mark: list[str] = [item.__str__() for item in _mark]
@@ -406,12 +411,13 @@ def panic(
 
     base_color: str = "31" if not thread_name else "34"
     second_color: str = "93" if not thread_name else "96"
+    third_color: str = "93" if not thread_name else "94"
 
     # WARNING: primary_error_color MUST be a bold color
     primary_error_color = f"\u001b[{base_color};1m" if (does_support_colors) else ("")
 
     # WARNING: secondary_error_color CANNOT be a bold color
-    secondary_error_color = f"\u001b[{base_color}m" if (does_support_colors) else ("")
+    secondary_error_color = f"\u001b[{third_color}m" if (does_support_colors) else ("")
 
     # WARNING: border_color CANNOT be a bold color
     border_color = f"\u001b[{base_color}m" if (does_support_colors) else ("")
@@ -463,11 +469,19 @@ def panic(
         color_escape_pattern = re.compile(r"(\x1b|\u001b)\[\d*(;\d+)*m")
         mark_line += "   "
         total_char_so_far: int = 0
-        line_end = len(standalone_tokenize_line(line, preserve_spaces=True)[:-4])
+        line_end = len(standalone_tokenize_line(line, preserve_spaces=True)[:-(4 if tokenized_line[skip].isspace() else 5)])
 
         max_skip: int = 0
+        max_start_with_start_space: int = skip
+        for token in tokenized_line[:skip]:
+            if token.isspace():
+                max_start_with_start_space += 1
+        max_start_with_start_space -= (3 if tokenized_line[skip].isspace() else 4)
+        
         for token in tokenized_line[:skip]:
             max_skip += len(token)
+        
+
 
         if follow_marked_order:
             if not mark:
@@ -526,7 +540,7 @@ def panic(
                     total_char_so_far += len(token) if index >= skip else 0
                     if index < skip:
                         continue
-                    if index < (line_end - 4):
+                    if index < line_end and index > max_start_with_start_space:
                         tokenized_line[index] = f"{primary_error_color}{token}{reset}"
                         mark_line += f"{secondary_error_color}{'~'*len(token)}{reset}"
                     else:
@@ -643,21 +657,30 @@ def panic(
         )
 
     # hex codes look like this: <Hex(x...)>
+    
     hex_code: str | (re.Match[str] | None) = re.search(
         r"<Hex\((\d+)\.(\w+)\)>", message
-    )
+    ) if not _code else None
     _hex_code = hex_code
+
     if hex_code:
         hex_code = f"{hex_code.group(1)}.{hex_code.group(2)}"  # type: ignore
         message = message.replace(f"<Hex({hex_code})>: ", f"")
         hex_code = f"{border_color}{chars['straight']} {chars['dash']*2} {primary_error_color}{hex_code}{border_color} {chars['dash']*(terminal_width-4-len(hex_code)-4)} {chars['straight']}{reset}"
         somewhat_middle = hex_code if not no_lines else ""
     else:
-        somewhat_middle = (
-            f"{border_color}{chars['straight']} {chars['dash']*(terminal_width-4)} {chars['straight']}{reset}"
-            if not no_lines
-            else ""
-        )
+        if _code:
+            somewhat_middle = (
+                f"{border_color}{chars['straight']} {chars['dash']*2} {primary_error_color}{_code}{border_color} {chars['dash']*(terminal_width-4-len(_code)-4)} {chars['straight']}{reset}"
+                if not no_lines
+                else ""
+            )
+        else:
+            somewhat_middle = (
+                f"{border_color}{chars['straight']} {chars['dash']*(terminal_width-4)} {chars['straight']}{reset}"
+                if not no_lines
+                else ""
+            )
 
     if (not multi_frame or (multi_frame and pos == 2)) and not no_lines:
         print(somewhat_middle)
@@ -668,15 +691,31 @@ def panic(
         output: list[str] = []
         import textwrap
 
-        if hex_code:
-            message += f"\nIf this is your first time seeing this error, and you are not sure how to fix it, type 'helix doc {_hex_code.group(1)}.{_hex_code.group(2)}'."  # type: ignore
         for line in message.split("\n"):
             for line2 in textwrap.wrap(line, terminal_width - 4):
                 output.append(
                     f"{border_color}{chars['straight']}{reset} {line2.ljust(terminal_width-4)} {border_color}{chars['straight']}{reset}"
                 )
+        
+        _temp_msg: str = ""
         if hex_code:
-            return [out.replace(f"'helix doc {_hex_code.group(1)}.{_hex_code.group(2)}'", f"{second_color}'helix doc {_hex_code.group(1)}.{_hex_code.group(2)}'{reset}") for out in output]  # type: ignore
+            _temp_msg = f"If this is your first time seeing this error, and you are not sure how to fix it, type 'helix doc {_hex_code.group(1)}.{_hex_code.group(2)}'."  # type: ignore
+        elif _code:
+            _temp_msg = f"If this is your first time seeing this error, and you are not sure how to fix it, type 'helix doc {_code}'."
+    
+        if _temp_msg:
+            output.append(f"{border_color}{chars['straight']}{reset} {' '*(terminal_width-4)} {border_color}{chars['straight']}{reset}")
+            
+            for line in textwrap.wrap(_temp_msg, terminal_width - 4):
+                output.append(
+                    f"{border_color}{chars['straight']}{reset} {line.ljust(terminal_width-4)} {border_color}{chars['straight']}{reset}"
+                )
+            
+        
+        if hex_code:
+            output[-1] = output[-1].replace(f"'helix doc {_hex_code.group(1)}.{_hex_code.group(2)}'", f"{secondary_error_color}'helix doc {_hex_code.group(1)}.{_hex_code.group(2)}'{reset}")
+        elif _code:
+            output[-1] = output[-1].replace(f"'helix doc {_code}'", f"{secondary_error_color}'helix doc {_code}'{reset}")
         return output
 
     if not multi_frame or (multi_frame and pos == 2):

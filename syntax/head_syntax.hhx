@@ -1,0 +1,24 @@
+use "syntax.hlx";
+
+
+if (defined(__cplusplus)) {
+    #define void auto
+    #define None auto
+}
+else {
+    #define auto void
+    #define None void
+}
+set_something(value: int) -> void;
+
+set_something_else(value: int) -> void;
+
+namespace python {
+    fn set_something(value: int) -> None;
+    fn set_something_else(value: int) -> None;
+}
+
+namespace c {
+    fn set_something(value: int) -> void;
+    fn set_something_else(value: int) -> void;
+}

@@ -1,3 +1,7 @@
+<<<<<<< HEAD
+=======
+import functools
+>>>>>>> 5b3e87180733de6321e2707e5feed733434b5ce5
 from src.core.base import (
     Processed_Line,
     Token_List,
@@ -9,6 +13,10 @@ from src.core.base import (
     file_cache,
     KEYWORDS,
     Thread,
+<<<<<<< HEAD
+=======
+    
+>>>>>>> 5b3e87180733de6321e2707e5feed733434b5ce5
 )
 
 def multi_split(
@@ -126,7 +134,11 @@ def ASYNC(func):
         func._result = func(*args, **kwargs)
         func._thread_started = False
 
+<<<<<<< HEAD
     @wraps(func)
+=======
+    @functools.wraps(func)
+>>>>>>> 5b3e87180733de6321e2707e5feed733434b5ce5
     def wrapper(*args, **kwargs):
         if not hasattr(func, "_thread_started") or not func._thread_started:
             func._thread = Thread(target=run_thread, args=(func, args, kwargs))
@@ -140,6 +152,11 @@ def ASYNC(func):
             return getattr(func, "_result", None)
         return None
 
+<<<<<<< HEAD
     func.join = join
     wrapper.join = join
+=======
+    setattr(func, "join", join)
+    setattr(wrapper, "join", join)
+>>>>>>> 5b3e87180733de6321e2707e5feed733434b5ce5
     return wrapper

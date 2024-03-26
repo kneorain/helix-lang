@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 from __future__ import annotations
+<<<<<<< HEAD
 
 #import tracemalloc
 #import atexit
@@ -42,9 +43,50 @@ from src.core.imports import (
 
 __version__: str = "0.1.0-alpha.a"
 USE_CACHE: bool = False
+=======
+PRODUCTION_BUILD = True
+import gc
+gc.disable() # disable garbage collection for performance
 
+import atexit
+
+import src.core.base as base
+from src.core.imports import (
+    os,
+    sys,
+    Any,
+    Tuple,
+    panic,
+    Event,
+    Timer,
+    Scope,
+    signal,
+    shutil,
+    CONFIG,
+    Hashing,
+    Callable,
+    Optional,
+    Namespace,
+    FrameType,
+    Tokenizer,
+    ArgParser,
+    framework,
+    ModuleType,
+    subprocess,
+    Transpiler,
+    py_compile,
+    inject_core,
+    HelixLanguage,
+    color_print as print,
+    perf_counter_ns as time,
+    Processed_Line, Token_List,
+)
+>>>>>>> 5b3e87180733de6321e2707e5feed733434b5ce5
+
+__version__: str = "0.10.0-alpha.a"
 bar_thread = Event()
 
+<<<<<<< HEAD
 class Hashing:
     """
     Provides functionality for hashing and comparing hashes of code files.
@@ -718,6 +760,9 @@ class Timer:
 
 
 class DisabledKeyboardInterrupt:
+=======
+class DisabledKeyboardInterrupt(framework.DisabledKeyboardInterrupt):
+>>>>>>> 5b3e87180733de6321e2707e5feed733434b5ce5
     """
     Context manager for temporarily disabling KeyboardInterrupt exceptions.
 
@@ -764,8 +809,12 @@ class DisabledKeyboardInterrupt:
         if self.signal_received:
             self.old_handler(*self.signal_received)  # type: ignore
 
+<<<<<<< HEAD
 
 class Helix(framework.HelixLanguage):
+=======
+class Helix(framework.Helix):
+>>>>>>> 5b3e87180733de6321e2707e5feed733434b5ce5
     """
     Main class for the Helix programming language interpreter and compiler.
 
@@ -778,7 +827,8 @@ class Helix(framework.HelixLanguage):
 
     Methods
     -------
-    __init__(self, conf_file: Optional[str] = None, *args: str, profile: bool = False, import_: bool = False)
+    __init__(self, conf_file: Optional[str] = None, *args: str,
+             profile: bool = False, import_: bool = False)
         Initialize the Helix interpreter/compiler with configuration.
     factory(cls, config_file: str, *args: str, **kwargs: Any)
         Factory method to create Helix instances.
@@ -788,20 +838,27 @@ class Helix(framework.HelixLanguage):
         Performs cleanup operations.
     compile_file(self, file: Optional[str] = None) -> Scope
         Compiles the specified Helix file.
-    transpile(self, file: Optional[str] = None) -> tuple[Scope, list[Processed_Line]]
+    transpile(self,
+              file: Optional[str] = None) -> tuple[Scope, list[Processed_Line]]
         Transpiles the specified Helix file to another language.
     generate_line_numbers(self, transpiled: list[Processed_Line]) -> str
         Generates line numbers for the transpiled code.
-    generate_source_code(self, scope_parsed: Scope, transpiled_lines: list[Processed_Line], format_source: bool = False, is_main: bool = True, no_inject: bool = False) -> str
+    generate_source_code(self, scope_parsed: Scope,
+                         transpiled_lines: list[Processed_Line],
+                         format_source: bool = False,
+                         is_main: bool = True,
+                         no_inject: bool = False) -> str
         Generates source code from parsed scope and transpiled lines.
-    inject_core(self, code: Optional[str] = None, is_main: bool = True) -> str
-        Injects core Helix functionality into the transpiled code.
     REPL() -> None
         Launches the Helix Read-Eval-Print Loop.
-    __hook_import__(cls, file: str, *args: str, config_file: Optional[str] = None, **kwargs: Any) -> ModuleType
+    __hook_import__(cls,
+                    file: str,
+                    *args: str,
+                    config_file: Optional[str] = None,
+                    **kwargs: Any) -> ModuleType
         Hook method for importing modules in Helix.
     """
-    config: Namespace
+    config: Any
 
     @classmethod
     def interpreter(
@@ -835,8 +892,12 @@ class Helix(framework.HelixLanguage):
         )
 
         if not globals_ and not locals_:
-            source_code = inst.inject_core(
-                source_code, is_main=False
+            source_code = inject_core(
+                inst,
+                source_code,
+                is_main=False,
+                __version__=__version__,
+                __file__=__file__
             )
 
         # print(source_code)
@@ -852,7 +913,7 @@ class Helix(framework.HelixLanguage):
             ".helix",
             "cache",
             "build_cache",
-            f"{os.path.basename(self.__file__).split('.')[0]}_hlx.py",
+            f"{os.path.basename(self.__file__).split('.')[0]}_hlx.hir",
         )
 
     def __init__(
@@ -870,9 +931,9 @@ class Helix(framework.HelixLanguage):
         self.timer.start("parse_args")
 
         if args and not import_:
-            _args = ArgParser(args).args
+            _args = ArgParser(args, __version__).args
         elif not args and not import_:
-            _args = ArgParser().args
+            _args = ArgParser(version=__version__).args
         else:
             _args = Namespace()
             _args.file = args[0]
@@ -912,9 +973,7 @@ class Helix(framework.HelixLanguage):
                 self.__file__, self.__out_file__
             )
 
-        self.__class__.config = load_config(
-            self.__config_file__
-        )  # TODO: INTERGRATE CONFIG FILE
+        self.__class__.config = CONFIG
 
         self.timer.end("init")
 
@@ -940,6 +999,9 @@ class Helix(framework.HelixLanguage):
                     style="red",
                 )
 
+            if base.COMPILE:
+                py_compile.compile(self.__out_file__, cfile=self.__out_file__, optimize=2)
+            
             self.timer.start("run")
             #_locals = {}
             #_globals = {}
@@ -1094,8 +1156,8 @@ class Helix(framework.HelixLanguage):
         _line_numbers: list[str] = str("\n".join(
             [
                 "-1" if line != "\x92" else "\x92"
-                for line in self.inject_core(
-                    None, is_main=not self.import_
+                for line in inject_core(
+                    self, None, is_main=not self.import_, __version__=__version__, __file__=__file__
                 ).splitlines()
                 if line.strip()
             ]
@@ -1157,23 +1219,19 @@ class Helix(framework.HelixLanguage):
         )
 
         self.timer.start("format_source")
-        if format_source:
-            # TODO: Handle InvalidInput
-            transpiled_code = format_file_contents(
-                transpiled_code, fast=True, mode=FileMode()
-            )
 
         self.timer.end("format_source")
         self.timer.end("generate_source_code")
 
         return (
-            self.inject_core(
-                transpiled_code, is_main=is_main
+            inject_core(
+                self, transpiled_code, is_main=is_main, __version__=__version__, __file__=__file__
             )
             if not no_inject
             else transpiled_code
         )
 
+<<<<<<< HEAD
     def inject_core(
         self,
         code: Optional[str] = None,
@@ -1433,6 +1491,8 @@ if __name__ == "__main__":
         else:
             return inject_code
 
+=======
+>>>>>>> 5b3e87180733de6321e2707e5feed733434b5ce5
     @staticmethod
     def REPL() -> None:
         # this is a repl environment for helix
@@ -1520,7 +1580,7 @@ if __name__ == "__main__":
             **scope.classes,
             **scope.variables,
         }.items():
-            if value.get("private"):
+            if "private" in value: # CHANGED from: if value.get("private", False):
                 remove.append(attr)
 
         # Clean up private attributes
@@ -1555,5 +1615,8 @@ if __name__ == "__main__":
     #Helix.__hook_import__("syntax/test.hlx")
     # from test_hlx import subtract
     # subtract(5, 3)
+<<<<<<< HEAD
     # Helix.REPL()
+=======
+>>>>>>> 5b3e87180733de6321e2707e5feed733434b5ce5
     
