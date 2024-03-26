@@ -48,95 +48,147 @@
 "await"        : map({"internal_name": "AWAIT"     , "parser": dummy        , "scoped": False, "body_required": False, "keyword_type": "asynchronous_control"}),
 */
 
+use super::TokenError;
+use paste::paste;
+use std::panic::panic_any;
+
 #[repr(C)]
-#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+#[derive(Debug, PartialEq, Eq, Hash)]
 pub struct Keyword {
-    pub str: &'static str,
+    pub ident: &'static str,
     pub scoped: bool,
     pub body_required: bool, // deprecate this field
 }
 
-
-
-const IF:           Keyword = Keyword { str: "if",        scoped: false,    body_required: true };
-const ELIF:         Keyword = Keyword { str: "elif",      scoped: false,    body_required: true };
-const ELSE:         Keyword = Keyword { str: "else",      scoped: false,    body_required: true };
-const UNLESS:       Keyword = Keyword { str: "unless",    scoped: false,    body_required: true };
-const WHILE:        Keyword = Keyword { str: "while",     scoped: false,    body_required: true };
-const FOR:          Keyword = Keyword { str: "for",       scoped: true,     body_required:true };
-const CASE:         Keyword = Keyword { str: "case",      scoped: false,    body_required: true };
-const DEFAULT:      Keyword = Keyword { str: "default",   scoped: false,    body_required: true };
-const SWITCH:       Keyword = Keyword { str: "switch",    scoped: false,    body_required: true };
-const MATCH:        Keyword = Keyword { str: "match",     scoped: false,    body_required: true };
-// Functions
-const FN:           Keyword = Keyword { str: "fn",        scoped: true,     body_required: true };
-const LAMBDA:       Keyword = Keyword { str: "lambda",    scoped: false,    body_required: true };
-// Threads
-const THREAD:       Keyword = Keyword { str: "thread",    scoped: true,     body_required: true };
-// Macros
-const MACRO:        Keyword = Keyword { str: "macro",     scoped: true,     body_required: true };
-// Async
-const ASYNC:        Keyword = Keyword { str: "async",     scoped: false,    body_required: true };
-// Return
-const RETURN:       Keyword = Keyword { str: "return",    scoped: false,    body_required: true };
-// Classes
-const CLASS:        Keyword = Keyword { str: "class",     scoped: true,     body_required: true };
-const INTERFACE:    Keyword = Keyword { str: "interface", scoped: true,     body_required: true };
-const STRUCT:       Keyword = Keyword { str: "struct",    scoped: true,     body_required: true };
-const UNION:        Keyword = Keyword { str: "union",     scoped: true,     body_required: true };
-const ENUM:         Keyword = Keyword { str: "enum",      scoped: true,     body_required: true };
-// Abstract
-const ABSTRACT:     Keyword = Keyword { str: "abstract",  scoped: true,     body_required: true };
-// Error Handling
-const TRY:          Keyword = Keyword { str: "try",       scoped: false,    body_required: true };
-const CATCH:        Keyword = Keyword { str: "catch",     scoped: false,    body_required: true };
-const EXCEPT:       Keyword = Keyword { str: "except",    scoped: false,    body_required: true };
-const FINALLY:      Keyword = Keyword { str: "finally",   scoped: false,    body_required: true };
-const THROW:        Keyword = Keyword { str: "throw",     scoped: false,    body_required: true };
-// Loops
-const BREAK:        Keyword = Keyword { str: "break",     scoped: false,    body_required: false };
-const CONTINUE:     Keyword = Keyword { str: "continue",  scoped: false,    body_required: false };
-// Delegate
-const DELEGATE:     Keyword = Keyword { str: "delegate",  scoped: false,    body_required: false };
-// With
-const WITH:         Keyword = Keyword { str: "with",      scoped: false,    body_required: true };
-// Access Modifiers
-const PRIVATE:      Keyword = Keyword { str: "private",   scoped: false,    body_required: false };
-const PROTECTED:    Keyword = Keyword { str: "protected", scoped: false,    body_required: false };
-const PUBLIC:       Keyword = Keyword { str: "public",    scoped: false,    body_required: false };
-const FINAL:        Keyword = Keyword { str: "final",     scoped: false,    body_required: false };
-const STATIC:       Keyword = Keyword { str: "static",    scoped: false,    body_required: false };
-const UNSAFE:       Keyword = Keyword { str: "unsafe",    scoped: false,    body_required: false };
-// Variables
-const LET:          Keyword = Keyword { str: "let",       scoped: false,    body_required: false };
-const CONST:        Keyword = Keyword { str: "const",     scoped: false,    body_required: false };
-const VAR:          Keyword = Keyword { str: "var",       scoped: false,    body_required: false };
-// Imports
-const INCLUDE:      Keyword = Keyword { str: "include",   scoped: false,    body_required: false };
-const IMPORT:       Keyword = Keyword { str: "import",    scoped: false,    body_required: false };
-const USING:        Keyword = Keyword { str: "using",     scoped: false,    body_required: false };
-const FROM:         Keyword = Keyword { str: "from",      scoped: false,    body_required: false };
-const YIELD:        Keyword = Keyword { str: "yield",     scoped: false,    body_required: false };
-const AWAIT:        Keyword = Keyword { str: "await",     scoped: false,    body_required: false };
-
-pub const KEYWORDS: [&Keyword; 42] = [
-    &IF,   &ELIF,   &ELSE,   &UNLESS,   &WHILE,  &FOR,    &CASE,     &DEFAULT,
-    &FN,   &LAMBDA, &THREAD, &MACRO,    &ASYNC,  &RETURN, &CLASS,    &INTERFACE,
-    &TRY,  &CATCH,  &EXCEPT, &FINALLY,  &THROW,  &BREAK,  &CONTINUE, &DELEGATE,
-    &LET,  &CONST,  &AWAIT,  &INCLUDE,  &IMPORT, &USING,  &FROM,     &YIELD,
-    &WITH, &MATCH,  &SWITCH, &ABSTRACT, &ENUM,   &STRUCT, &PRIVATE,  &PROTECTED,
-    &VAR,  &PUBLIC, &FINAL,  &STATIC,   &UNSAFE, &UNION,
-];
-
-static pub fn get_keyword(keyword: &str) -> &Keyword {
-    for kw in KEYWORDS.iter() {
-        if kw.str == keyword {
-            return &kw;
-        }
-    }
-    panic!("Keyword not found: {}", keyword);
+/// Counts the number of elements passed to it,
+/// [credit](https://stackoverflow.com/a/34324856)
+macro_rules! count {
+    () => (0usize);
+    ( $input:tt $($element:tt)* ) => (1usize + count!($($element)*));
 }
 
-static pub fn get_all_keywords() -> &'static [&'static Keyword] {
-    &KEYWORDS
+// TODO: Add a comment generator for the keywords, like a field called description or something and it is applied to #[doc = ...]
+macro_rules! define_keywords {
+    // use paste to convert the cases
+    {$($name:ident { scoped: $scoped:literal, body_required: $body_required:literal}),*} => {
+        paste!{
+            // For every keyword, create a constant with the keyword name
+            $(
+                #[doc = "The " $name " keyword"]
+                const [<$name:snake:upper>]: Keyword = Keyword {
+                    ident:         stringify!($name),
+                    scoped:        $scoped,
+                    body_required: $body_required,
+                };
+            )*
+
+            // Creates the KEYWORD ARRAY
+
+            pub const KEYWORDS: [Keyword; count!($($name)*)] = [$([<$name:snake:upper>],)*];
+
+            // Creates a function to get the keyword by name
+            #[doc = "Get a keyword by its identifier"]
+            pub fn get_keyword(ident: &str) -> &Keyword {
+                // This is faster than using a for loop
+                match ident {
+                    // For every keyword, return the constant
+                    $(
+                        stringify!($name) => &[<$name:snake:upper>],
+                    )*
+                    _ => panic_any(TokenError::InvalidKeyword(Box::from(ident)))
+                }
+            }
+            
+        }
+    }
+}
+
+
+
+define_keywords! {
+    // Control Flow
+    if        { scoped: false, body_required: true  },
+    unless    { scoped: false, body_required: true  },
+    else      { scoped: false, body_required: true  },
+    
+    // Loops
+    while     { scoped: false, body_required: true  },
+    for       { scoped: true , body_required: true  },
+    
+    // Loop Control
+    continue  { scoped: false, body_required: false },
+    break     { scoped: false, body_required: false },    
+    // in        { scoped: false, body_required: false },
+
+    // Pattern Matching
+    match     { scoped: false, body_required: false },
+    switch    { scoped: false, body_required: false },
+    case      { scoped: false, body_required: true  },
+    default   { scoped: false, body_required: true  },
+
+    // Function Declaration
+    fn         { scoped: true , body_required: true  },
+    lambda     { scoped: false, body_required: false },
+    thread     { scoped: true , body_required: true  },
+    macro      { scoped: true , body_required: true  },
+
+    // Function Modifier
+    async      { scoped: false, body_required: false }, // Denotes an asynchronous function
+    delegate   { scoped: false, body_required: false }, 
+    inline     { scoped: false, body_required: false }, // Denotes an inline function
+
+    // Function Control
+    return     { scoped: false, body_required: false }, // Returns a value from a function
+    
+    // Data Structures
+    class      { scoped: true , body_required: true  },
+    struct     { scoped: true , body_required: true  }, // A type structure without methods
+    enum       { scoped: true , body_required: true  }, // An enum
+    union      { scoped: true , body_required: true  }, // A union
+
+    // Type Declaration
+    abstract   { scoped: true , body_required: true  }, // An interface with default methods
+    type       { scoped: false, body_required: false }, // A type alias
+    interface  { scoped: true , body_required: true  }, // An interface without default methods
+    
+    
+    // Type Handing
+    typeof     { scoped: false, body_required: false }, // Returns the type of a variable
+    sizeof     { scoped: false, body_required: false }, // Returns the size of a type in bytes
+    instanceof { scoped: false, body_required: false }, // Checks if a variable is an instance of a type
+
+    // Error Handling
+    try       { scoped: false, body_required: true  }, 
+    catch     { scoped: false, body_required: true  },
+    except    { scoped: false, body_required: true  },
+    finally   { scoped: false, body_required: true  }, 
+    throw     { scoped: false, body_required: false }, // Throws an error
+
+    // Core
+    with      { scoped: false, body_required: true  },
+
+    // Access Modifier
+    private   { scoped: false, body_required: false }, // Accessible from the class only
+    protected { scoped: false, body_required: false }, // Accessible from the class and subclasses
+    public    { scoped: false, body_required: false }, // Accessible from anywhere
+    const     { scoped: false, body_required: false }, // A compile time constant, 
+    final     { scoped: false, body_required: false }, // A runtime constant, once set cannot be changed 
+    static    { scoped: false, body_required: false }, // A denotes interior mutability 
+    unsafe    { scoped: false, body_required: false }, // Notates Undefined Behavior
+    
+    
+    // Variable Declaration
+    let       { scoped: false, body_required: false }, // A mutable variable
+    var       { scoped: false, body_required: false }, 
+    auto      { scoped: false, body_required: false }, // A variable with automatic type inference 
+
+    // Module Import
+    include   { scoped: false, body_required: false }, // Includes a file
+    import    { scoped: false, body_required: false }, // Imports a module
+    using     { scoped: false, body_required: false }, // Uses a module
+    from      { scoped: false, body_required: false }, // Imports a module from a package
+    
+    // Asynchronous Control
+    yield     { scoped: false, body_required: false },
+    await     { scoped: false, body_required: false }
 }
