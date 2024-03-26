@@ -37,9 +37,9 @@ def replace(self, __old: str, __new: str) -> 'Token_List':
 #[repr(C)]
 #[derive(Clone, Debug, Hash, PartialEq, Eq)]
 struct TokenList {
-    line: Vec<Token>,
-    indent_level: u16,
-    file: Arc<str>,
+    line:         Vec<Token>,
+    indent_level: Arc<u16>,
+    file:         Arc<str>,
 }
 // TODO: If this is all just in-place getting of betweens this can easily be all done inplace with a single iterator getting chunked up,
 // all of the functions that return using .collect can return a Filter or FilterMap (depending of use case)
@@ -50,7 +50,7 @@ struct TokenList {
 
 #[allow(dead_code)]
 impl TokenList {
-    pub fn new(line: Vec<Token>, indent_level: u16, file: Arc<str>) -> Self {
+    pub fn new(line: Vec<Token>, indent_level: Arc<u16>, file: Arc<str>) -> Self {
         Self {
             line,
             indent_level,
@@ -62,52 +62,47 @@ impl TokenList {
         &self.line
     }
 
-    pub fn indent_level(&self) -> u16 {
-        self.indent_level
+    pub fn indent_level(&self) -> &u16 {
+        self.indent_level.as_ref()
     }
 
     pub fn file(&self) -> &str {
         self.file.as_ref()
     }
 
-    pub fn find_line_number(&self, token: &str) -> i32 {
-        for line in &self.line {
-            if token == line.value().get_token() {
-                return line.line_number();
-            }
-        }
-        return -1;
+    // REMOVED: pub fn find_line_number(&self, _match: &str) -> i32 {}
+
+    pub fn contains_str(&self, key: &str) -> bool {
+        self.line.iter().any(|token| key == token.token())
     }
 
-    pub fn contains(&self, key: &Token) -> bool {
-        self.line.iter().any(|token| token.contains(key))
-    }
+    //pub fn contains_from(&self, key: &Token) -> Vec<Token> {
+    //    self.line
+    //        .iter()
+    //        .filter_map(|token| match token.contains(key) {
+    //            true => Some(token.clone()),
+    //            false => None,
+    //        })
+    //        .collect()
+    //}
+    // I dont remember what this function does
 
-    pub fn contains_from(&self, key: &Token) -> Vec<Token> {
-        self.line
-            .iter()
-            .filter_map(|token| match token.contains(key) {
-                true => Some(token.clone()),
-                false => None,
-            })
-            .collect()
-    }
-
-    pub fn full_line(&self, token: &str) -> Vec<Token> {
+    pub fn full_line(&self) -> String {
         let mut found = false;
-        self.line
+        // join all tokens with ' '
+        return self.line
             .iter()
-            .filter_map(|line| {
+            .map(|token| token.token())
+            .fold(String::new(), |acc, token| {
                 match found {
-                    true=> Some(line.clone()),
-                    false if token == line.value().get_token()=> {
+                    true => acc,
+                    false if token == "\n" => {
                         found = true;
-                        return Some(line.clone());
+                        acc
                     }
-                    false => None,
-                } 
-            })
-            .collect()
+                    false => acc + token + " ",
+                }
+            });
     }
 
     pub fn get_all_after(&self, token: &str) -> Vec<Token> {
@@ -117,7 +112,7 @@ impl TokenList {
             .filter_map(|line| {
                 match found {
                     true => return Some(line.clone()), // find a way to return a reference
-                    false if token == line.value().get_token() => {found = true;None},
+                    false if token == line.token() => {found = true; None},
                     _ => None
                 }
             })
@@ -131,7 +126,7 @@ impl TokenList {
             .filter_map(|line| {
                 match found {
                     true => Some(line.clone()), // find a way to return a reference
-                    false if token == line.value().get_token() => {
+                    false if token == line.token() => {
                         found = true;
                         return None;
                     }
@@ -150,27 +145,25 @@ impl TokenList {
             .iter()
             .enumerate()
             .filter_map(|(i, line)| {
-
-                // match start == line.value().get_token() && count == 0 {
+                // match start == line.token() && count == 0 {
                 //     true => {
                 //         start_index = i;
                 //         count += 1;
                 //     }
-                //     false if start == line.value().get_token() && count > 0 => {
+                //     false if start == line.token() && count > 0 => {
                 //         count += 1;
                 //     }
                 //     false => {}
                 // }
 
-
-                if start == line.value().get_token() && count == 0 {
+                if start == line.token() && count == 0 {
                     start_index = i;
                     count += 1;
-                } else if start == line.value().get_token() && count > 0 {
+                } else if start == line.token() && count > 0 {
                     count += 1;
                 }
 
-                if end == line.value().get_token() {
+                if end == line.token() {
                     count -= 1;
                     if count == 0 {
                         end_index = i;
@@ -185,7 +178,7 @@ impl TokenList {
     pub fn count(&self, value: &str) -> usize {
         let mut count = 0;
         for token in &self.line {
-            if value == token.value().get_token() {
+            if value == token.token() {
                 count += 1;
             }
         }
@@ -194,20 +187,35 @@ impl TokenList {
     }
 
     pub fn split(&self, value: &str) -> Vec<TokenList> {
-        let mut output = Vec::new();
-        let mut temp = Vec::new();
-        for token in &self.line {
-            if value == token.value().get_token() {
-                output.push(TokenList::new(temp, self.indent_level, self.file.clone()));
-                temp = Vec::new();
-            } else {
-                temp.push(token.clone());
+        let temp = self.clone();
+        let mut split = Vec::new();
+        let mut start = 0;
+
+        for (i, token) in temp.line.iter().enumerate() {
+            if value == token.token() {
+                split.push(temp.splice(start, Some(i)));
+                start = i + 1;
             }
         }
-        if !temp.is_empty() {
-            output.push(TokenList::new(temp, self.indent_level, self.file.clone()));
+
+        split.push(temp.splice(start, None));
+        return split;
+    }
+
+    pub fn split_line(&self, value: &str) -> Vec<Token> {
+        let temp = self.clone();
+        let mut split = Vec::new();
+        let mut start = 0;
+
+        for (i, token) in temp.line.iter().enumerate() {
+            if value == token.token() {
+                split.extend(temp.splice(start, Some(i)).line);
+                start = i + 1;
+            }
         }
-        return output;
+
+        split.extend(temp.splice(start, None).line);
+        return split;
     }
 
     pub fn splice(&self, start: usize, end: Option<usize>) -> TokenList {
@@ -216,26 +224,30 @@ impl TokenList {
         return temp;
     }
 
+    pub fn splice_line(&self, start: usize, end: Option<usize>) -> Vec<Token> {
+        self.splice(start, end).line
+    }
+
     pub fn append(&mut self, value: Token) {
         self.line.push(value);
     }
 
     pub fn replace(&mut self, old: &str, new: &str) {
         self.line.iter_mut().for_each(|token| {
-            if old == token.value().get_token() {
+            if old == token.token() {
                 token.set_token(new.to_string());
             }
         });
     }
 
     pub fn remove(&mut self, value: &str) {
-        self.line.retain(|token| value != token.value().get_token());
+        self.line.retain(|token| value != token.token());
     }
 
     pub fn index(&self, value: &str) -> usize {
         self.line
             .iter()
-            .position(|token| value == token.value().get_token())
+            .position(|token| value == token.token())
             .unwrap()
     }
 

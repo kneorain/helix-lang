@@ -9,6 +9,7 @@ extern crate pretty_env_logger;
 #[macro_use]
 extern crate log;
 
+use std::path::Path;
 use std::{ panic, thread };
 use std::time;
 
@@ -51,8 +52,7 @@ fn main() {
     pretty_env_logger::init(); // TO SEE LOGS run `set RUST_LOG=debug` in terminal
     rust::init_rust();
     python::init_python();
-    
-    test_threads();
+
     
     python::test::test_kwargs(1, 2, None);
     println!("{:?}", python::test::test_args(1, 2));
@@ -60,11 +60,13 @@ fn main() {
     cpp::c("hello from Rust");
     println!("Result: {}", cpp::add_sum(2, 62)); // 2^62 is the max value for i64
     
-    fun_name();
-}
+    // print the cwd
+    let cwd = std::env::current_dir().unwrap();
+    println!("Current working directory: {}", cwd.display());
+    let lexar = rust::token::lexer::Lexer::new("PORT/src/test.hlx");
+    let tokens = lexar.tokenize();
+    println!("{:?}", tokens);
 
-fn fun_name() {
-    panic_name!(HelixError::PythonError("hello world".to_string()));
 }
 
 #[allow(dead_code)]
