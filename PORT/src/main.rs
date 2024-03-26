@@ -52,7 +52,6 @@ fn main() {
     pretty_env_logger::init(); // TO SEE LOGS run `set RUST_LOG=debug` in terminal
     rust::init_rust();
     python::init_python();
-
     
     python::test::test_kwargs(1, 2, None);
     println!("{:?}", python::test::test_args(1, 2));
