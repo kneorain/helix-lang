@@ -32,6 +32,8 @@ COMPILED_RE = re.compile(rf"""
         
 */
 
+// TODO: Put regexps in a lazy static
+
 impl Lexer {
     pub fn new(file_name: &str) -> Self {
         Self {
@@ -84,7 +86,7 @@ impl Lexer {
     }
 
     fn find_next_token(&self, s: &str) -> Option<(usize, TokenType)> {
-        let regexes = [
+        let regexps = [
             (&self.string_re, TokenType::STRING),
             (&self.character_re, TokenType::CHARACTER),
             (&self.numeric_re, TokenType::NUMERIC),
@@ -94,9 +96,9 @@ impl Lexer {
             (&self.comment_re, TokenType::COMMENT),
         ];
 
-        for (regex, token_type) in regexes {
+        for (regex, token_type) in regexps {
             if let Some(matched) = regex.find(s) {
-                return Some((matched.end(), token_type.clone()));
+                return Some((matched.end(), token_type));
             }
         }
 
