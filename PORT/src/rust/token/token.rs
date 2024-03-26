@@ -1,18 +1,18 @@
-use std::{mem, ops};
+use super::keywords::Keyword;
+use crate::panic_name;
+use pyo3::prelude::*;
+use regex::Regex;
+use std::borrow::Cow;
+use std::hash::Hash;
 use std::num::{NonZeroI32, NonZeroU16};
 use std::panic::panic_any;
 use std::sync::Arc;
-use std::{ collections::HashMap, fmt::Display };
-use std::hash::Hash;
-use pyo3::prelude::*;
-use regex::Regex;
-use super::keywords::{Keyword, get_all_keywords};
-use crate::panic_name;
+use std::{collections::HashMap, fmt::Display};
+use std::{mem, ops};
 
 use super::token_value::TokenValue;
 
 // TODO: use super::Label;
-
 
 #[repr(C)]
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
@@ -92,33 +92,33 @@ def is_empty(self) -> bool:
 */
 #[pyclass]
 #[repr(C)]
-#[derive(Clone, Debug,PartialEq, Eq, Hash)]
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub struct Token {
     // ------- Meta about the token ------- //
     original_line: Arc<str>,
-    file_name:     Arc<str>,
-    
-    row:  i32,
-    col:  u16,
-    
+    file_name: Arc<str>,
+
+    row: i32,
+    col: u16,
+
     // ------- Information about the token ------- //
     identifier: TokenType,
-    token:      String,
-    
+    token: String,
+
     // TODO: Make the keys into an enum
     // ------- Parsed at a later stage ------- //
-    attributes:    Vec<(String, String)>,
-    indent_level:  u16,
+    attributes: Vec<(String, String)>,
+    indent_level: u16,
 }
 
 impl Token {
     pub fn new(
         original_line: Arc<str>,
-        file_name:     Arc<str>,
-        row:           i32,
-        col:           u16,
-        token:         String,
-        identifier:    TokenType,
+        file_name: Arc<str>,
+        row: i32,
+        col: u16,
+        token: String,
+        identifier: TokenType,
     ) -> Self {
         Self {
             original_line,
@@ -134,29 +134,29 @@ impl Token {
 
     // ========= Getters ========= //
     pub fn original_line(&self) -> &str {
-        return self.original_line.as_ref();
+        self.original_line.as_ref()
     }
 
     pub fn row(&self) -> i32 {
-        return self.row;
+        self.row
     }
 
-    pub fn file_name(&self) -> &str{
+    pub fn file_name(&self) -> &str {
         self.file_name.as_ref()
     }
 
     pub fn col(&self) -> u16 {
-        return self.col;
+        self.col
     }
 
     pub fn identifier(&self) -> &TokenType {
-        return &self.identifier;
+        &self.identifier
     }
-    
+
     pub fn token(&self) -> &String {
-        return &self.token;
+        &self.token
     }
-    
+
     pub fn get_attr(&self, key: &str) -> Option<&str> {
         for (k, v) in self.attributes.iter() {
             if k == key {
@@ -167,7 +167,7 @@ impl Token {
     }
 
     pub fn indent_level(&self) -> u16 {
-        return self.indent_level;
+        self.indent_level
     }
 
     // ========= Setters ========= //
@@ -195,22 +195,21 @@ impl Token {
 
     // ========= Methods ========= //
     pub fn is_empty(&self) -> bool {
-        return self.token.is_empty();
+        self.token.is_empty()
     }
 
     pub fn equals_str(&self, other: &str) -> bool {
-        return self.token == other;
+        self.token == other
     }
 
     pub fn equals_token(&self, other: &Token) -> bool {
-        return self.token == other.token;
+        self.token == other.token
     }
 
     pub fn contains(&self, key: &str) -> bool {
-        return self.token.contains(key);
+        self.token.contains(key)
     }
 }
-
 
 impl IntoIterator for Token {
     type Item = String;
@@ -221,11 +220,11 @@ impl IntoIterator for Token {
     }
 }
 
-
 #[derive(Debug)]
 pub enum TokenError {
     TokenIsNotLine,
     IllegalAccess,
+    InvalidKeyword(Box<str>),
 }
 
 impl Display for TokenError {
@@ -233,9 +232,8 @@ impl Display for TokenError {
         use TokenError::*;
         match self {
             TokenIsNotLine => write!(f, "Token is not a line"),
-            TokenIsNotToken => write!(f, "Token is not a token"),
             IllegalAccess => write!(f, "Token has been accessed in a illegal way"),
+            InvalidKeyword(s) => write!(f, "Invalid keyword {s}"),
         }
     }
 }
-
