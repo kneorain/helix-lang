@@ -62,9 +62,15 @@ fn main() {
     // print the cwd
     let cwd = std::env::current_dir().unwrap();
     println!("Current working directory: {}", cwd.display());
+    
+    
+    let start = time::Instant::now();
     let lexar = rust::token::lexer::Lexer::new("PORT/src/test.hlx");
     let tokens = lexar.tokenize();
+    let elapsed = start.elapsed();
     println!("{:?}", tokens);
+    println!("Elapsed: {:?}", elapsed);
+    
 
 }
 
