@@ -58,6 +58,28 @@ pub struct Keyword {
     pub ident: &'static str,
     pub scoped: bool,
     pub body_required: bool, // deprecate this field
+    pub ty: KeywordType,
+}
+#[derive(Debug, PartialEq, Eq, Hash)]
+enum KeywordType {
+    ControlFlow,
+    Loop,
+    LoopControl,
+    PatternMatching,
+    FunctionDeclaration,
+    FunctionModifier,
+    FunctionControl,
+    StructureDeclaration,
+    TypeDeclaration,
+    ClassModifier,
+    ErrorHandling,
+    Core,
+    AccessModifier,
+    VariableDeclaration,
+    ModuleImport,
+    AsynchronousControl,
+    MetaProgramming,
+    TypeHandling,
 }
 
 /// Counts the number of elements passed to it,
@@ -70,21 +92,22 @@ macro_rules! count {
 // TODO: Add a comment generator for the keywords, like a field called description or something and it is applied to #[doc = ...]
 macro_rules! define_keywords {
     // use paste to convert the cases
-    {$($name:ident { scoped: $scoped:literal, body_required: $body_required:literal}),*} => {
+    {$($internal:ident { scoped: $scoped:literal, body_required: $body_required:literal, ident: $ident:ident, ty:$ty:ident, description:$description:literal }),*} => {
         paste!{
             // For every keyword, create a constant with the keyword name
             $(
-                #[doc = "The " $name " keyword"]
-                const [<$name:snake:upper>]: Keyword = Keyword {
+                #[doc = $description]
+                const $internal: Keyword = Keyword {
                     ident:         stringify!($name),
                     scoped:        $scoped,
                     body_required: $body_required,
+                    ty:        KeywordType::$ty,
                 };
             )*
 
             // Creates the KEYWORD ARRAY
-
-            pub const KEYWORDS: [Keyword; count!($($name)*)] = [$([<$name:snake:upper>],)*];
+            #[doc = "An array of all the keywords"]
+            pub const KEYWORDS: [Keyword; count!($($internal)*)] = [$($internal,)*];
 
             // Creates a function to get the keyword by name
             #[doc = "Get a keyword by its identifier"]
@@ -93,102 +116,116 @@ macro_rules! define_keywords {
                 match ident {
                     // For every keyword, return the constant
                     $(
-                        stringify!($name) => &[<$name:snake:upper>],
+                        stringify!($ident) => &$internal,
                     )*
                     _ => panic_any(TokenError::InvalidKeyword(Box::from(ident)))
                 }
             }
-            
+
         }
     }
 }
 
+// TODO: make a way to define aliases for keywords
 
-
+// make a separate keyword for header only keywords
+// every thing at comp time has to be header only
+// so if they use custom meta within meta it has to be in the namespace of the compiler 
 define_keywords! {
     // Control Flow
-    if        { scoped: false, body_required: true  },
-    unless    { scoped: false, body_required: true  },
-    else      { scoped: false, body_required: true  },
-    
-    // Loops
-    while     { scoped: false, body_required: true  },
-    for       { scoped: true , body_required: true  },
-    
-    // Loop Control
-    continue  { scoped: false, body_required: false },
-    break     { scoped: false, body_required: false },    
-    // in        { scoped: false, body_required: false },
+    IF        { scoped: false, body_required: true, ident:if       , ty:ControlFlow  , description:"The if keyword"                },
+    UNLESS    { scoped: false, body_required: true, ident:elif     , ty:ControlFlow  , description:"The unless keyword, like elif" },
+    ELSE      { scoped: false, body_required: true, ident:else     , ty:ControlFlow  , description:"The else keyword"              },
 
+    // Loops
+    WHILE     { scoped: false, body_required: true, ident:while    , ty:Loop        , description:"The while keyword"             },
+    FOR       { scoped: true , body_required: true, ident:for      , ty:Loop        , description:"The for keyword"               },
+    //LOOP      { scoped: false, body_required: true, ident:loop , ty:Loop, description:"An endless loop" },
+    // post test loop needed
+    
     // Pattern Matching
-    match     { scoped: false, body_required: false },
-    switch    { scoped: false, body_required: false },
-    case      { scoped: false, body_required: true  },
-    default   { scoped: false, body_required: true  },
+    CASE      { scoped: false, body_required: true, ident:case     , ty:PatternMatching, description:"The case keyword" },
+    DEFAULT   { scoped: false, body_required: true, ident:default  , ty:PatternMatching, description:"The default keyword" },
+    MATCH     { scoped: false, body_required: false, ident:match    , ty:PatternMatching, description:"The match keyword" },
+    SWITCH    { scoped: false, body_required: false, ident:switch   , ty:PatternMatching, description:"The switch keyword" },
+
+    // Loop Control
+    BREAK     { scoped: false, body_required: false, ident:break   , ty:LoopControl, description:"The break keyword"          },
+    CONTINUE  { scoped: false, body_required: false, ident:continue, ty:LoopControl, description:"The continue keyword"       },
 
     // Function Declaration
-    fn         { scoped: true , body_required: true  },
-    lambda     { scoped: false, body_required: false },
-    thread     { scoped: true , body_required: true  },
-    macro      { scoped: true , body_required: true  },
+    FUNCTION  { scoped: true , body_required: true , ident:fn       , ty:FunctionDeclaration, description:"The function keyword" },
+    ANONYMOUS_FUNCTION { scoped: true , body_required: true , ident:lambda, ty:FunctionDeclaration, description:"The lambda keyword" },
+
+    // Threading
+    THREAD    { scoped: true , body_required: true , ident:thread   , ty:FunctionDeclaration, description:"The thread keyword" },
+
+    // Meta Programming
+    MACRO     { scoped: true , body_required: true, ident:macro    , ty:MetaProgramming, description:"The macro keyword" },
+    OPERATOR  { scoped: true , body_required: true, ident:operator , ty:MetaProgramming, description:"The operator keyword" },
+
 
     // Function Modifier
-    async      { scoped: false, body_required: false }, // Denotes an asynchronous function
-    delegate   { scoped: false, body_required: false }, 
-    inline     { scoped: false, body_required: false }, // Denotes an inline function
+    ASYNC     { scoped: false, body_required: false, ident:async    , ty:FunctionModifier, description:"Denotes an asynchronous function" },
+    DELEGATE  { scoped: false, body_required: false, ident:delegate , ty:FunctionModifier, description:"The delegate keyword" },
+    INLINE    { scoped: false, body_required: false, ident:inline   , ty:FunctionModifier, description:"Denotes an inline function" },
 
     // Function Control
-    return     { scoped: false, body_required: false }, // Returns a value from a function
-    
-    // Data Structures
-    class      { scoped: true , body_required: true  },
-    struct     { scoped: true , body_required: true  }, // A type structure without methods
-    enum       { scoped: true , body_required: true  }, // An enum
-    union      { scoped: true , body_required: true  }, // A union
+    RETURN    { scoped: false, body_required: false, ident:return   , ty:FunctionControl, description:"Returns a value from a function" },
 
-    // Type Declaration
-    abstract   { scoped: true , body_required: true  }, // An interface with default methods
-    type       { scoped: false, body_required: false }, // A type alias
-    interface  { scoped: true , body_required: true  }, // An interface without default methods
-    
-    
-    // Type Handing
-    typeof     { scoped: false, body_required: false }, // Returns the type of a variable
-    sizeof     { scoped: false, body_required: false }, // Returns the size of a type in bytes
-    instanceof { scoped: false, body_required: false }, // Checks if a variable is an instance of a type
+    // Data Structures
+    CLASS      { scoped: true , body_required: true , ident:class    , ty:StructureDeclaration, description:"The class keyword" },
+    STRUCT     { scoped: true , body_required: true , ident:struct   , ty:StructureDeclaration, description:"A type structure without methods" },
+    ENUM       { scoped: true , body_required: true , ident:enum     , ty:StructureDeclaration, description:"An enum" },
+    UNION      { scoped: true , body_required: true , ident:union    , ty:StructureDeclaration, description:"A union" },
+
+
+    // Type Declarations
+    INTERFACE  { scoped: true , body_required: true , ident:interface, ty:TypeDeclaration, description:"An interface without default methods" },
+    ABSTRACT   { scoped: true , body_required: true , ident:abstract , ty:TypeDeclaration, description:"An interface with default methods" },
+    TYPE       { scoped: false, body_required: false, ident:type     , ty:TypeDeclaration, description:"A type alias" },
+
+    // Type Handling
+    TYPEOF     { scoped: false, body_required: false, ident:typeof    , ty:TypeHandling, description:"Returns the type of a variable" },
+    SIZEOF     { scoped: false, body_required: false, ident:sizeof    , ty:TypeHandling, description:"Returns the size of a type in bytes" },
+    INSTANCEOF { scoped: false, body_required: false, ident:instanceof, ty:TypeHandling, description:"Checks if a variable is an instance of a type" }, // not sure about this
+
 
     // Error Handling
-    try       { scoped: false, body_required: true  }, 
-    catch     { scoped: false, body_required: true  },
-    except    { scoped: false, body_required: true  },
-    finally   { scoped: false, body_required: true  }, 
-    throw     { scoped: false, body_required: false }, // Throws an error
 
-    // Core
-    with      { scoped: false, body_required: true  },
+    TRY       { scoped: false, body_required: true , ident:try      , ty:ErrorHandling, description:"The try keyword" },
+    CATCH     { scoped: false, body_required: true , ident:catch    , ty:ErrorHandling, description:"The catch keyword" },
+    EXCEPT    { scoped: false, body_required: true , ident:except   , ty:ErrorHandling, description:"The except keyword" },
+    FINALLY   { scoped: false, body_required: true , ident:finally  , ty:ErrorHandling, description:"The finally keyword" },
+    THROW     { scoped: false, body_required: false, ident:throw    , ty:ErrorHandling, description:"Throws an error" },
+
+    // // Core
+    // with      { scoped: false, body_required: true  },
 
     // Access Modifier
-    private   { scoped: false, body_required: false }, // Accessible from the class only
-    protected { scoped: false, body_required: false }, // Accessible from the class and subclasses
-    public    { scoped: false, body_required: false }, // Accessible from anywhere
-    const     { scoped: false, body_required: false }, // A compile time constant, 
-    final     { scoped: false, body_required: false }, // A runtime constant, once set cannot be changed 
-    static    { scoped: false, body_required: false }, // A denotes interior mutability 
-    unsafe    { scoped: false, body_required: false }, // Notates Undefined Behavior
-    
-    
-    // Variable Declaration
-    let       { scoped: false, body_required: false }, // A mutable variable
-    var       { scoped: false, body_required: false }, 
-    auto      { scoped: false, body_required: false }, // A variable with automatic type inference 
+    PRIVATE   { scoped: false, body_required: false, ident:private  , ty:AccessModifier, description:"Accessible from a data structure only" },
+    PROTECTED { scoped: false, body_required: false, ident:protected, ty:AccessModifier, description:"Accessible from a data structure and its children" },
+    PUBLIC    { scoped: false, body_required: false, ident:public   , ty:AccessModifier, description:"Accessible from anywhere" },
+    CONST     { scoped: false, body_required: false, ident:const    , ty:AccessModifier, description:"A compile time constant" },
+    FINAL     { scoped: false, body_required: false, ident:final    , ty:AccessModifier, description:"A runtime constant, once set cannot be changed" },
+    STATIC    { scoped: false, body_required: false, ident:static   , ty:AccessModifier, description:"Denotes interior mutability" },
+    UNSAFE    { scoped: false, body_required: false, ident:unsafe   , ty:AccessModifier, description:"Notates Undefined Behavior" },
+
+    // Variable Declaration 
+    LET       { scoped: false, body_required: false, ident:let      , ty:VariableDeclaration, description:"A mutable variable" }, // should use let mut ...
+    VAR       { scoped: false, body_required: false, ident:var      , ty:VariableDeclaration, description:"The var keyword" },
+    AUTO      { scoped: false, body_required: false, ident:auto     , ty:VariableDeclaration, description:"A variable with automatic type inference" }, // could be let auto x = 3;
 
     // Module Import
-    include   { scoped: false, body_required: false }, // Includes a file
-    import    { scoped: false, body_required: false }, // Imports a module
-    using     { scoped: false, body_required: false }, // Uses a module
-    from      { scoped: false, body_required: false }, // Imports a module from a package
-    
+    IMPORT    { scoped: false, body_required: false, ident:import   , ty:ModuleImport, description:"Imports a module" },
+    INCLUDE   { scoped: false, body_required: false, ident:include  , ty:ModuleImport, description:"Includes a file" },
+    USING     { scoped: false, body_required: false, ident:using    , ty:ModuleImport, description:"Uses a module" },
+    FROM      { scoped: false, body_required: false, ident:from     , ty:ModuleImport, description:"Imports a module from a package" },
+
     // Asynchronous Control
-    yield     { scoped: false, body_required: false },
-    await     { scoped: false, body_required: false }
+    YIELD     { scoped: false, body_required: false, ident:yield    , ty:AsynchronousControl, description:"Yields a value from a generator" },
+    AWAIT     { scoped: false, body_required: false, ident:await    , ty:AsynchronousControl, description:"Waits for an asynchronous function to complete" }
+    // should be a modifier like let await 3= ...
+    // and .await 
+
 }
