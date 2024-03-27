@@ -89,6 +89,7 @@ dependencies = [
  "rustc-hash",
  "shlex",
  "syn 2.0.55",
+ "syn 2.0.55",
  "which",
 ]
 
@@ -101,6 +102,7 @@ dependencies = [
  "autocxx-engine",
  "env_logger 0.9.3",
  "indexmap 1.9.3",
+ "syn 2.0.55",
  "syn 2.0.55",
 ]
 
@@ -129,6 +131,7 @@ dependencies = [
  "serde_json",
  "strum_macros",
  "syn 2.0.55",
+ "syn 2.0.55",
  "tempfile",
  "thiserror",
  "version_check",
@@ -144,6 +147,7 @@ dependencies = [
  "proc-macro-error",
  "proc-macro2",
  "quote",
+ "syn 2.0.55",
  "syn 2.0.55",
 ]
 
@@ -161,6 +165,7 @@ dependencies = [
  "quote",
  "serde",
  "serde_json",
+ "syn 2.0.55",
  "syn 2.0.55",
  "thiserror",
 ]
@@ -274,6 +279,7 @@ dependencies = [
  "quote",
  "scratch",
  "syn 2.0.55",
+ "syn 2.0.55",
 ]
 
 [[package]]
@@ -285,6 +291,7 @@ dependencies = [
  "codespan-reporting",
  "proc-macro2",
  "quote",
+ "syn 2.0.55",
  "syn 2.0.55",
 ]
 
@@ -302,6 +309,7 @@ checksum = "b404f596046b0bb2d903a9c786b875a126261b52b7c3a64bbb66382c41c771df"
 dependencies = [
  "proc-macro2",
  "quote",
+ "syn 2.0.55",
  "syn 2.0.55",
 ]
 
@@ -356,7 +364,9 @@ dependencies = [
 [[package]]
 name = "fastrand"
 version = "2.0.2"
+version = "2.0.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "658bd65b1cf4c852a3cc96f18a8ce7b5640f6b703f905c7d74532294c2a63984"
 checksum = "658bd65b1cf4c852a3cc96f18a8ce7b5640f6b703f905c7d74532294c2a63984"
 
 [[package]]
@@ -411,6 +421,7 @@ dependencies = [
  "lazy_static",
  "log",
  "miette 7.2.0",
+ "paste",
  "paste",
  "pretty_env_logger",
  "pyo3",
@@ -643,6 +654,7 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn 2.0.55",
+ "syn 2.0.55",
 ]
 
 [[package]]
@@ -653,6 +665,7 @@ checksum = "dcf09caffaac8068c346b6df2a7fc27a177fd20b39421a39ce0a211bde679a6c"
 dependencies = [
  "proc-macro2",
  "quote",
+ "syn 2.0.55",
  "syn 2.0.55",
 ]
 
@@ -741,6 +754,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "de3145af08024dea9fa9914f381a17b8fc6034dfb00f3a84013f7ff43f29ed4c"
 
 [[package]]
+name = "paste"
+version = "1.0.14"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "de3145af08024dea9fa9914f381a17b8fc6034dfb00f3a84013f7ff43f29ed4c"
+
+[[package]]
 name = "peeking_take_while"
 version = "0.1.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -771,10 +790,13 @@ dependencies = [
 [[package]]
 name = "prettyplease"
 version = "0.2.17"
+version = "0.2.17"
 source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8d3928fb5db768cb86f891ff014f0144589297e3c6a1aba6ed7cecfdace270c7"
 checksum = "8d3928fb5db768cb86f891ff014f0144589297e3c6a1aba6ed7cecfdace270c7"
 dependencies = [
  "proc-macro2",
+ "syn 2.0.55",
  "syn 2.0.55",
 ]
 
@@ -859,6 +881,7 @@ dependencies = [
  "pyo3-macros-backend",
  "quote",
  "syn 2.0.55",
+ "syn 2.0.55",
 ]
 
 [[package]]
@@ -871,6 +894,7 @@ dependencies = [
  "proc-macro2",
  "pyo3-build-config",
  "quote",
+ "syn 2.0.55",
  "syn 2.0.55",
 ]
 
@@ -988,6 +1012,7 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn 2.0.55",
+ "syn 2.0.55",
 ]
 
 [[package]]
@@ -1009,6 +1034,7 @@ checksum = "0b2e6b945e9d3df726b65d6ee24060aff8e3533d431f677a9695db04eff9dfdb"
 dependencies = [
  "proc-macro2",
  "quote",
+ "syn 2.0.55",
  "syn 2.0.55",
 ]
 
@@ -1087,7 +1113,9 @@ dependencies = [
 [[package]]
 name = "syn"
 version = "2.0.55"
+version = "2.0.55"
 source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "002a1b3dbf967edfafc32655d0f377ab0bb7b994aa1d32c8cc7e9b8bf3ebb8f0"
 checksum = "002a1b3dbf967edfafc32655d0f377ab0bb7b994aa1d32c8cc7e9b8bf3ebb8f0"
 dependencies = [
  "proc-macro2",
