@@ -123,15 +123,6 @@ CHAR = r"'.*'"
 INDENT_CHAR = "    "
 
 
-"""
-07/14/2016     08/02/2016
-07/22/2022     08/02/2022
-08/11/2023     12/19/2023
-
-Al Mankhool, Bur Dubai
-305, Al Falasi Residences, 317 - 11 B St
-"""
-
 FAT_CHARACTER = [
     # CHARACTERS MUST BE > 2
     r"\=\=\=",  # ===
