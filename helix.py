@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 from __future__ import annotations
-
+PRODUCTION_BUILD = True
 import gc
 gc.disable() # disable garbage collection for performance
 
@@ -22,7 +22,6 @@ from src.core.imports import (
     CONFIG,
     Hashing,
     Callable,
-    FileMode,
     Optional,
     Namespace,
     FrameType,
@@ -35,13 +34,12 @@ from src.core.imports import (
     py_compile,
     inject_core,
     HelixLanguage,
-    format_file_contents,
     color_print as print,
     perf_counter_ns as time,
     Processed_Line, Token_List,
 )
 
-__version__: str = "0.1.0-alpha.a"
+__version__: str = "0.10.0-alpha.a"
 bar_thread = Event()
 
 class DisabledKeyboardInterrupt(framework.DisabledKeyboardInterrupt):
@@ -477,11 +475,6 @@ class Helix(framework.Helix):
         )
 
         self.timer.start("format_source")
-        if format_source:
-            # TODO: Handle InvalidInput
-            transpiled_code = format_file_contents(
-                transpiled_code, fast=True, mode=FileMode()
-            )
 
         self.timer.end("format_source")
         self.timer.end("generate_source_code")
@@ -616,5 +609,4 @@ if __name__ == "__main__":
     #Helix.__hook_import__("syntax/test.hlx")
     # from test_hlx import subtract
     # subtract(5, 3)
-    # Helix.REPL()
     
