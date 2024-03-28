@@ -1,0 +1,9 @@
+class C_cout {
+    fn new(self) {
+        ...
+    }
+
+    fn <<(self, a: string) {
+        print(a);
+    }
+}

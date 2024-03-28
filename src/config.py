@@ -4,9 +4,6 @@ import toml
 import dataclasses
 from typing import Any, Optional
 
-
-# TODO: ADD PANIC's here
-
 @dataclasses.dataclass
 class HelixConfig:
     @dataclasses.dataclass
@@ -25,22 +22,22 @@ class HelixConfig:
 
     @dataclasses.dataclass
     class Compiler:
-        py: str = sys.executable
-        c: str = "gcc"
-        cpp: str = "g++"
-        rust: str = "rustc"
-        flags_py: str = "-OO"
-        flags_cpp: str = "-std=c++17"
-        flags_c: str = "-std=c18"
+        py:         str = sys.executable
+        c:          str = "gcc"
+        cpp:        str = "g++"
+        rust:       str = "rustc"
+        flags_py:   str = "-OO"
+        flags_cpp:  str = "-std=c++17"
+        flags_c:    str = "-std=c18"
         flags_rust: str = "--edition=2021"
 
     @dataclasses.dataclass
     class Linker:
         c_cpp_include_dirs: list[str] = dataclasses.field(default_factory=list)
-        rs_include_dirs: list[str] = dataclasses.field(default_factory=list)
-        py_include_dirs: list[str] = dataclasses.field(default_factory=list)
-        lib_dirs: list[str] = dataclasses.field(default_factory=list)
-        link_static: bool = False
+        rs_include_dirs:    list[str] = dataclasses.field(default_factory=list)
+        py_include_dirs:    list[str] = dataclasses.field(default_factory=list)
+        lib_dirs:           list[str] = dataclasses.field(default_factory=list)
+        link_static:        bool      = False
 
     @dataclasses.dataclass
     class Formatter:
@@ -192,19 +189,19 @@ class ConfigLoader:
 
     @staticmethod
     def load_config(init_proj: bool = False) -> HelixConfig:
-        project_config_path = os.path.join(os.getcwd(), 'helix.toml')
-        default_config_path = os.path.expanduser(HelixConfig.Core().core_location) + '/helix.toml'
-        env_config_path = os.getenv('HELIX_CONFIG')
+        project_config_path: str = os.path.join(os.getcwd(), 'helix.toml')
+        default_config_path: str = os.path.expanduser(HelixConfig.Core().core_location) + '/helix.toml'
+        env_config_path: Optional[str] = os.getenv('HELIX_CONFIG')
 
-        project_config = {}
+        project_config: dict[str, Any] = {}
         if os.path.exists(project_config_path):
             project_config = ConfigLoader.load_config_file(project_config_path)
 
-        env_config = {}
+        env_config: dict[str, Any] = {}
         if env_config_path and os.path.exists(env_config_path):
             env_config = ConfigLoader.load_config_file(env_config_path)
 
-        default_config = {}
+        default_config: dict[str, Any] = {}
         if os.path.exists(default_config_path):
             default_config = ConfigLoader.load_config_file(default_config_path)
         else:
@@ -213,11 +210,11 @@ class ConfigLoader:
             ConfigLoader.save_config(default_config_path, default_config)
 
         if init_proj and not os.path.exists(project_config_path):
-            minimal_project_config = dataclasses.asdict(ConfigFactory.create_project_config())
+            minimal_project_config: dict[str, Any] = dataclasses.asdict(ConfigFactory.create_project_config())
             ConfigLoader.save_config(project_config_path, minimal_project_config)
 
         # Merge configurations: project -> env -> default
-        merged_config = ConfigLoader.merge_dicts(default_config, env_config)
+        merged_config: dict[str, Any] = ConfigLoader.merge_dicts(default_config, env_config)
         merged_config = ConfigLoader.merge_dicts(merged_config, project_config)
         
         # Convert the merged dictionary back into a HelixConfig instance
@@ -230,7 +227,7 @@ class ConfigLoader:
     @staticmethod
     def dict_to_helix_config(data: dict[str, Any]) -> HelixConfig:
         # For simplicity, we will create default instances and then override with data
-        helix_config = HelixConfig()
+        helix_config: HelixConfig = HelixConfig()
 
         for section_name, section_data in data.items():
             if hasattr(helix_config, section_name):

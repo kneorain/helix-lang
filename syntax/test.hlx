@@ -88,7 +88,6 @@ class C_cout {
 
 fn main(argv: list<string>) {
     let a: C_cout = C_cout();
-    let b: C_cout = a;
     a << "hello world";
     subtract(123, 123);
     print(a_cursed_fucntion(23));

@@ -10,7 +10,7 @@ from  beartype.door import is_bearable
 
 class Token:
     _: str = "Helix Token"
-    
+
     # ---------------------------- Constructor ------------------------------- #
     def __init__(self,
         original_line: Optional[str],
@@ -105,10 +105,10 @@ class Token:
         return any([_ in other for _ in self.__processed_line])
 
     def __str__(self) -> str:
-        return f"Token(\n\toriginal_line\t= {repr(self.__original_line)}, \n\tprocessed_line\t= {self.__processed_line}, \n\tline_number\t= {self.__line_number},\n\tindent_level\t= {self.__indent_level}\n)\n"
+        return f"Token(original_line={repr(self.__original_line)}, processed_line={self.__processed_line if isinstance(self.__processed_line, list) else 'None'}, token={self.__processed_line if isinstance(self.__processed_line, str) else 'None'}, line_number={self.__line_number}, indent_level={self.__indent_level})"
 
     def __repr__(self) -> str:
-        return f"Token({repr(self.__processed_line)})"
+        return str(self)
 
     def __iter__(self) -> Iterator[str]:
         return iter(self.__processed_line)
@@ -126,11 +126,7 @@ class Token_List(list[Token]):
         self.file = file
 
     def __str__(self):
-        return (f"Token_List("
-            f"line = {self.line}, "
-            f"indent_level = {self.indent_level}, "
-            f"file = {self.file}"
-        ")")
+        return f"Token_List(line={self.line}, indent_level={self.indent_level}, file={self.file})"
     
     def __iter__(self) -> Iterator[Token]:
         return iter(self.line)
@@ -147,7 +143,7 @@ class Token_List(list[Token]):
         return len(self.line)
 
     def __repr__(self) -> str:
-        return '"' + ' '.join([_.token for _ in self.line]) + '"'
+        return str(self)
 
     def __getitem__(self, index: int) -> Token:
         return self.line[index]
