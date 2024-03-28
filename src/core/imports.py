@@ -94,10 +94,6 @@ from argparse import (
     Namespace,
     ArgumentParser
 )
-from black       import (
-    FileMode,
-    format_file_contents
-)
 
 # ----------------------------- Internal Imports ----------------------------- #
 
