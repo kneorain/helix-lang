@@ -1,0 +1,17 @@
+use "syntax.hlx";
+
+if sys::is_windows() {
+    define set_something(int value) -> void;
+} else {
+    define set_something_else(int value) -> void;
+}
+
+namespace python {
+    fn set_something(value: int) -> None;
+    fn set_something_else(value: int) -> None;
+}
+
+namespace c {
+    fn set_something(value: int) -> void;
+    fn set_something_else(value: int) -> void;
+}
