@@ -1,5 +1,5 @@
 import functools
-from src.core.base import (
+from src.core.core import (
     Processed_Line,
     Token_List,
     INDENT_CHAR,

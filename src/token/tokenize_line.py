@@ -3,7 +3,7 @@ from functools import cache
 from typing import Optional
 from src.panic import panic
 
-import src.core.base as base
+import src.core.core as core
 from src.classes.Token import Token
 
 COMPILED_RE: Optional[re.Pattern] = None
@@ -15,21 +15,21 @@ def compiled_re(ignore_strings: bool = False) -> re.Pattern:
         COMPILED_RE = re.compile(rf"""
             ([fbur]*"[^"\\]*(?:\\.[^"\\]*)*")                                                                          | # Double quotes strings, including f, b, r, u strings
             ([fbur]*'[^'\\]*(?:\\.[^'\\]*)*')                                                                          | # Single quotes strings, including f, b, r, u strings
-            ({back_slash.join(base.COMMENT.split())}[^\n]*)                                                         | # Single line comments (~~)
-            ({back_slash.join(base.BLOCK_COMMENT.split())}[\s\S]*?{back_slash.join(base.BLOCK_COMMENT.split())}) | # Multi line comments (~*~ ... ~*~)
+            ({back_slash.join(core.COMMENT.split())}[^\n]*)                                                         | # Single line comments (~~)
+            ({back_slash.join(core.BLOCK_COMMENT.split())}[\s\S]*?{back_slash.join(core.BLOCK_COMMENT.split())}) | # Multi line comments (~*~ ... ~*~)
             (\b\d+\.\d+\b)                                                                                             | # Decimal numbers
             (\b\w+\b)                                                                                                  | # Words (identifiers, keywords)
-            ({'|'.join(base.FAT_CHARACTER)})                                                                        | # Double character operators
+            ({'|'.join(core.FAT_CHARACTER)})                                                                        | # Double character operators
             ([\(\){{}};,])                                                                                             | # Single character delimiters
             (\S)                                                                                                       | # Catch other characters
         """, re.MULTILINE | re.VERBOSE)
     if ignore_strings:
         return re.compile(rf"""
-            ({back_slash.join(base.COMMENT.split())}[^\n]*)                                                         | # Single line comments (~~)
-            ({back_slash.join(base.BLOCK_COMMENT.split())}[\s\S]*?{back_slash.join(base.BLOCK_COMMENT.split())}) | # Multi line comments (~*~ ... ~*~)
+            ({back_slash.join(core.COMMENT.split())}[^\n]*)                                                         | # Single line comments (~~)
+            ({back_slash.join(core.BLOCK_COMMENT.split())}[\s\S]*?{back_slash.join(core.BLOCK_COMMENT.split())}) | # Multi line comments (~*~ ... ~*~)
             (\b\d+\.\d+\b)                                                                                             | # Decimal numbers
             (\b\w+\b)                                                                                                  | # Words (identifiers, keywords)
-            ({'|'.join(base.FAT_CHARACTER)})                                                                        | # Double character operators
+            ({'|'.join(core.FAT_CHARACTER)})                                                                        | # Double character operators
             ([\(\){{}};,])                                                                                             | # Single character delimiters
             (\S)                                                                                                       | # Catch other characters
         """, re.MULTILINE | re.VERBOSE)
@@ -62,7 +62,7 @@ def tokenize_line(code: Token | str, path: Optional[str] = None, ignore_errors: 
         token
         for group in tokens
         for token in group
-        if token and not token.startswith(base.COMMENT) and not token.startswith(base.BLOCK_COMMENT) and not token.endswith(base.BLOCK_COMMENT)
+        if token and not token.startswith(core.COMMENT) and not token.startswith(core.BLOCK_COMMENT) and not token.endswith(core.BLOCK_COMMENT)
     ]
     
     if path is None:
@@ -76,13 +76,13 @@ def tokenize_line(code: Token | str, path: Optional[str] = None, ignore_errors: 
             line_no=code.line_number
         )
         for token in flattened_tokens
-        if token.strip() in base.RESERVED_KEYWORDS and not ignore_errors
+        if token.strip() in core.RESERVED_KEYWORDS and not ignore_errors
     ]
     
     code.line = [
-        base.EARLY_REPLACEMENTS[token]
+        core.EARLY_REPLACEMENTS[token]
         if (
-            token in base.EARLY_REPLACEMENTS
+            token in core.EARLY_REPLACEMENTS
         ) else (
             token
         ) for token in flattened_tokens
@@ -102,11 +102,11 @@ def standalone_tokenize_line(line: str | Token) -> list[str]:
     
     back_slash = "\\"
     pattern = re.compile(rf"""
-        ({back_slash.join(base.COMMENT.split())}[^\n]*)                                                         | # Single line comments (~~)
-        ({back_slash.join(base.BLOCK_COMMENT.split())}[\s\S]*?{back_slash.join(base.BLOCK_COMMENT.split())}) | # Multi line comments (~*~ ... ~*~)
+        ({back_slash.join(core.COMMENT.split())}[^\n]*)                                                         | # Single line comments (~~)
+        ({back_slash.join(core.BLOCK_COMMENT.split())}[\s\S]*?{back_slash.join(core.BLOCK_COMMENT.split())}) | # Multi line comments (~*~ ... ~*~)
         (\b\d+\.\d+\b)                                                                                             | # Decimal numbers
         (\b\w+\b)                                                                                                  | # Words (identifiers, keywords)
-        ({'|'.join(base.FAT_CHARACTER)})                                                                        | # Double character operators
+        ({'|'.join(core.FAT_CHARACTER)})                                                                        | # Double character operators
         ([\(\){{}};,])                                                                                             | # Single character delimiters
         (\S)                                                                                                       | # Catch other characters
     """, re.MULTILINE | re.VERBOSE)
@@ -124,5 +124,5 @@ def standalone_tokenize_line(line: str | Token) -> list[str]:
         token
         for group in tokens
         for token in group
-        if token and not token.startswith(base.COMMENT) and not token.startswith(base.BLOCK_COMMENT) and not token.endswith(base.BLOCK_COMMENT)
+        if token and not token.startswith(core.COMMENT) and not token.startswith(core.BLOCK_COMMENT) and not token.endswith(core.BLOCK_COMMENT)
     ]

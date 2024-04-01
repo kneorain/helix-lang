@@ -1,4 +1,4 @@
-import src.core.base as base
+import src.core.core as core
 from src.core.imports import (
     dump, load,
     wraps,
@@ -39,7 +39,7 @@ def cache(func: Callable) -> Callable:
 def file_cache(func: Callable) -> Callable:
     @wraps(func)
     def wrapper(*args: Tuple[Any, ...], **kwargs: dict[str, Any]) -> Any:
-        if not base.USE_CACHE: return func(*args, **kwargs)
+        if not core.USE_CACHE: return func(*args, **kwargs)
         
         global local_cache
         

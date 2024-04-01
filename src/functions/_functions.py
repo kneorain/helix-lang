@@ -1,4 +1,4 @@
-import src.core.base as base
+import src.core.core as core
 from src.core.imports import (
     Processed_Line,
     Token_List,
@@ -94,7 +94,7 @@ class ExtractTypedParamsFromFunc(framework.Translate):
             self.in_param = True
             self.line = self.line[1:]
         else:
-            base.ERROR_CODES.SYNTAX_MISSING_EXCEPTED_TOKEN.format(
+            core.ERROR_CODES.SYNTAX_MISSING_EXCEPTED_TOKEN.format(
                 token="("
             ).panic(
                 ")",
@@ -138,7 +138,7 @@ class ExtractTypedParamsFromFunc(framework.Translate):
                 self.line[2].token == ":"
                 or self.line[2].token == "<\\r1>"
             ):
-                base.ERROR_CODES.SYNTAX_MISSING_EXCEPTED_TOKEN.format(
+                core.ERROR_CODES.SYNTAX_MISSING_EXCEPTED_TOKEN.format(
                     token="->"
                 ).panic(
                     "->",
@@ -159,7 +159,7 @@ class ExtractTypedParamsFromFunc(framework.Translate):
                 self.line[1].token != ":"
                 and self.line[1].token != "<\\r1>"
             ):
-                base.ERROR_CODES.SYNTAX_MISSING_EXCEPTED_TOKEN.format(
+                core.ERROR_CODES.SYNTAX_MISSING_EXCEPTED_TOKEN.format(
                     token="{}"
                 ).panic(
                     "fn",
@@ -207,7 +207,7 @@ class ExtractTypedParamsFromFunc(framework.Translate):
             self.line = self.line[3:]
         else:
             if token == "=":
-                base.ERROR_CODES.SYNTAX_UNSUPPORTED_SYNTAX.format(
+                core.ERROR_CODES.SYNTAX_UNSUPPORTED_SYNTAX.format(
                     syntax="="
                 ).panic(
                     token,
@@ -223,7 +223,7 @@ class ExtractTypedParamsFromFunc(framework.Translate):
                 self.line = self.line[1:]
             else:
                 del token
-                base.ERROR_CODES.TYPE_UNDECLARED.format(
+                core.ERROR_CODES.TYPE_UNDECLARED.format(
                     identifier=tuple(self.variables.keys())[
                         -1
                     ]
@@ -260,7 +260,7 @@ class ExtractTypedParamsFromFunc(framework.Translate):
                 self.line[3].token == ":"
                 or self.line[3].token == "<\\r1>"
             ):
-                base.ERROR_CODES.SYNTAX_MISSING_EXCEPTED_TOKEN.format(
+                core.ERROR_CODES.SYNTAX_MISSING_EXCEPTED_TOKEN.format(
                     token="->"
                 ).panic(
                     "->",
@@ -279,7 +279,7 @@ class ExtractTypedParamsFromFunc(framework.Translate):
                 self.line[2].token != ":"
                 and self.line[2].token != "<\\r1>"
             ):
-                base.ERROR_CODES.SYNTAX_MISSING_EXCEPTED_TOKEN.format(
+                core.ERROR_CODES.SYNTAX_MISSING_EXCEPTED_TOKEN.format(
                     token="{}"
                 ).panic(
                     "fn",
@@ -505,7 +505,7 @@ class Function(framework.Translate):
                     for i in self.parent_scope.name
                 ]
             ):
-                base.ERROR_CODES.OPERATOR_OVERLOADING_OUTSIDE_CLASS.panic(
+                core.ERROR_CODES.OPERATOR_OVERLOADING_OUTSIDE_CLASS.panic(
                     self.name,
                     file=self.ast_list.file,
                     line_no=self.ast_list.find_line_number(
@@ -527,7 +527,7 @@ class Function(framework.Translate):
                 self.modifiers,
             )
 
-        base.ERROR_CODES.SYNTAX_MISSING_EXCEPTED_TOKEN.format(
+        core.ERROR_CODES.SYNTAX_MISSING_EXCEPTED_TOKEN.format(
             token=self.root_scope.get_keyword("FUNCTION")
         ).panic(
             self.ast_list[1].token,
@@ -554,7 +554,7 @@ class Function(framework.Translate):
 
         for k, v in self.variables["params"].items():
             if v["type"] == "void":
-                base.ERROR_CODES.TYPE_INVALID_TYPE_IN_CONTEXT.format(
+                core.ERROR_CODES.TYPE_INVALID_TYPE_IN_CONTEXT.format(
                     type="void"
                 ).panic(
                     "void",
@@ -564,7 +564,7 @@ class Function(framework.Translate):
                     ),
                 )
             self.add_to_output(
-                f"{k}: {base.replace_primitive(v['type'], 0)}, "
+                f"{k}: {core.replace_primitive(v['type'], 0)}, "
             )
             self.current_scope.variables[k] = v["type"]
         
@@ -580,7 +580,7 @@ class Function(framework.Translate):
             self.ast_list.line[-1].token == "<\\r1>"
             and self.ast_list.indent_level == 0
         ):
-            base.ERROR_CODES.SYNTAX_INVALID_SYNTAX.format(
+            core.ERROR_CODES.SYNTAX_INVALID_SYNTAX.format(
                 location="noop function at the global scope is not allowed, "
                          "use {...} to create an empty block function",
             ).panic(
@@ -615,7 +615,7 @@ class Function(framework.Translate):
                     for i in self.parent_scope.name
                 ]
             ):
-                base.ERROR_CODES.FUNCTION_INVALID_MODIFIERS.format(
+                core.ERROR_CODES.FUNCTION_INVALID_MODIFIERS.format(
                     modifiers="static",
                 ).panic(
                     self.root_scope.get_keyword("STATIC"),
@@ -661,7 +661,7 @@ class Function(framework.Translate):
                 self.root_scope.get_keyword("STATIC")
             ]
         ):
-            base.ERROR_CODES.FUNCTION_INVALID_MODIFIERS.format(
+            core.ERROR_CODES.FUNCTION_INVALID_MODIFIERS.format(
                 modifiers="private and static",
             ).panic(
                 self.root_scope.get_keyword("PRIVATE"),
@@ -678,7 +678,7 @@ class Function(framework.Translate):
                 self.root_scope.get_keyword("UNSAFE")
             ]
         ):
-            base.ERROR_CODES.FUNCTION_INVALID_MODIFIERS.format(
+            core.ERROR_CODES.FUNCTION_INVALID_MODIFIERS.format(
                 modifiers="async and unsafe",
             ).panic(
                 self.root_scope.get_keyword("ASYNC"),

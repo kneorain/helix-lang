@@ -1,5 +1,5 @@
 # THIS TOOK ME 2 DAYS TO WRITE, I'M SO PROUD OF MYSELF
-import src.core.base as base
+import src.core.core as core
 from src.core.imports import (
     Scope,
     Processed_Line,
@@ -58,17 +58,17 @@ def _for(ast_list: Token_List, current_scope: Scope, parent_scope: Scope, root_s
             def extract_variables(index: int, token: Token) -> None:
                 nonlocal current_var_name, in_generic, generic_count, current_var_type, current_var_value, current_var_unsafe, current_var_discard, expecting_type, expecting_value, excepting_name
 
-                if token in [base.find_keyword("LET"), base.find_keyword("VAR"), base.find_keyword("UNSAFE")]:
+                if token in [core.find_keyword("LET"), core.find_keyword("VAR"), core.find_keyword("UNSAFE")]:
                     if expecting_value:
                         excepting_name = True
                         expecting_value = False
                         processed_decls[stack[-1]]["value"] = current_var_value.strip()[:-2]
                         current_var_value = ""
 
-                    current_var_unsafe = token == base.find_keyword("UNSAFE") or init_statement[index-1] == base.find_keyword("UNSAFE")
+                    current_var_unsafe = token == core.find_keyword("UNSAFE") or init_statement[index-1] == core.find_keyword("UNSAFE")
 
-                    current_var_discard = not (token == base.find_keyword("LET"))
-                    current_var_discard = not (token == base.find_keyword("LET") or init_statement[index+1] == base.find_keyword("LET"))
+                    current_var_discard = not (token == core.find_keyword("LET"))
+                    current_var_discard = not (token == core.find_keyword("LET") or init_statement[index+1] == core.find_keyword("LET"))
 
                     excepting_name = True
                     return
@@ -79,7 +79,7 @@ def _for(ast_list: Token_List, current_scope: Scope, parent_scope: Scope, root_s
                         processed_decls[current_var_name.strip()] = {
                             "type":    current_var_type.strip(),
                             "value":   current_var_value.strip(),
-                            base.find_keyword("UNSAFE"):  current_var_unsafe,
+                            core.find_keyword("UNSAFE"):  current_var_unsafe,
                             "discard": current_var_discard
                         }
                         current_var_name = ""
@@ -91,7 +91,7 @@ def _for(ast_list: Token_List, current_scope: Scope, parent_scope: Scope, root_s
                         processed_decls[current_var_name.strip()] = {
                             "type":    current_var_type.strip(),
                             "value":   current_var_value.strip(),
-                            base.find_keyword("UNSAFE"):  current_var_unsafe,
+                            core.find_keyword("UNSAFE"):  current_var_unsafe,
                             "discard": current_var_discard
                         }
                         current_var_name = ""
@@ -116,7 +116,7 @@ def _for(ast_list: Token_List, current_scope: Scope, parent_scope: Scope, root_s
                             processed_decls[_name] = {
                                 "type":    processed_decls[_name]['type'] if processed_decls[_name]['type'] != '' else current_var_type.strip(),
                                 "value":   processed_decls[_name]["value"] if processed_decls[_name]["value"] != '' else current_var_value.strip(),
-                                base.find_keyword("UNSAFE"):  processed_decls[_name][base.find_keyword("UNSAFE")],
+                                core.find_keyword("UNSAFE"):  processed_decls[_name][core.find_keyword("UNSAFE")],
                                 "discard": processed_decls[_name]["discard"]
                             } if processed_decls[_name]['type'] == "" and processed_decls[_name]["value"] == "" else processed_decls[_name]
                         current_var_type = ""
@@ -127,7 +127,7 @@ def _for(ast_list: Token_List, current_scope: Scope, parent_scope: Scope, root_s
                         processed_decls[stack[-1]] = {
                             "type":    current_var_type.strip(),
                             "value":   current_var_value.strip(),
-                            base.find_keyword("UNSAFE"):  current_var_unsafe,
+                            core.find_keyword("UNSAFE"):  current_var_unsafe,
                             "discard": current_var_discard
                         }
                         current_var_type = ""
@@ -177,7 +177,7 @@ def _for(ast_list: Token_List, current_scope: Scope, parent_scope: Scope, root_s
 
             return processed_decls
 
-        if len(init_statement) > 1 and init_statement[0].token in (base.find_keyword("LET"), base.find_keyword("VAR"), base.find_keyword("UNSAFE")):
+        if len(init_statement) > 1 and init_statement[0].token in (core.find_keyword("LET"), core.find_keyword("VAR"), core.find_keyword("UNSAFE")):
             declarations = process_init_statement(init_statement)
             # if any vars need to be discarded
             if any([declarations[_name]["discard"] for _name in declarations]):
@@ -261,11 +261,11 @@ def _for(ast_list: Token_List, current_scope: Scope, parent_scope: Scope, root_s
             def extract_variables(index: int, token: Token) -> None:
                 nonlocal current_var_name, current_var_unsafe, current_var_discard, excepting_name
 
-                if token in [base.find_keyword("LET"), base.find_keyword("VAR"), base.find_keyword("UNSAFE")]:
-                    current_var_unsafe = token == base.find_keyword("UNSAFE") or init_statement[index-1] == base.find_keyword("UNSAFE")
+                if token in [core.find_keyword("LET"), core.find_keyword("VAR"), core.find_keyword("UNSAFE")]:
+                    current_var_unsafe = token == core.find_keyword("UNSAFE") or init_statement[index-1] == core.find_keyword("UNSAFE")
 
-                    current_var_discard = not (token == base.find_keyword("LET"))
-                    current_var_discard = not (token == base.find_keyword("LET") or init_statement[index+1] == base.find_keyword("LET"))
+                    current_var_discard = not (token == core.find_keyword("LET"))
+                    current_var_discard = not (token == core.find_keyword("LET") or init_statement[index+1] == core.find_keyword("LET"))
 
                     excepting_name = True
                     return
@@ -274,7 +274,7 @@ def _for(ast_list: Token_List, current_scope: Scope, parent_scope: Scope, root_s
                     if token == ",":
                         stack.append(current_var_name.strip())
                         processed_decls[current_var_name.strip()] = {
-                            base.find_keyword("UNSAFE"):  current_var_unsafe,
+                            core.find_keyword("UNSAFE"):  current_var_unsafe,
                             "discard": current_var_discard
                         }
                         current_var_name = ""
@@ -288,14 +288,14 @@ def _for(ast_list: Token_List, current_scope: Scope, parent_scope: Scope, root_s
             if excepting_name:
                 stack.append(current_var_name.strip())
                 processed_decls[current_var_name.strip()] = {
-                    base.find_keyword("UNSAFE"):  current_var_unsafe,
+                    core.find_keyword("UNSAFE"):  current_var_unsafe,
                     "discard": current_var_discard
                 }
 
 
             for _name in stack:
                 processed_decls[_name] = {
-                    base.find_keyword("UNSAFE"):  processed_decls[_name][base.find_keyword("UNSAFE")],
+                    core.find_keyword("UNSAFE"):  processed_decls[_name][core.find_keyword("UNSAFE")],
                     "discard": processed_decls[_name]["discard"]
                 }
 

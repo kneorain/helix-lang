@@ -3,7 +3,7 @@ from src.token.normalize_tokens import normalize_tokens
 from src.token.remove_comments import remove_comment
 from src.token.tokenize_line   import tokenize_line
 from src.classes.Token import Token, Token_List
-import src.core.base as base
+import src.core.core as core
 
 
 
@@ -22,21 +22,21 @@ class Tokenizer:
             list[list[str]]: The normalized and tokenized file
         """
 
-        if path in base.CACHE:
-            return base.CACHE[path]
+        if path in core.CACHE:
+            return core.CACHE[path]
 
         with open(path, "r") as file:
             lines = tuple(Token(line, "", index + 1, 0) for index, line in enumerate(file))
 
-        if base.USE_POOL and len(lines) > 1000:
-            base.POOL.map(remove_comment, lines)  # Batch operation
-            base.POOL.map(lambda line: tokenize_line(line, path), lines)
+        if core.USE_POOL and len(lines) > 1000:
+            core.POOL.map(remove_comment, lines)  # Batch operation
+            core.POOL.map(lambda line: tokenize_line(line, path), lines)
         else:
             tuple(map(remove_comment, lines))
             tuple(map(lambda line: tokenize_line(line, path), lines))
             
         normalized_tokens = normalize_tokens(lines, path)
-        base.CACHE[path] = normalized_tokens
+        core.CACHE[path] = normalized_tokens
         return normalized_tokens
 
     @staticmethod

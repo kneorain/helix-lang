@@ -7,7 +7,7 @@ gc.disable() # disable garbage collection for performance
 
 import atexit
 
-import src.core.base as base
+import src.core.core as core
 from src.core.imports import (
     os,
     sys,
@@ -274,7 +274,7 @@ class Helix(framework.Helix):
                     style="red",
                 )
 
-            if base.COMPILE:
+            if core.COMPILE:
                 py_compile.compile(self.__out_file__, cfile=self.__out_file__, optimize=2)
             
             self.timer.start("run")
@@ -589,8 +589,8 @@ class Helix(framework.Helix):
         gc.collect(2)
         
 def exit_func(*args: Any) -> None:
-    if base.POOL.is_alive:
-        base.POOL.close()
+    if core.POOL.is_alive:
+        core.POOL.close()
     
     #print("Memory Usage: ", tracemalloc.get_traced_memory()[1] / 10**6, "MB")
     

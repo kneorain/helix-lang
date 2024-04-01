@@ -1,4 +1,4 @@
-import src.core.base as base
+import src.core.core as core
 
 # get the signal int to see when the program ends
 import signal
@@ -19,7 +19,7 @@ def exponential_decay_generator(current, base_sleep=0.01):
     x = current / MAX
     return base_sleep - (base_sleep * math.exp(-b * x))
 
-@base.ASYNC
+@core.ASYNC
 def show_bar(event: Event):
     global current
     while current < MAX and not event.is_set():

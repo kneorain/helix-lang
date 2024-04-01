@@ -1,4 +1,4 @@
-import src.core.base as base
+import src.core.core as core
 from src.core.imports import (
     Token_List,
     Processed_Line,
@@ -172,7 +172,7 @@ def _let(ast_list: Token_List, current_scope, parent_scope, root_scope) -> Proce
         )
         
         
-        for values in base.IGNORE_TYPES_MAP:
+        for values in core.IGNORE_TYPES_MAP:
             if values in value["type"]:
                 value["value"] = "Any"
                 broken_type = True
@@ -180,11 +180,11 @@ def _let(ast_list: Token_List, current_scope, parent_scope, root_scope) -> Proce
         value["type"] = mass_replace(value["type"].full_line().strip(), cleaning) if not broken_type else "Any"
 
         if not null_value:
-            output += f"{INDENT_CHAR*(ast_list.indent_level + (1 if override_dispatch_error else 0))}{name}: {base.replace_primitive(value['type'])} = {base.replace_primitive(value['type'], 3) if base.replace_primitive(value['type'], 3) not in value['value'] else ''}({value['value']})\n"
+            output += f"{INDENT_CHAR*(ast_list.indent_level + (1 if override_dispatch_error else 0))}{name}: {core.replace_primitive(value['type'])} = {core.replace_primitive(value['type'], 3) if core.replace_primitive(value['type'], 3) not in value['value'] else ''}({value['value']})\n"
         elif null_value and value["value"] == "None":
-            output += f"{INDENT_CHAR*(ast_list.indent_level + (1 if override_dispatch_error else 0))}{name}: Optional[{base.replace_primitive(value['type'])}] = {value['value']}\n"
+            output += f"{INDENT_CHAR*(ast_list.indent_level + (1 if override_dispatch_error else 0))}{name}: Optional[{core.replace_primitive(value['type'])}] = {value['value']}\n"
         elif null_value and value["value"]:
-            output += f"{INDENT_CHAR*(ast_list.indent_level + (1 if override_dispatch_error else 0))}{name}: Optional[{base.replace_primitive(value['type'])}]= {base.replace_primitive(value['type'], 3) if base.replace_primitive(value['type'], 3) not in value['value'] else ''}({value['value']})\n"
+            output += f"{INDENT_CHAR*(ast_list.indent_level + (1 if override_dispatch_error else 0))}{name}: Optional[{core.replace_primitive(value['type'])}]= {core.replace_primitive(value['type'], 3) if core.replace_primitive(value['type'], 3) not in value['value'] else ''}({value['value']})\n"
         #    + "\n" + (
         #    (
         #        INDENT_CHAR*(ast_list.indent_level) + "print(" + name + ")\n"

@@ -12,6 +12,8 @@ pub struct Lexer {
     file_name: Arc<str>,
 }
 
+
+
 lazy_static::lazy_static! {
     static ref STRING_RE: Regex = Regex::new(r#"([fbur]*"[^"\\]*(?:\\.[^"\\]*)*")"#).unwrap();
     static ref CHARACTER_RE: Regex = Regex::new(r#"([fbur]*'[^'\\]*(?:\\.[^'\\]*)*')"#).unwrap();

@@ -5,7 +5,7 @@ from src.config import CONFIG
 
 import re
 from src.classes.Token import Token
-import src.core.base as base
+import src.core.core as core
 
 in_block_comment: bool = False
 
@@ -26,12 +26,12 @@ def remove_comment(_code: Token):
     global in_block_comment
 
     code: str = _code.original_line
-    code = re.sub(base.INLINE_COMMENT, "", re.sub(base.COMMENT, "", code))
+    code = re.sub(core.INLINE_COMMENT, "", re.sub(core.COMMENT, "", code))
     
     code = re.sub(r"override\s+.*\:", "", code)
     code = re.sub(r"impl\s+.*:", "", code)
     
-    if re.search(base.BLOCK_COMMENT, code):
+    if re.search(core.BLOCK_COMMENT, code):
         in_block_comment = ~in_block_comment # type: ignore
         code = ""
         

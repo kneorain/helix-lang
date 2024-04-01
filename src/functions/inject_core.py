@@ -1,4 +1,4 @@
-import src.core.base as base
+import src.core.core as core
 from src.core.imports import (
     os,
     datetime,
@@ -120,7 +120,7 @@ def exception_handler(exception_type: type[BaseException] | threading.ExceptHook
     current_exception = exception
     relevant_frames = []
 
-    early_replacements = dict((v, k) for k, v in {base.EARLY_REPLACEMENTS}.items())
+    early_replacements = dict((v, k) for k, v in {core.EARLY_REPLACEMENTS}.items())
 
     # First loop: filter out irrelevant frames
     index = 0

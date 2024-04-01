@@ -1,4 +1,4 @@
-use std::fmt::Display;
+use std::{fmt::Display, process::exit, time};
 
 use pyo3::{
     types::{PyDict, PyList, PyModule}, Python,
@@ -11,6 +11,8 @@ pub use crate::python::shared::unknown_int::NumericType;
 pub use private::python_import;
 use private::python_import::repr_python;
 use std::env;
+use std::sync::mpsc;
+use std::thread;
 pub use crate::__panic__;
 
 // --------------------------- BEGIN PYTHON IMPORTS ----------------------------
@@ -73,20 +75,21 @@ macro_rules! __panic__ {
         {
             let mut params = $crate::python::shared::default_params::PanicParams::default();
             $(params.line_no = Some($crate::NumericType::Int($line_no));)*
-            $crate::python::__panic__impl($error, $mark, params)
+            $crate::python::__panic__impl($error, $mark, params);
         }
     };
     ($error:expr, $mark:expr $(, $field:ident = $value:expr)*) => {
         {
             let mut params = $crate::python::shared::default_params::PanicParams::default();
             $(params.$field = Some($value);)*
-            $crate::python::__panic__impl($error, $mark, params)
+            $crate::python::__panic__impl($error, $mark, params);
         }
     };
 }
 
 #[allow(non_snake_case)]
 pub fn __panic__impl<T: Display>(__error: T, _mark: Option<Vec<&str>>, params: shared::default_params::PanicParams) {
+
     Python::with_gil(|py| {
         // print the __file__
         let module = PyModule::import(py, "panic").expect("Failed to import PANIC");
@@ -122,14 +125,16 @@ pub fn __panic__impl<T: Display>(__error: T, _mark: Option<Vec<&str>>, params: s
         let py_error = pyo3::types::PyString::new(py, &format!("{}", __error));
 
         // Call the Python function with arguments and keyword arguments
+        warn!("calling __panic__");
         match module.call_method("__panic__", (py_error, _mark), Some(kwargs)) {
             Ok(_) => {}
             Err(e) => {
                 e.print_and_set_sys_last_vars(py);
             }
         };
-    });
 
+    });
+    
     return;
 }
 

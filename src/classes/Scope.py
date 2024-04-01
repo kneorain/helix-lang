@@ -1,4 +1,4 @@
-import src.core.base as base
+import src.core.core as core
 from src.core.imports import (
     Optional,
     Token_List,
@@ -96,7 +96,7 @@ class Scope:
     
     @classmethod
     def get_match(cls, line: Token_List, keys: Optional[tuple] = None, depth: int = 0) -> Optional[str]:
-        all_keywords = tuple(base.KEYWORDS.keys()) if not keys else keys
+        all_keywords = tuple(core.KEYWORDS.keys()) if not keys else keys
         matches = [ast.token for ast in line if ast.token in all_keywords]
         if len(matches) >= depth + 1:
             return matches[depth]
@@ -113,13 +113,13 @@ class Scope:
         in_scope = False
         
         for index in range(len(scope.children)):
-            if not in_scope and cls.contains(scope.children[index], tuple(tuple(base.NAMESPACED_KEYWORD.keys()))) and temp_scope.indent_level != scope.children[index].indent_level:
-                _temp: Optional[str] = cls.get_match(scope.children[index], tuple(tuple(base.NAMESPACED_KEYWORD.keys())))
+            if not in_scope and cls.contains(scope.children[index], tuple(tuple(core.NAMESPACED_KEYWORD.keys()))) and temp_scope.indent_level != scope.children[index].indent_level:
+                _temp: Optional[str] = cls.get_match(scope.children[index], tuple(tuple(core.NAMESPACED_KEYWORD.keys())))
                 
                 if _temp is None:
                     raise ValueError(f"Expected a match, got {_temp}")
             
-                new_scope = Scope(scope.children[index], base.NAMESPACED_KEYWORD[_temp], [scope.children[index]], scope.children[index].indent_level)
+                new_scope = Scope(scope.children[index], core.NAMESPACED_KEYWORD[_temp], [scope.children[index]], scope.children[index].indent_level)
                 new_scope.namespace_header = scope.children[index]
                 in_scope = True
                 continue
@@ -128,8 +128,8 @@ class Scope:
                     temp_scope.append_child(new_scope)
                     new_scope = None
                     in_scope = False
-                    if cls.contains(scope.children[index], tuple(tuple(base.NAMESPACED_KEYWORD.keys()))):
-                        new_scope = Scope(scope.children[index], base.NAMESPACED_KEYWORD[cls.get_match(scope.children[index], tuple(tuple(base.NAMESPACED_KEYWORD.keys())))], [scope.children[index]], scope.children[index].indent_level)
+                    if cls.contains(scope.children[index], tuple(tuple(core.NAMESPACED_KEYWORD.keys()))):
+                        new_scope = Scope(scope.children[index], core.NAMESPACED_KEYWORD[cls.get_match(scope.children[index], tuple(tuple(core.NAMESPACED_KEYWORD.keys())))], [scope.children[index]], scope.children[index].indent_level)
                         new_scope.namespace_header = scope.children[index]
                         in_scope = True
                         continue
@@ -152,8 +152,8 @@ class Scope:
         in_scope = False
 
         for index in range(len(lines)):
-            if not in_scope and cls.contains(lines[index], tuple(base.NAMESPACED_KEYWORD.keys())):
-                new_scope = Scope(lines[index], base.NAMESPACED_KEYWORD[cls.get_match(lines[index], tuple(base.NAMESPACED_KEYWORD.keys()))], [lines[index]], lines[index].indent_level)
+            if not in_scope and cls.contains(lines[index], tuple(core.NAMESPACED_KEYWORD.keys())):
+                new_scope = Scope(lines[index], core.NAMESPACED_KEYWORD[cls.get_match(lines[index], tuple(core.NAMESPACED_KEYWORD.keys()))], [lines[index]], lines[index].indent_level)
                 new_scope.namespace_header = lines[index]
                 in_scope = True
                 continue
@@ -162,8 +162,8 @@ class Scope:
                     root_scope.append_child(new_scope)
                     new_scope = None
                     in_scope = False
-                    if cls.contains(lines[index], tuple(base.NAMESPACED_KEYWORD.keys())):
-                        new_scope = Scope(lines[index], base.NAMESPACED_KEYWORD[cls.get_match(lines[index], tuple(base.NAMESPACED_KEYWORD.keys()))], [lines[index]], lines[index].indent_level)
+                    if cls.contains(lines[index], tuple(core.NAMESPACED_KEYWORD.keys())):
+                        new_scope = Scope(lines[index], core.NAMESPACED_KEYWORD[cls.get_match(lines[index], tuple(core.NAMESPACED_KEYWORD.keys()))], [lines[index]], lines[index].indent_level)
                         new_scope.namespace_header = lines[index]
                         in_scope = True
                         continue
@@ -181,4 +181,4 @@ class Scope:
 
     @cache
     def get_keyword(self, internal_name: str) -> str:
-        return next((keyword for keyword in base.KEYWORDS if base.KEYWORDS[keyword]["internal_name"] == internal_name), None)
+        return next((keyword for keyword in core.KEYWORDS if core.KEYWORDS[keyword]["internal_name"] == internal_name), None)

@@ -1,6 +1,6 @@
 from src.cache_store import cache
 from src.panic import panic
-import src.core.base as base
+import src.core.core as core
 from src.classes.Token import Token, Token_List
 
 @cache
@@ -43,7 +43,7 @@ def normalize_tokens(_lines: tuple[Token, ...], path: str) -> tuple[Token_List, 
         nonlocal stack, indent_level, firs_inst, previous_element
 
         token = lines[index].token
-        if token in base.BODY_REQUIRED_KEYWORDS.keys() and lines[index-1].token not in (base.find_keyword("ELSE"), ):
+        if token in core.BODY_REQUIRED_KEYWORDS.keys() and lines[index-1].token not in (core.find_keyword("ELSE"), ):
             # append the line to the stack
             for i in range(index, len(lines)):
                 if lines[i].token == "{":
@@ -140,17 +140,17 @@ def normalize_tokens(_lines: tuple[Token, ...], path: str) -> tuple[Token_List, 
         for line in final_lines:
             if not line: continue
             for token in line:
-                if token.token in base.BODY_REQUIRED_KEYWORDS.keys():
+                if token.token in core.BODY_REQUIRED_KEYWORDS.keys():
                     broken_syntax = False
                     break
             if not broken_syntax:
                 if line[-1].token != ":":
-                    base.ERROR_CODES.SYNTAX_MISSING_EXCEPTED_TOKEN.format(token="{}").panic(
+                    core.ERROR_CODES.SYNTAX_MISSING_EXCEPTED_TOKEN.format(token="{}").panic(
                         file=path,
                         line_no=line[-1].line_number
                     )
                 broken_syntax = True
         else:
-            base.ERROR_CODES.SYNTAX_UNBALANCED_PARENTHESIS.panic("{", file=path, line_no=stack[-1].line_number)
+            core.ERROR_CODES.SYNTAX_UNBALANCED_PARENTHESIS.panic("{", file=path, line_no=stack[-1].line_number)
 
     return tuple(Token_List(_, _[0].indent_level, path) for _ in final_lines if _)

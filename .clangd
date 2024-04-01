@@ -9,6 +9,5 @@ CompileFlags: # Tweak the parse settings, example directory given to show format
     - "-IC:\\Program Files (x86)\\Windows Kits\\10\\include\\10.0.22621.0\\winrt"
     - "-IC:\\Program Files (x86)\\Windows Kits\\10\\include\\10.0.22621.0\\cppwinrt"
     - "-IC:\\Program Files (x86)\\Windows Kits\\NETFXSDK\\4.8\\include\\um"
-    - "-IZ:\\devolopment\\helix\\helix-lang\\target\\debug\\build\\helix-compiler-c4af7e19530dfe15\\out\\cxxbridge\\include"
-    - "-IZ:\\devolopment\\helix\\helix-lang\\target\\debug\\build\\helix-compiler-c4af7e19530dfe15\\out\\cxxbridge\\crate"
-  
+    - "-IZ:\\devolopment\\helix\\helix-lang\\target\\release\\build\\helix-compiler-bdc03fc12764a032\\out\\cxxbridge\\include"
+    - "-IZ:\\devolopment\\helix\\helix-lang\\target\\release\\build\\helix-compiler-bdc03fc12764a032\\out\\cxxbridge\\crate"

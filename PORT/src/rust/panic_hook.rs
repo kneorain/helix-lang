@@ -20,6 +20,7 @@ macro_rules! panic_name {
 
 pub fn better_panic(panic_info: &panic::PanicInfo) {
     error!("panic called");
+    error!("panic_info: {:?}", panic_info);
     static mut PANIC_LOCK: AtomicBool = AtomicBool::new(false);
     info!("panic lock acquired");
 
@@ -51,6 +52,50 @@ pub fn better_panic(panic_info: &panic::PanicInfo) {
         let frames = backtrace.frames();
         let relevant_frames = filter_relevant_frames(frames);
 
+        if relevant_frames.len() == 0 {
+            let filename = match panic_info.location() {
+                Some(s) => std::path::Path::new(s.file()),
+                None => {
+                    std::path::Path::new("unknown")
+                }
+            };
+            let line_no = match panic_info.location() {
+                Some(s) => s.line(),
+                None => {
+                    0
+                }
+            };
+
+            let column_no = match panic_info.location() {
+                Some(s) => s.column(),
+                None => {
+                    0
+                }
+            };
+            
+            let pos = 0;
+
+            let panic_payload = format!("{}", panic_info)
+                .split("\n")
+                .map(|s| s.to_owned())
+                .collect::<Vec<String>>()[1..]
+                .join("\n");
+
+            // TODO: all the line after the colon should be set where the None call is
+             
+            info!("panic_payload: {:?}", panic_payload);
+            __panic__!(
+                panic_payload,
+                None,
+                file = filename.to_str().unwrap(),
+                line_no = NumericType::Uint(line_no),
+                multi_frame = false,
+                pos = pos as i8,
+                thread_name = if thread_name != "main" { thread_name } else { "" },
+                lang = "rs"
+            );
+        }
+
         for (index, frame) in relevant_frames.iter().enumerate() {
             let symbol = match frame.symbols().get(0) {
                 Some(s) => s,
@@ -60,13 +105,6 @@ pub fn better_panic(panic_info: &panic::PanicInfo) {
             };
 
             let filename = match symbol.filename() {
-                Some(s) => s,
-                None => {
-                    continue;
-                }
-            };
-
-            let filename = match filename.to_str() {
                 Some(s) => s,
                 None => {
                     continue;
@@ -92,10 +130,11 @@ pub fn better_panic(panic_info: &panic::PanicInfo) {
                 .collect::<Vec<String>>()[1..]
                 .join("\n");
 
+            info!("panic_payload: {:?}", panic_payload);
             __panic__!(
                 panic_payload,
                 None,
-                file = filename,
+                file = filename.to_str().unwrap(),
                 line_no = NumericType::Uint(line_no),
                 multi_frame = if relevant_frames.len() > 1 { true } else { false },
                 pos = pos as i8,

@@ -1,5 +1,5 @@
 from __future__ import annotations
-import src.core.base as base
+import src.core.core as core
 from src.core.imports import (
     os,
     sys,
@@ -144,7 +144,7 @@ class Hashing(framework.Hashing):
             )
 
     def is_code_altered(self) -> bool:
-        if not base.USE_CACHE:
+        if not core.USE_CACHE:
             return True
 
         if not os.path.exists(self.__output_path) or (

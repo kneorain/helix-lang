@@ -1,4 +1,4 @@
-import src.core.base as base
+import src.core.core as core
 from src.core.imports import (
     exit,
     Iterable,
@@ -28,7 +28,7 @@ class ArgParser(framework.ArgParser):
         Returns the namespace of parsed command-line arguments.
     """
     def help_screen(self):
-        print(base.clean_docstring("""usage: helix [-h] [-v] [-o COMPILE] [-d] [-l LOG] [-c CONFIG] [-s] file ...
+        print(core.clean_docstring("""usage: helix [-h] [-v] [-o COMPILE] [-d] [-l LOG] [-c CONFIG] [-s] file ...
 
             Welcome to the Helix CLI, the gateway to harnessing the power and simplicity of Helix,
             a programming language designed for developers who cherish Python's ease but crave more
@@ -166,7 +166,7 @@ class ArgParser(framework.ArgParser):
         self.__args__ = parser.parse_args(argv)  # type: ignore
 
         if self.__args__.reset_cache:
-            base.USE_CACHE = False
+            core.USE_CACHE = False
         
         # Handling version flag
         if self.__args__.version:

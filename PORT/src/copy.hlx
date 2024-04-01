@@ -1,0 +1,106 @@
+class C_cout {
+    fn new(self) {
+        ...
+    }
+
+    fn <<(self, a: string) {
+        print(a);
+    }
+}
+
+let cout = C_cout.new();
+cout << "Hello, world!\n";
+
+fn some_test() {
+    let a = 5;
+    nonlocal fn inner() {
+        print(a);
+        a = 10; ~~ changes the value of a in the outer scope
+    }
+    inner();
+    print(a); ~~ prints 10
+    print(sq_root!(10));
+}
+
+macro sq_root!(arg1) {
+    body! {
+        let x = arg1;
+        let y = 1;
+        let e = 0.000001;
+        while (x - y > e) {
+            x = (x + y) / 2;
+            y = arg1 / x;
+        }
+        print(x);
+    }
+}
+
+~*~ converted to the following **python** code:
+
+class C_cout:
+    def __init__(self):
+        ...
+
+    def __lshift__(self, a):
+        print(a)
+
+cout = C_cout()
+cout << "Hello, world!\n"
+
+def some_test():
+    a = 5
+    def inner():
+        print(a)
+        a = 10
+    inner()
+    print(a)
+    print(sq_root_body1(10))
+    
+def sq_root_body1(arg1):
+    x = arg1
+    y = 1
+    e = 0.000001
+    while (x - y > e):
+        x = (x + y) / 2
+        y = arg1 / x
+    print(x)
+~*~
+
+macro sq_root!(arg1) {
+    let x = arg1;
+    let y = 1;
+    let e = 0.000001;
+    while (x - y > e) {
+        x = (x + y) / 2;
+        y = arg1 / x;
+    }
+
+    print(x);
+} ~~ this kind of macro can only be used as a statement, not as an expression
+
+
+let a = sq_root!(10); ~~ would not work since the macro is a statement
+sq_root!(10); ~~ would work
+
+macro sq_root!(arg1) {
+    arg1 * (10 ** -6 / 2 + 1) / 2
+} ~~ this kind of macro can only be used anywhere since its a expression
+
+let a = sq_root!(10); ~~ prints the square root of 10
+print(sq_root!(10)); ~~ prints the square root of 10
+
+macro sq_root!(arg1) {
+    body! {
+        let x = arg1;
+        let y = 1;
+        let e = 0.000001;
+        while (x - y > e) {
+            x = (x + y) / 2;
+            y = arg1 / x;
+        }
+        return x ~~ return must be used in a body macro
+    }
+}
+
+let a = sq_root!(10); ~~ prints the square root of 10
+print(sq_root!(10)); ~~ prints the square root of 10

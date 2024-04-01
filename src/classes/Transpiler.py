@@ -1,4 +1,4 @@
-import src.core.base as base
+import src.core.core as core
 from src.core.imports import (
     Scope,
     Processed_Line,
@@ -31,13 +31,13 @@ class Transpiler:
         if root_scope is None:
             raise ValueError("root_scope is None. Internal reference error. This should never happen.")
         
-        return base._unmarked(line, current_scope, parent_scope, root_scope, self.ignore_main)
+        return core._unmarked(line, current_scope, parent_scope, root_scope, self.ignore_main)
     
     def get_match_function(self, child: Token_List) -> Callable[[Token_List, Optional[Scope], Optional[Scope], Scope], Processed_Line]:
-        match = Scope.get_match(child, tuple(base.KEYWORDS.keys()))
+        match = Scope.get_match(child, tuple(core.KEYWORDS.keys()))
 
         if match:
-            return base.KEYWORDS[match]["parser"] # type: ignore
+            return core.KEYWORDS[match]["parser"] # type: ignore
         else:
             return self.parse_non_keyword
     
