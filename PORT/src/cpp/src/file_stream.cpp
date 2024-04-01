@@ -107,14 +107,14 @@ static inline size_t rls(char* data, int startLine, int endLine) {
     size_t size = 0;
     int currentLine = 1;
 
-    // Skip lines until we reach the startLine
+    // skip lines until it reaches the startLine
     while (*cursor && currentLine < startLine) {
         if (*cursor++ == '\n') {
             currentLine++;
         }
     }
 
-    // Count bytes in the specified line range
+    // count bytes in the specified line range
     while (*cursor && currentLine <= endLine) {
         size += (*cursor != '\n');
         currentLine += (*cursor++ == '\n');
@@ -125,24 +125,24 @@ static inline size_t rls(char* data, int startLine, int endLine) {
 
 // function to read a specific line from a file
 static inline std::string rl(char*& data, int line) {
-    if (--line < 0) return ""; // Adjust for 0-based indexing
+    if (--line < 0) return ""; // adjust for 0-based indexing
 
     const char* line_start = nullptr;
     const char* cursor = data;
 
     for (; *cursor; ++cursor) {
-        if (line_start == nullptr) line_start = cursor; // Set start at the beginning or after a newline
+        if (line_start == nullptr) line_start = cursor; // set start at the beginning or after a newline
 
         if (*cursor == '\n') {
             if (line-- == 0) {
-                // Found the desired line
+                // found the desired line
                 return std::string(line_start, cursor - line_start);
             }
-            line_start = nullptr; // Reset start for next line
+            line_start = nullptr; // reset start for next line
         }
     }
 
-    // Handle the case where the last line doesn't end with a newline
+    // handle the case where the last line doesn't end with a newline
     return (line == 0) ? std::string(line_start, cursor - line_start) : std::string();
 }
 
