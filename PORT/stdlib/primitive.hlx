@@ -1,0 +1,25 @@
+import "ops" as *;
+
+interface Primitive::Ops<Self> {
+    ~~ the super implmentation for all primitive types (int, float, string, char, list)
+    fn clone(&self) -> Self;
+    fn eq(&self, other: Self) -> bool;
+    fn ne(&self, other: Self) -> bool;
+    fn lt(&self, other: Self) -> bool;
+    fn le(&self, other: Self) -> bool;
+    fn gt(&self, other: Self) -> bool;
+    fn ge(&self, other: Self) -> bool;
+    fn cmp(&self, other: Self) -> Ordering;
+    fn hash(&self) -> int;
+    fn to_int(&self) -> int;
+    fn to_float(&self) -> float;
+    fn to_string(&self) -> string;
+    fn to_char(&self) -> char;
+    fn to_list(&self) -> list;
+    
+    ~~ !!NOT IMPORANT FOR NOW!!
+    ~~ fn to_bytes(&self) -> bytes;
+    ~~ fn to_bits(&self) -> bits;
+    ~~ fn to_hex(&self) -> hex;
+    ~~ fn to_base(&self, base: int) -> string;
+}

@@ -65,13 +65,6 @@ pub fn better_panic(panic_info: &panic::PanicInfo) {
                     0
                 }
             };
-
-            let column_no = match panic_info.location() {
-                Some(s) => s.column(),
-                None => {
-                    0
-                }
-            };
             
             let pos = 0;
 

@@ -1,5 +1,4 @@
-use serde::de;
-use serde::{de::Error, Deserialize, Serialize};
+use serde::{Deserialize, Serialize};
 use serde_repr::*;
 use std::fs;
 use std::path::Path;

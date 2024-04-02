@@ -1,3 +1,9 @@
+#[deprecated = "This module is not required when using an AST and a lexer/parser."]
+/// # Deprecated
+/// This module is marked as deprecated because it is not required when using an AST and a
+/// lexer/parser. This is a remnant of the old codebase and will not be used in
+/// the current implementation.
+
 use super::token::Token;
 use pyo3::prelude::*;
 use std::hash::Hash;
@@ -36,20 +42,18 @@ def replace(self, __old: str, __new: str) -> 'Token_List':
 #[pyclass]
 #[repr(C)]
 #[derive(Clone, Debug, Hash, PartialEq, Eq)]
-struct TokenList {
+#[deprecated]
+pub struct TokenList {
     line:         Vec<Token>,
     indent_level: Arc<u16>,
     file:         Arc<str>,
 }
-// TODO: If this is all just in-place getting of betweens this can easily be all done inplace with a single iterator getting chunked up,
-// all of the functions that return using .collect can return a Filter or FilterMap (depending of use case)
-// as it would be more efficient and less memory intensive than collecting into a vector and then returning that vector
-// leading to less unnecessary allocations and deallocations
-// contains_from, full_line, get_all_after,get_all_before,get_between
-// can all be converted to this format
 
 #[allow(dead_code)]
+#[deprecated = "This module is not required when using an AST and a lexer/parser."]
 impl TokenList {
+    /// Creates a new `TokenList` with the given line, indent level, and file.
+    #[deprecated = "This module is not required when using an AST and a lexer/parser."]
     pub fn new(line: Vec<Token>, indent_level: Arc<u16>, file: Arc<str>) -> Self {
         Self {
             line,
@@ -58,39 +62,30 @@ impl TokenList {
         }
     }
 
+    /// Returns a reference to the line of tokens in the `TokenList`.
     pub fn line(&self) -> &[Token] {
         &self.line
     }
 
+    /// Returns a reference to the indent level of the `TokenList`.
     pub fn indent_level(&self) -> &u16 {
         self.indent_level.as_ref()
     }
 
+    /// Returns a reference to the file of the `TokenList`.
     pub fn file(&self) -> &str {
         self.file.as_ref()
     }
 
-    // REMOVED: pub fn find_line_number(&self, _match: &str) -> i32 {}
-
+    /// Checks if the `TokenList` contains a token with the given key.
     pub fn contains_str(&self, key: &str) -> bool {
         self.line.iter().any(|token| key == token.token())
     }
 
-    //pub fn contains_from(&self, key: &Token) -> Vec<Token> {
-    //    self.line
-    //        .iter()
-    //        .filter_map(|token| match token.contains(key) {
-    //            true => Some(token.clone()),
-    //            false => None,
-    //        })
-    //        .collect()
-    //}
-    // I dont remember what this function does
-
+    /// Returns the full line of tokens as a string.
     pub fn full_line(&self) -> String {
         let mut found = false;
-        // join all tokens with ' '
-        return self.line
+        self.line
             .iter()
             .map(|token| token.token())
             .fold(String::new(), |acc, token| {
@@ -102,30 +97,35 @@ impl TokenList {
                     }
                     false => acc + token + " ",
                 }
-            });
+            })
     }
 
+    /// Returns all tokens after the given token.
     pub fn get_all_after(&self, token: &str) -> Vec<Token> {
         let mut found = false;
         self.line
             .iter()
             .filter_map(|line| {
                 match found {
-                    true => return Some(line.clone()), // find a way to return a reference
-                    false if token == line.token() => {found = true; None},
+                    true => return Some(line.clone()),
+                    false if token == line.token() => {
+                        found = true;
+                        None
+                    }
                     _ => None
                 }
             })
             .collect()
     }
 
+    /// Returns all tokens before the given token.
     pub fn get_all_before(&self, token: &str) -> Vec<Token> {
         let mut found = false;
         self.line
             .iter()
             .filter_map(|line| {
                 match found {
-                    true => Some(line.clone()), // find a way to return a reference
+                    true => Some(line.clone()),
                     false if token == line.token() => {
                         found = true;
                         return None;
@@ -136,6 +136,7 @@ impl TokenList {
             .collect()
     }
 
+    /// Returns all tokens between the start and end tokens.
     pub fn get_between(&self, start: &str, end: &str) -> Vec<Token> {
         let mut start_index = 0;
         let mut end_index = 0;
@@ -145,17 +146,6 @@ impl TokenList {
             .iter()
             .enumerate()
             .filter_map(|(i, line)| {
-                // match start == line.token() && count == 0 {
-                //     true => {
-                //         start_index = i;
-                //         count += 1;
-                //     }
-                //     false if start == line.token() && count > 0 => {
-                //         count += 1;
-                //     }
-                //     false => {}
-                // }
-
                 if start == line.token() && count == 0 {
                     start_index = i;
                     count += 1;
@@ -170,11 +160,12 @@ impl TokenList {
                         return Some(line.clone());
                     }
                 }
-                return None;
+                None
             })
             .collect()
     }
 
+    /// Returns the number of occurrences of the given value in the `TokenList`.
     pub fn count(&self, value: &str) -> usize {
         let mut count = 0;
         for token in &self.line {
@@ -182,10 +173,10 @@ impl TokenList {
                 count += 1;
             }
         }
-
-        return count;
+        count
     }
 
+    /// Splits the `TokenList` into multiple `TokenList` instances based on the given value.
     pub fn split(&self, value: &str) -> Vec<TokenList> {
         let temp = self.clone();
         let mut split = Vec::new();
@@ -199,9 +190,10 @@ impl TokenList {
         }
 
         split.push(temp.splice(start, None));
-        return split;
+        split
     }
 
+    /// Splits the `TokenList` into multiple `Token` instances based on the given value.
     pub fn split_line(&self, value: &str) -> Vec<Token> {
         let temp = self.clone();
         let mut split = Vec::new();
@@ -215,23 +207,27 @@ impl TokenList {
         }
 
         split.extend(temp.splice(start, None).line);
-        return split;
+        split
     }
 
+    /// Removes a range of tokens from the `TokenList` and returns them as a new `TokenList`.
     pub fn splice(&self, start: usize, end: Option<usize>) -> TokenList {
         let mut temp = self.clone();
         temp.line = temp.line[start..end.unwrap_or(temp.line.len())].to_vec();
-        return temp;
+        temp
     }
 
+    /// Removes a range of tokens from the `TokenList` and returns them as a vector of `Token`.
     pub fn splice_line(&self, start: usize, end: Option<usize>) -> Vec<Token> {
         self.splice(start, end).line
     }
 
+    /// Appends a token to the end of the `TokenList`.
     pub fn append(&mut self, value: Token) {
         self.line.push(value);
     }
 
+    /// Replaces all occurrences of the old token with the new token.
     pub fn replace(&mut self, old: &str, new: &str) {
         self.line.iter_mut().for_each(|token| {
             if old == token.token() {
@@ -240,10 +236,12 @@ impl TokenList {
         });
     }
 
+    /// Removes all occurrences of the given token from the `TokenList`.
     pub fn remove(&mut self, value: &str) {
         self.line.retain(|token| value != token.token());
     }
 
+    /// Returns the index of the first occurrence of the given token in the `TokenList`.
     pub fn index(&self, value: &str) -> usize {
         self.line
             .iter()
@@ -251,22 +249,27 @@ impl TokenList {
             .unwrap()
     }
 
+    /// Returns the number of tokens in the `TokenList`.
     pub fn len(&self) -> usize {
         self.line.len()
     }
 
+    /// Returns the token at the given index in the `TokenList`.
     pub fn get(&self, index: usize) -> Token {
         self.line[index].clone()
     }
 
+    /// Sets the token at the given index in the `TokenList`.
     pub fn set(&mut self, index: usize, value: Token) {
         self.line[index] = value;
     }
 
+    /// Returns an iterator over the tokens in the `TokenList`.
     pub fn iter(&self) -> std::slice::Iter<Token> {
         self.line.iter()
     }
 
+    /// Returns a mutable iterator over the tokens in the `TokenList`.
     pub fn iter_mut(&mut self) -> std::slice::IterMut<Token> {
         self.line.iter_mut()
     }

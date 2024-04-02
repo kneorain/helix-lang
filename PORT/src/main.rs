@@ -9,11 +9,10 @@ extern crate pretty_env_logger;
 #[macro_use]
 extern crate log;
 
-use std::fs::File;
-use std::io::{BufRead, Read};
 use std::{ io, panic, thread };
 use std::time;
 
+#[allow(dead_code)]
 fn test_threads() {
     let _handler = thread::Builder
         ::new()
@@ -54,17 +53,20 @@ fn main() -> io::Result<()> {
     rust::init_rust();
     python::init_python();
     
-    ////python::test::test_kwargs(1, 2, None);
-    ////println!("{:?}", python::test::test_args(1, 2));
-    ////
-    ////cpp::test::c("hello from Rust");
-    ////
-    ////println!("Result: {}", cpp::test::add_sum(2, 62)); // 2^62 is the max value for i64
-    ////
-    ////// print the cwd
-    ////let cwd = std::env::current_dir().unwrap();
-    ////println!("Current working directory: {}", cwd.display());
-
+    println!("\n---------- PYTHON ----------");
+    python::test::test_kwargs(1, 2, None);
+    println!("{:?}", python::test::test_args(1, 2));
+    
+    println!("\n---------- C++ ----------");
+    cpp::test::c("hello from Rust");
+    
+    println!("Result: {}", cpp::test::add_sum(2, 62)); // 2^62 is the max value for i64
+    
+    // print the cwd
+    println!("\n---------- RUST ----------");
+    let cwd = std::env::current_dir().unwrap();
+    println!("Current working directory: {}", cwd.display());
+    
     //let inst = cpp::file_stream::new_file_stream("PORT/src/test.hlx");
     
     
@@ -74,17 +76,20 @@ fn main() -> io::Result<()> {
     //let inst = cpp::file_stream::new_file_stream("PORT/src/test.hlx");
     //let _reader = inst.get_data_from_chunk(0);
     
-    let start = time::Instant::now();
+    // let start = time::Instant::now();
     
-    let input = File::open("PORT/src/copy.hlx")?;
-    let buffered = std::io::BufReader::new(input);
-    let line_count = buffered.lines().count();
-
-    let elapsed = start.elapsed();
-
-    println!("Rust IO Elapsed: {:?}", elapsed);
-    println!("total lines {}", line_count);
+    // let input = File::open("PORT/src/copy.hlx")?;
+    // let buffered = std::io::BufReader::new(input);
+    // let line_count = buffered.lines().count();
     
+    // let elapsed = start.elapsed();
+    
+    // println!("Rust IO Elapsed: {:?}", elapsed);
+    // println!("total lines {}", line_count);
+    
+    // FIXME: C++ IS UNDER COUNTING LINES
+    
+    println!("\n---------- C++ ----------");
     let start = time::Instant::now();
     
     let inst = cpp::file_stream::new_file_stream("PORT/src/copy.hlx");

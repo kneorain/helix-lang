@@ -61,7 +61,7 @@ pub struct Keyword {
     pub ty: KeywordType,
 }
 #[derive(Debug, PartialEq, Eq, Hash)]
-enum KeywordType {
+pub enum KeywordType {
     ControlFlow,
     Loop,
     LoopControl,

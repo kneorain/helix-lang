@@ -1,0 +1,71 @@
+import "primitive" as *;
+import "ops" as *;
+
+abstract int::Primitive+Ops<int>+Bitwise {
+    fn max(&self)               -> int      { ... }
+    fn min(&self)               -> int      { ... }
+    fn bits(&self)              -> int      { ... }
+    fn bytes(&self)             -> int      { ... }
+    fn to_str(&self, base: int) -> string   { ... }
+    fn sqrt(&self)              -> int      { ... }
+    fn abs(&self)               -> int      { ... }
+    fn sign(&self)              -> int      { ... }
+    fn is_positive(&self)       -> bool     { ... }
+    fn is_negative(&self)       -> bool     { ... }
+    fn is_zero(&self)           -> bool     { ... }
+    fn next_power_of_two()      -> int      { ... }
+
+    impl Primitive:
+        fn clone(&self)             -> Self   { ... }
+        fn eq(&self,  other:  Self) -> bool   { ... }
+        fn ne(&self,  other:  Self) -> bool   { ... }
+        fn lt(&self,  other:  Self) -> bool   { ... }
+        fn le(&self,  other:  Self) -> bool   { ... }
+        fn gt(&self,  other:  Self) -> bool   { ... }
+        fn ge(&self,  other:  Self) -> bool   { ... }
+        fn hash(&self)              -> int    { ... }
+        fn to_int(&self)            -> int    { ... }
+        fn to_float(&self)          -> float  { ... }
+        fn to_string(&self)         -> string { ... }
+        fn to_char(&self)           -> char   { ... }
+        fn to_list(&self)           -> list   { ... }
+
+        static fn convert(other: float) -> Self { ... }
+        static fn convert(other: int)   -> Self { ... }
+        static fn convert(other: char)  -> Self { ... }
+        static fn convert(other: string)-> Self { ... }
+
+    impl Ops:
+        fn +  (&self, other: Self)  -> Self { ... }
+        fn -  (&self, other: Self)  -> Self { ... }
+        fn *  (&self, other: Self)  -> Self { ... }
+        fn /  (&self, other: Self)  -> Self { ... }
+        fn %  (&self, other: Self)  -> Self { ... }
+        fn |  (&self, other: Self)  -> Self { ... }
+        fn &  (&self, other: Self)  -> Self { ... }
+        fn ^  (&self, other: Self)  -> Self { ... }
+        fn << (&self, other: Self)  -> Self { ... }
+        fn >> (&self, other: Self)  -> Self { ... }
+        fn !  (&self)               -> Self { ... }
+        fn -  (&self)               -> Self { ... }
+        fn ++ (&self)               -> Self { ... }
+        fn -- (&self)               -> Self { ... }
+        fn += (&self, other: Self)  -> Self { ... }
+        fn -= (&self, other: Self)  -> Self { ... }
+        fn *= (&self, other: Self)  -> Self { ... }
+        fn /= (&self, other: Self)  -> Self { ... }
+        fn %= (&self, other: Self)  -> Self { ... }
+        fn |= (&self, other: Self)  -> Self { ... }
+        fn &= (&self, other: Self)  -> Self { ... }
+        fn ^= (&self, other: Self)  -> Self { ... }
+        fn <<=(&self, other: Self)  -> Self { ... }
+        fn >>=(&self, other: Self)  -> Self { ... }
+    
+    impl Bitwise:
+        fn ==(&self, other: Self)   -> bool { ... }
+        fn !=(&self, other: Self)   -> bool { ... }
+        fn <(&self, other: Self)    -> bool { ... }
+        fn <=(&self, other: Self)   -> bool { ... }
+        fn >(&self, other: Self)    -> bool { ... }
+        fn >=(&self, other: Self)   -> bool { ... }
+}
