@@ -1,6 +1,6 @@
 # This document outlines the workload of each team member on what to do.
 
-- [ ] **Josh**
+- **Josh**
   - [ ] enums
   - **Data Types**
     - [ ] `int`
