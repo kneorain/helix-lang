@@ -4,6 +4,9 @@ use pyo3::{
     types::{PyDict, PyList, PyModule}, Python,
 };
 
+#[path ="./macros/panic.rs"]
+mod panic_macro;
+
 pub mod shared;
 mod private;
 
@@ -67,24 +70,6 @@ pub fn init_python() {
             panic!("Failed to find the PORT directory");
         }
     });
-}
-
-#[macro_export]
-macro_rules! __panic__ {
-    ($error:expr, $mark:expr $(, line_no = $line_no:expr)?) => {
-        {
-            let mut params = $crate::python::shared::default_params::PanicParams::default();
-            $(params.line_no = Some($crate::NumericType::Int($line_no));)*
-            $crate::python::__panic__impl($error, $mark, params);
-        }
-    };
-    ($error:expr, $mark:expr $(, $field:ident = $value:expr)*) => {
-        {
-            let mut params = $crate::python::shared::default_params::PanicParams::default();
-            $(params.$field = Some($value);)*
-            $crate::python::__panic__impl($error, $mark, params);
-        }
-    };
 }
 
 #[allow(non_snake_case)]
