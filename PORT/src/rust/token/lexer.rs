@@ -280,7 +280,7 @@ impl<'a> Iterator for Tokenizer<'a> {
                     operator.iter().enumerate().all(|(i, c)| {
                         // TODO: make this more optimal
                         if c == &b'\0' {
-                            print!("*");
+                            //print!("*");
                             return true;
                         }
 
