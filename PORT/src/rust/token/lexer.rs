@@ -1,136 +1,356 @@
-use super::{Token, TokenType};
-use regex::Regex;
-use std::sync::Arc;
-use std::{fs::File, io::self};
-use std::sync::Mutex;
-use std::thread;
-use std::sync::mpsc;
-use std::io::BufRead;
+use std::{iter::Peekable, ops::ControlFlow, slice};
+use smallvec::{smallvec, SmallVec};
+use core::str::Chars;
 
+use super::Token;
 
-pub struct Lexer {
-    file_name: Arc<str>,
+// lazy_static::lazy_static! {
+//     static ref STRING_RE: Regex = Regex::new(r#"([fbur]*"[^"\\]*(?:\\.[^"\\]*)*")"#).unwrap();
+//     static ref CHARACTER_RE: Regex = Regex::new(r#"([fbur]*'[^'\\]*(?:\\.[^'\\]*)*')"#).unwrap();
+//     static ref NUMERIC_RE: Regex = Regex::new(r#"(\b\d+\.\d+\b|\b\d+[fdui]?\b)"#).unwrap();
+//     static ref IDENTIFIER_RE: Regex = Regex::new(r#"(\b[a-zA-Z][a-zA-Z0-9_]*\b)"#).unwrap();
+//     static ref DELIMITER_RE: Regex = Regex::new(r#"([\(\)\{\}\[\];,])"#).unwrap();
+//     static ref OPERATOR_RE: Regex = Regex::new(r#"([+\-*/%=&|!<>^])"#).unwrap();
+//     static ref COMMENT_RE: Regex = Regex::new(r#"((?://[^\n]*)|(/\*[\s\S]*?\*/))"#).unwrap();
+// }
+
+// make an interface for a lexer
+
+pub trait Lexer {
+    fn lexer    (&self, file:    &str) -> Vec<Token>;
+    fn lexer_str(&self, content: &str) -> Vec<Token>;
 }
 
+#[derive(Debug, Clone)]
+pub struct Tokenizer {
+    chars: Peekable<Chars<'static>>,
+    column: usize,
+    row: usize,
+    tokens: SmallVec<[String; 32]>,
+}
 
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+pub struct TokenIR {
+    token: &'static str,
+    column: usize,
+    row: usize,
+}
+
+impl TokenIR {
+    pub fn new(token: &[u8], column: usize, row: usize) -> Self {
+        let column = column.saturating_sub(token.len()); // + (1);
+            // FIXME: more testing is needed to determine if this is the
+            // correct way to calculate the column since the +1 is
+            // a hack to fix the column being off by one.
+        let ptr = token.as_ptr() as *const u8;
+        let token = std::str::from_utf8(unsafe { slice::from_raw_parts(ptr, token.len()) }).unwrap();
+
+        TokenIR {
+            token,
+            column,
+            row,
+        }
+    }
+}
 
 lazy_static::lazy_static! {
-    static ref STRING_RE: Regex = Regex::new(r#"([fbur]*"[^"\\]*(?:\\.[^"\\]*)*")"#).unwrap();
-    static ref CHARACTER_RE: Regex = Regex::new(r#"([fbur]*'[^'\\]*(?:\\.[^'\\]*)*')"#).unwrap();
-    static ref NUMERIC_RE: Regex = Regex::new(r#"(\b\d+\.\d+\b|\b\d+[fdui]?\b)"#).unwrap();
-    static ref IDENTIFIER_RE: Regex = Regex::new(r#"(\b[a-zA-Z][a-zA-Z0-9_]*\b)"#).unwrap();
-    static ref DELIMITER_RE: Regex = Regex::new(r#"([\(\)\{\}\[\];,])"#).unwrap();
-    static ref OPERATOR_RE: Regex = Regex::new(r#"([+\-*/%=&|!<>^])"#).unwrap();
-    static ref COMMENT_RE: Regex = Regex::new(r#"((?://[^\n]*)|(/\*[\s\S]*?\*/))"#).unwrap();
+    static ref MULTI_CHAR_OPERATORS: SmallVec<[SmallVec<[char; 0]>; 0]> = smallvec![
+        smallvec!['=', '=', '='],
+        smallvec!['!', '=', '='],
+        smallvec!['.', '.', '.'],
+        smallvec!['r', '/', '/'],
+        smallvec!['r', '*', '*'],
+        smallvec!['r', '<', '<'],
+        smallvec!['r', '>', '>'],
+        smallvec!['/', '/', '='],
+        smallvec!['*', '*', '='],
+        smallvec!['<', '<', '='],
+        smallvec!['>', '>', '='],
+        smallvec!['?', '?',],
+        smallvec!['|', ':',],
+        smallvec!['=', '=',],
+        smallvec!['!', '=',],
+        smallvec!['<', '=',],
+        smallvec!['>', '=',],
+        smallvec!['/', '/',],
+        smallvec!['*', '*',],
+        smallvec!['<', '<',],
+        smallvec!['>', '>',],
+        smallvec!['r', '+',],
+        smallvec!['r', '-',],
+        smallvec!['r', '*',],
+        smallvec!['r', '/',],
+        smallvec!['r', '%',],
+        smallvec!['r', '&',],
+        smallvec!['r', '|',],
+        smallvec!['r', '^',],
+        smallvec!['+', '=',],
+        smallvec!['-', '=',],
+        smallvec!['*', '=',],
+        smallvec!['/', '=',],
+        smallvec!['%', '=',],
+        smallvec!['&', '=',],
+        smallvec!['|', '=',],
+        smallvec!['^', '=',],
+        smallvec!['=', '=',],
+        smallvec!['=', '>',],
+        smallvec!['@', '=',],
+        smallvec!['-', '>',],
+        smallvec!['<', '-',],
+        smallvec!['<', '=',],
+        smallvec!['>', '=',],
+        smallvec!['&', '&',],
+        smallvec!['-', '-',],
+        smallvec![':', ':',],
+        smallvec!['|', '|',],
+        smallvec!['+', '+',],
+        smallvec!['_', '_',],
+        smallvec!['?', '=',],
+    ];
+
+    static ref ALLOWED_STRING_PREFIXES: SmallVec<[char; 4]> = smallvec!['r', 'b', 'u', 'f'];
 }
 
-// make an unsafe but VERY fast io reader for the lexer
-
-impl Lexer {
-    pub fn new(file_name: &str) -> Self {
-        Self {
-            file_name: Arc::from(file_name.to_owned()),
+impl Tokenizer {
+    pub fn new(content: &'static str) -> Self {
+        Tokenizer {
+            chars: content.chars().peekable(),
+            column: 0,
+            row: 0,
+            tokens: SmallVec::new(),
         }
     }
 
-    pub fn tokenize(&self) -> Vec<Token> {
-        let file = File::open(&*self.file_name).unwrap();
-        let reader = io::BufReader::new(file);
-        let tokens = Arc::new(Mutex::new(Vec::new()));
-        let mut line_number = 1;
-    
-        let (sender, receiver) = mpsc::channel();
-    
-        // Spawn multiple threads to process lines concurrently
-        let num_threads = 4;
-        let receiver = Arc::new(Mutex::new(receiver));
+    /// dirty estimate of the number of tokens in the content
+    pub fn fast_estimate_number_of_tokens(content: &str) -> usize {
+        let mut count = 0;
+        let mut in_string = false;
+        let mut prev_char = '\0';
 
-        for _ in 0..num_threads {
-            let tokens = Arc::clone(&tokens);
-            let file_name = Arc::clone(&self.file_name);
-            let receiver = Arc::clone(&receiver);
-
-            let handle = thread::spawn(move || {
-                while let Ok(line) = receiver.lock().unwrap().recv() {
-                    let line_tokens = Lexer::tokenize_line(file_name.clone(), Arc::from(line), line_number);
-                    line_number += 1;
-
-                    tokens.lock().unwrap().extend(line_tokens);
+        for c in content.chars() {
+            if in_string {
+                if c == '"' && prev_char != '\\' {  // Handle string closure and escape character
+                    in_string = false;
                 }
-            });
-
-            handle.join().unwrap();
+            } else {
+                if c == '"' {  // Handle string opening
+                    in_string = true;
+                    count += 1; // Count the entire string as one token
+                } else if c.is_alphanumeric() || c == '_' || c.is_ascii_punctuation() {
+                    count += 1;
+                }
+            }
+            prev_char = c;
         }
-
-        // Read the file line by line and send each line to the threads
-        for line in reader.lines() {
-            sender.send(line.unwrap()).unwrap();
-        }
-
-        // Drop the sender to close the channel
-        drop(sender);
-
-        // Wait for all threads to finish
-        for _ in 0..num_threads {
-            receiver.lock().unwrap().recv().unwrap();
-        }
-
-        // Extract the tokens from the Arc<Mutex<Vec<Token>>>
-        Arc::try_unwrap(tokens).unwrap().into_inner().unwrap()
+        count
     }
 
-    fn tokenize_line(file_name: Arc<str>, line: Arc<str>, line_number: i32) -> Vec<Token> {
+    pub fn gather_all_tokens(tokenizer: &mut Self, _content: &str) -> Vec<TokenIR> {
         let mut tokens = Vec::new();
-        let mut start = 0;
 
-        while start < line.len() {
-            if let Some((length, token_type)) = Lexer::find_next_token(&line[start..]) {
-                tokens.push(Token::new(
-                    line.clone(),
-                    file_name.clone(),
-                    line_number,
-                    start as u16,
-                    line[start..start + length].trim().to_owned(),
-                    token_type,
-                ));
-                start += length;
+        loop {
+            let token = tokenizer.next();
+            if !token.token.is_empty() {
+                tokens.push(token);
             } else {
-                start += 1; // Skip to next character
+                break;
             }
         }
 
-        return tokens;
+        tokens
     }
 
-    fn find_next_token(s: &str) -> Option<(usize, TokenType)> {
-        if let Some(captures) = STRING_RE.captures(s) {
-            return Some((captures.get(0).unwrap().as_str().len(), TokenType::STRING));
+    #[inline]
+    pub fn next(&mut self) -> TokenIR {
+        let mut token: Vec<u8> = Vec::new();
+        
+        while let Some(&ch) = self.chars.peek() {
+            if ch.is_whitespace() {
+                if ch == '\n' {
+                    self.row += 1;
+                    self.column = 0;
+                } else {
+                    self.column += 1;
+                }
+
+                self.chars.next();
+                if !token.is_empty() {
+                    break;
+                }
+                continue;
+            }
+
+            // Check if the next characters are a multi-character operator
+            if MULTI_CHAR_OPERATORS.iter().any(|operator| operator[0] == ch) {
+                if let Some(operator) = MULTI_CHAR_OPERATORS.iter().find(|&operator| {
+                    operator.iter().enumerate().all(|(i, &c)| {
+                        if let Some(ch) = self.chars.clone().nth(i) {
+                            c == ch
+                        } else {
+                            false
+                        }
+                    })
+                }) {
+                    for _ in 0..operator.len() {
+                        token.push(self.chars.next().unwrap() as u8);
+                        self.column += 1;
+                    }
+                    break; // Break out of "while let Some(&ch) = self.chars.peek() { ... }"
+                }
+            }
+            
+            // Handle single character tokens
+            match ch {
+                '{' | '}' | '(' | ')' | ';' | '!' | '=' | '|' => {
+                    if let ControlFlow::Break(_) = self.process_delimiter(&mut token) {
+                        break;
+                    }
+                }
+                '\'' | '"' => {
+                    if let ControlFlow::Break(_) = self.process_string(&mut token, ch) {
+                        break;
+                    }
+                }
+                _ => {
+                    if let ControlFlow::Break(_) = self.process_char(ch, &mut token) {
+                        continue;
+                    }
+                }
+            }
+        }
+    
+        let return_val = TokenIR::new(
+            &token,
+            self.column,
+            self.row);
+        return_val
+    }
+
+    fn process_char(&mut self, ch: char, token: &mut Vec<u8>) -> ControlFlow<()> {
+        if ALLOWED_STRING_PREFIXES.contains(&ch) && (*self.chars.peek().unwrap() == '"' || *self.chars.peek().unwrap() == '\'') {
+            token.push(ch as u8);
+            self.column += 1;
+            return ControlFlow::Break(());
+        }
+        token.push(self.chars.next().unwrap() as u8);
+        self.column += 1;
+        // if theres a string prefix like r, b, u, f and a " or ' then we need to handle it
+    
+    
+        ControlFlow::Continue(())
+    }
+    
+    fn process_delimiter(&mut self, token: &mut Vec<u8>) -> ControlFlow<()> {
+        if token.is_empty() {
+            token.push(self.chars.next().unwrap() as u8);
+            self.column += 1;
+        }
+        return ControlFlow::Break(());
+    }
+    
+    #[inline]
+    fn process_string(&mut self, token: &mut Vec<u8>, ch: char) -> ControlFlow<()> {
+        if !token.is_empty() && !(token.ends_with(&[ALLOWED_STRING_PREFIXES[0] as u8]) || token.ends_with(&[ALLOWED_STRING_PREFIXES[1] as u8]) || token.ends_with(&[ALLOWED_STRING_PREFIXES[2] as u8]) || token.ends_with(&[ALLOWED_STRING_PREFIXES[3] as u8])) {
+            return ControlFlow::Break(());
+        }
+        let quote_char = ch;
+        token.push(self.chars.next().unwrap() as u8);
+        self.column += 1;
+        let mut is_escaped = false;
+        // Push the starting quote
+        while let Some(&c) = self.chars.peek() {
+            if c == '\n' {
+                self.row += 1;
+            }
+    
+            if c == '\\' && !is_escaped {
+                is_escaped = true;
+                token.push(self.chars.next().unwrap() as u8);
+                self.column += 1;
+                continue;
+            }
+            if c == quote_char && !is_escaped {
+                token.push(self.chars.next().unwrap() as u8);
+                self.column += 1;
+                break;
+            }
+            is_escaped = false;
+            token.push(self.chars.next().unwrap() as u8);
+            self.column += 1;
+        }
+        ControlFlow::Continue(())
+    }
+}
+
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_determine_tokens() {
+        let content =
+"fn === main() {
+            println!(\"Hello,
+            world!\");
+            \"Hello; \\\" world!\"
+            if true != false {
+                let xyz_99_yoMama = 5 | b\"some\" | 'c';
+            }
+        }";
+
+        let mut tokenizer = Tokenizer::new(content);
+
+        let excepeted = [
+            "fn",
+            "===",
+            "main",
+            "(",
+            ")",
+            "{",
+            "println",
+            "!",
+            "(",
+            "\"Hello,\n            world!\"",
+            ")",
+            ";",
+            "\"Hello; \\\" world!\"",
+            "if",
+            "true",
+            "!=",
+            "false",
+            "{",
+            "let",
+            "xyz_99_yoMama",
+            "=",
+            "5",
+            "|",
+            "b\"some\"",
+            "|",
+            "'c'",
+            ";",
+            "}",
+            "}",
+        ];
+
+        for index in 0..excepeted.len() {
+            
+            let start = std::time::Instant::now();
+            let token = tokenizer.next();
+            let elapsed = start.elapsed();
+            println!("r:{} c:{} t:{} e:{:?}", token.row, token.column, token.token, elapsed);
+            assert_eq!(token.token, excepeted[index]);
+        
         }
 
-        if let Some(captures) = CHARACTER_RE.captures(s) {
-            return Some((captures.get(0).unwrap().as_str().len(), TokenType::CHARACTER));
-        }
+        tokenizer = Tokenizer::new(content);
+         
+        let start = std::time::Instant::now();
+        let tokens = Tokenizer::gather_all_tokens(&mut tokenizer, content);
+        
+        let elapsed = start.elapsed();
 
-        if let Some(captures) = NUMERIC_RE.captures(s) {
-            return Some((captures.get(0).unwrap().as_str().len(), TokenType::NUMERIC));
-        }
-
-        if let Some(captures) = IDENTIFIER_RE.captures(s) {
-            return Some((captures.get(0).unwrap().as_str().len(), TokenType::IDENTIFIER));
-        }
-
-        if let Some(captures) = DELIMITER_RE.captures(s) {
-            return Some((captures.get(0).unwrap().as_str().len(), TokenType::DELIMITER));
-        }
-
-        if let Some(captures) = OPERATOR_RE.captures(s) {
-            return Some((captures.get(0).unwrap().as_str().len(), TokenType::OPERATOR));
-        }
-
-        if let Some(captures) = COMMENT_RE.captures(s) {
-            return Some((captures.get(0).unwrap().as_str().len(), TokenType::COMMENT));
-        }
-
-        return None;
+        println!("{:?}", tokens);
+        println!("{:?}", elapsed);
     }
 }

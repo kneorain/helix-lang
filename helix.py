@@ -597,7 +597,6 @@ def exit_func(*args: Any) -> None:
     gc.collect(0)
     gc.collect(1)
     gc.collect(2)
-
 atexit.register(exit_func)
 signal.signal(signal.SIGTERM, exit_func)
 

@@ -146,7 +146,7 @@ static inline std::string rl(char*& data, int line) {
     return (line == 0) ? std::string(line_start, cursor - line_start) : std::string();
 }
 
-static std::_Iter_diff_t<char *> tl(char const *fname) {
+static long long tl(char const *fname) {
     #ifdef __unix__ // tell kernel the access pattern.
         posix_fadvise(fd, 0, 0, 1);  // FDADVICE_SEQUENTIAL
     #endif
@@ -199,7 +199,7 @@ static std::_Iter_diff_t<char *> tl(char const *fname) {
     #endif
 
     // get the total number of lines
-    auto total_lines = std::count(
+    long long total_lines = std::count(
         data,
         data + size,
         '\n'

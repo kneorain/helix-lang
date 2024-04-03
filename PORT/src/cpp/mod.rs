@@ -1,4 +1,3 @@
-#[no_mangle]
 mod private;
 pub mod shared;
 

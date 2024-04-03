@@ -60,6 +60,7 @@ pub struct Keyword {
     pub has_body: bool, // deprecate this field
 }
 
+
 /// Counts the number of elements passed to it,
 /// [credit](https://stackoverflow.com/a/34324856)
 macro_rules! count {
@@ -71,27 +72,27 @@ macro_rules! count {
 // option!(something, default_expr)
 // option!((pretend this is blank), default_expr)
 // if its something then return the something, this is for returning code
-#[macro_export]
-macro_rules! option {
-    ($option:expr, $default:expr ) => {
-        $option
-    };
-    (, $default:expr) => {
-        $default
-    };
-}
+// #[macro_export]
+// macro_rules! option {
+//     ($option:expr, $default:expr ) => {
+//         $option
+//     };
+//     (, $default:expr) => {
+//         $default
+//     };
+// }
 
-macro_rules! unordered_struct_macro{
-    ($name:ident { $($field:ident : $value:expr),* }) => {
-        paste! {
-            struct $name {
-                $(
-                    $field: $value,
-                )*
-            }
-        }
-    };
-}
+// macro_rules! unordered_struct_macro{
+//     ($name:ident { $($field:ident : $value:expr),* }) => {
+//         paste! {
+//             struct $name {
+//                 $(
+//                     $field: $value,
+//                 )*
+//             }
+//         }
+//     };
+// }
 
 // make this load at compile time from a toml file or something, or even load into a dyn lib that is called on comp time...
 

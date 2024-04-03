@@ -1,4 +1,5 @@
-use std::fmt::Display;
+#[deprecated = "This module is deprecated and will be removed in the future. Use the Token module instead."]
+
 use std::hash::Hash;
 use std::ops::{Index, IndexMut,};
 use std::panic::panic_any;

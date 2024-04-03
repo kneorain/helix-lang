@@ -1,4 +1,4 @@
-use std::{fmt::Display, process::exit, time};
+use std::fmt::Display;
 
 use pyo3::{
     types::{PyDict, PyList, PyModule}, Python,
@@ -14,8 +14,6 @@ pub use crate::python::shared::unknown_int::NumericType;
 pub use private::python_import;
 use private::python_import::repr_python;
 use std::env;
-use std::sync::mpsc;
-use std::thread;
 pub use crate::__panic__;
 
 // --------------------------- BEGIN PYTHON IMPORTS ----------------------------
