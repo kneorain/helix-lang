@@ -1,6 +1,6 @@
-use std::{iter::Peekable, ops::ControlFlow, slice};
-use smallvec::{smallvec, SmallVec};
 use core::str::Chars;
+use smallvec::{smallvec, SmallVec};
+use std::{iter::Peekable, ops::ControlFlow, slice};
 
 use super::Token;
 
@@ -17,104 +17,73 @@ use super::Token;
 // make an interface for a lexer
 
 pub trait Lexer {
-    fn lexer    (&self, file:    &str) -> Vec<Token>;
+    fn lexer(&self, file: &str) -> Vec<Token>;
     fn lexer_str(&self, content: &str) -> Vec<Token>;
 }
 
 #[derive(Debug, Clone)]
-pub struct Tokenizer {
-    chars: Peekable<Chars<'static>>,
+pub struct Tokenizer<'a> {
+    chars: Peekable<slice::Iter<'a, u8>>,
+    cursor: usize,
     column: usize,
     row: usize,
     tokens: SmallVec<[String; 32]>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub struct TokenIR {
-    token: &'static str,
+pub struct TokenIR<'a> {
+    token: &'a str,
     column: usize,
     row: usize,
 }
 
-impl TokenIR {
-    pub fn new(token: &[u8], column: usize, row: usize) -> Self {
-        let column = column.saturating_sub(token.len()); // + (1);
+impl<'a> TokenIR<'a> {
+    pub fn new(token: Vec<u8>, column: usize, row: usize) -> Self {
+        TokenIR {
+            token: unsafe {
+                std::str::from_utf8(slice::from_raw_parts((&token).as_ptr(), token.len()))
+                    .unwrap_unchecked()
+            },
             // FIXME: more testing is needed to determine if this is the
             // correct way to calculate the column since the +1 is
             // a hack to fix the column being off by one.
-        let ptr = token.as_ptr() as *const u8;
-        let token = std::str::from_utf8(unsafe { slice::from_raw_parts(ptr, token.len()) }).unwrap();
-
-        TokenIR {
-            token,
-            column,
+            column: column.saturating_sub(token.len()), // + (1);,
             row,
         }
     }
 }
+// macro_rules! no_format {
+//     {$ex:block} => {
+// $ex
 
-lazy_static::lazy_static! {
-    static ref MULTI_CHAR_OPERATORS: SmallVec<[SmallVec<[char; 0]>; 0]> = smallvec![
-        smallvec!['=', '=', '='],
-        smallvec!['!', '=', '='],
-        smallvec!['.', '.', '.'],
-        smallvec!['r', '/', '/'],
-        smallvec!['r', '*', '*'],
-        smallvec!['r', '<', '<'],
-        smallvec!['r', '>', '>'],
-        smallvec!['/', '/', '='],
-        smallvec!['*', '*', '='],
-        smallvec!['<', '<', '='],
-        smallvec!['>', '>', '='],
-        smallvec!['?', '?',],
-        smallvec!['|', ':',],
-        smallvec!['=', '=',],
-        smallvec!['!', '=',],
-        smallvec!['<', '=',],
-        smallvec!['>', '=',],
-        smallvec!['/', '/',],
-        smallvec!['*', '*',],
-        smallvec!['<', '<',],
-        smallvec!['>', '>',],
-        smallvec!['r', '+',],
-        smallvec!['r', '-',],
-        smallvec!['r', '*',],
-        smallvec!['r', '/',],
-        smallvec!['r', '%',],
-        smallvec!['r', '&',],
-        smallvec!['r', '|',],
-        smallvec!['r', '^',],
-        smallvec!['+', '=',],
-        smallvec!['-', '=',],
-        smallvec!['*', '=',],
-        smallvec!['/', '=',],
-        smallvec!['%', '=',],
-        smallvec!['&', '=',],
-        smallvec!['|', '=',],
-        smallvec!['^', '=',],
-        smallvec!['=', '=',],
-        smallvec!['=', '>',],
-        smallvec!['@', '=',],
-        smallvec!['-', '>',],
-        smallvec!['<', '-',],
-        smallvec!['<', '=',],
-        smallvec!['>', '=',],
-        smallvec!['&', '&',],
-        smallvec!['-', '-',],
-        smallvec![':', ':',],
-        smallvec!['|', '|',],
-        smallvec!['+', '+',],
-        smallvec!['_', '_',],
-        smallvec!['?', '=',],
-    ];
+//     };
+// }
 
-    static ref ALLOWED_STRING_PREFIXES: SmallVec<[char; 4]> = smallvec!['r', 'b', 'u', 'f'];
-}
+// TODO: make this a flat buffer
+//no_format! {
+// fix formatting
+const MULTI_CHAR_OPERATOR: [[u8; 3]; 51] = [
+    *b"===", *b"!==", *b"...", *b"r//", *b"r**", *b"r<<", *b"r>>", *b"//=", *b"**=", *b"<<=",
+    *b">>=", *b"??\0", *b"|:\0", *b"==\0", *b"!=\0", *b"<=\0", *b">=\0", *b"//\0", *b"**\0",
+    *b"<<\0", *b">>\0", *b"r+\0", *b"r-\0", *b"r*\0", *b"r/\0", *b"r%\0", *b"r&\0", *b"r|\0",
+    *b"r^\0", *b"+=\0", *b"-=\0", *b"*=\0", *b"/=\0", *b"%=\0", *b"&=\0", *b"|=\0", *b"^=\0",
+    *b"==\0", *b"=>\0", *b"@=\0", *b"->\0", *b"<-\0", *b"<=\0", *b">=\0", *b"&&\0", *b"--\0",
+    *b"::\0", *b"||\0", *b"++\0", *b"__\0", *b"?=\0",
+];
 
-impl Tokenizer {
-    pub fn new(content: &'static str) -> Self {
+//const OPERATOR_PREFIXES: [u8; 4] = [b'r', b'b', b'u', b'f'];
+//}
+// const TWO_CHAR_OPERATORS: [ [u8; 2]; 40] = [
+
+// ];
+
+const ALLOWED_STRING_PREFIXES: [u8; 4] = [b'r', b'b', b'u', b'f'];
+
+impl<'a> Tokenizer<'a> {
+    pub fn new(content: &'a str) -> Self {
         Tokenizer {
-            chars: content.chars().peekable(),
+            chars: content.as_bytes().iter().peekable(),
+            cursor: 0,
             column: 0,
             row: 0,
             tokens: SmallVec::new(),
@@ -125,31 +94,38 @@ impl Tokenizer {
     pub fn fast_estimate_number_of_tokens(content: &str) -> usize {
         let mut count = 0;
         let mut in_string = false;
-        let mut prev_char = '\0';
+        let mut prev_char = b'\0';
 
-        for c in content.chars() {
-            if in_string {
-                if c == '"' && prev_char != '\\' {  // Handle string closure and escape character
+        for c in content.as_bytes() {
+            match c {
+                b'"' if in_string & (prev_char != b'\\') => {
+                    // Handle string closure and escape character
                     in_string = false;
                 }
-            } else {
-                if c == '"' {  // Handle string opening
+                b'"' => {
+                    // Handle string opening
                     in_string = true;
                     count += 1; // Count the entire string as one token
-                } else if c.is_alphanumeric() || c == '_' || c.is_ascii_punctuation() {
+                }
+                c if c.is_ascii_alphanumeric() || *c == b'_' || c.is_ascii_punctuation() => {
                     count += 1;
                 }
+                _ => {}
             }
-            prev_char = c;
+            prev_char = *c;
         }
         count
     }
 
-    pub fn gather_all_tokens(tokenizer: &mut Self, _content: &str) -> Vec<TokenIR> {
+    // there is prob a trait for this
+
+    // does this need to return a vec or not
+    pub fn gather_all_tokens(tokenizer: &mut Self, _content: &str) -> Vec<TokenIR<'a>> {
         let mut tokens = Vec::new();
 
         loop {
-            let token = tokenizer.next();
+            let token = unsafe { tokenizer.next().unwrap_unchecked() };
+
             if !token.token.is_empty() {
                 tokens.push(token);
             } else {
@@ -160,128 +136,206 @@ impl Tokenizer {
         tokens
     }
 
-    #[inline]
-    pub fn next(&mut self) -> TokenIR {
-        let mut token: Vec<u8> = Vec::new();
-        
-        while let Some(&ch) = self.chars.peek() {
-            if ch.is_whitespace() {
-                if ch == '\n' {
-                    self.row += 1;
-                    self.column = 0;
-                } else {
-                    self.column += 1;
-                }
+    fn process_char(&mut self, ch: u8, token: &mut Vec<u8>) -> ControlFlow<()> {
+        //print!("l");
 
-                self.chars.next();
-                if !token.is_empty() {
-                    break;
-                }
-                continue;
+        match unsafe { *self.chars.peek().unwrap_unchecked() } {
+            b'\'' | b'"' if ALLOWED_STRING_PREFIXES.contains(&ch) => {
+                //print!("m");
+                token.push(ch);
+                self.column += 1;
+                return ControlFlow::Break(());
             }
 
-            // Check if the next characters are a multi-character operator
-            if MULTI_CHAR_OPERATORS.iter().any(|operator| operator[0] == ch) {
-                if let Some(operator) = MULTI_CHAR_OPERATORS.iter().find(|&operator| {
-                    operator.iter().enumerate().all(|(i, &c)| {
-                        if let Some(ch) = self.chars.clone().nth(i) {
-                            c == ch
-                        } else {
-                            false
-                        }
-                    })
-                }) {
-                    for _ in 0..operator.len() {
-                        token.push(self.chars.next().unwrap() as u8);
-                        self.column += 1;
-                    }
-                    break; // Break out of "while let Some(&ch) = self.chars.peek() { ... }"
-                }
-            }
-            
-            // Handle single character tokens
-            match ch {
-                '{' | '}' | '(' | ')' | ';' | '!' | '=' | '|' => {
-                    if let ControlFlow::Break(_) = self.process_delimiter(&mut token) {
-                        break;
-                    }
-                }
-                '\'' | '"' => {
-                    if let ControlFlow::Break(_) = self.process_string(&mut token, ch) {
-                        break;
-                    }
-                }
-                _ => {
-                    if let ControlFlow::Break(_) = self.process_char(ch, &mut token) {
-                        continue;
-                    }
-                }
-            }
+            _ => {}
         }
-    
-        let return_val = TokenIR::new(
-            &token,
-            self.column,
-            self.row);
-        return_val
-    }
 
-    fn process_char(&mut self, ch: char, token: &mut Vec<u8>) -> ControlFlow<()> {
-        if ALLOWED_STRING_PREFIXES.contains(&ch) && (*self.chars.peek().unwrap() == '"' || *self.chars.peek().unwrap() == '\'') {
-            token.push(ch as u8);
-            self.column += 1;
-            return ControlFlow::Break(());
-        }
-        token.push(self.chars.next().unwrap() as u8);
+        //print!("n");
+
+        token.push(*self.chars.next().unwrap());
         self.column += 1;
         // if theres a string prefix like r, b, u, f and a " or ' then we need to handle it
-    
-    
+
         ControlFlow::Continue(())
     }
-    
+
     fn process_delimiter(&mut self, token: &mut Vec<u8>) -> ControlFlow<()> {
+        //print!("j");
         if token.is_empty() {
-            token.push(self.chars.next().unwrap() as u8);
+            //print!("k");
+            token.push(*self.chars.next().unwrap());
             self.column += 1;
         }
+
         return ControlFlow::Break(());
     }
-    
-    #[inline]
-    fn process_string(&mut self, token: &mut Vec<u8>, ch: char) -> ControlFlow<()> {
-        if !token.is_empty() && !(token.ends_with(&[ALLOWED_STRING_PREFIXES[0] as u8]) || token.ends_with(&[ALLOWED_STRING_PREFIXES[1] as u8]) || token.ends_with(&[ALLOWED_STRING_PREFIXES[2] as u8]) || token.ends_with(&[ALLOWED_STRING_PREFIXES[3] as u8])) {
+
+    #[inline(always)]
+    fn process_string(&mut self, token: &mut Vec<u8>, ch: u8) -> ControlFlow<()> {
+        //print!("d");
+
+        if !token.is_empty()
+            && !ALLOWED_STRING_PREFIXES.contains(unsafe { token.last().unwrap_unchecked() })
+        {
+            //print!("e");
+            
             return ControlFlow::Break(());
         }
-        let quote_char = ch;
-        token.push(self.chars.next().unwrap() as u8);
+       
+
+        
+        // if ALLOWED_STRING_PREFIXES.contains(&ch) && (*self.chars.peek().unwrap() == '"' || *self.chars.peek().unwrap() == '\'') {
+        //     token.push(ch as u8);
+        //     self.column += 1;
+        //     return ControlFlow::Break(());
+        // }
+        // make a macro for this
+
+        token.push(*self.chars.next().unwrap());
+
         self.column += 1;
+
         let mut is_escaped = false;
         // Push the starting quote
         while let Some(&c) = self.chars.peek() {
-            if c == '\n' {
-                self.row += 1;
+            match c {
+                b'\n' => {
+                    //print!("f");
+                    self.row += 1
+                }
+                b'\\' if !is_escaped => {
+                    //print!("g");
+                    is_escaped = true;
+                    token.push(*self.chars.next().unwrap());
+                    self.column += 1;
+                    continue;
+                }
+                c if (*c == ch) & !is_escaped => {
+                    //print!("h");
+                    token.push(*self.chars.next().unwrap());
+                    self.column += 1;
+                    break;
+                }
+                _ => {
+                    //print!("i");
+                }
             }
-    
-            if c == '\\' && !is_escaped {
-                is_escaped = true;
-                token.push(self.chars.next().unwrap() as u8);
-                self.column += 1;
-                continue;
-            }
-            if c == quote_char && !is_escaped {
-                token.push(self.chars.next().unwrap() as u8);
-                self.column += 1;
-                break;
-            }
+
             is_escaped = false;
-            token.push(self.chars.next().unwrap() as u8);
+
+            token.push(*self.chars.next().unwrap());
             self.column += 1;
         }
         ControlFlow::Continue(())
     }
 }
 
+impl<'a> Iterator for Tokenizer<'a> {
+    type Item = TokenIR<'a>;
+    #[inline(always)]
+    fn next(&mut self) -> Option<Self::Item> {
+        // is a vec needed here or can we return a slice of the content
+
+        let mut token = Vec::new();
+
+        // slice the slices and split them into smaller slice parts
+
+        let mut token_slice: &[u8];
+
+        let lower_bound = self.chars.len() + 1;
+
+        let mut upper_bound = lower_bound;
+
+        while let Some(&ch) = self.chars.peek() {
+            //print!("\n1");
+            if ch.is_ascii_whitespace() {
+                //print!("2");
+                match ch {
+                    b'\n' => {
+                        //print!("3");
+                        self.row += 1;
+                        self.column = 0;
+                    }
+                    _ => self.column += 1,
+                }
+                //print!("4");
+                self.chars.next();
+                if !token.is_empty() {
+                    //print!("5");
+                    break;
+                }
+                continue;
+            }
+            //print!("6");
+
+            // this should obtain a slice of the next few characters and then match on it, or iterate over each part of the multiline ops
+
+            // Check if the next characters are a multi-character operator
+            if MULTI_CHAR_OPERATOR
+                .iter()
+                .any(|operator| operator[0] == *ch)
+            {
+                //print!("7");
+                if let Some(operator) = MULTI_CHAR_OPERATOR.iter().find(|&operator| {
+                    operator.iter().enumerate().all(|(i, c)| {
+                        // TODO: make this more optimal
+                        if c == &b'\0' {
+                            print!("*");
+                            return true;
+                        }
+
+                        // fix clone
+                        match self.chars.clone().nth(i) {
+                            Some(ch) => {
+                                //print!("9");
+
+                                ch == c
+                            }
+                            None => false,
+                        }
+                    })
+                }) {
+                    // TODO: need a better way to handle this
+
+                    let op_len = if operator[2] == b'\0' { 2 } else { 3 };
+
+                    for _ in 0..op_len {
+                        token.push(*self.chars.next().unwrap());
+                        self.column += 1;
+                    }
+
+                    break; // Break out of "while let Some(&ch) = self.chars.peek() { ... }"
+                }
+            }
+            //print!("9");
+            // Handle single character tokens
+            match ch {
+                b'{' | b'}' | b'(' | b')' | b';' | b'!' | b'=' | b'|' => {
+                    //print!("a");
+                    if self.process_delimiter(&mut token).is_break() {
+                        break;
+                    }
+                }
+                // strings should not be allowed to be ' '
+                b'\'' | b'"' => {
+                    if self.process_string(&mut token, *ch).is_break() {
+                        //print!("b");
+                        break;
+                    }
+                }
+
+                _ if self.process_char(*ch, &mut token).is_break() => {
+                    //print!("c");
+                    continue;
+                }
+                _ => {}
+            }
+        }
+        //println!("\nTOKEN FINISH: {}", std::str::from_utf8(&token).unwrap());
+
+        TokenIR::new(token, self.column, self.row).into()
+    }
+}
 
 #[cfg(test)]
 mod tests {
@@ -289,8 +343,7 @@ mod tests {
 
     #[test]
     fn test_determine_tokens() {
-        let content =
-"fn === main() {
+        let content = "fn === main() {
             println!(\"Hello,
             world!\");
             \"Hello; \\\" world!\"
@@ -301,7 +354,7 @@ mod tests {
 
         let mut tokenizer = Tokenizer::new(content);
 
-        let excepeted = [
+        let expected = [
             "fn",
             "===",
             "main",
@@ -333,21 +386,22 @@ mod tests {
             "}",
         ];
 
-        for index in 0..excepeted.len() {
-            
+        for index in 0..expected.len() {
             let start = std::time::Instant::now();
-            let token = tokenizer.next();
+            let token = tokenizer.next().unwrap();
             let elapsed = start.elapsed();
-            println!("r:{} c:{} t:{} e:{:?}", token.row, token.column, token.token, elapsed);
-            assert_eq!(token.token, excepeted[index]);
-        
+            println!(
+                "r:{} c:{} t:{} e:{:?}",
+                token.row, token.column, token.token, elapsed
+            );
+            assert_eq!(token.token, expected[index]);
         }
 
         tokenizer = Tokenizer::new(content);
-         
+
         let start = std::time::Instant::now();
         let tokens = Tokenizer::gather_all_tokens(&mut tokenizer, content);
-        
+
         let elapsed = start.elapsed();
 
         println!("{:?}", tokens);
