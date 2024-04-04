@@ -1,10 +1,11 @@
 use core::str::Chars;
-use smallvec::{smallvec, SmallVec};
-use std::{
-    iter::Peekable,
-    ops::{ControlFlow, Index},
-    slice,
-};
+use smallvec::{ smallvec, SmallVec };
+use std::{ iter::Peekable, ops::{ ControlFlow, Index }, slice };
+
+use std::sync::atomic::{ AtomicU8, AtomicUsize };
+use std::sync::atomic::Ordering;
+use std::sync::OnceLock;
+
 
 use super::Token;
 
@@ -37,7 +38,9 @@ impl<'a> TokenIR<'a> {
     pub fn new(token: &'a [u8], column: usize, row: usize, complete: bool) -> Self {
         TokenIR {
             // safe as we only have valid utf8 tokens
-            token: unsafe {std::str::from_utf8(token).unwrap_unchecked()},
+            token: unsafe {
+                std::str::from_utf8(token).unwrap_unchecked()
+            },
             // FIXME: more testing is needed to determine if this is the
             // correct way to calculate the column since the +1 is
             // a hack to fix the column being off by one.
@@ -58,9 +61,9 @@ impl<'a> TokenIR<'a> {
 //no_format! {
 // fix formatting
 const MULTI_CHAR_OPERATOR: [[u8; 3]; 51] = [
-    *b"===", *b"!==", *b"...", *b"r//", *b"r**", *b"r<<",
-    *b"r>>", *b"//=", *b"**=", *b"<<=", *b">>=",
-    
+    *b"===", *b"!==", *b"...", *b"r//", *b"r**", *b"r<<", *b"r>>", *b"//=",
+    *b"**=", *b"<<=", *b">>=",
+
     *b"??\0", *b"|:\0", *b"==\0", *b"!=\0", *b"<=\0", *b">=\0", *b"//\0",
     *b"**\0", *b"<<\0", *b">>\0", *b"r+\0", *b"r-\0", *b"r*\0", *b"r/\0",
     *b"r%\0", *b"r&\0", *b"r|\0", *b"r^\0", *b"+=\0", *b"-=\0", *b"*=\0",
@@ -80,7 +83,7 @@ const ALLOWED_STRING_PREFIXES: [u8; 4] = [b'r', b'b', b'u', b'f'];
 // TODO USE BYTES CRATE IF ITS FASTER TO ITERATE OVER BYTES
 
 macro_rules! increment_token {
-    ($self:ident,$upper_bound:ident) => {
+    ($self:ident, $upper_bound:ident) => {
         // make unchecked?
         //$self.chars.next().unwrap();
         $self.increment_token()
@@ -100,6 +103,99 @@ pub struct Tokenizer<'a> {
     complete: bool,
 }
 
+#[derive(Debug, Clone)]
+enum COLORS {
+    RED = 31,        GREEN = 32,       YELLOW = 33,
+    BLUE = 34,       MAGENTA = 35,     CYAN = 36,
+    BrightRed = 91,  BrightGreen = 92,   BrightYellow = 93,
+    BrightBlue = 94, BrightMagenta = 95, BrightCyan = 96,
+}
+
+const COLORS: [COLORS; 12] = [
+    COLORS::RED,        COLORS::GREEN,         COLORS::YELLOW,
+    COLORS::MAGENTA,    COLORS::BLUE,          COLORS::CYAN,
+    COLORS::BrightRed,  COLORS::BrightGreen,   COLORS::BrightYellow,
+    COLORS::BrightBlue, COLORS::BrightMagenta, COLORS::BrightCyan,
+];
+
+struct DebugCounrter {
+    color_count: AtomicU8,
+    char_count: AtomicUsize,
+}
+
+impl DebugCounrter {
+    /// println! style usage,
+    /// so a message and format args
+    fn new() -> Self {
+        return DebugCounrter { color_count: AtomicU8::new(0), char_count: AtomicUsize::new(0) };
+    }
+
+    const CHARS: [char; 62] = [
+        '0','1','2','3','4','5','6','7','8','9','a','b','c','d','e','f','g','h',
+        'i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z',
+        'A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R',
+        'S','T','U','V','W','X','Y','Z',
+    ];
+
+    pub fn printy(&mut self, line_number: u32) {
+        self.char_count.fetch_add(1, Ordering::SeqCst);
+        print!(
+            "\u{001b}[{}m({}|{})\u{001b}[0m|",
+            self.get_color(),
+            self.get_char(),
+            line_number
+        );
+    }
+
+    fn get_color(&mut self) -> u8 {
+        let color_count = self.color_count.load(Ordering::SeqCst);
+        self.color_count.store((color_count + 1) % (COLORS.len() as u8), Ordering::SeqCst);
+        return COLORS[color_count as usize].clone() as u8;
+    }
+
+    fn get_char(&mut self) -> char {
+        let char = self.char_count.load(Ordering::SeqCst);
+        self.char_count.store((char + 1) % (Self::CHARS.len() as usize), Ordering::SeqCst);
+        return Self::CHARS[char as usize];
+    }
+
+    pub fn reset(&mut self) {
+        self.color_count.store(0, Ordering::SeqCst);
+        self.char_count. store(0, Ordering::SeqCst);
+    }
+
+    pub fn printy_char(&mut self, c: &str) {
+        self.char_count.fetch_add(1, Ordering::SeqCst);
+        print!(
+            "\u{001b}[{}m{}\u{001b}[0m",
+            self.get_color(), c
+        );
+    }
+    
+
+}
+
+static mut DBG: OnceLock<DebugCounrter> = OnceLock::new();
+macro_rules! dbg_trace {
+    () => {
+        unsafe {DBG.get_mut().unwrap().printy(line!());}
+    };
+    ($literal:literal) => {
+        unsafe {DBG.get_mut().unwrap().printy_char($literal.into());}
+    };
+    ($($arg:tt)*) => { // dbg_trace(reset, "hello we start trace {}", "hello we start trace {})
+        //if cfg!(debug_assertions) {
+            println!();
+            print!($($arg)*);
+        //}
+        unsafe{
+            DBG.get_or_init(|| DebugCounrter::new());
+            DBG.get_mut().unwrap().reset()
+        }
+    };
+    
+}
+
 impl<'a> Tokenizer<'a> {
     pub fn new(content: &'a str) -> Self {
         Tokenizer {
@@ -109,7 +205,7 @@ impl<'a> Tokenizer<'a> {
             lower_bound: 0,
             upper_bound: 0,
             row: 0,
-            token: &content.as_bytes()[0..0],
+            token: &[],
             complete: true,
         }
     }
@@ -170,7 +266,7 @@ impl<'a> Tokenizer<'a> {
     fn peak_next(&self) -> Option<&u8> {
         self.chars.get(self.cursor + 1)
     }
-    
+
     #[inline(always)]
     fn peak_to(&self, to: usize) -> Option<&[u8]> {
         self.chars.get(self.cursor..to)
@@ -204,26 +300,25 @@ impl<'a> Tokenizer<'a> {
         self.cursor += 1;
     }
 
+    fn increment_lower (&mut self) {
+        self.lower_bound += 1;
+    }
+
     #[inline(always)]
     fn increment_token(&mut self) -> &'a [u8] {
         let old_lower_bound = self.lower_bound;
         self.upper_bound += 1;
         self.lower_bound = self.upper_bound;
 
-
-        unsafe {
-            self.chars
-                .get(old_lower_bound..=self.upper_bound)
-                .unwrap_unchecked()
-        }
+        unsafe { self.chars.get(old_lower_bound..=self.upper_bound).unwrap_unchecked() }
     }
 
     fn process_char(&mut self, ch: &u8) -> ControlFlow<()> {
-        print!("l");
+        dbg_trace!("m");
 
         match self.peak_char() {
             Some(b'\'') | Some(b'"') if ALLOWED_STRING_PREFIXES.contains(ch) => {
-                print!("m");
+                dbg_trace!("n");
 
                 self.increment_char();
 
@@ -233,7 +328,7 @@ impl<'a> Tokenizer<'a> {
             _ => {}
         }
 
-        print!("n");
+        dbg_trace!("o");
 
         self.increment_column();
         // if theres a string prefix like r, b, u, f and a " or ' then we need to handle it
@@ -253,25 +348,22 @@ impl<'a> Tokenizer<'a> {
         self.increment_cursor();
     }
 
-
-
     #[inline(always)]
     fn process_delimiter(&mut self) -> ControlFlow<()> {
-        print!("j");
+        dbg_trace!("b");
         if self.is_empty() {
-            print!("k");
+            dbg_trace!("c");
             self.increment_char();
         }
 
         return ControlFlow::Break(());
     }
-    #[inline(always)]
 
+    #[inline(always)]
     fn last_char(&self) -> Option<&u8> {
         self.chars.get(self.cursor - 1)
     }
     #[inline(always)]
-
     fn is_empty(&self) -> bool {
         self.cursor == self.lower_bound
     }
@@ -281,12 +373,10 @@ impl<'a> Tokenizer<'a> {
         self.peak_to(slice.len()) == Some(slice)
     }
     #[inline(always)]
-
     fn reset_column(&mut self) {
         self.column = 0;
     }
     #[inline(always)]
-
     fn token(&'a self) -> &'a [u8] {
         // cache the token but
 
@@ -296,12 +386,13 @@ impl<'a> Tokenizer<'a> {
     #[inline(always)]
     fn process_string(&mut self, ch: &u8) -> ControlFlow<()> {
         // if string is not complete it should return a type
-        print!("d");
+        dbg_trace!("f");
 
-        if !self.is_empty()// TODO REMOVE to_owned
-            & !ALLOWED_STRING_PREFIXES.contains(unsafe {self.last_char().unwrap_unchecked()})
+        if
+            !self.is_empty() & // TODO REMOVE to_owned
+            !ALLOWED_STRING_PREFIXES.contains(unsafe { self.last_char().unwrap_unchecked() })
         {
-            print!("e");
+            dbg_trace!("g");
 
             return ControlFlow::Break(());
         }
@@ -321,22 +412,22 @@ impl<'a> Tokenizer<'a> {
             // peak should error or something
             match c {
                 b'\n' => {
-                    print!("f");
+                    dbg_trace!("h");
                     self.increment_row(); // does this need reset colum?
                 }
                 b'\\' if !is_escaped => {
-                    print!("g");
+                    dbg_trace!("i");
                     is_escaped = true;
                     self.increment_char();
                     continue;
                 }
                 c if (c == ch) & !is_escaped => {
-                    print!("h");
+                    dbg_trace!("j");
                     self.increment_char();
                     break;
                 }
                 _ => {
-                    print!("i");
+                    dbg_trace!("k");
                 }
             }
 
@@ -346,7 +437,6 @@ impl<'a> Tokenizer<'a> {
         }
         ControlFlow::Continue(())
     }
-   
 }
 
 impl<'a> Iterator for Tokenizer<'a> {
@@ -357,40 +447,35 @@ impl<'a> Iterator for Tokenizer<'a> {
 
         // slice the slices and split them into smaller slice parts
 
-
-
-
         for ch in self.chars.index(self.cursor..self.chars.len()) {
-
-            print!("\n {}: 1",* ch as char);
+            dbg_trace!("{}:", *ch as char);
+            dbg_trace!("0");
             if ch.is_ascii_whitespace() {
-                print!("2");
+                dbg_trace!("1");
                 match ch {
                     b'\n' => {
-                        print!("3");
+                        dbg_trace!("2");
                         self.increment_row();
-                        self.reset_column();
                     }
-                    _ => self.skip_char(),
+                    _ => self.increment_column(),
                 }
-                print!("4");
-                self.increment_char();
+                dbg_trace!("3");
+
+                self.increment_cursor();
+                
                 if !self.is_empty() {
-                    print!("5");
+                    dbg_trace!("4");
                     break;
                 }
                 continue;
             }
-            print!("6");
+            dbg_trace!("5");
 
             // this should obtain a slice of the next few characters and then match on it, or iterate over each part of the multiline ops
             // use a chain?
             // Check if the next characters are a multi-character operator
-            if MULTI_CHAR_OPERATOR
-                .iter()
-                .any(|operator| operator[0] == *ch)
-            {
-                print!("7");
+            if MULTI_CHAR_OPERATOR.iter().any(|operator| operator[0] == *ch) {
+                dbg_trace!("6");
                 // if let Some(operator) = MULTI_CHAR_OPERATOR
                 //     .iter()
                 //     .find(|&operator| self.peak_to(operator.len()).unwrap() == operator)
@@ -410,52 +495,50 @@ impl<'a> Iterator for Tokenizer<'a> {
                     // this is temp until we can figure out a better way to handle this
                     let op_len = if operator[2] == b'\0' { 2 } else { 3 };
                     // TODO: need better solution for Some(&operator[0..op_len])
-
+                    dbg_trace!("7");
                     // this gets the next few characters and then checks if they are equal to the operator
                     if self.peak_to(op_len) == Some(&operator[0..op_len]) {
+                        dbg_trace!("8");
                         for _ in 0..op_len {
                             self.increment_char();
                         }
-
                         break; // Break out of "while let Some(&ch) = self.chars.peek() { ... }"
                     }
                 }
             }
 
-            print!("9");
+            dbg_trace!("9");
+            
             // Handle single character tokens
             match ch {
                 b'{' | b'}' | b'(' | b')' | b';' | b'!' | b'=' | b'|' => {
-                    print!("a");
+                    dbg_trace!("a");
                     if self.process_delimiter().is_break() {
+                        dbg_trace!("d");
+
                         break;
                     }
                 }
                 // strings should not be allowed to be ' '
                 b'\'' | b'"' => {
+                    dbg_trace!("e");
                     if self.process_string(ch).is_break() {
-                        print!("b");
+                        dbg_trace!("l");
                         break;
                     }
                 }
 
                 _ if self.process_char(ch).is_break() => {
-                    print!("c");
+                    dbg_trace!("p");
                     continue;
                 }
                 _ => {}
             }
         }
 
-
         //println!("\nTOKEN FINISH: {}", std::str::from_utf8(&token).unwrap());
 
-        Some(TokenIR::new(
-            self.increment_token(),
-            self.column,
-            self.row,
-            self.complete,
-        ))
+        Some(TokenIR::new(self.increment_token(), self.column, self.row, self.complete))
     }
 }
 
@@ -465,7 +548,8 @@ mod tests {
 
     #[test]
     fn test_determine_tokens() {
-        let content = "fn === main() {
+        let content =
+            "fn === main() {
             println!(\"Hello,
             world!\");
             \"Hello; \\\" world!\"
@@ -512,10 +596,7 @@ mod tests {
             let start = std::time::Instant::now();
             let token = tokenizer.next().unwrap();
             let elapsed = start.elapsed();
-            println!(
-                "\nr:{} c:{} t:{} e:{:?}",
-                token.row, token.column, token.token, elapsed
-            );
+            println!("\nr:{} c:{} t:{} e:{:?}", token.row, token.column, token.token, elapsed);
             assert_eq!(token.token, expected[index]);
         }
 
