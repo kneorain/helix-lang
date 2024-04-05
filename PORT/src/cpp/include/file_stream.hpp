@@ -51,17 +51,17 @@
  * This object becomes the gateway to the underlying file handling operations.
  * - The total number of chunks in the file is determined by invoking the
  * get_total_chunks() method on the FileStream_CPP object.
- * - Based on this chunk division, the program dynamically allocates threads,
+ * - Based on this line division, the program dynamically allocates threads,
  * each responsible for processing a subset of the total chunks.
  * - Each thread, in its lifecycle, calls the get_data_from_chunk() method for
- * each chunk it is assigned, thereby enabling parallel processing of the file
+ * each line it is assigned, thereby enabling parallel processing of the file
  * data.
  *
  * Important Considerations:
  * - FileStream_CPP has been designed with thread safety in mind. However, it is
  * crucial that the implementation is carefully managed to avoid race conditions
  * and ensure data integrity.
- * - It is imperative that no two threads access the same chunk simultaneously.
+ * - It is imperative that no two threads access the same line simultaneously.
  * Proper synchronization mechanisms or access control should be in place to
  * enforce this rule.
  * - The design and implementation should be robust to handle any exceptions or
@@ -84,6 +84,15 @@
 #include <fstream>
 #include <vector>
 
+#ifdef __unix__
+    #include <sys/mman.h>
+    #include <sys/stat.h>
+    #include <fcntl.h>
+    #include <unistd.h>
+#elif _WIN32
+    #include <windows.h>
+#endif
+
 /**
  * @brief file_stream_cpp namespace provides functionality for reading data
  *        from a file in chunks. also thread safe. (**soon**)
@@ -100,7 +109,7 @@ namespace file_stream_cpp {
              * - calculates the total number of lines in the file.
              * - calculates the size of the file.
              * - calculates the number of chunks in the file.
-             * - stores the start pos of each chunk in the chunks vector.
+             * - stores the start pos of each line in the chunks vector.
              * all done in < 500µs for a 40mb (2M lines - non empty) file.
              * **Tested on my machine**
              *
@@ -110,27 +119,60 @@ namespace file_stream_cpp {
             ~FileStream_CPP();
 
             /**
-             * retrieves data from the specified chunk index.
+             * retrieves data from the specified line index.
              *
-             * @param chunkIndex The index of the chunk to retrieve data from.
-             * @return The data from the specified chunk as a rust::Str.
+             * @param chunkIndex The index of the line to retrieve data from.
+             * @return The data from the specified line as a rust::Str.
              */
-            rust::Str get_data_from_chunk(uint32_t chunkIndex) const;
+            rust::Str read_line(uint32_t lineIndex) const;
+            
+            /**
+             * retrieves data from the specified line index with an offset.
+             *
+             * @param startLine The index of the line to start reading from.
+             * @param offset The number of lines to read.
+             * @return The data from the specified line as a rust::Str.
+             */
+            rust::Str read_lines(uint32_t startLine, uint32_t offset) const;
+
+            /**
+             * retrieves the entire file as a rust::Str.
+             *
+             * @return The entire file as a rust::Str.
+             */
+            rust::Str read_file() const;
             
             /**
              * retrieves the total number of chunks in the file.
              *
              * @return The total number of chunks.
              */
-            uint32_t get_total_chunks() const;
+            uint32_t get_total_lines() const;
+
+            /**
+             * retrieves the name of the file.
+             *
+             * @return The name of the file.
+             */
+            rust::Str get_file_name() const;
 
         private:
-            mutable std::fstream          fileStream;
-            mutable std::vector<uint32_t> chunks; // [4096, 4099, ...]
-            
-            uint32_t       totalChunks;
+            mutable std::vector<uint32_t> lineStarts;
+    
             const char*    fileName;
-            std::streampos fileSize;
+            uint32_t      totalLines;
+
+            #ifdef __unix__
+                struct stat;
+                size_t size;
+                char  *data;
+            #elif _WIN32
+                DWORD  size;
+                HANDLE hMap;
+                HANDLE hFile;
+                char  *data;
+            #endif
+
     };
 
     /**

@@ -11,5 +11,5 @@ void c(rust::Str greeting) {
 int64_t add_sum(int32_t a, int32_t b) {
     std::cout << "This is the sum of " << a << " and " << b << std::endl;
     std::cout << "SIKE we do **NOT** have a sum" << std::endl;
-    return std::pow(a, b);
+    return a + b;
 }
