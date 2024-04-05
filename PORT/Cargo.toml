@@ -8,7 +8,7 @@ default = ["debug-trace"]
 debug-trace =[]
 
 [[bin]]
-name = "port"
+name = "helix-compiler"
 path = "src/main.rs"
 
 
