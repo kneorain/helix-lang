@@ -32,14 +32,14 @@
  *
  * @file file_stream.cpp
  * Description: This file forms an integral part of the frontend for the Helix
- * Compiler. It includes the implementation of the FileStream_CPP class, which
+ * Compiler. It includes the implementation of the FileReader class, which
  * serves as a pivotal component in handling large files efficiently. The
  * primary functionality of this class is to perform memory mapping for rapid
  * file access and ensure thread-safe operations for concurrent data reading.
  * This is particularly important in the context of a compiler where speed and
  * efficiency of file processing directly impact the overall compilation time.
  *
- * The FileStream_CPP class is designed to optimize the file reading process,
+ * The FileReader class is designed to optimize the file reading process,
  * leveraging multithreading to enhance performance. It intelligently divides
  * the file into manageable chunks and enables simultaneous processing by
  * multiple threads. This approach is not only efficient but also scalable,
@@ -47,10 +47,10 @@
  * capabilities.
  *
  * Usage in Compiler Workflow:
- * - The main thread initiates the process by creating a FileStream_CPP object.
+ * - The main thread initiates the process by creating a FileReader object.
  * This object becomes the gateway to the underlying file handling operations.
  * - The total number of chunks in the file is determined by invoking the
- * get_total_chunks() method on the FileStream_CPP object.
+ * get_total_chunks() method on the FileReader object.
  * - Based on this line division, the program dynamically allocates threads,
  * each responsible for processing a subset of the total chunks.
  * - Each thread, in its lifecycle, calls the get_data_from_chunk() method for
@@ -58,7 +58,7 @@
  * data.
  *
  * Important Considerations:
- * - FileStream_CPP has been designed with thread safety in mind. However, it is
+ * - FileReader has been designed with thread safety in mind. However, it is
  * crucial that the implementation is carefully managed to avoid race conditions
  * and ensure data integrity.
  * - It is imperative that no two threads access the same line simultaneously.
@@ -97,14 +97,14 @@
  * @brief file_stream_cpp namespace provides functionality for reading data
  *        from a file in chunks. also thread safe. (**soon**)
  */
-namespace file_stream_cpp {
-    class FileStream_CPP {
+namespace file_reader {
+    class FileReader {
         public:
             /**
              * @brief this class provides functionality for reading data
              *        from a file in an highly optimized manner for a compiler.
              *
-             * constructs a FileStream_CPP object with the specified filename.
+             * constructs a FileReader object with the specified filename.
              * does the following magic:
              * - calculates the total number of lines in the file.
              * - calculates the size of the file.
@@ -115,8 +115,8 @@ namespace file_stream_cpp {
              *
              * @param filename The name of the file to be read.
              */
-            FileStream_CPP(const std::string &filename);
-            ~FileStream_CPP();
+            FileReader(const std::string &filename);
+            ~FileReader();
 
             /**
              * retrieves data from the specified line index.
@@ -176,12 +176,12 @@ namespace file_stream_cpp {
     };
 
     /**
-     * creates a new FileStream_CPP object with the specified filename.
-     * this function is the entry point for creating FileStream_CPP objects.
+     * creates a new FileReader object with the specified filename.
+     * this function is the entry point for creating FileReader objects.
      * to use in rust/c code.
      *
      * @param filename The name of the file to be read.
-     * @return A unique pointer to the newly created FileStream_CPP object.
+     * @return A unique pointer to the newly created FileReader object.
      */
-    std::unique_ptr<FileStream_CPP> new_file_stream(rust::Str filename);
+    std::unique_ptr<FileReader> init(rust::Str filename);
 }

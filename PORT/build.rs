@@ -1,7 +1,6 @@
 fn main() -> miette::Result<()> {
-    // let _user = std::env::current_dir().unwrap();
-    // let mut build = cc::Build::new();
     
+    // TODO: FIX
     //let cpp_files: Vec<PathBuf> = fs::read_dir("src\\cpp").unwrap()
     //    .map(|entry| entry.unwrap().path())
     //    .filter(|path| path.extension().unwrap() == "cpp")
@@ -10,7 +9,7 @@ fn main() -> miette::Result<()> {
 
     cxx_build::bridge("src/cpp/mod.rs")
         .file("src/cpp/src/greeting.cpp")
-        .file("src/cpp/src/file_stream.cpp")
+        .file("src/cpp/src/file_reader.cpp")
         //.compiler("clang++")
         //.include("C:\\Programing Languages\\LLVM\\include")
         .std("c++17")
@@ -33,7 +32,11 @@ fn main() -> miette::Result<()> {
     
     println!("cargo:rerun-if-changed=src/cpp/mod.rs");
     println!("cargo:rerun-if-changed=src/rust/mod.rs");
+
+        // TODO: Remove these when the cpp_files is done
     println!("cargo:rerun-if-changed=src/cpp/greeting.cpp");
     println!("cargo:rerun-if-changed=src/cpp/include/greeting.h");
+    println!("cargo:rerun-if-changed=src/cpp/file_reader.cpp");
+    println!("cargo:rerun-if-changed=src/cpp/include/file_reader.hpp");
     Ok(())
 }
