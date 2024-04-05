@@ -3,6 +3,10 @@ name = "helix-compiler"
 version = "0.1.0"
 edition = "2021"
 
+[features]
+default = ["debug-trace"]
+debug-trace =[]
+
 [[bin]]
 name = "port"
 path = "src/main.rs"
