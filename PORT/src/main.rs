@@ -41,7 +41,7 @@ impl PrimedInstant {
         self.average_overhead = (0..Self::PRIME_ITERATIONS).fold(std::time::Duration::new(0, 0), |acc, _| {
             let start = std::time::Instant::now();
 
-            let elapsed = _start.elapsed();
+            let elapsed = start.elapsed();
 
             return acc + elapsed;
         }) / Self::PRIME_ITERATIONS as u32;
