@@ -22,7 +22,7 @@ pub struct PrimedInstant {
 }
 
 impl PrimedInstant {
-    const PRIME_ITERATIONS: usize = 100000000;
+    const PRIME_ITERATIONS: usize = 100000;
 
     #[inline(always)]
     pub fn new() -> Self {
@@ -61,7 +61,7 @@ impl PrimedInstant {
         info!("{}: {:?}", message, self.elapsed);
     }
     
-    pub fn log_elapsed(&self, message: &str) {
+    pub fn log_elapsed(&self) {
         info!("Time Elapsed: {:?}",self.elapsed);
     }
 
