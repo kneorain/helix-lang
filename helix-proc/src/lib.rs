@@ -9,9 +9,43 @@ use syn::parse;
 
 use std::ops::Add;
 // example of add type bound 
-fn foo<T: Add<T, Output = T>>(a: T, b: T) -> T {
-    a + b
+
+// gets
+// two_char_operators:helix_proc::convert_bytes_to_u16!( b"==" | b"!=" | b"<=" | b">=" | b"//" | b"**" |
+// b"<<" | b">>" | b"r+" | b"r-"| b"r*" | b"r/" | b"r%" | b"r&" | b"r|" |
+// b"r^" | b"+=" | b"-=" | b"*=" | b"/=" | b"%=" | b"&=" | b"|=" | b"^=" |
+// b"=>" | b"@=" | b"->" | b"<-" | b"<=" | b">=" | b"&&" | b"--" |
+// b"::" | b"||" | b"++" | b"__" | b"?="),
+
+
+#[proc_macro]
+pub fn convert_bytes_to_u16(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
+    input.to_string().replace("\n", "").split(" | ").map(|x| {
+        // parse the byte string to a string
+        let s = x.parse::<String>().unwrap();
+        
+        // remove the first and last character
+        let s = s[1..s.len()-1].as_bytes();
+
+        let s:[u8; 2] = [s[0], s[1]];
+
+        format!("{}",unsafe { std::mem::transmute::<[u8; 2], u16>(s)})     
+    }).collect::<Vec<String>>().join(" | ").parse().unwrap()
 }
+
+
+#[proc_macro]
+pub fn get_first_char_pattern(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
+    let mut input = input.to_string().replace("\n", "").split(" | ").map(|x| {
+        let first_char = x.chars().next().unwrap();
+        format!("b'{}'", first_char)
+    }).collect::<Vec<String>>();
+    
+    input.dedup();
+    
+    input.join(" | ").parse().unwrap()
+}
+
 
 
 // conditional!(, const FISH: &str = "salmon" );

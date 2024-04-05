@@ -420,6 +420,7 @@ dependencies = [
  "cxx",
  "cxx-build",
  "fxhash",
+ "helix-proc",
  "lazy_static",
  "log",
  "miette 7.2.0",
@@ -434,6 +435,7 @@ dependencies = [
  "syn 2.0.57",
  "tokio",
  "toml",
+ "trie-match",
 ]
 
 [[package]]
@@ -1287,6 +1289,17 @@ dependencies = [
  "serde_spanned",
  "toml_datetime",
  "winnow",
+]
+
+[[package]]
+name = "trie-match"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d23c631289863e3c84b1827230ce1abd992e7920054899f8ae908ed5ad589f95"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn 2.0.57",
 ]
 
 [[package]]
