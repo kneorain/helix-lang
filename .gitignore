@@ -125,3 +125,12 @@ dmypy.json
 
 # Cython debug symbols
 cython_debug/
+
+# TODO: Add the .gitignore templates for rust and c++ from Github 
+
+*.o
+target/
+Cargo.lock
+*.a
+*.exe
+*.rlib
