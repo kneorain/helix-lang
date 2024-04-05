@@ -7,8 +7,15 @@
 fn main() -> miette::Result<()> {
     let mut bridge = cxx_build::bridge("src/cpp/mod.rs");
 
+    const CPP_OUT_DIR: &str = "../target/cpp";
+
+    // check if the target/cpp directory exists
+    if !std::path::Path::new(CPP_OUT_DIR).exists() {
+        std::fs::create_dir(CPP_OUT_DIR).expect("Could not create the target/cpp directory");
+    }
+
     // Set up the compiler
-    bridge.std("c++17").flag("-MD").opt_level(3);
+    bridge.std("c++17").flag("-MD").opt_level(3).out_dir(CPP_OUT_DIR);
 
     // Watch the the mod.rs file
     println!("cargo:rerun-if-changed=./src/cpp/mod.rs");
