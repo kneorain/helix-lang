@@ -798,7 +798,8 @@ mod tests {
 
         let mut instant = crate::PrimedInstant::new();
 
-
+        instant.prime();
+        
         for index in 0..expected.len() {
             instant.start();
             let token = unsafe { tokenizer.next().unwrap_unchecked()};
