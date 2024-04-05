@@ -14,13 +14,13 @@ pub mod test {
     }
 }
 
-#[cxx::bridge(namespace = "file_stream_cpp")]
-pub mod file_stream {
+#[cxx::bridge(namespace = "file_reader")]
+pub mod FileReader {
     unsafe extern "C++" { // EXPOSED TO RUST
-        include!("helix-compiler/src/cpp/include/file_stream.hpp");
-        type FileStream_CPP;
+        include!("helix-compiler/src/cpp/include/file_reader.hpp");
+        type T_FileReader;
     
-        fn new_file_stream(filename: &str) -> UniquePtr<FileStream_CPP>;
+        fn init(filename: &str) -> UniquePtr<T_FileReader>;
         fn read_line(&self, lineIndex: u32) -> &str;
         fn read_lines(&self, start: u32, offset: u32) -> &str;
         fn read_file(&self) -> &str;
@@ -28,8 +28,8 @@ pub mod file_stream {
     }
 }
 
-pub fn new_async_file_stream(filename: &str) -> std::sync::Arc<Mutex<cxx::UniquePtr<file_stream::FileStream_CPP>>> {
-    return std::sync::Arc::new(std::sync::Mutex::new(file_stream::new_file_stream(filename)));
+pub fn new_async_file_stream(filename: &str) -> std::sync::Arc<Mutex<cxx::UniquePtr<FileReader::T_FileReader>>> {
+    return std::sync::Arc::new(std::sync::Mutex::new(FileReader::init(filename)));
 }
 
 

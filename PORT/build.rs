@@ -10,7 +10,7 @@ fn main() -> miette::Result<()> {
 
     cxx_build::bridge("src/cpp/mod.rs")
         .file("src/cpp/src/greeting.cpp")
-        .file("src/cpp/src/file_stream.cpp")
+        .file("src/cpp/src/file_reader.cpp")
         //.compiler("clang++")
         //.include("C:\\Programing Languages\\LLVM\\include")
         .std("c++17")

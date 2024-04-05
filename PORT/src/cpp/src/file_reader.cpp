@@ -1,6 +1,6 @@
 /** ----------------------------------------------------------------------------
  * @link{https://github.com/kneorain/helix-lang}
- * @brief Implementation of the FileStream_CPP class for efficient file handling.
+ * @brief Implementation of the FileReader class for efficient file handling.
  *
  * This file is part of the Helix Compiler, an open-source compiler
  * for the Helix programming language.
@@ -33,14 +33,14 @@
  *
  * @file file_stream.cpp
  * Description: This file forms an integral part of the frontend for the Helix
- * Compiler. It includes the implementation of the FileStream_CPP class, which
+ * Compiler. It includes the implementation of the FileReader class, which
  * serves as a pivotal component in handling large files efficiently. The
  * primary functionality of this class is to perform memory mapping for rapid
  * file access and ensure thread-safe operations for concurrent data reading.
  * This is particularly important in the context of a compiler where speed and
  * efficiency of file processing directly impact the overall compilation time.
  *
- * The FileStream_CPP class is designed to optimize the file reading process,
+ * The FileReader class is designed to optimize the file reading process,
  * leveraging multithreading to enhance performance. It intelligently divides
  * the file into manageable chunks and enables simultaneous processing by
  * multiple threads. This approach is not only efficient but also scalable,
@@ -48,10 +48,10 @@
  * capabilities.
  *
  * Usage in Compiler Workflow:
- * - The main thread initiates the process by creating a FileStream_CPP object.
+ * - The main thread initiates the process by creating a FileReader object.
  * This object becomes the gateway to the underlying file handling operations.
  * - The total number of chunks in the file is determined by invoking the
- * get_total_chunks() method on the FileStream_CPP object.
+ * get_total_chunks() method on the FileReader object.
  * - Based on this chunk division, the program dynamically allocates threads,
  * each responsible for processing a subset of the total chunks.
  * - Each thread, in its lifecycle, calls the get_data_from_chunk() method for
@@ -59,7 +59,7 @@
  * data.
  *
  * Important Considerations:
- * - FileStream_CPP has been designed with thread safety in mind. However, it is
+ * - FileReader has been designed with thread safety in mind. However, it is
  * crucial that the implementation is carefully managed to avoid race conditions
  * and ensure data integrity.
  * - It is imperative that no two threads access the same chunk simultaneously.
@@ -125,8 +125,8 @@ FileInfo count(const init first, const init last, const char val) {
     return FileInfo {static_cast<uint32_t>(line_starts.size()), std::move(line_starts)};
 }
 
-namespace file_stream_cpp {
-    FileStream_CPP::FileStream_CPP(const std::string &filename)
+namespace file_reader {
+    T_FileReader::T_FileReader(const std::string &filename)
         : fileName(filename.c_str()
     ) {
         #ifdef __unix__ // tell kernel the access pattern.
@@ -183,7 +183,7 @@ namespace file_stream_cpp {
         lineStarts = info.line_starts; // store the line starts
     }
 
-    rust::Str FileStream_CPP::read_line(uint32_t lineIndex) const {
+    rust::Str T_FileReader::read_line(uint32_t lineIndex) const {
         if (lineIndex >= totalLines) {
             return rust::Str(
                 "FAILED TO READ! LINE INDEX OUT OF BOUNDS! GOT: "
@@ -201,7 +201,7 @@ namespace file_stream_cpp {
         );
     }
 
-    rust::Str FileStream_CPP::read_lines(uint32_t startLine, uint32_t offset) const {
+    rust::Str T_FileReader::read_lines(uint32_t startLine, uint32_t offset) const {
         if (startLine >= totalLines || (startLine + offset) >= totalLines) {
             return rust::Str(
                 "FAILED TO READ! LINE INDEX OUT OF BOUNDS! GOT: "
@@ -219,20 +219,20 @@ namespace file_stream_cpp {
         );
     }
 
-    rust::Str FileStream_CPP::read_file() const {
+    rust::Str T_FileReader::read_file() const {
         return rust::Str(data, size);
     }
 
 
-    rust::Str FileStream_CPP::get_file_name() const {
+    rust::Str T_FileReader::get_file_name() const {
         return rust::Str(fileName);
     }
 
-    uint32_t FileStream_CPP::get_total_lines() const {
+    uint32_t T_FileReader::get_total_lines() const {
         return totalLines;
     }
 
-    FileStream_CPP::~FileStream_CPP() {
+    T_FileReader::~T_FileReader() {
         #ifdef __unix__ // cleanup
             munmap(data, size);
         #elif _WIN32
@@ -245,8 +245,8 @@ namespace file_stream_cpp {
         
     }
 
-    std::unique_ptr<FileStream_CPP> new_file_stream(rust::Str filename) {
-        return std::make_unique<FileStream_CPP>(std::string(filename));
+    std::unique_ptr<T_FileReader> init(rust::Str filename) {
+        return std::make_unique<T_FileReader>(std::string(filename));
     }
 
 }

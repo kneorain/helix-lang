@@ -140,7 +140,7 @@ fn main() -> io::Result<()> {
     println!("Current working directory: {}", cwd.display());
 
     println!("\n---------- C++ ----------");
-    let inst = cpp::file_stream::new_file_stream("PORT/src/copy.hlx");
+    let inst = cpp::FileReader::init("PORT/src/copy.hlx");
     
 
     instant.prime();
