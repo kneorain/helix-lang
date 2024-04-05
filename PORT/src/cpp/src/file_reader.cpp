@@ -126,9 +126,10 @@ FileInfo count(const init first, const init last, const char val) {
 }
 
 namespace file_reader {
-    FileReader::FileReader(const std::string &filename)
-        : fileName(filename.c_str()) {
-#ifdef __unix__ // tell kernel the access pattern.
+    T_FileReader::T_FileReader(const std::string &filename)
+        : fileName(filename.c_str()
+    ) {
+        #ifdef __unix__ // tell kernel the access pattern.
             posix_fadvise(fd, 0, 0, 1);  // FDADVICE_SEQUENTIAL
         #endif
 
@@ -182,7 +183,7 @@ namespace file_reader {
         lineStarts = info.line_starts; // store the line starts
     }
 
-    rust::Str FileReader::read_line(uint32_t lineIndex) const {
+    rust::Str T_FileReader::read_line(uint32_t lineIndex) const {
         if (lineIndex >= totalLines) {
             return rust::Str(
                 "FAILED TO READ! LINE INDEX OUT OF BOUNDS! GOT: "
@@ -200,8 +201,7 @@ namespace file_reader {
         );
     }
 
-    rust::Str FileReader::read_lines(uint32_t startLine,
-                                     uint32_t offset) const {
+    rust::Str T_FileReader::read_lines(uint32_t startLine, uint32_t offset) const {
         if (startLine >= totalLines || (startLine + offset) >= totalLines) {
             return rust::Str(
                 "FAILED TO READ! LINE INDEX OUT OF BOUNDS! GOT: "
@@ -219,20 +219,21 @@ namespace file_reader {
         );
     }
 
-    rust::Str FileReader::read_file() const {
+    rust::Str T_FileReader::read_file() const {
         return rust::Str(data, size);
     }
 
-    rust::Str FileReader::get_file_name() const {
+
+    rust::Str T_FileReader::get_file_name() const {
         return rust::Str(fileName);
     }
 
-    uint32_t FileReader::get_total_lines() const {
+    uint32_t T_FileReader::get_total_lines() const {
         return totalLines;
     }
 
-    FileReader::~FileReader() {
-#ifdef __unix__ // cleanup
+    T_FileReader::~T_FileReader() {
+        #ifdef __unix__ // cleanup
             munmap(data, size);
         #elif _WIN32
             UnmapViewOfFile(data);
@@ -243,7 +244,7 @@ namespace file_reader {
         delete[] data;
     }
 
-    std::unique_ptr<FileReader> init(rust::Str filename) {
-        return std::make_unique<FileReader>(std::string(filename));
+    std::unique_ptr<T_FileReader> init(rust::Str filename) {
+        return std::make_unique<T_FileReader>(std::string(filename));
     }
 }

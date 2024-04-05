@@ -22,7 +22,7 @@ pub struct PrimedInstant {
 }
 
 impl PrimedInstant {
-    const PRIME_ITERATIONS: usize = 100000000;
+    const PRIME_ITERATIONS: usize = 100000;
 
     #[inline(always)]
     pub fn new() -> Self {
@@ -37,12 +37,13 @@ impl PrimedInstant {
     // Primes the instruction cache with the instructions related to instant,
     // and returns the average time it takes to execute a timing operation to get an accurate delta
     pub fn prime(&mut self) {
-        (0..Self::PRIME_ITERATIONS).fold(std::time::Duration::new(0, 0), |acc, _| {
+        println!("Priming the instruction cache with the instructions related to instant...");
+        self.average_overhead = (0..Self::PRIME_ITERATIONS).fold(std::time::Duration::new(0, 0), |acc, _| {
             let start = std::time::Instant::now();
 
-            let elapsed = start.elapsed();
+            let elapsed = _start.elapsed();
 
-            acc + elapsed
+            return acc + elapsed;
         }) / Self::PRIME_ITERATIONS as u32;
     }
     
@@ -60,7 +61,7 @@ impl PrimedInstant {
         info!("{}: {:?}", message, self.elapsed);
     }
     
-    pub fn log_elapsed(&self, message: &str) {
+    pub fn log_elapsed(&self) {
         info!("Time Elapsed: {:?}",self.elapsed);
     }
 
@@ -73,6 +74,7 @@ impl PrimedInstant {
         self.elapsed
     }
 }
+
 
 
 
@@ -138,13 +140,12 @@ fn main() -> io::Result<()> {
     println!("Current working directory: {}", cwd.display());
 
     println!("\n---------- C++ ----------");
-
+    
+    let inst = cpp::FileReader::init("PORT/src/copy.hlx");
 
     instant.prime();
 
     instant.start();
-    
-    let inst = cpp::FileReader::init("PORT/src/copy.hlx");
     
     let lines = inst.read_file();
     let lines2 = inst.read_line(2187622);
