@@ -30,21 +30,21 @@ impl PrimedInstant {
             instant: std::time::Instant::now(),
             average_overhead: std::time::Duration::new(0, 0),
             elapsed: std::time::Duration::new(0, 0),
-        }.prime()
+        }
     }
 
     #[inline(always)]
     // Primes the instruction cache with the instructions related to instant,
     // and returns the average time it takes to execute a timing operation to get an accurate delta
-    pub fn prime(self)->Self {
-        (0..Self::PRIME_ITERATIONS).fold(std::time::Duration::new(0, 0), |acc, _| {
-            let start = std::time::Instant::now();
+    pub fn prime(&mut self) {
+        println!("Priming the instruction cache with the instructions related to instant...");
+        (0..Self::PRIME_ITERATIONS).fold(std::time::Duration::new(0, 0), |_acc, _| {
+            let _start = std::time::Instant::now();
 
-            let elapsed = start.elapsed();
+            let _elapsed = _start.elapsed();
 
-            acc + elapsed
-        }) / Self::PRIME_ITERATIONS as u32;
-        self
+            return _acc + _elapsed;
+        }); // / Self::PRIME_ITERATIONS as u32;
     }
     
     #[inline(always)]
@@ -74,6 +74,7 @@ impl PrimedInstant {
         self.elapsed
     }
 }
+
 
 
 
@@ -142,7 +143,9 @@ fn main() -> io::Result<()> {
     let inst = cpp::file_stream::new_file_stream("PORT/src/copy.hlx");
     
 
-    instant.prime().start();
+    instant.prime();
+
+    instant.start();
     
     let lines = inst.read_file();
     let lines2 = inst.read_line(2187622);
@@ -151,7 +154,7 @@ fn main() -> io::Result<()> {
     println!("file: {}", lines);
     println!("line 1 {}", lines2);
     println!("lines 1-5 {}", lines3);
-    instant.log(Some("C++ IO Elapsed"));
+    instant.log("C++ IO Elapsed");
 
     
     
