@@ -256,12 +256,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "constime"
-version = "0.2.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "33ac181bf8bd332be3a8cc3da11e41f5675891e3bb234ec891226139fea8da58"
-
-[[package]]
 name = "cxx"
 version = "1.0.120"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -441,12 +435,6 @@ dependencies = [
 [[package]]
 name = "helix-proc"
 version = "0.1.0"
-dependencies = [
- "constime",
- "proc-macro2",
- "quote",
- "syn 2.0.57",
-]
 
 [[package]]
 name = "hermit-abi"

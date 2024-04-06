@@ -276,7 +276,6 @@ const CONTINUE: ControlFlow = ControlFlow::Continue(());
 
 impl<'a> Tokenizer<'a> {
 
-    const DEFAULT_RANGE: Range<usize> = 0..0;
     const DEFAULT_COLUMN: usize = 0;
     const DEFAULT_ROW: usize = 1;
     const DEFAULT_CHAR: u8 = b'\0';
@@ -661,7 +660,7 @@ impl<'a> Tokenizer<'a> {
 
         self.increment_cursor();
         // if theres a string prefix like r, b, u, f and a " or ' then we need to handle it
-
+        
         CONTINUE
     }
 }
@@ -714,7 +713,7 @@ impl<'a> Iterator for Tokenizer<'a> {
             // Break the loop 
             } == BREAK { break }
         }
-        
+
         #[cfg(feature = "debug-trace")]
         println!(" :t {} h {})",self.tail(), self.peek_head(),);
 
