@@ -1,4 +1,3 @@
-
 #[macro_export]
 macro_rules! __panic__ {
     ($error:expr, $mark:expr $(, line_no = $line_no:expr)?) => {
