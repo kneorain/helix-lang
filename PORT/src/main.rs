@@ -143,22 +143,19 @@ fn main() -> io::Result<()> {
     
     let inst = cpp::FileReader::init("PORT/src/copy.hlx");
 
-    instant.prime();
 
-    instant.start();
-    
+    let inst = cpp::FileReader::init("PORT/src/copy.hlx");
     let lines = inst.read_file();
     let lines2 = inst.read_line(2187622);
-    let lines3 = inst.read_lines(1, 5);
-    instant.end();
+
+    let start = std::time::Instant::now();
+    let lines3 = inst.read_lines(1, 10);
+    let elapsed = start.elapsed();
+    
     println!("file: {}", lines);
     println!("line 1 {}", lines2);
-    println!("lines 1-5 {}", lines3);
-    instant.log("C++ IO Elapsed");
-
-    
-    
-    thread::sleep(time::Duration::from_millis(500));
+    println!("lines 1-10 (timed) {}", lines3);
+    println!("C++ IO Time Elapsed: {:?}", elapsed);
 
     //println!("{}", _reader);
     //let lexar = rust::token::lexer::Lexer::new("PORT/src/test.hlx");

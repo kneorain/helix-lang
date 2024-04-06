@@ -11,3 +11,6 @@ CompileFlags: # Tweak the parse settings, example directory given to show format
     - "-IC:\\Program Files (x86)\\Windows Kits\\NETFXSDK\\4.8\\include\\um"
     - "-IZ:\\devolopment\\helix\\helix-lang\\target\\release\\build\\helix-compiler-d3f6e8ab540840e8\\out\\cxxbridge\\include"
     - "-IZ:\\devolopment\\helix\\helix-lang\\target\\release\\build\\helix-compiler-d3f6e8ab540840e8\\out\\cxxbridge\\crate"
+    
+    - "-I/Volumes/Container/Projects/Helix/helix-lang/target/release/build/helix-compiler-19023081dbb16dd3/out/cxxbridge/include"
+    - "-I/Volumes/Container/Projects/Helix/helix-lang/target/release/build/helix-compiler-19023081dbb16dd3/out/cxxbridge/crate"
