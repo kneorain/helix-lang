@@ -78,7 +78,7 @@ fn main() -> miette::Result<()> {
         .file("src/cpp/src/file_reader.cpp")
         //.compiler("clang++")
         //.include("C:\\Programing Languages\\LLVM\\include")
-        .std("c++17")
+        .std("c++20")
         // dont show -Wignored-attributes
         //.flag("-Wno-ignored-attributes")
         .flag("-MD")

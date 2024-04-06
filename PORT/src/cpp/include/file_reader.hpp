@@ -84,7 +84,7 @@
 #include <fstream>
 #include <vector>
 
-#ifdef __unix__
+#if defined __unix__ || __APPLE__
     #include <sys/mman.h>
     #include <sys/stat.h>
     #include <fcntl.h>
@@ -157,13 +157,11 @@ namespace file_reader {
             rust::Str get_file_name() const;
 
         private:
+            const char    *fileName;
+            uint32_t       totalLines;
             mutable std::vector<uint32_t> lineStarts;
-    
-            const char*    fileName;
-            uint32_t      totalLines;
 
-            #ifdef __unix__
-                struct stat;
+            #if defined __unix__ || __APPLE__
                 size_t size;
                 char  *data;
             #elif _WIN32

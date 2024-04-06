@@ -37,7 +37,4 @@ pub fn new_async_file_stream(filename: &str) -> std::sync::Arc<Mutex<cxx::Unique
 
 
 use std::sync::Mutex;
-
-use cxx::UniquePtr;
-
 use crate::python::test::hello_from_python;
