@@ -1,6 +1,7 @@
 pub mod token;
 pub mod config;
 pub mod panic_hook;
+pub mod debug_counter;
 use panic_hook::better_panic;
 
 // TODO: Make this into a proc-macro.
