@@ -714,6 +714,7 @@ impl<'a> Iterator for Tokenizer<'a> {
             // Break the loop 
             } == BREAK { break }
         }
+        
         #[cfg(feature = "debug-trace")]
         println!(" :t {} h {})",self.tail(), self.peek_head(),);
 
@@ -803,10 +804,10 @@ mod tests {
         for index in 0..expected.len() {
             instant.start();
             let token = unsafe { tokenizer.next().unwrap_unchecked()};
-            let elapsed = instant.end();
+            instant.end();
             println!(
                 "\nr:{} c:{} t:'{}' e:{:?}",
-                token.row, token.column, token.token, elapsed
+                token.row, token.column, token.token, instant.elapsed
                         );
             assert_eq!(token.token, expected[index]);
         }
