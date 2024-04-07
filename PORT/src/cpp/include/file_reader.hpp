@@ -1,3 +1,4 @@
+#pragma once
 /** ----------------------------------------------------------------------------
  * @link{https://github.com/kneorain/helix-lang}
  *
@@ -77,11 +78,9 @@
  * @since   v0.0.1-stable
  * @version v0.1.2-stable
  * -------------------------------------------------------------------------- */
-#pragma once
 #include "rust/cxx.h"
 #include <memory>
 #include <cstdint>
-#include <fstream>
 #include <vector>
 
 #if defined __unix__ || __APPLE__
@@ -110,12 +109,12 @@ namespace file_reader {
              * - calculates the size of the file.
              * - calculates the number of chunks in the file.
              * - stores the start pos of each line in the chunks vector.
-             * all done in < 500µs for a 40mb (2M lines - non empty) file.
+             * all done in > 500µs for a 40mb (2M lines - non empty) file.
              * **Tested on my machine**
              *
              * @param filename The name of the file to be read.
              */
-            T_FileReader(const std::string &filename);
+             T_FileReader(const std::string &filename);
             ~T_FileReader();
 
             /**
@@ -170,7 +169,6 @@ namespace file_reader {
                 HANDLE hFile;
                 char  *data;
             #endif
-
     };
 
     /**

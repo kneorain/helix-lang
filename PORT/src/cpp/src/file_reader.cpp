@@ -121,11 +121,19 @@ FileInfo count(const iter first, const iter last, const char val) {
     std::vector<uint32_t> line_starts = {};
     for (; non_const_first != last; ++non_const_first) {
         if (*non_const_first == val) {
-            line_starts.push_back(std::distance(first, non_const_first));
+            line_starts.push_back(
+                std::distance(
+                    first,
+                    non_const_first
+                )
+            );
         }
     }
 
-    return FileInfo {static_cast<uint32_t>(line_starts.size()), std::move(line_starts)};
+    return FileInfo {
+        static_cast<uint32_t>(line_starts.size()),
+        std::move(line_starts)
+    };
 }
 
 template<typename ... args>
@@ -135,7 +143,7 @@ std::string string_format( const std::string &str, args ... formats ) {
     ) + 1;
 
     if (size_s <= 0) {
-        throw std::runtime_error( "Error during formatting." );
+        throw std::runtime_error(  "Error during formatting." );
     }
     
     auto size = static_cast<size_t>(size_s);
@@ -179,7 +187,16 @@ namespace file_reader {
                 }
 
                 size = fileStat.st_size;
-                data = static_cast<char*>(mmap(nullptr, size, PROT_READ, MAP_PRIVATE, fd, 0));
+                data = static_cast<char*>(
+                    mmap(
+                        nullptr,
+                        size,
+                        PROT_READ,
+                        MAP_PRIVATE,
+                        fd,
+                        0
+                    )
+                );
                 close(fd);
 
                 if (data == MAP_FAILED) {
@@ -188,14 +205,27 @@ namespace file_reader {
                 }
 
             #elif _WIN32
-                hFile = CreateFileA(fileName, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
-                if (hFile == INVALID_HANDLE_VALUE) {
+                hFile = CreateFileA(
+                    fileName,
+                    GENERIC_READ,
+                    FILE_SHARE_READ,
+                    NULL,
+                    OPEN_EXISTING,
+                    FILE_ATTRIBUTE_NORMAL,
+                    NULL
+                ); if (hFile == INVALID_HANDLE_VALUE) {
                     std::cerr << "Failed to open file: " << GetLastError() << std::endl;
                     throw std::runtime_error("Failed to open file");
                 }
 
-                hMap = CreateFileMapping(hFile, NULL, PAGE_READONLY, 0, 0, NULL);
-                if (hMap == NULL) {
+                hMap = CreateFileMapping(
+                    hFile,
+                    NULL,
+                    PAGE_READONLY,
+                    0,
+                    0,
+                    NULL
+                ); if (hMap == NULL) {
                     CloseHandle(hFile);
                     std::cerr << "Failed to create file mapping: " << GetLastError() << std::endl;
                     throw std::runtime_error("Failed to create file mapping");
@@ -209,8 +239,15 @@ namespace file_reader {
                     throw std::runtime_error("Failed to get file size");
                 }
 
-                data = static_cast<char*>(MapViewOfFile(hMap, FILE_MAP_READ, 0, 0, size));
-                if (data == NULL) {
+                data = static_cast<char*>(
+                    MapViewOfFile(
+                        hMap,
+                        FILE_MAP_READ,
+                        0,
+                        0,
+                        size
+                    )
+                ); if (data == NULL) {
                     CloseHandle(hMap);
                     CloseHandle(hFile);
                     std::cerr << "Failed to map view of file: " << GetLastError() << std::endl;
@@ -230,7 +267,14 @@ namespace file_reader {
             || lineIndex < 0
         ) {
             char* msg = new char[100];
-            int co = std::snprintf(msg, 256, "FAILED TO READ! LINE INDEX OUT OF BOUNDS! GOT: %d MAX: %d", lineIndex, totalLines);
+            int co = std::snprintf(
+                msg,
+                256,
+                "FAILED TO READ! LINE INDEX OUT OF BOUNDS! GOT: %d MAX: %d",
+                lineIndex,
+                totalLines
+            );
+
             if (co < 0) {
                 return rust::Str(
                     "FAILED TO READ! FORMAT ERROR!"
