@@ -435,6 +435,10 @@ dependencies = [
 [[package]]
 name = "helix-proc"
 version = "0.1.0"
+dependencies = [
+ "quote",
+ "syn 2.0.57",
+]
 
 [[package]]
 name = "hermit-abi"
