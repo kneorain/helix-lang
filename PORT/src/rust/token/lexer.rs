@@ -1,14 +1,14 @@
-use core::str::Chars;
-use std::borrow::{Borrow, BorrowMut};
-use smallvec::{smallvec, SmallVec};
-use std::ops::{Div, Index};
-use std::{iter::Peekable, ops::ControlFlow::*, ops::Range,};
+use std::{
+    ffi::OsStr,
+    ops::Range,
+    ptr::{self, addr_of_mut, slice_from_raw_parts},
+    slice::SliceIndex,
+    sync::atomic::{AtomicPtr, Ordering},
+};
 
-use std::sync::atomic::Ordering;
-use std::sync::atomic::{AtomicU8, AtomicUsize};
-use std::sync::OnceLock;
+use cxx::{memory::SharedPtrTarget, SharedPtr};
 
-use super::Token;
+use crate::rust::debug_counter::dbg_trace;
 
 // lazy_static::lazy_static! {
 //     static ref STRING_RE: Regex = Regex::new(r#"([fbur]*"[^"\\]*(?:\\.[^"\\]*)*")"#).unwrap();
@@ -27,28 +27,65 @@ pub trait Lexer {
     fn lexer_str(&self, content: &str) -> Vec<Token>;
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub struct TokenIR<'a> {
-    token: &'a str,
+// this is a struct that is managed in rust that communicates with cpp, should be under a shared ptr,
+
+#[derive(Debug)]
+pub struct Token<'cxx> {
+    //file: AtomicPtr<super::super::shared::file_data::File<'cxx>>,
+    chars: &'cxx [u8],
     column: usize,
     row: usize,
-    complete: bool,
-}
 
-impl<'a> TokenIR<'a> {
-    pub fn new(token: &'a [u8], column: usize, row: usize, complete: bool) -> Self {
-        TokenIR {
-            // safe as we only have valid utf8 tokens
-            token: unsafe { std::str::from_utf8(token).unwrap_unchecked() },
-            // FIXME: more testing is needed to determine if this is the
-            // correct way to calculate the column since the +1 is
-            // a hack to fix the column being off by one.
-            column: column.saturating_sub(token.len()), // + (1);,
+    complete: bool,
+    lifetime: std::marker::PhantomData<&'cxx u8>,
+} // something is needed to signal to cpp that a reference was made and one
+
+impl<'cxx> Token<'cxx> /*<'cxx>*/ {
+    const TOKEN_ORDERING: Ordering = Ordering::Relaxed;
+
+    pub fn new(
+        chars: &'cxx [u8],
+        /*file:AtomicPtr<super::super::shared::file_data::File>, */
+        column: usize,
+        row: usize,
+        complete: bool,
+    ) -> Self {
+        Token {
+            //file,
+            chars,
+            column,
             row,
             complete,
+            lifetime: std::marker::PhantomData,
         }
     }
+
+    // fn increnment_references(&self) {
+    //     self.file.load(Self::TOKEN_ORDERING).read().increment_references();
+    // }
+
+    // pub fn file_ptr(&self) -> &AtomicPtr<super::super::shared::file_data::File<'cxx>> {
+    //     self.file.load(TOKEN_ORDERING)
+    //     self.file.store(ptr, order)
+    // }
+
+    #[inline(always)]
+    pub fn as_str(&self) -> &'cxx str {
+        // Safe as we only have valid utf8 tokens
+        unsafe { std::str::from_utf8_unchecked(self.chars) }
+    }
+
+    #[inline(always)]
+    pub fn as_slice(&self) -> &'cxx [u8] {
+        self.chars
+    }
 }
+
+// impl<'cxx> Drop for Token<'cxx> {
+//     fn drop(&mut self) {
+//         unsafe { self.file.load(Self::TOKEN_ORDERING).read().decrement_references()};
+//     }
+// }
 // macro_rules! no_format {
 //     {$ex:block} => {
 // $ex
@@ -60,9 +97,6 @@ impl<'a> TokenIR<'a> {
 //no_format! {
 // fix formatting
 
-
-
-
 //const OPERATOR_PREFIXES: [u8; 4] = [b'r', b'b', b'u', b'f'];
 //}
 // const TWO_CHAR_OPERATORS: [ [u8; 2]; 40] = [
@@ -71,22 +105,39 @@ impl<'a> TokenIR<'a> {
 
 //
 
-// make a macro that makes these macros 
+// make a macro that makes these macros
 
 macro_rules! token_patterns {
     ($($name:ident:  $patten:pat),*) => {
         $(
             macro_rules! $name {
                 () => {
-                    $patten            
+                    $patten
                 };
-            
+
+                (first) => {
+                    helix_proc::get_first_char_pattern!($patten)
+                };
+
+                (u16$phantom:literal) => {
+                    helix_proc::convert_bytes_to_u16!($patten)
+                };
+
                 (match $ch:expr) => {
-                    matches!($ch, $name!()) 
+                    matches!($ch, $name!())
+                };
+
+
+                (raw$phantom:literal) => {
+                    helix_proc::raw!($patten)
+                };
+
+                (u16 match $ch:expr) => {
+                    matches!($ch, $name!(u16 ""))
                 };
 
                 (trie_match $ch:expr) => {
-                    trie_match::trie_match!{  
+                    trie_match::trie_match!{
                         match $ch {
                             $patten => true,
                         _ => false
@@ -98,223 +149,186 @@ macro_rules! token_patterns {
 
 }
 
-
-
+// todo: formatter should be able to format macros, a macro can define what formatting to use
 token_patterns! {
-    
+
     delimiters: b'{' | b'}' | b'(' | b')' | b';' | b'!' | b'=' | b'|',
-    whitespace: b'\t' | b'\n' | b'\x0C' | b'\r' | b' ',
-    quotes: b'\'' | b'"',
-    string_prefixes: b'r'|b'b'| b'u'| b'f',
-    two_char_operators:helix_proc::convert_bytes_to_u16!( b"==" | b"!=" | b"<=" | b">=" | b"//" | b"**" |
+
+    newline: b'\n',
+    other_whitespace: b'\t' | b'\n' | b'\x0C' | b'\r' | b' ',
+
+    whitespace: other_whitespace!() | newline!(),
+
+
+
+
+    string_quotes: b'"',
+    char_quotes: b'\'',
+
+    quotes: string_quotes!() | char_quotes!(),
+
+    backslash: b'\\',
+
+    // raw | binary | unicode | formatted
+    quote_prefixes: b'r'|b'b'| b'u'| b'f',
+
+    // escape sequences
+    // should we include regexp escape sequences in helix?
+    // newline | carriage return | tab | null | hex | unicode | unicode extended | single quote
+    escape_sequences: b"\\n" | b"\\r" | b"\\t" | b"\\0" | b"\\x" | b"\\u" | b"\\U" | b"\\'",
+
+
+    two_char_operators: b"==" | b"!=" | b"<=" | b">=" | b"//" | b"**" |
     b"<<" | b">>" | b"r+" | b"r-"| b"r*" | b"r/" | b"r%" | b"r&" | b"r|" |
     b"r^" | b"+=" | b"-=" | b"*=" | b"/=" | b"%=" | b"&=" | b"|=" | b"^=" |
     b"=>" | b"@=" | b"->" | b"<-" | b"<=" | b">=" | b"&&" | b"--" |
-    b"::" | b"||" | b"++" | b"__" | b"?="),
-    
+    b"::" | b"||" | b"++" | b"__" | b"?=",
+
+
+
     three_char_operators: b"===" | b"!==" | b"..." | b"r//" | b"r**" | b"r<<" | b"r>>" | b"//=" | b"**=" | b"<<=" |
     b">>=" | b"??" | b"|:",
-    
 
-    // TODO: Fix this...
-    operators_first_char:helix_proc::get_first_char_pattern!(b"==" | b"!=" | b"<=" | b">=" | b"//" | b"**" |
+    // hex: numeric!() | b'a'..=b'f' | b'A'..=b'F',
+
+
+    // method_call: b'.',
+    // static_method_call: b"::",
+    // method_error: b'?',
+
+
+    // fn_definition_error_suffix: b'?',
+    // fn_definition_suffixes: fn_definition_error_suffix!(),
+
+
+    // fn_definition: b"fn",
+
+    // // used for match statements
+    // implies: b"=>",
+
+    // fn_error: b'?',
+    // // idk abt this copiolet gave this : fn_error_eq: b"?=",
+
+    // fn_return: b"->",
+
+    // fn_param_start: b'(',
+    // fn_param_end: b')',
+
+    // scope_start: b'{',
+    // scope_end: b'}',
+
+    // array_start: b'[',
+    // array_end: b']',
+
+    // tuple_start: b'(',
+    // tuple_end: b')',
+
+    // // make thing that does this
+
+    // // numeric_prefix : {
+    // //     // all of these patterns are in numeric prefix and also their own patterns that  can be used...
+    // //     ordinal: b'o',
+    // // }
+
+
+    // // idk about big O
+    // ordinal_numeric:b'o' ,
+
+    // // little b is
+    // binary_numeric: b'b',
+
+    // // u is unicode. u4u32 would make it into the respective type from that char to the number
+    // unicode_numeric: b'u',
+    // numeric_hex: b'x' | b"0x",
+
+    // big_endian: b'b',
+    // little_endian: b'l',
+    // native_endian: b'n',
+
+    // numeric_endian_infixes: big_endian!() | little_endian!() | native_endian!(),
+    // numeric_prefixes: ordinal!() |  binary_numeric!(),
+
+    underscore: b'_',
+    uppercase: b'A'..=b'Z',
+    lowercase: b'a'..=b'z',
+    numeric: b'0'..=b'9',
+
+    alphanumeric: lowercase!() | uppercase!() | numeric!(),
+
+    identifier_first_char: lower_case!() | uppercase!() | underscore!(),
+
+    identifier: identifier_first_char!() | numeric!(),
+
+    punctuation: b'!'..=b'/'|b':'..=b'@'|b'['..=b'`'|b'{'..=b'~',
+
+    //TODO: make work -> operators: two_char_operators!() | three_char_operators!()
+
+    operators:  b"==" | b"!=" | b"<=" | b">=" | b"//" | b"**" |
     b"<<" | b">>" | b"r+" | b"r-"| b"r*" | b"r/" | b"r%" | b"r&" | b"r|" |
     b"r^" | b"+=" | b"-=" | b"*=" | b"/=" | b"%=" | b"&=" | b"|=" | b"^=" |
     b"=>" | b"@=" | b"->" | b"<-" | b"<=" | b">=" | b"&&" | b"--" |
-    b"::" | b"||" | b"++" | b"__" | b"?="|b"===" | b"!==" | b"..." | b"r//" | b"r**" | b"r<<" | b"r>>" | b"//=" | b"**=" | b"<<=" |
-    b">>=" | b"??" | b"|:")
+    b"::" | b"||" | b"++" | b"__" | b"?=" | b"===" | b"!==" | b"..." | b"r//" | b"r**" | b"r<<" | b"r>>" | b"//=" | b"**=" | b"<<=" |
+    b">>=" | b"??" | b"|:"
+
+
+
 }
 
-
-
-
-
-
-
+//
 //const ALLOWED_STRING_PREFIXES: [u8; 4] = [];
 
 // TODO USE BYTES CRATE IF ITS FASTER TO ITERATE OVER BYTES
 
 #[derive(Debug, Clone)]
-enum COLORS {
-    RED = 31,
-    GREEN = 32,
-    YELLOW = 33,
-    BLUE = 34,
-    MAGENTA = 35,
-    CYAN = 36,
-    BrightRed = 91,
-    BrightGreen = 92,
-    BrightYellow = 93,
-    BrightBlue = 94,
-    BrightMagenta = 95,
-    BrightCyan = 96,
-}
-
-const COLORS: [COLORS; 12] = [
-    COLORS::RED,
-    COLORS::GREEN,
-    COLORS::YELLOW,
-    COLORS::MAGENTA,
-    COLORS::BLUE,
-    COLORS::CYAN,
-    COLORS::BrightRed,
-    COLORS::BrightGreen,
-    COLORS::BrightYellow,
-    COLORS::BrightBlue,
-    COLORS::BrightMagenta,
-    COLORS::BrightCyan,
-];
-
-struct DebugCounter {
-    color_count: AtomicU8,
-    char_count: AtomicUsize,
-}
-
-impl DebugCounter {
-    /// println! style usage,
-    /// so a message and format args
-    fn new() -> Self {
-        return DebugCounter {
-            color_count: AtomicU8::new(0),
-            char_count: AtomicUsize::new(0),
-        };
-    }
-
-    const CHARS: [char; 62] = [
-        '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h',
-        'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z',
-        'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R',
-        'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z',
-    ];
-
-    pub fn print(&mut self, line_number: u32) {
-        self.char_count.fetch_add(1, Ordering::SeqCst);
-        print!(
-            "\u{001b}[{}m({}|{})\u{001b}[0m|",
-            self.color(),
-            self.char(),
-            line_number
-        );
-    }
-
-    fn color(&mut self) -> u8 {
-        let color_count = self.color_count.load(Ordering::SeqCst);
-        self.color_count
-            .store((color_count + 1) % (COLORS.len() as u8), Ordering::SeqCst);
-        return COLORS[color_count as usize].clone() as u8;
-    }
-
-    fn char(&mut self) -> char {
-        let char = self.char_count.load(Ordering::SeqCst);
-        self.char_count
-            .store((char + 1) % (Self::CHARS.len() as usize), Ordering::SeqCst);
-        return Self::CHARS[char as usize];
-    }
-
-    pub fn reset(&mut self) {
-        self.color_count.store(0, Ordering::SeqCst);
-        self.char_count.store(0, Ordering::SeqCst);
-    }
-
-    pub fn print_char(&mut self, c: &str) {
-        self.char_count.fetch_add(1, Ordering::SeqCst);
-        print!("\u{001b}[{}m{}\u{001b}[0m", self.color(), c);
-    }
-}
-
-static mut DBG: OnceLock<DebugCounter> = OnceLock::new();
-macro_rules! dbg_trace {
-    () => {
-        #[cfg(feature = "debug-trace")]
-        unsafe {DBG.get_mut().unwrap().print(line!());}
-    };
-    ($literal:literal) => {
-        #[cfg(feature = "debug-trace")]
-        unsafe {DBG.get_mut().unwrap().print_char($literal.into());}
-    };
-    ($($arg:tt)*) => { // dbg_trace(reset, "hello we start trace {}", "hello we start trace {})
-
-    #[cfg(feature = "debug-trace")]
-    unsafe{
-
-            println!();
-            print!($($arg)*);
-            DBG.get_or_init(|| DebugCounter::new());
-            DBG.get_mut().unwrap().reset()
-        }
-    };
-
-}
-
-#[derive(Debug, Clone)]
-pub struct Tokenizer<'a> {
-    chars: &'a [u8],
-    next_char: u8,
-    next_next_char: u8,
+pub struct Tokenizer<'cxx> {
+    slice_head: *const u8,
     column: usize,
     row: usize,
-    two_char_operator: [u8; 2],
-    // used for iterator to avoid reallocation
-    cursor: Range<usize>,
-    // if a token is complete
-    complete: bool,
-    last_type: TokenType,
-    last_token_column: usize,
-    last_token_row: usize,
 
-    // rename
-    chars_len:usize,
+    window_tail: *const u8,
+    window_head: *const u8,
+
+    // if a token is complete
+    // or store last token type
+    // last_token: *const Token<'cxx>,
+    token_column: usize,
+    token_row: isize,
+
+    slice_tail: *const u8,
+    lifetime: std::marker::PhantomData<&'cxx u8>,
 }
 
-type ControlFlow = std::ops::ControlFlow<()>;
-const BREAK: ControlFlow = ControlFlow::Break(());
-const CONTINUE: ControlFlow = ControlFlow::Continue(());
-
-
-
-
-impl<'a> Tokenizer<'a> {
-
+impl<'cxx> Tokenizer<'cxx> {
     const DEFAULT_COLUMN: usize = 0;
-    const DEFAULT_ROW: usize = 1;
+    const DEFAULT_ROW: isize = -1;
     const DEFAULT_CHAR: u8 = b'\0';
-    const DEFAULT_CURSOR: Range<usize> = 0..0;
-    const DEFAULT_COMPLETE: bool = true;
     const DEFAULT_LAST_TYPE: TokenType = TokenType::None;
 
     // cpp could straight up pass in a u8 slice instead of a string slice
-    pub fn new(content: &'a str) -> Self {
-    
-        let chars = content.as_bytes();
-    
+    pub fn new(chars: &'cxx [u8]) -> Self {
         Tokenizer {
-            chars,
-            next_next_char: Self::DEFAULT_CHAR,
-            cursor: Self::DEFAULT_CURSOR,
-            column: Self::DEFAULT_COLUMN,
-            next_char: Self::DEFAULT_CHAR,
+            slice_head: chars.as_ptr(),
+            slice_tail: unsafe { chars.as_ptr().add(chars.len()) },
+            window_head: chars.as_ptr(),
+            window_tail: chars.as_ptr(),
             row: Self::DEFAULT_ROW,
-            two_char_operator: [Self::DEFAULT_CHAR; 2],
-            complete: Self::DEFAULT_COMPLETE,
-            last_type: Self::DEFAULT_LAST_TYPE,
-            last_token_column: Self::DEFAULT_COLUMN,
-            last_token_row: Self::DEFAULT_ROW,
-            chars_len: chars.len(),
+            column: Self::DEFAULT_COLUMN,
+            token_column: Self::DEFAULT_COLUMN,
+            token_row: Self::DEFAULT_ROW,
+            // points to the location after the last char
+            lifetime: std::marker::PhantomData,
         }
     }
 
     #[inline(always)]
     /// Allows the tokenizer to be reset with new content without reallocation,
-    pub fn reset(&mut self, content: &'a str) {
-        self.chars = content.as_bytes();
-        self.reset_column();
+    pub fn reset(&mut self, content: &'cxx [u8]) {
+        self.slice_head = content.as_ptr();
+        self.slice_tail = unsafe { content.as_ptr().add(content.len()) };
+        self.window_tail = content.as_ptr();
+        self.window_head = content.as_ptr();
         self.row = Self::DEFAULT_ROW;
-        self.cursor = Self::DEFAULT_CURSOR;
-        self.complete = Self::DEFAULT_COMPLETE;
-        self.last_token_column = Self::DEFAULT_COLUMN;
-        self.last_token_row = Self::DEFAULT_ROW;
-        self.chars_len = self.chars.len();
+        self.reset_column();
     }
 
     /// A dirty estimate of the number of tokens in the content
@@ -325,18 +339,17 @@ impl<'a> Tokenizer<'a> {
 
         for c in content.as_bytes() {
             match c {
-                b'"' if in_string & (prev_char != b'\\') => {
+                quotes!() if in_string & (prev_char != backslash!(raw "")) => {
                     // Handle string closure and escape character
                     in_string = false;
                 }
-                b'"' => {
+                quotes!() => {
                     // Handle string opening
                     in_string = true;
                     count += 1; // Count the entire string as one token
                 }
-                c if c.is_ascii_alphanumeric() || *c == b'_' || c.is_ascii_punctuation() => {
-                    count += 1;
-                }
+                alphanumeric!() | punctuation!() | underscore!() => count += 1,
+
                 _ => {}
             }
             prev_char = *c;
@@ -346,7 +359,7 @@ impl<'a> Tokenizer<'a> {
 
     // there is prob a trait for this
 
-    pub fn gather_all_tokens(&'a mut self, content: &str) -> Vec<TokenIR<'a>> {
+    pub fn gather_all_tokens(&mut self, content: &str) -> Vec<Token> {
         let mut tokens = Vec::with_capacity(Self::fast_estimate_number_of_tokens(content));
 
         while let Some(token) = self.next() {
@@ -356,67 +369,71 @@ impl<'a> Tokenizer<'a> {
         tokens
     }
 
+    fn window_len(&self) -> usize {
+        unsafe { self.window_tail as usize - self.window_head as usize }
+    }
+
     // nested inlining do not inline: feature for helix
 
     #[inline(always)]
-    fn peek_char(&self) -> Option<&u8> {
-        self.peek_char_n(1)
+    fn peek_ahead_n(&self, n: usize) -> u8 {
+        unsafe { *self.window_tail.add(n) }
+    }
+
+    fn peek_ahead(&self) -> u8 {
+        self.peek_ahead_n(1)
     }
 
     #[inline(always)]
-    fn peek_char_n(&self, n: usize) -> Option<&u8> {
-        self.chars.get(self.peek_head() + n)
+    fn get_slice_from_tail_window(&self, to: usize) -> &[u8] {
+        unsafe { &*slice_from_raw_parts(self.window_tail, to) }
     }
 
-    #[inline(always)]
-    fn peek_head(&self) -> usize {
-        self.cursor.end
-    }
+    //  #[inline(always)]
+    //     fn peek_behind_slice(&self, to: usize) -> &[u8] {
+    //         return if self.in_bounds(to) {
+    //             unsafe { &*slice_from_raw_parts(self.window_tail.add(1), to) }
+
+    //             Self::DEFAULT_CHAR
+    //         } else {
+    //             &[]
+    //         };
+    //     }
 
     #[inline(always)]
-    fn tail(&self) -> usize {
-        self.cursor.start
-    }
-
-    #[inline(always)]
-    fn peek_slice(&self, to: usize) -> Option<&[u8]> {
-        self.chars.get(self.peek_head()..self.peek_head() + to)
-    }
-
-    #[inline(always)]
-    fn peek_behind(&self) -> Option<&u8> {
-        self.chars.get(self.tail() - 1)
-    }
-
-    #[inline(always)]
-    fn peak_behind_slice(&self, back_to: usize) -> Option<&[u8]> {
-        self.chars.get(self.tail() - back_to..self.tail())
+    fn peek_behind(&self) -> u8 {
+        // check if the window is empty so it does not go out of bounds
+        return if self.window_is_empty() {
+            Self::DEFAULT_CHAR
+        } else {
+            unsafe { self.window_tail.sub(1).read() }
+        };
     }
 
     // Head methods
 
     #[inline(always)]
-    fn increment_peek_head(&mut self) {
-        self.increment_peek_head_n(1);
+    fn increment_window_tail(&mut self) {
+        self.increment_window_tail_n(1);
     }
 
     #[inline(always)]
     fn increment_cursor(&mut self) {
-        self.increment_peek_head();
+        self.increment_window_tail();
         self.increment_column();
     }
 
     #[inline(always)]
     fn increment_cursor_n(&mut self, n: usize) {
-        self.increment_peek_head_n(n);
+        self.increment_window_tail_n(n);
         self.increment_column_n(n);
     }
 
     // Column and head methods
 
     #[inline(always)]
-    fn increment_peek_head_n(&mut self, n: usize) {
-        self.cursor.end += n;
+    fn increment_window_tail_n(&mut self, n: usize) {
+        self.window_tail = unsafe { self.window_tail.add(n) };
     }
 
     #[inline(always)]
@@ -427,47 +444,32 @@ impl<'a> Tokenizer<'a> {
     // Tail methods
 
     #[inline(always)]
-    fn increment_tail(&mut self) {
-        self.increment_tail_n(1);
+    fn increment_head(&mut self) {
+        self.increment_head_n(1);
     }
 
     #[inline(always)]
-    fn increment_tail_n(&mut self, n: usize) {
-        self.cursor.start += n;
+    fn increment_head_n(&mut self, n: usize) {
+        unsafe { self.window_head.add(n) };
     }
 
-    #[inline(always)]
-    fn set_tail(&mut self, tail: usize) {
-        self.cursor.start = tail;
-    }
+    // #[inline(always)]
+    // fn increment_window_n(&mut self, n: usize) {
+    //     // Move the head
+    //     self.increment_tail_n(n);
+    //     self.increment_peek_head_n(n);
+
+    //     // Set the tail to the old head
+    // }
+
+    // #[inline(always)]
+    // fn increment_window(&mut self) {
+    //     self.increment_window_n(1);
+    // }
 
     #[inline(always)]
-    fn increment_window_n(&mut self, n: usize) {
-        // Move the head
-        self.increment_tail_n(n);
-        self.increment_peek_head_n(n);
-
-        // Set the tail to the old head
-    }
-
-    #[inline(always)]
-    fn increment_window(&mut self) {
-        self.increment_window_n(1);
-    }
-
-    // removes the cut token
-    #[inline(always)]
-    fn end_token(&mut self) {
-        self.last_token_column = self.column;
-        self.last_token_row = self.row;
-        self.increment_peek_head();
-        self.set_tail(self.peek_head());
-    }
-
-    #[inline(always)]
-    fn cut_current(&mut self) -> Option<&'a [u8]> {
-        // cache this... and update it only when called
-        self.chars.get(self.cursor.clone())
+    fn at_end(&self) -> bool {
+        std::ptr::addr_eq(self.window_tail, self.slice_tail)
     }
 
     #[inline(always)]
@@ -481,21 +483,10 @@ impl<'a> Tokenizer<'a> {
         self.reset_column();
     }
 
-    #[inline(always)]
-    fn last_char(&self) -> Option<&u8> {
-        self.chars.get(self.peek_head()-1)
-    }
-
-    #[inline(always)]
-    fn cut_index(&self, idx: usize) -> Option<&u8> {
-        self.chars.get(idx)
-    }
-
-    
-
+    // not needed prob slow
     #[inline(always)]
     fn match_slice(&self, slice: &[u8]) -> bool {
-        self.peek_slice(slice.len()) == Some(slice)
+        self.get_slice_from_tail_window(slice.len()) == slice
     }
 
     #[inline(always)]
@@ -503,234 +494,297 @@ impl<'a> Tokenizer<'a> {
         self.column = Self::DEFAULT_COLUMN;
     }
 
-    /// Processing methods
-
     #[inline(always)]
-    fn process_whitespace(&mut self) -> ControlFlow {
-        dbg_trace!("1");
-        match self.next_char {
-            b'\n' => {
-                dbg_trace!("2");
-                self.increment_row();
-            }
-            _ => self.increment_column(),
-        }
-        
-        self.increment_peek_head();
-        dbg_trace!("3");
-        // //dbg!(self.is_cut_empty());
-
-        if !self.cursor.is_empty() {
-            BREAK
-        } else {
-            CONTINUE           
-        }
+    fn window_is_empty(&self) -> bool {
+        std::ptr::addr_eq(self.window_head, self.window_tail)
     }
 
     #[inline(always)]
-    fn process_operator(&mut self) -> ControlFlow {
-        dbg_trace!("6");
-
-        if let Some(slice)= self.peek_slice(3) {
-
-            if three_char_operators!(trie_match slice) {
-                dbg_trace!("7");
-
-                self.increment_cursor_n(3);
-
-                return BREAK;
-            }
-        }
-
-        
-        // this is safe as the peak for 3 is checked so 2 is always valid
-        
-        // we convert the slice to a u16 to compare it the two char operators which are already u16
-        // this should be faster than comparing two slices* untested
-        if two_char_operators!( match unsafe {             
-            
-            //TODO: Figure out a way to do this without copying
-            std::ptr::copy_nonoverlapping(self.peek_slice(2).unwrap_unchecked().as_ptr(), self.two_char_operator.as_mut_ptr(), 2);
-            
-            std::mem::transmute::<[u8;2], u16>(self.two_char_operator)
-        
-        }) {
-            dbg_trace!("8");
-
-            self.increment_cursor_n(2);
-
-            return BREAK;
-        };
-
-        CONTINUE
+    fn peek_behind_char(&self) -> char {
+        self.peek_behind() as char
     }
-
-
     #[inline(always)]
-    fn process_delimiter(&mut self) -> ControlFlow {
-        dbg_trace!("b");
-        // self.decrement_head(); // change later
 
-        if self.cursor.is_empty() {
-            dbg_trace!("c");
-            self.increment_cursor();
-            return BREAK;
-        }
+    fn window_tail_char(&self) -> char {
+        self.window_tail() as char
+    }
+    #[inline(always)]
 
-        return CONTINUE;
+    fn peek_ahead_char(&self) -> char {
+        self.peek_ahead() as char
+    }
+    #[inline(always)]
+
+    fn tail_pretty(&self) -> char {
+        self.window_tail() as char
+    }
+    #[inline(always)]
+
+    fn head_pretty(&self) -> char {
+        self.window_head() as char
+    }
+    #[inline(always)]
+
+    fn char_head_pretty(&self) -> char {
+        self.window_head() as char
+    }
+    #[inline(always)]
+    fn window_head(&self) -> u8 {
+        unsafe { self.window_head.read() }
     }
 
     #[inline(always)]
-    fn process_quotes(&mut self) -> ControlFlow {
-        // if string is not complete it should return a type
-        dbg_trace!("f");
+    fn window_head_pretty(&self) -> char {
+        self.window_head() as char
+    }
 
-        if !self.cursor.is_empty() & 
-            // If this was contains it would be O(n) instead of O(1)
-            // cut last exists so this should always be true
-            !string_prefixes!(match unsafe { self.last_char().unwrap_unchecked() })
-        {
-            dbg_trace!("g");
+    #[inline(always)]
+    fn window_tail(&self) -> u8 {
+        unsafe { self.window_tail.read() }
+    }
+    #[inline(always)]
 
-            return BREAK;
-        }
+    fn window_tail_pretty(&self) -> char {
+        self.window_tail() as char
+    }
+    #[inline(always)]
+    fn in_bounds(&self, n: usize) -> bool {
+        self.window_tail as usize + n <= self.slice_tail as usize
+    }
 
+    fn window_head_index(&self) -> usize {
+        self.window_head as usize - self.slice_head as usize
+    }
+
+    fn window_tail_index(&self) -> usize {
+        self.window_tail as usize - self.slice_head as usize
+    }
+
+    fn reset_window_head(&mut self) {
+        self.window_head = self.window_tail
+    }
+    #[inline(always)]
+    fn make_token(&self, complete: bool) -> Token<'cxx> {
+        Token::new(
+            unsafe { &*slice_from_raw_parts(self.window_head as *const u8, self.window_len()) }, //TODO: unchecked
+            self.token_column,
+            self.token_row,
+            complete, // TODO: if its incomplete return somewhere else
+        )
+    }
+
+    #[inline(always)]
+    fn skip_one(&mut self) {
         self.increment_cursor();
-
-        let mut is_escaped = false;
-
-        // Push the starting quote
-        while let Some(c) = self.peek_char() { 
-            // TODO: FIX
-            // peak should error or something
-            match c {
-                // Newline
-                b'\n' => {
-                    dbg_trace!("h");
-                    self.increment_cursor();
-                }
-
-                // Backslash
-                b'\\' if !is_escaped => {
-                    dbg_trace!("i");
-                    is_escaped = true;
-                    self.increment_cursor();
-                    continue;
-                }
-                
-                c if (*c == self.next_char) & !is_escaped => {
-                    dbg_trace!("j");
-                    self.increment_cursor();
-                    break;
-                }
-
-                _ => {
-                    dbg_trace!("k");
-                }
-            }
-
-            is_escaped = false;
-
-            // The closing quote
-            self.increment_cursor();
-        }
-
-        CONTINUE
-    }
-
-    #[inline(always)]
-    fn process_char(&mut self) -> ControlFlow {
-        dbg_trace!("m");
-
-        // Check for string prefix
-        match self.next_next_char { 
-            
-            quotes!() if string_prefixes!(match self.next_char) => {
-                dbg_trace!("n");
-
-                self.increment_cursor();
-
-                return BREAK;
-            }
-            
-            _ => {}
-        }
-        
-        dbg_trace!("o");
-
-        self.increment_cursor();
-        // if theres a string prefix like r, b, u, f and a " or ' then we need to handle it
-        
-        CONTINUE
+        self.reset_window_head();
     }
 }
 
-
-
-impl<'a> Iterator for Tokenizer<'a> {
-    type Item = TokenIR<'a>;
+impl<'cxx> Iterator for Tokenizer<'cxx> {
+    type Item = Token<'cxx>;
 
     #[inline(always)]
     fn next(&mut self) -> Option<Self::Item> {
-        
-
-        for i in self.peek_head()..=self.chars_len {
-            
-            self.next_next_char = match self.chars.get(i + 1) {
-                Some(c) => *c,
-                None => {
-                    self.complete = false;
-                    break
-                },
+        'outer: loop {
+            // if the tail is at the end of the input return None
+            if self.at_end() {
+                return if self.window_is_empty() {
+                    None
+                } else {
+                    Some(self.make_token(false))
+                };
             };
-            
-            // if peek fails the end of the input has been reached, so there is no need to check.
-            self.next_char = unsafe {*self.chars.get(i).unwrap_unchecked()};
 
-            dbg_trace!("(c '{}' n '{}' t {} h {}: ",self.next_char as char,self.next_next_char as char,self.tail(),self.peek_head());
-            
+            // if peek fails the end of the input has been reached, so there is no need to check.
+
+            dbg_trace!(
+                "(l '{}' c '{}' p '{}' h {} t {}: ",
+                self.peek_behind_char(),
+                self.window_tail_char(),
+                self.peek_ahead_char(),
+                self.window_head_index(),
+                self.window_tail_index(),
+            );
+
             dbg_trace!("0");
 
-            
             // peeks the next char, could not use peek method due to
-            if match self.next_next_char {
+            match self.window_tail() {
                 // Whitespace
-                whitespace!() => self.process_whitespace(),
-                
+                whitespace @ whitespace!() => {
+                    dbg_trace!("1");
+                    match whitespace {
+                        newline!() => {
+                            dbg_trace!("2");
+                            self.increment_row();
+                        }
+                        _ => self.increment_column(),
+                    }
+
+                    self.skip_one();
+                    dbg_trace!("3");
+
+                    #[cfg(feature = "debug-trace")]
+                    print!(": skipped!)");
+                }
+
                 // Operators
 
+                // these should peek and match indiv
+
                 // check for the first char of an operator to avoid checking all operators
-                operators_first_char!() => self.process_operator(),
+                operators!(first)
+                    if {
+                        dbg_trace!("4");
+                        self.in_bounds(3)
+                    } && {
+                        dbg_trace!("5");
+                        three_char_operators!(match self.get_slice_from_tail_window(3))
+                    } =>
+                {
+                    dbg_trace!("6");
+                    break self.increment_cursor_n(2);
+                }
+
+                operators!(first)
+                    if {
+                        dbg_trace!("7");
+
+                        self.in_bounds(2)
+                    } && two_char_operators!(u16 match unsafe {
+
+                    dbg_trace!("8");
+                    (self.window_tail as *const u16).read()
+                    }) =>
+                {
+                    dbg_trace!("9");
+                    break self.increment_cursor_n(1);
+                }
 
                 // Delimiters
-                delimiters!() => self.process_delimiter(),
-                
-                // Quotes
-                quotes!() => self.process_quotes(),
+                delimiters!() => {
+                    dbg_trace!("a");
+                    // self.decrement_head(); // change later
+
+                    if !self.window_is_empty() {
+                        dbg_trace!("b");
+                        self.increment_cursor();
+                    }
+
+                    break;
+                }
+
+                // Single char operators
 
                 // Characters
-                _ => self.process_char(),
-            // Break the loop 
-            } == BREAK { break }
+                // TODO: Finish this
+                // char_quotes!() => {
+                //     dbg_trace!("c");
+                // }
+
+                // change this macro from string quotes to char
+
+                // Strings
+                // quote @ string_quotes!() => {
+                quote @ quotes!() => {
+                    // if string is not complete it should return a type
+                    dbg_trace!("d");
+
+                    if !self.window_is_empty() & !quote_prefixes!(match self.peek_behind()) {
+                        dbg_trace!("e");
+                        break;
+                    }
+
+                    self.increment_cursor();
+
+                    // Push the starting quote
+                    loop {
+                        // Bounds check the ptr
+                        if self.at_end() {
+                            return Some(self.make_token(false));
+                        }
+
+                        // todo make ptr look up table for all match statements
+
+                        // peak should error or something
+                        match self.window_tail() {
+                            // Newline
+                            newline!() => {
+                                dbg_trace!("f");
+                                self.increment_row()
+                            }
+
+                            // Backslash
+                            backslash!() if self.in_bounds(1) && (self.peek_ahead() == quote) => {
+                                self.increment_cursor();
+                                dbg_trace!("g");
+                            }
+
+                            // idk if this arm is correct
+                            c if (c == quote) => {
+                                dbg_trace!("h");
+                                break 'outer;
+                            }
+
+                            _ => {
+                                dbg_trace!("i");
+                            }
+                        }
+
+                        self.increment_cursor();
+                    }
+                }
+
+                // Characters
+                _ => {
+                    dbg_trace!("j");
+
+                    // Check for string pre fix
+                    match self.peek_ahead() {
+                        // TODO Remove this part
+                        quotes!() if quote_prefixes!(match self.window_tail()) => {
+                            dbg_trace!("k");
+                            self.increment_cursor();
+                        }
+                        // TODO: Remove this part and simplify it
+                        whitespace!() | delimiters!() => {
+                            dbg_trace!("l");
+                            break;
+                        }
+
+                        _ => self.increment_cursor(),
+                    }
+
+                    dbg_trace!("m");
+                }
+            }
         }
 
         #[cfg(feature = "debug-trace")]
-        println!(" :t {} h {})",self.tail(), self.peek_head(),);
+        println!(
+            " :h {} t {})",
+            self.window_head_index(),
+            self.window_tail_index(),
+        );
 
         //println!("\nTOKEN FINISH: {}", std::str::from_utf8(&token).unwrap());
 
-        let token =  Some(TokenIR::new(
-            self.cut_current().unwrap(), //TODO: unchecked
-            self.last_token_column,
-            self.last_token_row,
-            self.complete,
-        ));
+        self.increment_window_tail();
+        let token = Some(self.make_token(true));
 
-        self.end_token();
+        // Reset the last token column and row to the current column and row
+        self.token_column = self.column;
+        self.token_row = self.row;
+
+        // Set the tail to the head to clear the window
+        self.reset_window_head();
 
         token
     }
 }
+
+// TODO: make a macro that converts the patten matching of rust to simd instructions
+// so it looks like pattrn matching when using it in code, but its actually using simd instructions
 
 // TODO: Add this
 #[derive(Debug, Clone)]
@@ -745,24 +799,24 @@ enum TokenType {
     None,
 }
 
-
 #[cfg(test)]
 mod tests {
     use super::*;
 
-    
     #[test]
     fn test_determine_tokens() {
-        let content = "fn === main() {
-            println!(\"Hello,
-            world!\");
-            \"Hello; \\\" world!\"
+        let content = //std::hint::black_box(
+            "fn ===main() {
+            println!(\"Hello, \\u{32}\n\\nworld!\");\"Hello; \\\" world!\"
             if true != false {
-                let xyz_99_yoMama = 5 | b\"some\" | 'c';
+                let xyz_99_yoMama = 5 | b\"some\" | 'c'| b\'s\';
             }
-        }";
-        
-        let mut tokenizer = Tokenizer::new(content);
+        }"; 
+        // TODO: fix the issue when this is added to the end of the thing
+        // \"2
+
+        //);
+        let mut tokenizer = Tokenizer::new(content.as_bytes());
 
         let expected = [
             "fn",
@@ -774,7 +828,7 @@ mod tests {
             "println",
             "!",
             "(",
-            "\"Hello,\n            world!\"",
+            "\"Hello, \\u{32}\n\\nworld!\"",
             ")",
             ";",
             "\"Hello; \\\" world!\"",
@@ -791,6 +845,8 @@ mod tests {
             "b\"some\"",
             "|",
             "'c'",
+            "|",
+            "b\'s\'",
             ";",
             "}",
             "}",
@@ -799,21 +855,25 @@ mod tests {
         let mut instant = crate::PrimedInstant::new();
 
         instant.prime();
-        
+
         for index in 0..expected.len() {
             instant.start();
-            let token = unsafe { tokenizer.next().unwrap_unchecked()};
+            let token = match tokenizer.next() {
+                Some(token) => token,
+                None => break,
+            };
             instant.end();
             println!(
                 "\nr:{} c:{} t:'{}' e:{:?}",
-                token.row, token.column, token.token, instant.elapsed
-                        );
-            assert_eq!(token.token, expected[index]);
+                token.row,
+                token.column,
+                token.as_str(),
+                instant.elapsed
+            );
+            assert_eq!(token.as_str(), expected[index]);
         }
-        
-        tokenizer = Tokenizer::new(content);
 
-
+        tokenizer = Tokenizer::new(content.as_bytes());
 
         let start = std::time::Instant::now();
         let tokens = Tokenizer::gather_all_tokens(&mut tokenizer, content);
@@ -824,22 +884,22 @@ mod tests {
         println!("{:?}", elapsed);
     }
 }
-        // Two char operators
-        // macro_rules! match_operator {
-        //     ($word:ident,$num:literal,$dbg:literal) => {
-        //         paste::paste!{
-        //             if [<$word _char_operators>]!(trie_match self.peek_slice($num) ) {
-        //                 dbg_trace!($dbg);
-        
-        //                 // Move the head to the end of the operator
-        //                 self.increment_cursor_n($num);
-        
-        //                 return BREAK;
-        //             };
-        //         }
-        //     };
-        // }
-    
-        // make these better based on the other macro and or a proc macro
-        // match_operator!(two,2,"8");
-        // match_operator!(three,3,"9");
+// Two char operators
+// macro_rules! match_operator {
+//     ($word:ident,$num:literal,$dbg:literal) => {
+//         paste::paste!{
+//             if [<$word _char_operators>]!(trie_match self.peek_slice($num) ) {
+//                 dbg_trace!($dbg);
+
+//                 // Move the head to the end of the operator
+//                 self.increment_cursor_n($num);
+
+//                 break;
+//             };
+//         }
+//     };
+// }
+
+// make these better based on the other macro and or a proc macro
+// match_operator!(two,2,"8");
+// match_operator!(three,3,"9");

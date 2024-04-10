@@ -27,12 +27,12 @@ pub mod FileReader {
     unsafe extern "C++" {
         // EXPOSED TO RUST
         include!("helix-compiler/src/cpp/include/file_reader.hpp");
-        type T_FileReader;
+        type T_FileReader<'a>;
 
-        fn init(filename: &str) -> UniquePtr<T_FileReader>;
-        fn read_line(&self, lineIndex: u32) -> &str;
-        fn read_lines(&self, start: u32, offset: u32) -> &str;
-        fn read_file(&self) -> &str;
+        fn init<'a,'cpp>(filename: &'a str) -> UniquePtr<T_FileReader<'cpp>>;
+        fn read_line<'cpp>(&self, lineIndex: u32) -> &'cpp str;
+        fn read_lines<'cpp >(&self, start: u32, offset: u32) -> &'cpp  str;
+        fn read_file<'cpp >(&self) -> &'cpp str;
         fn get_total_lines(&self) -> u32;
     }
 }

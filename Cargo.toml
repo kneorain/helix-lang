@@ -1,5 +1,5 @@
 [workspace]
 members = [
-    "PORT", "helix-proc",
+    "PORT", "helix-proc", "test_simd",
 ]
 resolver = "2"
