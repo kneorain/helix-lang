@@ -34,7 +34,7 @@ pub struct Token<'cxx> {
     //file: AtomicPtr<super::super::shared::file_data::File<'cxx>>,
     chars: &'cxx [u8],
     column: usize,
-    row: usize,
+    row: isize,
 
     complete: bool,
     lifetime: std::marker::PhantomData<&'cxx u8>,
@@ -47,7 +47,7 @@ impl<'cxx> Token<'cxx> /*<'cxx>*/ {
         chars: &'cxx [u8],
         /*file:AtomicPtr<super::super::shared::file_data::File>, */
         column: usize,
-        row: usize,
+        row: isize,
         complete: bool,
     ) -> Self {
         Token {
@@ -283,7 +283,7 @@ token_patterns! {
 pub struct Tokenizer<'cxx> {
     slice_head: *const u8,
     column: usize,
-    row: usize,
+    row: isize,
 
     window_tail: *const u8,
     window_head: *const u8,
@@ -542,11 +542,12 @@ impl<'cxx> Tokenizer<'cxx> {
     fn window_tail(&self) -> u8 {
         unsafe { self.window_tail.read() }
     }
-    #[inline(always)]
 
+    #[inline(always)]
     fn window_tail_pretty(&self) -> char {
         self.window_tail() as char
     }
+
     #[inline(always)]
     fn in_bounds(&self, n: usize) -> bool {
         self.window_tail as usize + n <= self.slice_tail as usize
