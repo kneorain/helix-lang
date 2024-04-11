@@ -14,7 +14,7 @@ pub const EXPECTED: &'static [&'static str] = &[
     "println",
     "!",
     "(",
-    "\"Hello, \\u32\n\\nworld!\"",
+    "\"Hello,\n    \\nworld!\"",
     ")",
     ";",
     "\"Hello; \\\" world!\"",
