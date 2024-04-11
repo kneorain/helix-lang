@@ -23,17 +23,29 @@ pub mod test {
 }
 
 #[cxx::bridge(namespace = "file_reader")]
-pub mod FileReader {
+pub mod File {
     unsafe extern "C++" {
-        // EXPOSED TO RUST
         include!("helix-compiler/src/cpp/include/file_reader.hpp");
-        type T_FileReader;
 
-        fn init(filename: &str) -> UniquePtr<T_FileReader>;
-        fn read_line(&self, lineIndex: u32) -> &str;
-        fn read_lines(&self, start: u32, offset: u32) -> &str;
-        fn read_file(&self) -> &str;
-        fn get_total_lines(&self) -> u32;
+        type FileIO;
+
+        fn init();
+
+        fn open(filename: &str, mode: &str, encoding: &str) -> SharedPtr<FileIO>;
+
+        fn readLine(&self) -> &[u8];
+        fn readLines(&self) -> &[u8];
+        fn read(&self) -> &[u8];
+
+        fn write(&self, data: &[u8]);
+        fn writeLine(&self, data: &[u8]);
+        fn writeLines(&self, lines: &[&[u8]]);
+
+        fn append(&self, data: &[u8]);
+        fn appendLine(&self, data: &[u8]);
+        fn appendLines(&self, lines: &[&[u8]]);
+
+        fn close(&self);
     }
 }
 

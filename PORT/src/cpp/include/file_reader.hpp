@@ -29,11 +29,11 @@ namespace file_io {
                                                 const rust::Str &mode = "r",
                                                 const rust::Str &encoding = "utf-8");
 
-            virtual rust::slice<const uint8_t> readLine() = 0;
+            virtual rust::slice<const uint8_t> readLine()  = 0;
             virtual rust::slice<const uint8_t> readLines() = 0;
-            virtual rust::slice<const uint8_t> read() = 0;
+            virtual rust::slice<const uint8_t> read()      = 0;
 
-            virtual void write(const rust::slice<const uint8_t> &data) = 0;
+            virtual void write(const rust::slice<const uint8_t> &data)     = 0;
             virtual void writeLine(const rust::slice<const uint8_t> &data) = 0;
             virtual void writeLines(const rust::slice<const rust::slice<const uint8_t>> &lines) = 0;
 
@@ -113,7 +113,7 @@ namespace file_io {
             }
     };
 
-    inline FileIO_Internal* FileIO_Internal::instance = nullptr;
+    inline FileIO_Internal *FileIO_Internal::instance = nullptr;
     inline std::shared_ptr<FileIO> FileIO::open(const rust::Str &filename,
                                                 const rust::Str &mode,
                                                 const rust::Str &encoding

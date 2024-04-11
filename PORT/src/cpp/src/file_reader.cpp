@@ -81,284 +81,129 @@
 #include "helix-compiler/src/cpp/mod.rs.h"
 #include "rust/cxx.h"
 
-// headers
-#include <cstdint>
-#include <iostream>
 #include <memory>
 #include <string>
+#include <vector>
+#include <atomic>
 #include <stdexcept>
-#include <cstring>
 
-// mmap
-#include <string>
-#include <sys/stat.h>
-#if defined __unix__ || __APPLE__
-    #include <fcntl.h>
-    #include <cerrno>
-    #include <cstring>
-    #include <unistd.h>
-    #include <sys/mman.h>
-#elif _WIN32
-    #include <windows.h>
-    #include <fileapi.h>
-#endif
+namespace file_io {
 
-#define MAX_LINE_CHUNKS 0x1e
+    // Forward declaration of FileIO class
+    class FileIO {
+    public:
+        virtual ~FileIO() {}
 
+        static std::shared_ptr<FileIO> open(const rust::Str& filename,
+                                            const rust::Str& mode = "r",
+                                            const rust::Str& encoding = "utf-8");
 
-struct FileInfo {
-    uint32_t              total_lines;
-    std::vector<uint32_t> line_starts ;
-};
+        virtual std::vector<uint8_t> readLine() = 0;
+        virtual std::vector<uint8_t> readLines() = 0;
+        virtual std::vector<uint8_t> read() = 0;
 
-template<class iter>
-FileInfo count(const iter first, const iter last, const char val) {
-    if (std::distance(first, last) < 0) {
-        throw std::range_error("Invalid iterator range");
-    }
-    iter non_const_first = first;
+        virtual void write(const std::vector<uint8_t>& data) = 0;
+        virtual void writeLine(const std::vector<uint8_t>& data) = 0;
+        virtual void writeLines(const std::vector<std::vector<uint8_t>>& lines) = 0;
 
-    std::vector<uint32_t> line_starts = {};
-    for (; non_const_first != last; ++non_const_first) {
-        if (*non_const_first == val) {
-            line_starts.push_back(
-                std::distance(
-                    first,
-                    non_const_first
-                )
-            );
-        }
-    }
+        virtual void append(const std::vector<uint8_t>& data) = 0;
+        virtual void appendLine(const std::vector<uint8_t>& data) = 0;
+        virtual void appendLines(const std::vector<std::vector<uint8_t>>& lines) = 0;
 
-    return FileInfo {
-        static_cast<uint32_t>(line_starts.size()),
-        std::move(line_starts)
+        virtual void close() = 0;
+
+    protected:
+        FileIO() = default;
     };
-}
 
-template<typename ... args>
-std::string string_format( const std::string &str, args ... formats ) {
-    int size_s = std::snprintf(
-        nullptr, 0, str.c_str(), formats ...
-    ) + 1;
+    // Implementation of FileIO_R
+    class FileIO_R : public FileIO {
+    public:
+        FileIO_R(const rust::Str& filename, const rust::Str& encoding);
+        ~FileIO_R();
 
-    if (size_s <= 0) {
-        throw std::runtime_error(  "Error during formatting." );
-    }
-    
-    auto size = static_cast<size_t>(size_s);
-    std::unique_ptr<char[]> buf(new char[size]);
-    
-    std::snprintf(
-        buf.get(),
-        size,
-        str.c_str(),
-        formats ...
-    );
-    
-    return std::string(
-        buf.get(),
-        buf.get() + size - 1
-    );
-}
+        std::vector<uint8_t> readLine() override;
+        std::vector<uint8_t> readLines() override;
+        std::vector<uint8_t> read() override;
 
-namespace file_reader {
-    T_FileReader::T_FileReader(const std::string &filename)
-        : fileName(filename.c_str())
-        , totalLines(0)
-        , lineStarts(0)
-        
-        // os specific
-        , size(0)
-        , data(nullptr)
-    {
-        #if defined __unix__ || __APPLE__
-                int fd = open(fileName, O_RDONLY);
-                if (fd == -1) {
-                    std::cerr << "Failed to open file: " << strerror(errno) << std::endl;
-                    throw std::runtime_error("Failed to open file");
-                }
+    private:
+        std::atomic<bool> is_open;
+        std::atomic<bool> is_error;
+        std::atomic<bool> is_empty;
+    };
 
-                struct stat fileStat;
-                if (fstat(fd, &fileStat) == -1) {
-                    std::cerr << "Failed to get file size: " << strerror(errno) << std::endl;
-                    close(fd);
-                    throw std::runtime_error("Failed to get file size");
-                }
+    // Implementation of FileIO_W
+    class FileIO_W : public FileIO {
+    public:
+        FileIO_W(const rust::Str& filename, const rust::Str& encoding);
+        ~FileIO_W();
 
-                size = fileStat.st_size;
-                data = static_cast<char*>(
-                    mmap(
-                        nullptr,
-                        size,
-                        PROT_READ,
-                        MAP_PRIVATE,
-                        fd,
-                        0
-                    )
-                );
-                close(fd);
+        void write(const std::vector<uint8_t>& data) override;
+        void writeLine(const std::vector<uint8_t>& data) override;
+        void writeLines(const std::vector<std::vector<uint8_t>>& lines) override;
 
-                if (data == MAP_FAILED) {
-                    std::cerr << "Failed to memory map file: " << strerror(errno) << std::endl;
-                    throw std::runtime_error("Failed to memory map file");
-                }
+    private:
+        std::atomic<bool> is_open;
+        std::atomic<bool> is_error;
+    };
 
-            #elif _WIN32
-                hFile = CreateFileA(
-                    fileName,
-                    GENERIC_READ,
-                    FILE_SHARE_READ,
-                    NULL,
-                    OPEN_EXISTING,
-                    FILE_ATTRIBUTE_NORMAL,
-                    NULL
-                ); if (hFile == INVALID_HANDLE_VALUE) {
-                    std::cerr << "Failed to open file: " << GetLastError() << std::endl;
-                    throw std::runtime_error("Failed to open file");
-                }
+    // Implementation of FileIO_A
+    class FileIO_A : public FileIO {
+    public:
+        FileIO_A(const rust::Str& filename, const rust::Str& encoding);
+        ~FileIO_A();
 
-                hMap = CreateFileMapping(
-                    hFile,
-                    NULL,
-                    PAGE_READONLY,
-                    0,
-                    0,
-                    NULL
-                ); if (hMap == NULL) {
-                    CloseHandle(hFile);
-                    std::cerr << "Failed to create file mapping: " << GetLastError() << std::endl;
-                    throw std::runtime_error("Failed to create file mapping");
-                }
+        void append(const std::vector<uint8_t>& data) override;
+        void appendLine(const std::vector<uint8_t>& data) override;
+        void appendLines(const std::vector<std::vector<uint8_t>>& lines) override;
 
-                size = GetFileSize(hFile, NULL);
-                if (size == INVALID_FILE_SIZE) {
-                    CloseHandle(hMap);
-                    CloseHandle(hFile);
-                    std::cerr << "Failed to get file size: " << GetLastError() << std::endl;
-                    throw std::runtime_error("Failed to get file size");
-                }
+        std::vector<uint8_t> readLine() override;
+        std::vector<uint8_t> readLines() override;
+        std::vector<uint8_t> read() override;
 
-                data = static_cast<char*>(
-                    MapViewOfFile(
-                        hMap,
-                        FILE_MAP_READ,
-                        0,
-                        0,
-                        size
-                    )
-                ); if (data == NULL) {
-                    CloseHandle(hMap);
-                    CloseHandle(hFile);
-                    std::cerr << "Failed to map view of file: " << GetLastError() << std::endl;
-                    throw std::runtime_error("Failed to map view of file");
-                }
-            #endif
+    private:
+        std::atomic<bool> is_open;
+        std::atomic<bool> is_error;
+        std::atomic<bool> is_empty;
+    };
 
-            FileInfo info = count(data, data + size, '\n');
-            totalLines = info.total_lines;
-            lineStarts = std::move(info.line_starts);
-    }
+    // Implementation of FileIO_Internal
+    class FileIO_Internal {
+    private:
+        FileIO** files;
+        static FileIO_Internal* instance;
 
-    rust::Str T_FileReader::read_line(uint32_t lineIndex) const {
-        std::cout << "Reading line: " << lineIndex << std::endl;
-        if (
-               lineIndex >= totalLines
-            || lineIndex < 0
-        ) {
-            char* msg = new char[100];
-            int co = std::snprintf(
-                msg,
-                256,
-                "FAILED TO READ! LINE INDEX OUT OF BOUNDS! GOT: %d MAX: %d",
-                lineIndex,
-                totalLines
-            );
+        FileIO_Internal() {
+            files = static_cast<FileIO**>(malloc(sizeof(FileIO*) * 0xf36db));
+        }
 
-            if (co < 0) {
-                return rust::Str(
-                    "FAILED TO READ! FORMAT ERROR!"
-                );
+    public:
+        ~FileIO_Internal() {
+            delete[] files;
+        }
+
+        static FileIO_Internal* getInstance() {
+            if (!instance) {
+                instance = new FileIO_Internal();
             }
-            return rust::Str(
-                msg
-            );
+            return instance;
         }
-        
-        uint32_t start = (lineIndex == 0 ? 0 : lineStarts[lineIndex - 1] + 1);
+    };
 
-        if (lineIndex == totalLines - 1) {
-            return rust::Str(
-                data + start,
-                size - start
-            );
-        }
-
-        if (lineStarts[lineIndex] == start) {
-            return rust::Str("");
+    std::shared_ptr<FileIO> FileIO::open(const rust::Str& filename,
+                                        const rust::Str& mode,
+                                        const rust::Str& encoding) {
+        if (mode == "r") {
+            return std::make_shared<FileIO_R>(filename, encoding);
+        } else if (mode == "w") {
+            return std::make_shared<FileIO_W>(filename, encoding);
         }
 
-        return rust::Str(
-            data + start,
-            lineStarts[lineIndex] - start
-        );
+        throw std::invalid_argument("Unsupported file mode");
     }
 
-    rust::Str T_FileReader::read_lines(uint32_t startLine, uint32_t offset) const {
-        if (
-               startLine >= totalLines
-            || (startLine + offset) >= totalLines
-            || offset > MAX_LINE_CHUNKS
-            || offset == 0
-            || offset < 0
-            || startLine < 0
-            || startLine > totalLines
-        ) {
-            char* msg = new char[100];
-            int co = std::snprintf(msg, 256, "FAILED TO READ! LINE INDEX OUT OF BOUNDS! GOT: %d MAX: %d", startLine, totalLines);
-            if (co < 0) {
-                return rust::Str(
-                    "FAILED TO READ! FORMAT ERROR!"
-                );
-            }
-            return rust::Str(
-                msg
-            );
-        }
-
-        uint32_t start = (startLine == 0 ? 0 : lineStarts[startLine - 1] + 1);
-
-        return rust::Str(
-            data + start,
-            lineStarts[startLine + offset] - start
-        );
+    void init() {
+        // Initialization code goes here
     }
 
-    rust::Str T_FileReader::read_file() const {
-        return rust::Str(data, size);
-    }
-
-
-    rust::Str T_FileReader::get_file_name() const {
-        return rust::Str(fileName);
-    }
-
-    uint32_t T_FileReader::get_total_lines() const {
-        return totalLines;
-    }
-
-    T_FileReader::~T_FileReader() {
-        // deallocate memory
-        #if defined __unix__ || __APPLE__ // cleanup
-            munmap(data, size);
-        #elif _WIN32
-            UnmapViewOfFile(data);
-            CloseHandle(hMap);
-            CloseHandle(hFile);
-        #endif
-    }
-
-    std::unique_ptr<T_FileReader> init(rust::Str filename) {
-        return std::make_unique<T_FileReader>(std::string(filename));
-    }
-}
+} // namespace file_io
