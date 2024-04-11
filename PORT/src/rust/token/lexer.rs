@@ -105,7 +105,7 @@ macro_rules! token_patterns {
                     helix_proc::raw!($patten)
                 };
 
-                (contains $ch:expr as u16) => {
+                (contains u16 $ch:expr ) => {
                     matches!($ch, $name!(u16 ""))
                 };
             }
@@ -466,7 +466,7 @@ impl<'cxx> Iterator for Tokenizer<'cxx> {
                 // Two character operators
                 operators!(first_char)
                     if self.is_window_in_bounds(2)
-                        && two_len_ops!(contains self.window_tail::<u16>() as u16) =>
+                        && two_len_ops!(contains u16 self.window_tail::<u16>() ) =>
                 {
                     break self.increment_cursor_by_n(1);
                 }
@@ -481,7 +481,8 @@ impl<'cxx> Iterator for Tokenizer<'cxx> {
 
                 // Quotes
                 quote @ quotes!() => {
-                    if !self.is_window_empty() & !quote_prefixes!(contains self.peek_behind_tail()) {
+                    if !self.is_window_empty() & !quote_prefixes!(contains self.peek_behind_tail())
+                    {
                         break;
                     }
 
