@@ -2,7 +2,8 @@
 #[feature(ptr_metadata)]
 #[feature(portable_simd)]
 use pyo3::{ types::PyModule, PyResult, Python };
-
+#[cfg(test)]
+pub mod tests;
 
 pub mod python;
 pub mod rust;
