@@ -116,7 +116,7 @@ macro_rules! token_patterns {
 
 token_patterns! {
 
-    delimiters: b'{' | b'}' | b'(' | b')' | b';' | b'!' | b'=' | b'|',
+    delimiters: b'{' | b'}' | b'(' | b')' | b';' | b'!' | b'=' | b'|'|b':'|b','|b'<'|b'>' | b'?'|b'.',
 
     newline: b'\n',
     other_whitespace: b'\t' | b'\x0C' | b'\r' | b' ',
@@ -255,102 +255,102 @@ impl<'cxx> Tokenizer<'cxx> {
         unsafe { &*slice_from_raw_parts(self.window_head as *const u8, self.window_len()) }
     }
 
-    #[inline(always)]
     /// Returns the value of the window head
+    #[inline(always)]
     fn window_head(&self) -> u8 {
         unsafe { self.window_head.read() }
     }
 
-    #[inline(always)]
     /// Increments the window head by one
+    #[inline(always)]
     pub fn window_head_increment(&mut self) {
         self.window_head_increment_n(1)
     }
 
-    #[inline(always)]
     /// Increments the window head by n
+    #[inline(always)]
     pub fn window_head_increment_n(&mut self, n: usize) {
         self.window_head = unsafe { self.window_head.add(n) }
     }
 
-    #[inline(always)]
     /// Returns the index of the window head in the slice
+    #[inline(always)]
     fn window_head_index(&self) -> usize {
         self.window_head as usize - self.slice_head as usize
     }
 
-    #[inline(always)]
     /// Resets the window head to the window tail
+    #[inline(always)]
     fn window_head_reset(&mut self) {
         self.window_head = self.window_tail
     }
 
-    #[inline(always)]
     /// Returns the index of the window head in the slice
+    #[inline(always)]
     fn window_tail<T>(&self) -> T {
         unsafe { (self.window_tail as *const T).read() }
     }
 
-    #[inline(always)]
     /// Increments the window tail by one
+    #[inline(always)]
     pub fn window_tail_increment(&mut self) {
         self.window_tail_increment_n(1);
     }
 
-    #[inline(always)]
     /// Increments the window tail by n
+    #[inline(always)]
     pub fn window_tail_increment_n(&mut self, n: usize) {
         self.window_tail = unsafe { self.window_tail.add(n) };
     }
 
-    #[inline(always)]
     /// Returns the index of the window tail in the slice
+    #[inline(always)]
     fn window_tail_index(&self) -> usize {
         self.window_tail as usize - self.slice_head as usize
     }
 
-    #[inline(always)]
     /// Returns a slice from the window tail to the given index
+    #[inline(always)]
     fn window_tail_slice(&self, to: usize) -> &[u8] {
         unsafe { &*slice_from_raw_parts(self.window_tail, to) }
     }
 
-    #[inline(always)]
     /// Returns the length of the window
+    #[inline(always)]
     fn window_len(&self) -> usize {
         self.window_tail as usize - self.window_head as usize
     }
 
-    #[inline(always)]
     /// Checks if the window tail is within the bounds of the slice
+    #[inline(always)]
     fn is_window_in_bounds(&self, n: usize) -> bool {
         self.window_tail as usize + n <= self.slice_tail as usize
     }
 
-    #[inline(always)]
     /// Checks if the window is empty
+    #[inline(always)]
     pub fn is_window_empty(&self) -> bool {
         std::ptr::addr_eq(self.window_head, self.window_tail)
     }
 
     // Cursor methods - These methods are used to move the window tail and column
 
-    #[inline(always)]
     /// Increments the window tail and column by one
+    #[inline(always)]
     pub fn increment_cursor(&mut self) {
         self.window_tail_increment();
         self.column_increment();
     }
 
-    #[inline(always)]
     /// Increments the window tail and column by n
+    #[inline(always)]
     pub fn increment_cursor_by_n(&mut self, n: usize) {
         self.window_tail_increment_n(n);
         self.column_increment_n(n);
     }
 
-    #[inline(always)]
     /// Returns the value one character ahead of the window tail
+    #[inline(always)]
     fn peek_ahead_window(&self) -> u8 {
         self.peek_ahead_n(1)
     }
@@ -361,8 +361,8 @@ impl<'cxx> Tokenizer<'cxx> {
         unsafe { *self.window_tail.add(n) }
     }
 
-    #[inline(always)]
     /// Returns the value one character behind the window tail
+    #[inline(always)]
     fn peek_behind_tail(&self) -> u8 {
         // check if the window is empty so it does not go out of bounds
         return if self.is_window_empty() {
@@ -372,24 +372,23 @@ impl<'cxx> Tokenizer<'cxx> {
         };
     }
 
-    #[inline(always)]
     /// Skips the current sub token
+    #[inline(always)]
     fn skip_sub_token(&mut self) {
         self.increment_cursor();
         self.window_head_reset();
     }
 
-    #[inline(always)]
     /// Checks if the slice is empty
+    #[inline(always)]
     pub fn is_slice_empty(&self) -> bool {
         std::ptr::addr_eq(self.window_tail, self.slice_tail)
     }
 
     // Column methods - These methods are used to move the column
 
-    // TODO: Fix column and row increments.
-    #[inline(always)]
     /// Increments the column by one
+    #[inline(always)]
     pub fn column_increment(&mut self) {
         self.column += 1;
     }
@@ -399,29 +398,29 @@ impl<'cxx> Tokenizer<'cxx> {
         self.column += n;
     }
 
-    #[inline(always)]
     /// Resets the column to the default column
+    #[inline(always)]
     pub fn column_reset(&mut self) {
         self.column = Self::DEFAULT_COLUMN;
     }
 
     // Row methods - These methods are used to move the row
 
-    #[inline(always)]
     /// Increments the row by one
+    #[inline(always)]
     pub fn increment_row(&mut self) {
         self.row_increment_n(1)
     }
 
-    #[inline(always)]
     /// Resets the row to the default row and increments the row by one
+    #[inline(always)]
     pub fn row_increment_n(&mut self, n: isize) {
         self.row += n;
         self.column_reset();
     }
 
-    #[inline(always)]
     /// Creates a new token from the current window
+    #[inline(always)]
     fn next_token(&mut self, complete: bool) -> Token<'cxx> {
         let token = Token::new(self.window(), self.token_column, self.token_row, complete);
         self.window_head_reset();
@@ -460,7 +459,7 @@ impl<'cxx> Iterator for Tokenizer<'cxx> {
                     if self.is_window_in_bounds(3)
                         && three_len_ops!(contains self.window_tail_slice(3)) =>
                 {
-                    break self.increment_cursor_by_n(2)
+                    break self.increment_cursor_by_n(2);
                 }
 
                 // Two character operators
@@ -472,30 +471,19 @@ impl<'cxx> Iterator for Tokenizer<'cxx> {
                 }
 
                 // Delimiters
-                delimiters!() => {
-                    if !self.is_window_empty() {
-                        self.increment_cursor();
-                    }
-                    break;
+                delimiters!() if !self.is_window_empty() => break self.increment_cursor(),
+
+                quote_prefixes!() if quotes!(contains self.peek_ahead_window()) => {
+                    self.increment_cursor()
                 }
 
                 // Quotes
                 quote @ quotes!() => {
-                    if !self.is_window_empty() & !quote_prefixes!(contains self.peek_behind_tail())
-                    {
-                        break;
-                    }
-
                     self.increment_cursor();
 
-                    loop {
-                        if self.is_slice_empty() {
-                            return Some(self.next_token(false));
-                        }
-
+                    while !self.is_slice_empty() {
                         match self.window_tail::<u8>() {
                             newline!() => self.increment_row(),
-
                             backslash!()
                                 if self.is_window_in_bounds(1)
                                     && self.peek_ahead_window() == quote =>
@@ -510,22 +498,28 @@ impl<'cxx> Iterator for Tokenizer<'cxx> {
 
                         self.increment_cursor();
                     }
-                }
+
+                    return Some(self.next_token(false));
+                } // End of quotes
+
+                // identifier @ alphanumeric!()| => {
+                //     loop {
+                //         if self.is_slice_empty() {
+                //             return Some(self.next_token(false));
+                //         }
+
+                //         match self.window_tail::<u8>() {
+                //             alphanumeric!() => self.increment_cursor(),
+                //             _ => break,
+                //         }
+                //     }
+                // }
 
                 // Characters
-                _ => {
-                    match self.peek_ahead_window() {
-                        // TODO Remove this part
-                        quotes!() if quote_prefixes!(contains self.window_tail::<u8>()) => {
-                            self.increment_cursor();
-                        }
-
-                        // TODO: Remove this part and simplify it
-                        whitespace!() | delimiters!() => break,
-
-                        _ => self.increment_cursor(),
-                    }
-                }
+                _ => match self.peek_ahead_window() {
+                    whitespace!() | delimiters!() => break self.increment_cursor(),
+                    _ => {},
+                },
             }
         }
 
