@@ -3,7 +3,6 @@ use std::{
     sync::atomic::{AtomicPtr, Ordering},
 };
 
-use crate::rust::debug_counter::dbg_trace;
 
 #[derive(Debug)]
 pub struct Token<'cxx> {
@@ -81,30 +80,25 @@ impl<'cxx> Token<'cxx> {
 }
 
 macro_rules! token_patterns {
-    ($($name:ident:  $patten:pat),*) => {
+    ($($name:ident:  $pattern:pat),*) => {
         $(
             macro_rules! $name {
                 () => {
-                    $patten
+                    $pattern
                 };
 
                 (first_char) => {
-                    helix_proc::get_first_char_pattern!($patten)
+                    helix_proc::get_first_char_pattern!($pattern)
                 };
 
                 (u16$phantom:literal) => {
-                    helix_proc::convert_bytes_to_u16!($patten)
+                    helix_proc::convert_bytes_to_u16!($pattern)
                 };
 
-                (contains $ch:expr) => {
-                    matches!($ch, $name!())
-                };
-
-
+                (contains $ch:expr) => { matches!($ch, $name!()) };
                 (raw$phantom:literal) => {
-                    helix_proc::raw!($patten)
+                    helix_proc::raw!($pattern)
                 };
-
                 (contains u16 $ch:expr ) => {
                     matches!($ch, $name!(u16 ""))
                 };
@@ -116,7 +110,17 @@ macro_rules! token_patterns {
 
 token_patterns! {
 
-    delimiters: b'{' | b'}' | b'(' | b')' | b';' | b'!' | b'=' | b'|'|b':'|b','|b'<'|b'>' |b'.',
+    // b'>' and b'<' are also delimiters for generics, that will be solved later
+    delimiters: b'{' | b'}' | b'(' | b')' | b'[' | b']',
+
+    list_separator: b',',
+
+    scope_separator: b';',
+
+    type_separator: b':',
+
+    static_access: b"::",
+    instance_access: b'.',
 
     newline: b'\n',
     other_whitespace: b'\t' | b'\x0C' | b'\r' | b' ',
@@ -133,14 +137,15 @@ token_patterns! {
     // raw | binary | unicode | formatted
     quote_prefixes: b'r'|b'b'| b'u'| b'f',
 
-    two_len_ops: b"==" | b"!=" | b"<=" | b">=" | b"//" | b"**" |
+    operators_1: b'?' | b'!' | b'='| b'<'|b'>'|b'&'| b'|' | b'+'|b'-'|b'*'|b'/'|b'%'|b'^'|b'@',
+
+    operators_2: b"==" | b"!=" | b"<=" | b">=" | b"//" | b"**" |b".."|
     b"<<" | b">>" | b"+=" | b"-=" | b"*=" | b"/=" | b"%=" | b"&=" | b"|=" | b"^=" |
     b"=>" | b"@=" | b"->" | b"<-" | b"<=" | b">=" | b"&&" | b"--" |
-    b"::" | b"||" | b"++" | b"?="|b"|:" |b"??",
+    b"||" | b"++" | b"?="|b"|:" |b"??"
+    | b"::", // TODO: Use static_access!() instead of b"::"
 
-
-
-    three_len_ops: b"===" | b"!==" | b"..."  | b"//=" | b"**=" | b"<<=" | b">>=",
+    operators_3: b"===" | b"!==" | b"..."  | b"//=" | b"**=" | b"<<=" | b">>="|b"..=",
 
     uppercase: b'A'..=b'Z',
     lowercase: b'a'..=b'z',
@@ -152,11 +157,7 @@ token_patterns! {
 
     punctuation: b'!'..=b'/'|b':'..=b'@'|b'['..=b'`'|b'{'..=b'~',
 
-    operators:  b"==" | b"!=" | b"<=" | b">=" | b"//" | b"**" |
-    b"<<" | b">>" | b"+=" | b"-=" | b"*=" | b"/=" | b"%=" | b"&=" | b"|=" | b"^=" |
-    b"=>" | b"@=" | b"->" | b"<-" | b"<=" | b">=" | b"&&" | b"--" |
-    b"::" | b"||" | b"++" | b"?="|b"|:" |b"??"| b"===" | b"!==" | b"..."  | b"//=" | b"**=" | b"<<=" |
-    b">>=" | b'?' 
+    operators: operator_1!() | operator_2!() | operator_3!()
 
 }
 
@@ -181,32 +182,32 @@ pub struct Tokenizer<'cxx> {
 }
 
 impl<'cxx> Tokenizer<'cxx> {
-    const DEFAULT_COLUMN: usize = 0;
-    const DEFAULT_ROW: isize = -1;
-    const DEFAULT_CHAR: u8 = b'\0';
+    pub const DEFAULT_COLUMN: usize = 0;
+    pub const FIRST_ROW: isize = -1;
+    pub const DEFAULT_CHAR: u8 = b'\0';
 
-    pub fn new(chars: &'cxx [u8]) -> Self {
+    pub fn new(chars: &'cxx [u8], starting_row: isize) -> Self {
         Tokenizer {
             slice_head: chars.as_ptr(),
             slice_tail: unsafe { chars.as_ptr().add(chars.len()) },
             window_head: chars.as_ptr(),
             window_tail: chars.as_ptr(),
-            row: Self::DEFAULT_ROW,
+            row: starting_row,
             column: Self::DEFAULT_COLUMN,
             token_column: Self::DEFAULT_COLUMN,
-            token_row: Self::DEFAULT_ROW,
+            token_row: Self::FIRST_ROW,
             lifetime: std::marker::PhantomData,
         }
     }
 
     #[inline(always)]
     /// Allows the tokenizer to be reset with new content without reallocation,
-    pub fn reset(&mut self, content: &'cxx [u8]) {
+    pub fn reset(&mut self, content: &'cxx [u8], starting_row: isize) {
         self.slice_head = content.as_ptr();
         self.slice_tail = unsafe { content.as_ptr().add(content.len()) };
         self.window_tail = content.as_ptr();
         self.window_head = content.as_ptr();
-        self.row = Self::DEFAULT_ROW;
+        self.row = starting_row;
         self.lifetime = std::marker::PhantomData;
         self.reset_column();
     }
@@ -448,30 +449,44 @@ impl<'cxx> Iterator for Tokenizer<'cxx> {
                 // Operators
 
                 // Three character operators
-                operators!(first_char)
+                operators_3!(first_char)
                     if self.is_window_in_bounds(3)
-                        && three_len_ops!(contains self.window_tail_slice(3)) =>
+                        && operators_3!(contains self.window_tail_slice(3)) =>
                 {
                     break self.increment_cursor_by_n(2);
                 }
 
                 // Two character operators
-                operators!(first_char)
+                operators_2!(first_char)
                     if self.is_window_in_bounds(2)
-                        && two_len_ops!(contains u16 self.window_tail::<u16>() ) =>
+                        && operators_2!(contains u16 self.window_tail::<u16>() ) =>
                 {
                     break self.increment_cursor_by_n(1);
                 }
 
-                // Delimiters
-                delimiters!() if !self.is_window_empty() => break self.increment_cursor(),
+                // Delimiters and one len ops
+                delimiters!()
+                | operators_1!()
+                | scope_separator!()
+                | type_separator!()
+                | instance_access!()
+                | list_separator!()
+                    if !self.is_window_empty() =>
+                {
+                    break self.increment_cursor()
+                }
 
-                delimiters!() => break,
-                    
+                delimiters!()
+                | operators_1!()
+                | scope_separator!()
+                | type_separator!()
+                | instance_access!()
+                | list_separator!() => break,
+
                 // Quotes
                 quote @ quotes!() => {
                     self.increment_cursor();
-                    
+
                     while !self.is_slice_empty() {
                         match self.window_tail::<u8>() {
                             newline!() => self.increment_row(),
@@ -481,19 +496,16 @@ impl<'cxx> Iterator for Tokenizer<'cxx> {
                             {
                                 self.increment_cursor()
                             }
-
                             char if char == quote => break 'outer,
-
                             _ => {}
                         }
-
                         self.increment_cursor();
                     }
 
                     return Some(self.next_token(false));
                 } // End of quotes
 
-                // TODO: parse this out as it 
+                // TODO: parse this out as it
                 // identifier @ alphanumeric!()| => {
                 //     loop {
                 //         if self.is_slice_empty() {
@@ -512,10 +524,18 @@ impl<'cxx> Iterator for Tokenizer<'cxx> {
                     quotes!() if quote_prefixes!(contains self.peek_behind_tail()) => {
                         self.increment_cursor()
                     }
+                    whitespace!()
+                    | delimiters!()
+                    // TODO: add this back when it is fixed --- operators!(first_char)
+                    | operators_1!(first_char) // TODO: Remove when fixed
+                    | operators_2!(first_char) // TODO: Remove when fixed
+                    | operators_3!(first_char) // TODO: Remove when fixed
+                    | scope_separator!()
+                    | type_separator!()
+                    | instance_access!()
+                    | list_separator!() => break,
 
-                    whitespace!() | delimiters!() | operators!(first_char) => break ,
                     _ => self.increment_cursor(),
-
                 },
             }
         }
@@ -554,7 +574,7 @@ mod tests {
     }
 
     fn determine_tokens(content: &'static str, expected: &'static [&'static str]) {
-        let mut tokenizer = Tokenizer::new(content.as_bytes());
+        let mut tokenizer = Tokenizer::new(content.as_bytes(), Tokenizer::FIRST_ROW);
 
         let mut instant = crate::PrimedInstant::new();
 
@@ -575,7 +595,7 @@ mod tests {
             assert_eq!(token.as_str(), expected[index]);
         }
 
-        tokenizer = Tokenizer::new(content.as_bytes());
+        tokenizer = Tokenizer::new(content.as_bytes(), Tokenizer::FIRST_ROW);
 
         let start = std::time::Instant::now();
         let tokens = Tokenizer::gather_all_tokens(&mut tokenizer, content);
