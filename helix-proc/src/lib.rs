@@ -16,7 +16,7 @@
 // b"=>" | b"@=" | b"->" | b"<-" | b"<=" | b">=" | b"&&" | b"--" |
 // b"::" | b"||" | b"++" | b"__" | b"?="),
 
-use quote::ToTokens;
+//use quote::ToTokens;
 
 #[proc_macro]
 pub fn convert_bytes_to_u16(input: proc_macro::TokenStream) -> proc_macro::TokenStream {

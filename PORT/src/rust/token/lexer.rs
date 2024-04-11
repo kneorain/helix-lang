@@ -1,5 +1,5 @@
 use std::{
-    ptr::{self, addr_of_mut, slice_from_raw_parts},
+    ptr::slice_from_raw_parts,
     sync::atomic::{AtomicPtr, Ordering},
 };
 
@@ -116,7 +116,7 @@ macro_rules! token_patterns {
 
 token_patterns! {
 
-    delimiters: b'{' | b'}' | b'(' | b')' | b';' | b'!' | b'=' | b'|'|b':'|b','|b'<'|b'>' | b'?'|b'.',
+    delimiters: b'{' | b'}' | b'(' | b')' | b';' | b'!' | b'=' | b'|'|b':'|b','|b'<'|b'>' |b'.',
 
     newline: b'\n',
     other_whitespace: b'\t' | b'\x0C' | b'\r' | b' ',
@@ -134,30 +134,29 @@ token_patterns! {
     quote_prefixes: b'r'|b'b'| b'u'| b'f',
 
     two_len_ops: b"==" | b"!=" | b"<=" | b">=" | b"//" | b"**" |
-    b"<<" | b">>" | b"r+" | b"r-"| b"r*" | b"r/" | b"r%" | b"r&" | b"r|" |
-    b"r^" | b"+=" | b"-=" | b"*=" | b"/=" | b"%=" | b"&=" | b"|=" | b"^=" |
+    b"<<" | b">>" | b"+=" | b"-=" | b"*=" | b"/=" | b"%=" | b"&=" | b"|=" | b"^=" |
     b"=>" | b"@=" | b"->" | b"<-" | b"<=" | b">=" | b"&&" | b"--" |
-    b"::" | b"||" | b"++" | b"__" | b"?=",
+    b"::" | b"||" | b"++" | b"?="|b"|:" |b"??",
 
 
 
-    three_len_ops: b"===" | b"!==" | b"..." | b"r//" | b"r**" | b"r<<" | b"r>>" | b"//=" | b"**=" | b"<<=" |
-    b">>=" | b"??" | b"|:",
+    three_len_ops: b"===" | b"!==" | b"..."  | b"//=" | b"**=" | b"<<=" | b">>=",
 
     uppercase: b'A'..=b'Z',
     lowercase: b'a'..=b'z',
     numeric: b'0'..=b'9',
 
-    alphanumeric: lowercase!() | uppercase!() | numeric!(),
+    alpha: lowercase!() | uppercase!(),
+
+    alphanumeric: alpha!() | numeric!(),
 
     punctuation: b'!'..=b'/'|b':'..=b'@'|b'['..=b'`'|b'{'..=b'~',
 
     operators:  b"==" | b"!=" | b"<=" | b">=" | b"//" | b"**" |
-    b"<<" | b">>" | b"r+" | b"r-"| b"r*" | b"r/" | b"r%" | b"r&" | b"r|" |
-    b"r^" | b"+=" | b"-=" | b"*=" | b"/=" | b"%=" | b"&=" | b"|=" | b"^=" |
+    b"<<" | b">>" | b"+=" | b"-=" | b"*=" | b"/=" | b"%=" | b"&=" | b"|=" | b"^=" |
     b"=>" | b"@=" | b"->" | b"<-" | b"<=" | b">=" | b"&&" | b"--" |
-    b"::" | b"||" | b"++" | b"?=" | b"===" | b"!==" | b"..." | b"r//" | b"r**" | b"r<<" | b"r>>" | b"//=" | b"**=" | b"<<=" |
-    b">>=" | b"??" | b"|:"
+    b"::" | b"||" | b"++" | b"?="|b"|:" |b"??"| b"===" | b"!==" | b"..."  | b"//=" | b"**=" | b"<<=" |
+    b">>=" | b'?' 
 
 }
 
@@ -209,7 +208,7 @@ impl<'cxx> Tokenizer<'cxx> {
         self.window_head = content.as_ptr();
         self.row = Self::DEFAULT_ROW;
         self.lifetime = std::marker::PhantomData;
-        self.column_reset();
+        self.reset_column();
     }
 
     /// A dirty estimate of the number of tokens in the content
@@ -390,7 +389,7 @@ impl<'cxx> Tokenizer<'cxx> {
     /// Increments the column by one
     #[inline(always)]
     pub fn column_increment(&mut self) {
-        self.column += 1;
+        self.column_increment_n(1)
     }
 
     #[inline(always)]
@@ -400,7 +399,7 @@ impl<'cxx> Tokenizer<'cxx> {
 
     /// Resets the column to the default column
     #[inline(always)]
-    pub fn column_reset(&mut self) {
+    pub fn reset_column(&mut self) {
         self.column = Self::DEFAULT_COLUMN;
     }
 
@@ -409,14 +408,8 @@ impl<'cxx> Tokenizer<'cxx> {
     /// Increments the row by one
     #[inline(always)]
     pub fn increment_row(&mut self) {
-        self.row_increment_n(1)
-    }
-
-    /// Resets the row to the default row and increments the row by one
-    #[inline(always)]
-    pub fn row_increment_n(&mut self, n: isize) {
-        self.row += n;
-        self.column_reset();
+        self.row += 1;
+        self.reset_column();
     }
 
     /// Creates a new token from the current window
@@ -473,14 +466,12 @@ impl<'cxx> Iterator for Tokenizer<'cxx> {
                 // Delimiters
                 delimiters!() if !self.is_window_empty() => break self.increment_cursor(),
 
-                quote_prefixes!() if quotes!(contains self.peek_ahead_window()) => {
-                    self.increment_cursor()
-                }
-
+                delimiters!() => break,
+                    
                 // Quotes
                 quote @ quotes!() => {
                     self.increment_cursor();
-
+                    
                     while !self.is_slice_empty() {
                         match self.window_tail::<u8>() {
                             newline!() => self.increment_row(),
@@ -517,8 +508,13 @@ impl<'cxx> Iterator for Tokenizer<'cxx> {
 
                 // Characters
                 _ => match self.peek_ahead_window() {
-                    whitespace!() | delimiters!() => break self.increment_cursor(),
-                    _ => {},
+                    quotes!() if quote_prefixes!(contains self.peek_behind_tail()) => {
+                        self.increment_cursor()
+                    }
+
+                    whitespace!() | delimiters!() | operators!(first_char) => break ,
+                    _ => self.increment_cursor(),
+
                 },
             }
         }
