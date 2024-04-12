@@ -3,43 +3,24 @@ use std::{
     sync::atomic::{AtomicPtr, Ordering},
 };
 
-
 #[derive(Debug)]
 pub struct Token<'cxx> {
-    //file: AtomicPtr<super::super::shared::file_data::File<'cxx>>,
     sub_tokens: &'cxx [u8],
     column: usize,
     row: isize,
-    complete: bool,
 }
 
 impl<'cxx> Token<'cxx> {
     const TOKEN_ORDERING: Ordering = Ordering::Relaxed;
 
-    pub fn new(
-        chars: &'cxx [u8],
-        /*file:AtomicPtr<super::super::shared::file_data::File>, */
-        column: usize,
-        row: isize,
-        complete: bool,
-    ) -> Self {
+    pub fn new(chars: &'cxx [u8], row: isize, column: usize) -> Self {
         Token {
             //file,
             sub_tokens: chars,
             column,
             row,
-            complete,
         }
     }
-
-    // fn increnment_references(&self) {
-    //     self.file.load(Self::TOKEN_ORDERING).read().increment_references();
-    // }
-
-    // pub fn file_ptr(&self) -> &AtomicPtr<super::super::shared::file_data::File<'cxx>> {
-    //     self.file.load(TOKEN_ORDERING)
-    //     self.file.store(ptr, order)
-    // }
 
     #[inline(always)]
     pub fn as_str(&self) -> &'cxx str {
@@ -50,10 +31,6 @@ impl<'cxx> Token<'cxx> {
     #[inline(always)]
     pub fn as_slice(&self) -> &'cxx [u8] {
         self.sub_tokens
-    }
-
-    pub fn is_complete(&self) -> bool {
-        self.complete
     }
 
     pub fn row(&self) -> isize {
@@ -68,14 +45,13 @@ impl<'cxx> Token<'cxx> {
         self.sub_tokens.len()
     }
 
-    pub fn complete(&mut self, other: Token<'cxx>) {
+    pub fn extend(&mut self, other: Token<'cxx>) {
         self.sub_tokens = unsafe {
             &*slice_from_raw_parts(
                 self.sub_tokens.as_ptr(),
                 self.sub_tokens.len() + other.sub_tokens.len(),
             )
         };
-        self.complete = true;
     }
 }
 
@@ -96,9 +72,8 @@ macro_rules! token_patterns {
                 };
 
                 (contains $ch:expr) => { matches!($ch, $name!()) };
-                (raw$phantom:literal) => {
-                    helix_proc::raw!($pattern)
-                };
+
+                (raw$phantom:literal) => {helix_proc::raw!($pattern)};
                 (contains u16 $ch:expr ) => {
                     matches!($ch, $name!(u16 ""))
                 };
@@ -116,6 +91,8 @@ token_patterns! {
     list_separator: b',',
 
     scope_separator: b';',
+
+    empty_call: b"()",
 
     type_separator: b':',
 
@@ -143,7 +120,7 @@ token_patterns! {
     b"<<" | b">>" | b"+=" | b"-=" | b"*=" | b"/=" | b"%=" | b"&=" | b"|=" | b"^=" |
     b"=>" | b"@=" | b"->" | b"<-" | b"<=" | b">=" | b"&&" | b"--" |
     b"||" | b"++" | b"?="|b"|:" |b"??"
-    | b"::", // TODO: Use static_access!() instead of b"::"
+    | b"::" |"()", // TODO: Use static_access!() instead of b"::" and empty_call!() instead of "()" when fixed
 
     operators_3: b"===" | b"!==" | b"..."  | b"//=" | b"**=" | b"<<=" | b">>="|b"..=",
 
@@ -163,62 +140,55 @@ token_patterns! {
 
 #[derive(Debug, Clone)]
 pub struct Tokenizer<'cxx> {
-    //
-    slice_head: *const u8,
-    slice_tail: *const u8,
+    sub_tokens: &'cxx [u8],
+    sub_tokens_start: *const u8,
+    sub_tokens_end: *const u8,
 
     // The window head is the start of the current token
-    window_head: *const u8,
-    window_tail: *const u8,
-
+    head: *const u8,
+    tail: *const u8,
+    incomplete: bool,
     row: isize,
-    column: usize,
 
-    token_row: isize,
-    token_column: usize,
-
-    /// Used to mark the lifetime and nothing else.
-    lifetime: std::marker::PhantomData<&'cxx u8>,
+    last_row_index: usize,
 }
 
 impl<'cxx> Tokenizer<'cxx> {
-    pub const DEFAULT_COLUMN: usize = 0;
     pub const FIRST_ROW: isize = -1;
     pub const DEFAULT_CHAR: u8 = b'\0';
 
     pub fn new(chars: &'cxx [u8], starting_row: isize) -> Self {
         Tokenizer {
-            slice_head: chars.as_ptr(),
-            slice_tail: unsafe { chars.as_ptr().add(chars.len()) },
-            window_head: chars.as_ptr(),
-            window_tail: chars.as_ptr(),
+            sub_tokens: chars,
+            sub_tokens_start: chars.as_ptr(),
+            sub_tokens_end: unsafe { chars.as_ptr().add(chars.len()) },
+            head: chars.as_ptr(),
+            tail: chars.as_ptr(),
             row: starting_row,
-            column: Self::DEFAULT_COLUMN,
-            token_column: Self::DEFAULT_COLUMN,
-            token_row: Self::FIRST_ROW,
-            lifetime: std::marker::PhantomData,
+            incomplete: false,
+            last_row_index: 0,
         }
     }
 
-    #[inline(always)]
     /// Allows the tokenizer to be reset with new content without reallocation,
     pub fn reset(&mut self, content: &'cxx [u8], starting_row: isize) {
-        self.slice_head = content.as_ptr();
-        self.slice_tail = unsafe { content.as_ptr().add(content.len()) };
-        self.window_tail = content.as_ptr();
-        self.window_head = content.as_ptr();
+        self.sub_tokens = content;
+        self.sub_tokens_start = self.sub_tokens.as_ptr();
+        self.sub_tokens_end = unsafe { self.sub_tokens.as_ptr().add(content.len()) };
+        self.tail = content.as_ptr();
+        self.head = content.as_ptr();
         self.row = starting_row;
-        self.lifetime = std::marker::PhantomData;
-        self.reset_column();
+        self.incomplete = false;
+        self.last_row_index = 0;
     }
 
     /// A dirty estimate of the number of tokens in the content
-    pub fn fast_estimate_number_of_tokens(content: &'cxx str) -> usize {
+    pub fn fast_estimate_number_of_tokens(&self) -> usize {
         let mut count = 0;
         let mut in_string = false;
         let mut prev_char = b'\0';
 
-        for c in content.as_bytes() {
+        for c in self.sub_tokens.iter() {
             match c {
                 quotes!() if in_string & (prev_char != backslash!(raw "")) => {
                     // Handle string closure and escape character
@@ -239,26 +209,26 @@ impl<'cxx> Tokenizer<'cxx> {
     }
 
     // There might be a trait for this.
-    pub fn gather_all_tokens(&mut self, content: &'cxx str) -> Vec<Token> {
-        let mut tokens = Vec::with_capacity(Self::fast_estimate_number_of_tokens(content));
+    pub fn gather_all_tokens(&mut self) -> Vec<Token> {
+        let mut tokens = Vec::with_capacity(self.fast_estimate_number_of_tokens());
 
-        while let Some(token) = self.next() {
-            tokens.push(token);
+        while !self.is_empty() {
+            tokens.push(self.next_token());
         }
 
         tokens
     }
 
     // Window methods - These methods are used to move the window head and tail
-
+    #[inline(always)]
     fn window(&self) -> &'cxx [u8] {
-        unsafe { &*slice_from_raw_parts(self.window_head as *const u8, self.window_len()) }
+        unsafe { &*slice_from_raw_parts(self.head as *const u8, self.window_len()) }
     }
 
     /// Returns the value of the window head
     #[inline(always)]
     fn window_head(&self) -> u8 {
-        unsafe { self.window_head.read() }
+        unsafe { self.head.read() }
     }
 
     /// Increments the window head by one
@@ -270,83 +240,67 @@ impl<'cxx> Tokenizer<'cxx> {
     /// Increments the window head by n
     #[inline(always)]
     pub fn window_head_increment_n(&mut self, n: usize) {
-        self.window_head = unsafe { self.window_head.add(n) }
+        self.head = unsafe { self.head.add(n) }
     }
 
     /// Returns the index of the window head in the slice
     #[inline(always)]
     fn window_head_index(&self) -> usize {
-        self.window_head as usize - self.slice_head as usize
+        self.head as usize - self.sub_tokens_start as usize
     }
 
     /// Resets the window head to the window tail
     #[inline(always)]
     fn window_head_reset(&mut self) {
-        self.window_head = self.window_tail
+        self.head = self.tail
     }
 
     /// Returns the index of the window head in the slice
     #[inline(always)]
     fn window_tail<T>(&self) -> T {
-        unsafe { (self.window_tail as *const T).read() }
+        unsafe { (self.tail as *const T).read() }
     }
 
     /// Increments the window tail by one
     #[inline(always)]
-    pub fn window_tail_increment(&mut self) {
-        self.window_tail_increment_n(1);
+    pub fn increment_tail(&mut self) {
+        self.increment_tail_window_n(1);
     }
 
     /// Increments the window tail by n
     #[inline(always)]
-    pub fn window_tail_increment_n(&mut self, n: usize) {
-        self.window_tail = unsafe { self.window_tail.add(n) };
+    pub fn increment_tail_window_n(&mut self, n: usize) {
+        self.tail = unsafe { self.tail.add(n) };
     }
 
     /// Returns the index of the window tail in the slice
     #[inline(always)]
     fn window_tail_index(&self) -> usize {
-        self.window_tail as usize - self.slice_head as usize
+        self.tail as usize - self.sub_tokens_start as usize
     }
 
     /// Returns a slice from the window tail to the given index
     #[inline(always)]
     fn window_tail_slice(&self, to: usize) -> &[u8] {
-        unsafe { &*slice_from_raw_parts(self.window_tail, to) }
+        unsafe { &*slice_from_raw_parts(self.tail, to) }
     }
 
     /// Returns the length of the window
     #[inline(always)]
     fn window_len(&self) -> usize {
-        self.window_tail as usize - self.window_head as usize
+        self.tail as usize - self.head as usize
     }
 
     /// Checks if the window tail is within the bounds of the slice
     #[inline(always)]
     fn is_window_in_bounds(&self, n: usize) -> bool {
-        self.window_tail as usize + n <= self.slice_tail as usize
+        self.tail as usize + n <= self.sub_tokens_end as usize
     }
 
     /// Checks if the window is empty
     #[inline(always)]
     pub fn is_window_empty(&self) -> bool {
-        std::ptr::addr_eq(self.window_head, self.window_tail)
-    }
-
-    // Cursor methods - These methods are used to move the window tail and column
-
-    /// Increments the window tail and column by one
-    #[inline(always)]
-    pub fn increment_cursor(&mut self) {
-        self.window_tail_increment();
-        self.column_increment();
-    }
-
-    /// Increments the window tail and column by n
-    #[inline(always)]
-    pub fn increment_cursor_by_n(&mut self, n: usize) {
-        self.window_tail_increment_n(n);
-        self.column_increment_n(n);
+        std::ptr::addr_eq(self.head, self.tail)
     }
 
     /// Returns the value one character ahead of the window tail
@@ -358,7 +312,7 @@ impl<'cxx> Tokenizer<'cxx> {
     #[inline(always)]
     /// Returns the value n characters ahead of the window tail
     fn peek_ahead_n(&self, n: usize) -> u8 {
-        unsafe { *self.window_tail.add(n) }
+        unsafe { self.tail.add(n).read() }
     }
 
     /// Returns the value one character behind the window tail
@@ -368,40 +322,21 @@ impl<'cxx> Tokenizer<'cxx> {
         return if self.is_window_empty() {
             Self::DEFAULT_CHAR
         } else {
-            unsafe { self.window_tail.sub(1).read() }
+            unsafe { self.tail.sub(1).read() }
         };
     }
 
     /// Skips the current sub token
     #[inline(always)]
     fn skip_sub_token(&mut self) {
-        self.increment_cursor();
+        self.increment_tail();
         self.window_head_reset();
     }
 
     /// Checks if the slice is empty
     #[inline(always)]
-    pub fn is_slice_empty(&self) -> bool {
-        std::ptr::addr_eq(self.window_tail, self.slice_tail)
-    }
-
-    // Column methods - These methods are used to move the column
-
-    /// Increments the column by one
-    #[inline(always)]
-    pub fn column_increment(&mut self) {
-        self.column_increment_n(1)
-    }
-
-    #[inline(always)]
-    pub fn column_increment_n(&mut self, n: usize) {
-        self.column += n;
-    }
-
-    /// Resets the column to the default column
-    #[inline(always)]
-    pub fn reset_column(&mut self) {
-        self.column = Self::DEFAULT_COLUMN;
+    pub fn is_empty(&self) -> bool {
+        std::ptr::addr_eq(self.tail, self.sub_tokens_end)
     }
 
     // Row methods - These methods are used to move the row
@@ -409,41 +344,42 @@ impl<'cxx> Tokenizer<'cxx> {
     /// Increments the row by one
     #[inline(always)]
     pub fn increment_row(&mut self) {
+        // Simplified from:
+        self.last_row_index = self.window_head_index() - self.window_len();
         self.row += 1;
-        self.reset_column();
+    }
+
+    #[inline(always)]
+    fn slice_from_head_to(&self, to: usize) -> &'cxx [u8] {
+        unsafe { &*slice_from_raw_parts(self.head, to) }
     }
 
     /// Creates a new token from the current window
     #[inline(always)]
-    fn next_token(&mut self, complete: bool) -> Token<'cxx> {
-        let token = Token::new(self.window(), self.token_column, self.token_row, complete);
+    fn create_next_token(&mut self) -> Token<'cxx> {
+        //dbg!((self.window_head_index(), self.last_row_index));
+
+        let token = Token::new(
+            self.window(),
+            self.row,
+            self.window_head_index() - self.last_row_index,
+        );
+
         self.window_head_reset();
         token
     }
-}
 
-impl<'cxx> Iterator for Tokenizer<'cxx> {
-    type Item = Token<'cxx>;
-
-    #[inline(always)]
-    fn next(&mut self) -> Option<Self::Item> {
+    fn next_token(&mut self) -> Token<'cxx> {
         'outer: loop {
-            if self.is_slice_empty() {
-                return if self.is_window_empty() {
-                    None
-                } else {
-                    Some(self.next_token(false))
-                };
-            };
-
             match self.window_tail::<u8>() {
                 // Whitespace
                 whitespace @ whitespace!() => {
-                    match whitespace {
-                        newline!() => self.increment_row(),
-                        _ => self.column_increment(),
-                    }
+                    
                     self.skip_sub_token();
+                    
+                    if whitespace == newline!(raw "") {
+                        self.increment_row();
+                    }
                 }
 
                 // Operators
@@ -453,7 +389,7 @@ impl<'cxx> Iterator for Tokenizer<'cxx> {
                     if self.is_window_in_bounds(3)
                         && operators_3!(contains self.window_tail_slice(3)) =>
                 {
-                    break self.increment_cursor_by_n(2);
+                    break self.increment_tail_window_n(2);
                 }
 
                 // Two character operators
@@ -461,7 +397,7 @@ impl<'cxx> Iterator for Tokenizer<'cxx> {
                     if self.is_window_in_bounds(2)
                         && operators_2!(contains u16 self.window_tail::<u16>() ) =>
                 {
-                    break self.increment_cursor_by_n(1);
+                    break self.increment_tail_window_n(1);
                 }
 
                 // Delimiters and one len ops
@@ -470,39 +406,39 @@ impl<'cxx> Iterator for Tokenizer<'cxx> {
                 | scope_separator!()
                 | type_separator!()
                 | instance_access!()
-                | list_separator!()
-                    if !self.is_window_empty() =>
-                {
-                    break self.increment_cursor()
+                | list_separator!() => {
+                    if !self.is_window_empty() {
+                        self.increment_tail()
+                    }
+                    break;
                 }
-
-                delimiters!()
-                | operators_1!()
-                | scope_separator!()
-                | type_separator!()
-                | instance_access!()
-                | list_separator!() => break,
-
                 // Quotes
                 quote @ quotes!() => {
-                    self.increment_cursor();
 
-                    while !self.is_slice_empty() {
+
+                    while !self.is_empty() {
+                        self.increment_tail();
+
                         match self.window_tail::<u8>() {
-                            newline!() => self.increment_row(),
+                            newline!() => {
+                                self.increment_row();
+                                // Temp fix for newlines in strings
+                                // as this fixes the column calculation
+                                self.last_row_index-=2; 
+                                },
                             backslash!()
                                 if self.is_window_in_bounds(1)
                                     && self.peek_ahead_window() == quote =>
                             {
-                                self.increment_cursor()
+                                self.increment_tail()
                             }
                             char if char == quote => break 'outer,
                             _ => {}
                         }
-                        self.increment_cursor();
-                    }
 
-                    return Some(self.next_token(false));
+                    }
+                    self.incomplete = true;
+                    return self.create_next_token();
                 } // End of quotes
 
                 // TODO: parse this out as it
@@ -522,8 +458,8 @@ impl<'cxx> Iterator for Tokenizer<'cxx> {
                 // Characters
                 _ => match self.peek_ahead_window() {
                     quotes!() if quote_prefixes!(contains self.peek_behind_tail()) => {
-                        self.increment_cursor()
-                    }
+                        self.increment_tail()
+                    },
                     whitespace!()
                     | delimiters!()
                     // TODO: add this back when it is fixed --- operators!(first_char)
@@ -533,72 +469,74 @@ impl<'cxx> Iterator for Tokenizer<'cxx> {
                     | scope_separator!()
                     | type_separator!()
                     | instance_access!()
-                    | list_separator!() => break,
+                    | list_separator!()  => break,
 
-                    _ => self.increment_cursor(),
+                    _ => self.increment_tail(),
                 },
             }
         }
+        self.increment_tail();
 
-        self.increment_cursor();
-
-        let token = Some(self.next_token(true));
-
-        // Reset the last token column and row to the current column and row
-        self.token_column = self.column;
-        self.token_row = self.row;
-
-        // Set the tail to the head to clear the window
-        self.window_head_reset();
-
-        token
+        self.create_next_token()
     }
 }
-
 #[cfg(test)]
 mod tests {
+    use std::{hint::black_box, slice::Iter};
+
     use super::*;
 
     #[test]
     fn test_determine_tokens_small() {
         use crate::tests::tokenizer::small_test::{CONTENT, EXPECTED};
 
-        determine_tokens(CONTENT, EXPECTED);
+        determine_tokens(CONTENT, EXPECTED.into_iter());
     }
 
     #[test]
     fn test_determine_tokens_large() {
         use crate::tests::tokenizer::large_test::{CONTENT, EXPECTED};
 
-        determine_tokens(CONTENT, EXPECTED);
+        determine_tokens(CONTENT, EXPECTED.into_iter());
     }
 
-    fn determine_tokens(content: &'static str, expected: &'static [&'static str]) {
-        let mut tokenizer = Tokenizer::new(content.as_bytes(), Tokenizer::FIRST_ROW);
+    fn determine_tokens<'a>(content: &'a str, mut expected: Iter<'a, &'a str>) {
+        let mut tokenizer = Tokenizer::new(black_box(content.as_bytes()), Tokenizer::FIRST_ROW);
 
         let mut instant = crate::PrimedInstant::new();
 
-        for index in 0..expected.len() {
+        instant.prime();
+
+        while !tokenizer.is_empty() {
             instant.start();
-            let token = match tokenizer.next() {
-                Some(token) => token,
-                None => break,
-            };
+            let token = tokenizer.next_token();
             instant.end();
             println!(
-                "\nr:{} c:{} t:'{}' e:{:?}",
+                "\nr:{} c:{} t:'{}' e:{:?} {}",
                 token.row,
                 token.column,
                 token.as_str(),
-                instant.elapsed
+                instant.elapsed,
+                if tokenizer.incomplete {
+                    "incomplete"
+                } else {
+                    ""
+                }
             );
-            assert_eq!(token.as_str(), expected[index]);
+
+            assert_eq!(
+                token.as_str().to_owned(),
+                expected.next().unwrap().to_owned()
+            );
         }
 
         tokenizer = Tokenizer::new(content.as_bytes(), Tokenizer::FIRST_ROW);
 
         let start = std::time::Instant::now();
-        let tokens = Tokenizer::gather_all_tokens(&mut tokenizer, content);
+
+        tokenizer.reset(content.as_bytes(), Tokenizer::FIRST_ROW);
+
+        let tokens = tokenizer.gather_all_tokens();
 
         let elapsed = start.elapsed();
 

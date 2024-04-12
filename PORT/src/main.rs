@@ -25,7 +25,7 @@ pub struct PrimedInstant {
 }
 
 impl PrimedInstant {
-    const PRIME_ITERATIONS: u128 = 100000;
+    const PRIME_ITERATIONS: u128 = 1000000;
 
     #[inline(always)]
     pub fn new() -> Self {
