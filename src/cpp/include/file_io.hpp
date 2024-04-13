@@ -1,17 +1,64 @@
-/** ----------------------------------------------------------------------------
- * @link{https://github.com/kneorain/helix-lang}
- * @brief Header file for the FileIO class, offering comprehensive file
- * manipulation capabilities.
+/**
+ * @file file_io.hpp
+ * @brief Implements file handling capabilities for the Helix compiler,
+ * leveraging both modern C++ and Rust features.
  *
- * This header is part of the Helix Compiler's frontend, leveraging advanced
- * file I/O operations crucial for handling source code efficiently in the
- * compilation process. The module provides functionalities such as reading,
- * writing, appending, and managing files with high efficiency and reliability,
- * ensuring robust file operations.
+ * This header contains classes and functions dedicated to managing file input
+ * and output operations within the Helix compiler environment. It defines a
+ * series of classes that encapsulate the basic file operations like reading,
+ * writing, and appending, as well as managing multiple file instances through a
+ * singleton class. This implementation uses the Helix-specific integer types
+ * from "better_ints.hpp" and error handling from "panic.h" to provide robust
+ * and error-resistant file operations. The integration with Rust through
+ * `rust/cxx.h` allows for seamless data exchange between C++ and Rust
+ * components.
+ *
+ * Classes:
+ * - `FileMode`: Represents the different modes a file can be opened with (read,
+ * write, append).
+ * - `file`: Low-level utility class for handling raw file data.
+ * - `FileIO`: High-level class for performing file I/O operations with error
+ * handling and mode management.
+ * - `FileManager`: Singleton class managing a collection of files, ensuring
+ * only one instance manages file access across the compiler.
+ *
+ * Usage:
+ * The `FileIO` class provides methods to read, write, and append data to files,
+ * which are intended to be easy to use in conjunction with the Rust components
+ * of the compiler. `FileManager` handles the allocation and deallocation of
+ * files efficiently, with methods to load and retrieve files based on an index,
+ * ensuring that file handling is centralized and consistent.
+ *
+ * Example (only in c++):
+ * ```cpp
+ * auto file_manager = FileManager::getInstance();
+ * file_manager->loadFile("Hello, Helix!", 42);
+ * auto file = file_manager->getFile(42);
+ * ```
+ *
+ * Example (rust):
+ * ```rs
+ * let file = file_io::open("example.txt", "r", "utf-8");
+ * let data = file.read(10); // similar to `open` in Python
+ * println!("Data: {:?}", data);
+ * ```
+ *
+ * This example demonstrates obtaining the singleton instance of `FileManager`,
+ * loading a file into the manager, and then retrieving it. The file operations
+ * are handled with attention to memory management and error conditions,
+ * throwing exceptions when necessary to prevent misuse and facilitate
+ * debugging.
+ *
+ * Notes:
+ * - The `file` class constructor and destructor manage dynamic memory
+ * explicitly, and exceptions are thrown to handle errors such as bad
+ * allocations or out-of-range indices.
+ * - The `FileIO` class methods such as `read`, `write`, and `append` are
+ * designed to be used with types defined in `rust/cxx.h`, allowing these
+ * methods to be directly usable with Rust components without additional
+ * conversion overhead.
  *
  * @author Dhruvan Kartik
- * @date 2024
- *
  * This work is licensed under the Creative Commons Attribution 4.0
  * International License. To view a copy of this license, visit
  * http://creativecommons.org/licenses/by/4.0/ or send a letter to
@@ -31,49 +78,32 @@
  * For the full license text, see the LICENSE file in the root directory of
  * this source code repository or visit the URL above.
  *
- * -----------------------------------------------------------------------------
- *
- * @file file_io.hpp
- * Description: Implements the FileIO and FileManager classes, providing
- * methods for reading, writing, appending, and managing files with high
- * performance and reliability. The classes support file handling operations
- * using memory-safe constructs and exception handling to ensure robustness,
- * particularly useful in a compiler setting for handling large files.
- *
- * Classes Defined:
- * - FileIO: Facilitates opening files and performing read, write, and append
- * operations.
- * - file: Manages memory for file data, ensuring efficient space usage.
- * - FileManager: Manages a pool of file objects for optimized file access.
- *
- * Usage in Compiler Workflow:
- * - FileIO objects manage file interactions throughout the compilation process,
- * ensuring thread-safe and efficient file access.
- * - FileManager maintains a static instance for global file management,
- * optimizing memory usage and operational speed by reusing file objects where
- * possible.
- *
- * Important Considerations:
- * - Proper error handling and resource management are crucial, especially in
- * multithreaded environments to prevent data corruption and memory leaks.
- * - The architecture should allow for scalability and flexibility to adapt to
- * various file sizes and system capabilities without degradation in
- * performance.
- *
- * @since   v0.1.3-stable
- * @version v0.1.4-stable
- * -------------------------------------------------------------------------- */
+ * @see panic.h for error handling used throughout the file operations.
+ * @see better_ints.hpp for the Helix-specific integer types used.
+ * @see rust/cxx.h for Rust integration.
+ * @doc generated by ChatGPT
+ */
 #pragma once
 
+#include "helix-compiler/src/cpp/include/panic.h"
 #include "better_ints.hpp"
 #include "rust/cxx.h"
 #include <memory>
 
 namespace file_io {
-    typedef struct {
+    typedef struct FileMode {
         bool read;
         bool write;
         bool append;
+        
+        std::string to_string() const {
+            return std::string("FileMode { read: ") + std::to_string(this->read) + ", write: " + std::to_string(this->write) + ", append: " + std::to_string(this->append) + " }";
+        }
+
+        friend std::ostream& operator<<(std::ostream& os, const FileMode& mode) {
+            os << mode.to_string();
+            return os;
+        }
     } FileMode;
 
     struct file {
@@ -86,7 +116,7 @@ namespace file_io {
             capacity = size + 0xf36dbf;
             data = (char*)std::malloc(capacity + 1);
             if (data == nullptr) {
-                throw std::bad_alloc();
+                throw (std::bad_alloc());
             }
             std::memcpy(data, init_data, size);
             data[size] = '\0';
@@ -176,7 +206,7 @@ namespace file_io {
 
             void loadFile(const char* data, int discernment) {
                 if (discernment < 0 || discernment >= 0xf36db) {
-                    throw std::out_of_range("Index out of range");
+                    throw (std::out_of_range("Index out of range"));
                 }
                 delete files[discernment];
                 files[discernment] = new file(data);
@@ -184,7 +214,7 @@ namespace file_io {
 
             file* getFile(int discernment) {
                 if (discernment < 0 || discernment >= 0xf36db) {
-                    throw std::out_of_range("Index out of range");
+                    throw (std::out_of_range("Index out of range"));
                 }
                 return files[discernment];
             }
@@ -196,7 +226,7 @@ namespace file_io {
             FileManager() {
                 files = (file**)std::malloc(sizeof(file*) * 0xf36db);
                 if (files == NULL) {
-                    throw std::bad_alloc();
+                    throw (std::bad_alloc());
                 }
                 for (size_t i = 0; i < 0xf36db; ++i) {
                     files[i] = nullptr;
