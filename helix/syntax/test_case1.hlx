@@ -1,0 +1,67 @@
+fn main() {
+    print("This should be printed to the console.")
+}
+
+class Test {
+    fn <<(self, s: String) {
+        print(s);
+    }
+}
+ 
+~~ auth: jrcarl624
+
+~*~
+pub trait MessageEmitter: EventLoop //+Downcast<>
+    where
+        Self: Send + Sync + Debug + Sized, // not sure about sized
+{
+    type MessageBody: Send + Sync + Debug + Default;
+
+    /// The identifier that stipulates where a message comes from,
+    /// helpful for debugging
+    /// should be smaller than a pointer
+    type Origin: Send + Sync + Debug + Copy + PartialEq + Default;
+
+    /// The identifier that stipulates where a message comes from,
+    /// this allows you to stipulate the size of the correlation id
+    /// that is used.
+    // All of these traits are implemented for all numeric primitives,
+    // TODO: find make 24 bit correlation id for more efficient packing cases as needed
+    type Correlation: Copy + Debug + Send + Default + PartialEq + AddAssign + Div<Output=Self::Correlation>;
+
+    type HandleIdentifier: Copy + Debug + Send + Default + PartialEq;
+
+    // todo: make it possible to switch out the message channels used within,
+    // make Message handle a trait as well to make it so it is easy to switch between
+    // sync and async
+    //
+    // type ReplySender: Sender<MessageType<Self>>;
+    // type ReplyReceiver: Receiver<MessageType<Self>>;
+    // type MessageSender: Sender<MessageType<Self>>;
+
+
+    const CORRELATION_MAX: Self::Correlation;
+
+    // Unfortunately this isn't available at this moment
+    #[cfg(feature = "associated_type_defaults")]
+    type MessageType = Event<Self>;
+
+    // TODO: Make better comment
+    fn message_handle(
+        &self,
+    ) -> &MessageHandle<Self>;
+    
+    /// Cal 
+    fn subscribe () {
+        
+    }
+
+~*~
+
+interface MessageEmitter {
+    fn message_handle(self) -> MessageHandle<Self> {...}
+}
+
+class MessageHandle {
+    fn subscribe(self) {}
+}

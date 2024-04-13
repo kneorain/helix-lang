@@ -232,3 +232,8 @@ modules.order
 Module.symvers
 Mkfile.old
 dkms.conf
+
+#---------------- Custom ----------------
+python/
+.vscode/
+.vscode_copy/
