@@ -1,34 +1,122 @@
-
 // todo make all non byte strings byte strings
 
 // todo: formatter should be able to format macros, a macro can define what formatting to use
-token_patterns! {
+skel! {
 
     delimiters: b'{' | b'}' | b'(' | b')' | b';' | b'!' | b'=' | b'|'|b':'|b','|b'<'|b'>' | b'?'|b'.',
     // two char delimeters
 
     newline: b'\n',
 
-    other_whitespace: b'\t' | b'\x0C' | b'\r' | b' ',
+    other_whitespace: b'\t' | b0xC | b'\r' | b' ',
 
     whitespace: other_whitespace!() | newline!(),
     // can use raw num bytes
     any: 0..=255,
 
-    doc comment {
-        single_line: {
-            start:"//",
-            end:"\n"
-
-        },
-        multi_line: {
-            start:"/*",
-            end:"*/"
-        }
+    comment: {
+        single_line:Delimited <"//",Any,"\n">
+        multi_line:Delimited <"/*",Any,"*/">
     },
     // todo: goto keyword
 
-    scope : {
+    abstract Delimited<START,MIDDLE,END?>: {
+        start: Literal = START,
+        middle: Pattern= MIDDLE,
+        end: Literal = END ?: START,
+
+        layout() -> {
+            self::start self::middle self::end
+        }
+    },
+
+    struct SquareBrackets<MIDDLE>: Delimited<b'[',MIDDLE,b']'>;
+
+    struct Parentheses<MIDDLE>: Delimited<b'(',MIDDLE,b')'>;
+
+    struct CurlyBrackets<MIDDLE>: Delimited<b'{',MIDDLE,b'}'>;
+
+    type AngleBrackets<MIDDLE>: Delimited<'<',MIDDLE,'>'>;
+
+    struct SingleQuotes<INNER>: Delimited<'\'',INNER>;
+
+    struct DoubleQuotes<INNER>: Delimited<b'"',INNER>;
+
+
+
+
+    // struct DoubleQuotes<MIDDLE>: Delimited<b'"',MIDDLE,b'"'> {
+    //     middle: MIDDLE
+    // },
+
+
+
+
+
+
+
+
+    /// A patten that contains all the different types of patterns
+    quantifier All;
+    quantifier AtLeastOne;
+    quantifier ZeroOrOne;
+
+    /// Some Sort of Pattern
+    statement Pattern
+
+    /// States that the pattern is optional at the end
+    statement OptionalAtEnd<>
+
+    statement RequiredAtEnd
+
+    abstract Separator<PAT,LIT> {
+        pattern: Pattern = PAT,
+        separator: Literal = LIT,
+        layout() -> {
+            self::pattern self::separator
+        }
+    },
+
+
+
+    /// Required Whitespace
+    pat HorizontalWhitespace:Literal = b' '|b'\t'|b'\r'|b0xC;
+    struct VerticalWhitespace:Literal = b'\n';
+
+    pat Whitespace:Literal = HorizontalWhitespace | VerticalWhitespace;
+
+
+
+    /// A structure that
+
+    abstract SeparatedGroup<PAT,SEPARATOR,START,END,END_REQUIRED>: Delimited<START,Separator<PAT,SEPARATOR>,END>{
+
+    }
+
+
+
+    statement Expression:Pattern;
+
+    struct Brace<REQUIRED_KEYWORD[]>: SeparatedGroup<Expression, ";", "{", "}", true> {
+
+        required_keyword: REQUIRED_KEYWORD
+
+
+    };
+
+    alias CommaList<Pat,Start>: SeparatedGroup<Pat, OptionalAtEnd<",">>;
+
+    /// A pattern that is a literal
+    statement Literal: Pattern;
+
+
+
+    interface List:SeparatedGroup {
+
+    },
+
+
+    scope:SeparatedGroup {
         start: '{',
         end: '}',
         separator: ';',
@@ -37,30 +125,17 @@ token_patterns! {
             pattern
         }
     },
+    /// Notates that something is a type declaration
+    statement TypeDeclaration:Pattern;
 
-    struct array: {
-        start: '[',
-        end: ']',
-        separator: ',',
 
-        layout instantiation
 
-    },// ident*:  means repeat
 
-    tuple: {
-        start: '(',
-        end: ')',
+    structure: {
 
-        middle* : {
-            separator: ',',
-        }
+    }
 
-        // makes it so a tuple will be parsed as a type
-        type -> {
-            start
-        }
 
-    },
 
     scope : {
         start: '{',
@@ -73,16 +148,442 @@ token_patterns! {
     }
 
 
+    abstract Keyword extends Pattern;
+
+    abstract Pattern: {
+        // Operator-specific documentation must be defined in subclasses
+        fn doc(&self) -> String;
+    }
+
+    inbuilt {
+        abstract Pattern;
+
+        abstract Literal extends Pattern;
+        abstract String extends Literal;
+        abstract Number extends Literal;
+        abstract Char extends Literal;
+        abstract Boolean extends Literal;
+    }
+
+    group math {
+        use super::ansi::punctuation::{Plus, Minus, Asterisk, Slash, Percent, CircumflexAccent,
+            CommercialAt, Ampersand,Not, VerticalLine, Tilde, Dollar, Hash, GraveAccent,
+            LowLine, Bang, Colon, Semicolon, LessThan, GreaterThan, Equals};
+
+        alias Add: Plus;
+        alias Subtract: Minus;
+        alias Multiply: Asterisk;
+        alias Divide: Slash;
+        alias Modulo: Percent;
+        alias Power: CircumflexAccent;
+        alias Factorial: Bang;
+        alias BitwiseAnd: Ampersand;
+        alias BitwiseOr: VerticalLine;
+        alias BitwiseXor: Tilde;
+        pattern BitwiseNot: Not | Bang;
+        alias MatrixMultiply: CommercialAt;
+
+        alias GreaterThan: GreaterThan;
+        alias LessThan: LessThan;
+
+        pattern GreaterThanOrEqualTo: GreaterThan+Equals;
+        pattern LessThanOrEqualTo: LessThan + Equals;
+        pattern EqualTo: Equals+Equals;
+
+        /// The not equal to operator
+        pattern NotEqualTo: Bang + Equals;
+
+        /// The strict equal to operator
+        pattern StrictEqualTo: Equals + Equals + Equals;
+
+        /// The strict not equal to operator
+        pattern StrictNotEqualTo: Bang + Equals + Equals;
+
+        /// The assignment operator
+        alias Assign: Equals;
+
+        pattern AddAssign: Plus + Equals;
+    }
+
+    group brackets {
+        group round {
+            use super::punctuation::{LeftParenthesis, RightParenthesis};
+            alias Open: LeftParenthesis;
+            alias Close: RightParenthesis;
+        }
+        group square {
+            use super::punctuation::{LeftBracket, RightBracket};
+            alias Open: LeftBracket;
+            alias Close: RightBracket;
+        }
+
+        group curly {
+            use super::punctuation::{LeftCurlyBracket, RightCurlyBracket};
+            alias Open: LeftCurlyBracket;
+            alias Close: RightCurlyBracket;
+        }
+
+        group angle {
+            use super::punctuation::{LessThan, GreaterThan};
+            char Open: LessThan;
+            char Close: GreaterThan;
+        }
+    }
+
+
+    group ansi {
+
+
+        enum Control {
+            Null: 0x0;
+            Enquiry: 0x5;
+            Acknowledge: 0x6;
+            Bell: 0x7;
+            Backspace: 0x8;
+            LineFeed: '\n';
+            VerticalTab: 0xB;
+            FormFeed: 0xC;
+            CarriageReturn: '\r';
+            ShiftOut: 0xE;
+            ShiftIn: 0xF;
+            DataLinkEscape: 0x10;
+            DeviceControlOne: 0x11;
+            DeviceControlTwo: 0x12;
+            DeviceControlThree: 0x13;
+            DeviceControlFour: 0x14;
+            NegativeAcknowledge: 0x15;
+            SynchronousIdle: 0x16;
+            EndOfTransmissionBlock: 0x17;
+            Cancel: 0x18;
+            EndOfMedium: 0x19;
+            Substitute: 0x1A;
+            Escape: 0x1B;
+            FileSeparator: 0x1C;
+            GroupSeparator: 0x1D;
+            RecordSeparator: 0x1E;
+            UnitSeparator: 0x1F;
+            Delete: 0x7F;
+        }
+        
+        use Control::{Tab, LineFeed, CarriageReturn, FormFeed, VerticalTab, Space};
+
+        enum Whitespace {
+            Newline: LineFeed;
+            Return: CarriageReturn;
+            HorizontalTab: Tab;
+            VerticalTab: VerticalTab;
+            FormFeed: FormFeed;
+            Space: ' ';
+        }
+
+        enum Punctuation {
+            CommercialAt: '@';
+            Backslash: '\\';
+            CircumflexAccent: '^';
+            Underscore: '_';
+            GraveAccent: '`';
+            VerticalLine: '|';
+            Tilde: '~';
+            Bang: '!';
+            DoubleQuote: '"';
+            Hash: '#';
+            Dollar: '$';
+            Percent: '%';
+            Ampersand: '&';
+            SingleQuote: '\'';
+            LeftParenthesis: '(';
+            RightParenthesis: ')';
+            Asterisk: '*';
+            Plus: '+';
+            Comma: ',';
+            Minus: '-';
+            Period: '.';
+            Slash: '/';
+            Colon: ':';
+            Semicolon: ';';
+            LessThan: '<';
+            Equals: '=';
+            GreaterThan: '>';
+            Question: '?';
+            LeftBracket: '[';
+            RightBracket: ']';
+            LeftCurlyBracket: '{';
+            RightCurlyBracket: '}';
+            Not:'¬';
+        }
 
 
 
+        enum LatinCapital {
+            A: 'A';
+            B: 'B';
+            C: 'C';
+            D: 'D';
+            E: 'E';
+            F: 'F';
+            G: 'G';
+            H: 'H';
+            I: 'I';
+            J: 'J';
+            K: 'K';
+            L: 'L';
+            M: 'M';
+            N: 'N';
+            O: 'O';
+            P: 'P';
+            Q: 'Q';
+            R: 'R';
+            S: 'S';
+            T: 'T';
+            U: 'U';
+            V: 'V';
+            W: 'W';
+            X: 'X';
+            Y: 'Y';
+            Z: 'Z';
+        }
+
+        enum LatinSmall {
+            A: 'a';
+            B: 'b';
+            C: 'c';
+            D: 'd';
+            E: 'e';
+            F: 'f';
+            G: 'g';
+            H: 'h';
+            I: 'i';
+            J: 'j';
+            K: 'k';
+            L: 'l';
+            M: 'm';
+            N: 'n';
+            O: 'o';
+            P: 'p';
+            Q: 'q';
+            R: 'r';
+            S: 's';
+            T: 't';
+            U: 'u';
+            V: 'v';
+            W: 'w';
+            X: 'x';
+            Y: 'y';
+            Z: 'z';
+        }
+
+        enum Digits {
+            Zero: '0';
+            One: '1';
+            Two: '2';
+            Three: '3';
+            Four: '4';
+            Five: '5';
+            Six: '6';
+            Seven: '7';
+            Eight: '8';
+            Nine: '9';
+        }
+
+        pattern Alpha: LatinCapital | LatinSmall;
+        pattern Alphanumeric: Alpha | Numeric;
+        alias Numeric: Digits;
+
+        pattern HorizontalWhitespace: Whitespace::Space | Whitespace::Tab | Whitespace::CarriageReturn | Whitespace::FormFeed | Whitespace::VerticalTab;
+        pattern VerticalWhitespace: Whitespace::Newline;
+
+        // these have to be very explicit
+    }
+
+    use ansi::{Alpha,Whitespace,Numeric,Punctuation::{self,Underscore,Period,DoubleQuote}};
+
+    pattern Identifier {
+        first: Alpha | Underscore,
+        rest: self::first | Numeric,
+
+        Identifier() -> {
+            self::first self::rest*
+        }
+    }
+
+    marker Primitive: Pattern;
+
+    pattern String: Delimited<DoubleQuote, All> + Primitive {
+        fn skip() -> {
+            self::backslash super::start
+        }
+    }
+
+    pattern Char: Delimited<SingleQuote, All> + Primitive {
+        fn skip() -> {
+            self::backslash super::start
+        }
+    }
+
+    group number {
+
+        use super::ansi::{Numeric,Period,Alphanumeric};
+
+
+        enum Prefix {
+            Binary: "0b",
+            Octal: "0o",
+            Hexadecimal: "0x",
+        }
+
+        enum Endian {
+            Little: "le",
+            Big: "be",
+            Native: "ne",
+        }
+
+        enum IntegerSuffix {
+            u8: "u8",
+            u16: "u16",
+            u32: "u32",
+            u64: "u64",
+            u128: "u128",
+            i8: "i8",
+            i16: "i16",
+            i32: "i32",
+            i64: "i64",
+            i128: "i128",
+        }
+
+        enum FloatSuffix {
+            f32: "f32",
+            f64: "f64"
+        }
+
+
+        /// The exponent part of a number
+        pattern Exponent {
+            e: ansi::LatinCapital::E | ansi::LatinSmall::E
+            sign: math::Add | math::Subtract,
+            multiplier: Numeric+,
+
+            Exponent() -> {
+                self::e self::sign? self::multiplier
+            }
+        }
+
+        pattern Float {
+            integer: Numeric+,
+            fractional:  Numeric+,
+            exponent: Exponent,
+            dot:Period,
+            suffix: FloatSuffix,
+
+            Float() -> {
+                self::integer self::dot self::fractional self::exponent self::suffix?
+            }
+
+            Float() -> {
+                self::integer self::suffix
+            }
+        }
+
+
+        pattern Number:Literal {
+            integer: Numeric+,
+            fractional: Period Numeric+,
+            exponent: Exponent,
+
+            Number() -> {
+                self::integer self::fractional? self::exponent?
+            }
+        }
+
+        pattern Integer:Literal {
+            decimal:Prefix
+            layout() -> {
+                self::decimal | self::binary | self::octal | self::hexadecimal
+            }
+        }
+
+
+
+
+
+    }
+
+
+
+    /// A boolean value
+    pattern Boolean: Literal {
+        true: "true",
+        false: "false",
+        layout() -> {
+            self::true | self::false
+        }
+    }
+
+
+    group operator {
+
+
+         // Abstract base class for operators to avoid redundancy
+        abstract Operator is builtin::Expression {
+            symbol: Pattern;
+            identifier: Pattern;
+            type: OperatorType;
+            precedence: number;
+            associativity: string;
+            Operator( identifier:Pattern,symbol:Pattern,  type:OperatorType,  precedence:Number, associativity:String)
+        }
+
+        /// The type of operator
+        enum OperatorType {
+            // Binary operators take two operands
+            Binary,
+            // Unary operators take one operand
+            Unary,
+            // Ternary operators take three operands
+            Ternary,
+        }
+
+        enum Associativity {
+            /// Evaluates from left to right
+            LeftToRight,
+            /// Evaluates from right to left
+            RightToLeft,
+        }
+
+        /// Assigns the value of the right operand to the left operand.
+        struct Assignment is Operator {
+            symbol: super::math::Assign,
+            type: OperatorType::Binary,
+            precedence: 1,
+            associativity: Associativity::RightToLeft,
+        }
+
+        struct EqualTo is Operator {
+            symbol: "==",
+            type: OperatorType::Binary,
+            precedence: 2,
+            associativity: Associativity::LeftToRight,
+            doc: "Checks if the left operand is equal to the right operand",
+        }
+
+
+
+    }
 
 
 
     variable: {
 
         prefix: {
-            mutable:  "mutable" | '~',
+            mutable:{
+                def: "~" |"mutable",
+                layout() -> {
+                    self
+                }
+            },
+            macro_invocation: {},
+            static: "static",
+            const: "const",
+
         },
 
 
@@ -112,14 +613,16 @@ token_patterns! {
                 separator:','
 
                 layout() -> {
-                    super::super::super:::variable self::separator*?  // optional end is *?
+                    ::variable self::separator*?  // optional end is *?
                 }
             }
-
 
             layout() -> {
                 self::start self::middle*? self::end self::suffix
             }
+
+
+
         },
 
 
@@ -133,6 +636,7 @@ token_patterns! {
         // let ...
     }
 
+    fn fizz_bizz (ffo:u8,f:u8)
 
     variable_type: {
         start: b":",
@@ -329,7 +833,7 @@ token_patterns! {
             precedence = 3,
             associativity = "Left to right",
             layout() -> { self::op }
-            
+
             assignment_layout -> { self::op super::expression }
         },
         less_than: {
@@ -476,8 +980,8 @@ token_patterns! {
             precedence = 11,
             associativity = "Right to left",
         },
-        
-        
+
+
 
 
 

@@ -1,6 +1,6 @@
 pub const CONTENT:&'static str =
         r#"
-        op ^ as xor(lhs: bool, rhs: bool) -> bool {
+        op ^ as xor(lhs: bool, rhs: bool) == bool {
             return lhs ^ rhs;
         }
         static async fn factorial(n: int) -> int {
@@ -13,7 +13,7 @@ pub const CONTENT:&'static str =
         }
         fn main() {
             let n: int?;
-            fn something(n: int) -> string {
+            fn somethingefijqdjfoiehrifjjaeboeroqrojqifhqwiejfowiegohq349ugq34hg894ht80qnuq9ersomethingefijqdjfoiehrifjjaeboeroqrojqifhqwiejfowiegohq349ugq34hg894ht80qnuq9ergb083g08q3gb083g08q3(n: int) -> string {
                 return match (n) {
                     1 -> "one",
                     2 -> "two",
@@ -24,7 +24,7 @@ pub const CONTENT:&'static str =
             n = int::parse(input("Enter a positive integer"));
             print("Factorial of " + n + " = " + factorial(n));
         }
-        class Mammal {
+        class wfjqwoegjqoefjiekrfowkgoqwgkf23osomethingefijqdjfoiehrifjjaeboeroqrojqifhqwiejfowiegohq349ugq34hgsomethingefijqdjfoiehrifjjaeboeroqrojqifhqwiejfowiegohq349ugq34hg894ht80qnuq9ergb083g08q3894ht80qnuq9ergb083g08q3rkiqgijefoqwjsomethingefijqdjfoiehrifjjaeboeroqrojqwfjqwoegjqoefjiekrfowkgoqwgkf23osomethingefijqdjfoiehrifjjaeboeroqrojqifhqwiejfowiegohq349ugq34hgsomethingefijqdjfoiehrifjjaeboeroqrojqifhqwiejfowiegohq349ugq34hg894ht80qnuq9ergb083g08q3wfjqwoegjqoefjiekrfowkgoqwgkf23osomethingefijqdjfoiehrifjjaeboeroqrojqifhqwiejfowiegohq349ugq34hgsomethingefijqdjfoiehrifjjaeboeroqrojqifhqwiejfowiegohq349ugq34hg894ht80qnuq9ergb083g08q3894ht80qnuq9ergb083g08q3rkiqgijefoqwjsomethingefijqdjfoiehrifjjaeboeroqrojqifhqwiejfowiegohq349ugq34hg894ht80qnuq9ergb083g08q3eo2j3tojq3obj35oqjgoq3kgqrego24jg894ht80qnuq9ergb083g08q3rkiqgijefoqwjsomethingefijqdjfoiehrifjjaeboeroqrojqifhqwiejfowiegohq349ugq34hg894ht80qnuq9ergb083g08q3eo2j3tojq3obj35oqjgoq3kgqrego24jgifhqwiejfowiegohq349ugq34hg894ht80qnuq9ergb083g08q3eo2j3tojq3obj35oqjgoq3kgqrego24jg {
             fn new(self: ref, name: string, age: int, breed: string) {}
             fn info() {}
         }
@@ -43,8 +43,7 @@ pub const CONTENT:&'static str =
             fn info() {
                 print(self.name + " is a " + self.age + " year old " + self.breed);
             }
-        }
-        "#;
+        } "#;
 
 pub const EXPECTED:&'static [&'static str] = &[
             "op",
@@ -60,7 +59,7 @@ pub const EXPECTED:&'static [&'static str] = &[
             ":",
             "bool",
             ")",
-            "->",
+            "==",
             "bool",
             "{",
             "return",
@@ -141,8 +140,7 @@ pub const EXPECTED:&'static [&'static str] = &[
             "}",
             "fn",
             "main",
-            "(",
-            ")",
+            "()",
             "{",
             "let",
             "n",
@@ -151,7 +149,7 @@ pub const EXPECTED:&'static [&'static str] = &[
             "?",
             ";",
             "fn",
-            "something",
+            "somethingefijqdjfoiehrifjjaeboeroqrojqifhqwiejfowiegohq349ugq34hg894ht80qnuq9ersomethingefijqdjfoiehrifjjaeboeroqrojqifhqwiejfowiegohq349ugq34hg894ht80qnuq9ergb083g08q3gb083g08q3",
             "(",
             "n",
             ":",
@@ -212,7 +210,7 @@ pub const EXPECTED:&'static [&'static str] = &[
             ";",
             "}",
             "class",
-            "Mammal",
+            "wfjqwoegjqoefjiekrfowkgoqwgkf23osomethingefijqdjfoiehrifjjaeboeroqrojqifhqwiejfowiegohq349ugq34hgsomethingefijqdjfoiehrifjjaeboeroqrojqifhqwiejfowiegohq349ugq34hg894ht80qnuq9ergb083g08q3894ht80qnuq9ergb083g08q3rkiqgijefoqwjsomethingefijqdjfoiehrifjjaeboeroqrojqwfjqwoegjqoefjiekrfowkgoqwgkf23osomethingefijqdjfoiehrifjjaeboeroqrojqifhqwiejfowiegohq349ugq34hgsomethingefijqdjfoiehrifjjaeboeroqrojqifhqwiejfowiegohq349ugq34hg894ht80qnuq9ergb083g08q3wfjqwoegjqoefjiekrfowkgoqwgkf23osomethingefijqdjfoiehrifjjaeboeroqrojqifhqwiejfowiegohq349ugq34hgsomethingefijqdjfoiehrifjjaeboeroqrojqifhqwiejfowiegohq349ugq34hg894ht80qnuq9ergb083g08q3894ht80qnuq9ergb083g08q3rkiqgijefoqwjsomethingefijqdjfoiehrifjjaeboeroqrojqifhqwiejfowiegohq349ugq34hg894ht80qnuq9ergb083g08q3eo2j3tojq3obj35oqjgoq3kgqrego24jg894ht80qnuq9ergb083g08q3rkiqgijefoqwjsomethingefijqdjfoiehrifjjaeboeroqrojqifhqwiejfowiegohq349ugq34hg894ht80qnuq9ergb083g08q3eo2j3tojq3obj35oqjgoq3kgqrego24jgifhqwiejfowiegohq349ugq34hg894ht80qnuq9ergb083g08q3eo2j3tojq3obj35oqjgoq3kgqrego24jg",
             "{",
             "fn",
             "new",
@@ -237,8 +235,7 @@ pub const EXPECTED:&'static [&'static str] = &[
             "}",
             "fn",
             "info",
-            "(",
-            ")",
+            "()",
             "{",
             "}",
             "}",
@@ -321,8 +318,7 @@ pub const EXPECTED:&'static [&'static str] = &[
             "}",
             "fn",
             "info",
-            "(",
-            ")",
+            "()",
             "{",
             "print",
             "(",

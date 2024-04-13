@@ -1,4 +1,5 @@
 use std::{
+    fmt::Debug,
     ptr::slice_from_raw_parts,
     sync::atomic::{AtomicPtr, Ordering},
 };
@@ -155,7 +156,7 @@ pub struct Tokenizer<'cxx> {
 
 impl<'cxx> Tokenizer<'cxx> {
     pub const FIRST_ROW: isize = -1;
-    pub const DEFAULT_CHAR: u8 = b'\0';
+    pub const DEFAULT_CHAR: u8 = 0;
 
     pub fn new(chars: &'cxx [u8], starting_row: isize) -> Self {
         Tokenizer {
@@ -200,7 +201,6 @@ impl<'cxx> Tokenizer<'cxx> {
                     count += 1; // Count the entire string as one token
                 }
                 alphanumeric!() | punctuation!() => count += 1,
-
                 _ => {}
             }
             prev_char = *c;
@@ -374,7 +374,6 @@ impl<'cxx> Tokenizer<'cxx> {
             match self.window_tail::<u8>() {
                 // Whitespace
                 whitespace @ whitespace!() => {
-                    
                     self.skip_sub_token();
                     
                     if whitespace == newline!(raw "") {
@@ -384,6 +383,8 @@ impl<'cxx> Tokenizer<'cxx> {
 
                 // Operators
 
+                // Two character operators
+
                 // Three character operators
                 operators_3!(first_char)
                     if self.is_window_in_bounds(3)
@@ -392,7 +393,6 @@ impl<'cxx> Tokenizer<'cxx> {
                     break self.increment_tail_window_n(2);
                 }
 
-                // Two character operators
                 operators_2!(first_char)
                     if self.is_window_in_bounds(2)
                         && operators_2!(contains u16 self.window_tail::<u16>() ) =>
@@ -414,18 +414,15 @@ impl<'cxx> Tokenizer<'cxx> {
                 }
                 // Quotes
                 quote @ quotes!() => {
-
-
                     while !self.is_empty() {
                         self.increment_tail();
-
                         match self.window_tail::<u8>() {
                             newline!() => {
                                 self.increment_row();
                                 // Temp fix for newlines in strings
                                 // as this fixes the column calculation
-                                self.last_row_index-=2; 
-                                },
+                                self.last_row_index -= 2;
+                            }
                             backslash!()
                                 if self.is_window_in_bounds(1)
                                     && self.peek_ahead_window() == quote =>
@@ -435,7 +432,6 @@ impl<'cxx> Tokenizer<'cxx> {
                             char if char == quote => break 'outer,
                             _ => {}
                         }
-
                     }
                     self.incomplete = true;
                     return self.create_next_token();
@@ -480,6 +476,7 @@ impl<'cxx> Tokenizer<'cxx> {
         self.create_next_token()
     }
 }
+
 #[cfg(test)]
 mod tests {
     use std::{hint::black_box, slice::Iter};
@@ -508,15 +505,15 @@ mod tests {
         instant.prime();
 
         while !tokenizer.is_empty() {
-            instant.start();
+            let start = std::time::Instant::now();
             let token = tokenizer.next_token();
-            instant.end();
+            let end = start.elapsed();
             println!(
                 "\nr:{} c:{} t:'{}' e:{:?} {}",
                 token.row,
                 token.column,
                 token.as_str(),
-                instant.elapsed,
+                end,
                 if tokenizer.incomplete {
                     "incomplete"
                 } else {
@@ -540,7 +537,7 @@ mod tests {
 
         let elapsed = start.elapsed();
 
-        println!("Tokens: {:?}", tokens);
+        //println!("Tokens: {:?}", tokens);
         println!("Total Time to gather: {:?}", elapsed);
     }
 }
