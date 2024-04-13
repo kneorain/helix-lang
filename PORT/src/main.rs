@@ -134,11 +134,6 @@ fn main() -> io::Result<()> {
     python::test::test_kwargs(1, 2, None);
     println!("{:?}", python::test::test_args(1, 2));
     
-    println!("\n---------- C++ ----------");
-    cpp::test::c("hello from Rust");
-    
-    println!("Result: {}", cpp::test::add_sum(2, 62)); // 2^62 is the max value for i64
-    
     // print the cwd
     println!("\n---------- RUST ----------");
     let cwd = std::env::current_dir().unwrap();
@@ -146,21 +141,11 @@ fn main() -> io::Result<()> {
 
     println!("\n---------- C++ ----------");
     
-    let inst = cpp::FileReader::init("PORT/src/copy.hlx");
-
-
-    let inst = cpp::FileReader::init("PORT/src/copy.hlx");
-    let lines = inst.read_file();
-    let lines2 = inst.read_line(2187622);
-
-    let start = std::time::Instant::now();
-    let lines3 = inst.read_lines(1, 10);
-    let elapsed = start.elapsed();
-    
-    println!("file: {}", lines);
-    println!("line 1 {}", lines2);
-    println!("lines 1-10 (timed) {}", lines3);
-    println!("C++ IO Time Elapsed: {:?}", elapsed);
+    let inst = cpp::File::open(
+        "PORT/src/test.hlx",
+        "r",
+        "utf-8"
+    );
 
     //println!("{}", _reader);
     //let lexar = rust::token::lexer::Lexer::new("PORT/src/test.hlx");
