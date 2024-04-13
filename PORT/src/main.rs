@@ -1,6 +1,9 @@
 #[allow(unused_imports)]
+#[feature(ptr_metadata)]
+#[feature(portable_simd)]
 use pyo3::{ types::PyModule, PyResult, Python };
-
+#[cfg(test)]
+pub mod tests;
 
 pub mod python;
 pub mod rust;
@@ -17,19 +20,19 @@ use std::time;
 
 pub struct PrimedInstant {
     pub instant: std::time::Instant,
-    pub average_overhead: std::time::Duration,
-    pub elapsed: std::time::Duration,
+    pub average_overhead: u128,
+    pub elapsed: u128,
 }
 
 impl PrimedInstant {
-    const PRIME_ITERATIONS: usize = 100000;
+    const PRIME_ITERATIONS: u128 = 1000000;
 
     #[inline(always)]
     pub fn new() -> Self {
         Self {
             instant: std::time::Instant::now(),
-            average_overhead: std::time::Duration::new(0, 0),
-            elapsed: std::time::Duration::new(0, 0),
+            average_overhead: 0,
+            elapsed: 0,
         }
     }
 
@@ -38,13 +41,13 @@ impl PrimedInstant {
     // and returns the average time it takes to execute a timing operation to get an accurate delta
     pub fn prime(&mut self) {
         println!("Priming the instruction cache with the instructions related to instant...");
-        self.average_overhead = (0..Self::PRIME_ITERATIONS).fold(std::time::Duration::new(0, 0), |acc, _| {
+        self.average_overhead = (0..Self::PRIME_ITERATIONS).fold(0, |acc, _| {
             let start = std::time::Instant::now();
 
             let elapsed = start.elapsed();
 
-            return acc + elapsed;
-        }) / Self::PRIME_ITERATIONS as u32;
+            return acc + elapsed.as_nanos();
+        }) / Self::PRIME_ITERATIONS;
     }
     
     #[inline(always)]
@@ -54,7 +57,7 @@ impl PrimedInstant {
 
     #[inline(always)]
     pub fn end(&mut self) {
-        self.elapsed = self.instant.elapsed() - self.average_overhead
+        self.elapsed = self.instant.elapsed().as_nanos() - self.average_overhead
     }
 
     pub fn log(&self,message: &str) {
@@ -70,7 +73,7 @@ impl PrimedInstant {
     }
 
     #[inline(always)]
-    pub fn get_elapsed(&self)-> std::time::Duration {
+    pub fn get_elapsed_ns(&self)->u128{
         self.elapsed
     }
 }

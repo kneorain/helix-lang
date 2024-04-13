@@ -2,6 +2,7 @@ pub mod token;
 pub mod config;
 pub mod panic_hook;
 pub mod debug_counter;
+mod shared;
 use panic_hook::better_panic;
 
 // TODO: Make this into a proc-macro.
@@ -17,3 +18,5 @@ pub fn init_rust() {
     // ................................ //
     info!("rust bootstrap initialized");
 }
+
+
