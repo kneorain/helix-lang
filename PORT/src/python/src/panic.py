@@ -361,9 +361,10 @@ def __panic__(
                     (line_no - lines_to_print) if line_no - lines_to_print > 0 else 0
                 ) : line_no
             ]
-        except Exception:
+        except Exception as e:
             lines = [
-                f"Panic failed, '{file}' (likely due to an eval statement in the previous stack frame)."
+                f"Panic failed, '{file}' (likely due to an eval statement in the previous stack frame).",
+                f"Error: {e}",
             ]
     else:
         raise ValueError("Panic failed, could not find the right stack frame.")

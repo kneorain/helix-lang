@@ -1,5 +1,6 @@
 CompileFlags: # Tweak the parse settings, example directory given to show format
   Add:
+    - "-std=c++20"
     - "-IC:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Tools\\MSVC\\14.39.33519\\include"
     - "-IC:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Tools\\MSVC\\14.39.33519\\ATLMFC\\include"
     - "-IC:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Auxiliary\\VS\\include"
@@ -12,5 +13,7 @@ CompileFlags: # Tweak the parse settings, example directory given to show format
     - "-IZ:\\devolopment\\helix\\helix-lang\\target\\release\\build\\helix-compiler-d3f6e8ab540840e8\\out\\cxxbridge\\include"
     - "-IZ:\\devolopment\\helix\\helix-lang\\target\\release\\build\\helix-compiler-d3f6e8ab540840e8\\out\\cxxbridge\\crate"
     
-    - "-I/Volumes/Container/Projects/Helix/helix-lang/target/release/build/helix-compiler-19023081dbb16dd3/out/cxxbridge/include"
-    - "-I/Volumes/Container/Projects/Helix/helix-lang/target/release/build/helix-compiler-19023081dbb16dd3/out/cxxbridge/crate"
+    - "-I/Volumes/Container/Projects/Helix/helix-lang/target/release/build/helix-compiler-d3f6e8ab540840e8/out/cxxbridge/include"
+    - "-I/Volumes/Container/Projects/Helix/helix-lang/target/release/build/helix-compiler-d3f6e8ab540840e8/out/cxxbridge/crate"
+
+    - "-IZ:\\devolopment\\helix\\helix-lang\\PORT\\src\\cpp"
