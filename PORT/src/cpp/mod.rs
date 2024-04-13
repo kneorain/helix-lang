@@ -3,52 +3,44 @@ pub mod shared;
 
 use cxx::UniquePtr;
 use std::sync::{Arc, Mutex};
-use FileReader::T_FileReader;
+use File::FileIO;
 
-use crate::python::test::hello_from_python;
+use crate::python::panic_cpp_impl;
 
 #[cxx::bridge]
-pub mod test {
+mod use_headers {
     unsafe extern "C++" {
-        // EXPOSED TO RUST
-        include!("helix-compiler/src/cpp/include/greeting.h");
-        fn c(greeting: &str);
-        fn add_sum(a: i32, b: i32) -> i64;
-    }
-
-    extern "Rust" {
-        // EXPOSED TO C++
-        fn hello_from_python();
+        include!("helix-compiler/src/cpp/include/better_ints.hpp");
+        include!("helix-compiler/src/cpp/include/panic.h");
     }
 }
 
-#[cxx::bridge(namespace = "file_reader")]
+
+#[cxx::bridge(namespace = "file_io")]
 pub mod File {
     unsafe extern "C++" {
-        include!("helix-compiler/src/cpp/include/file_reader.hpp");
+        include!("helix-compiler/src/cpp/include/file_io.hpp");
 
         type FileIO;
 
-        fn init();
-
-        fn open(filename: &str, mode: &str, encoding: &str) -> SharedPtr<FileIO>;
-
-        fn readLine(&self) -> &[u8];
-        fn readLines(&self) -> &[u8];
-        fn read(&self) -> &[u8];
-
-        fn write(&self, data: &[u8]);
-        fn writeLine(&self, data: &[u8]);
-        fn writeLines(&self, lines: &[&[u8]]);
-
-        fn append(&self, data: &[u8]);
-        fn appendLine(&self, data: &[u8]);
-        fn appendLines(&self, lines: &[&[u8]]);
-
-        fn close(&self);
+        fn open(filename: &str, mode: &str, encoding: &str) -> UniquePtr<FileIO>;
     }
-}
 
-pub fn new_async_file_stream(filename: &str) -> Arc<Mutex<UniquePtr<T_FileReader>>> {
-    return Arc::new(Mutex::new(FileReader::init(filename)));
+    extern "Rust" {
+        fn panic_cpp_impl(
+            _error: &str,
+            mark: &[&str],
+            _file: &str,
+            line_no: i32,
+            no_lines: bool,
+            multi_frame: bool,
+            pos: i8,
+            follow_marked_order: bool,
+            mark_start: u32,
+            thread_name: &str,
+            no_exit: bool,
+            lang: &str,
+            _code: &str,
+        );
+    }
 }

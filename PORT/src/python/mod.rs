@@ -121,3 +121,67 @@ pub fn __panic__impl<T: Display>(__error: T, _mark: Option<Vec<&str>>, params: s
     return;
 }
 
+#[allow(non_snake_case)]
+pub fn panic_cpp_impl<'a>(
+    error: &str,
+    mark: &[&str],
+    file: &'a str,
+    line_no: i32,
+    no_lines: bool,
+    multi_frame: bool,
+    pos: i8,
+    follow_marked_order: bool,
+    mark_start: u32,
+    thread_name: &'a str,
+    no_exit: bool,
+    lang: &'a str,
+    _code: &'a str,
+) {
+    Python::with_gil(|py| {
+        // print the __file__
+        let module = PyModule::import(py, "panic").expect("Failed to import PANIC");
+        
+        let kwargs = PyDict::new(py);
+        kwargs.set_item("_file", file).expect("broke.");
+        kwargs.set_item("_line_no", line_no).expect("broke.");
+        kwargs.set_item("no_lines", no_lines).expect("broke.");
+        kwargs.set_item("multi_frame", multi_frame).expect("broke.");
+        
+        kwargs.set_item("pos", pos).expect("broke.");
+        
+        if let ref repl = mark {
+            kwargs.set_item("replacements", repl).expect("broke.");
+        }
+        kwargs.set_item(
+            "follow_marked_order",
+            follow_marked_order,
+        ).expect("broke.");
+        if let ref mark = mark_start {
+            kwargs.set_item("mark_start", mark).expect("broke.");
+        }
+        if let ref name = thread_name {
+            kwargs.set_item("thread_name", name).expect("broke.");
+        }
+        kwargs.set_item("no_exit", no_exit).expect("broke.");
+        kwargs.set_item("lang", lang).expect("broke.");
+        if let ref code = _code {
+            kwargs.set_item("_code", code).expect("broke.");
+        }
+
+        // Convert __error to a Python object
+        let py_error = pyo3::types::PyString::new(py, error);
+
+        // convert mark to a Python object
+        let mark = mark.iter().map(|x| pyo3::types::PyString::new(py, x)).collect::<Vec<_>>();
+        
+        // Call the Python function with arguments and keyword arguments
+        warn!("calling __panic__");
+        match module.call_method("__panic__", (py_error, mark), Some(kwargs)) {
+            Ok(_) => {}
+            Err(e) => {
+                e.print_and_set_sys_last_vars(py);
+            }
+        };
+
+    });
+}
