@@ -39,33 +39,36 @@
 #pragma once
 
 #include <cstdint>
-#include <vcruntime.h>
+
+typedef int8_t         i8;
+typedef int16_t        i16;
+typedef int32_t        i32;
+typedef int64_t        i64;
+typedef uint8_t        u8;
+typedef uint16_t       u16;
+typedef uint32_t       u32;
+typedef uint64_t       u64;
+
+typedef int_fast8_t    i8_fast;
+typedef int_fast16_t   i16_fast;
+typedef int_fast32_t   i32_fast;
+typedef int_fast64_t   i64_fast;
+typedef uint_fast8_t   u8_fast;
+typedef uint_fast16_t  u16_fast;
+typedef uint_fast32_t  u32_fast;
+typedef uint_fast64_t  u64_fast;
+
+typedef intmax_t       isize_max;
+typedef uintmax_t      usize_max;
+
+#ifdef _WIN32
+    #include <vcruntime.h>
+#endif
 
 #if _VCRT_COMPILER_PREPROCESSOR
 
 #pragma warning(push)
 #pragma warning(disable: _VCRUNTIME_DISABLED_WARNINGS)
-
-typedef signed char        i8;
-typedef short              i16;
-typedef int                i32;
-typedef long long          i64;
-typedef unsigned char      u8;
-typedef unsigned short     u16;
-typedef unsigned int       u32;
-typedef unsigned long long u64;
-
-typedef signed char        i8_fast;
-typedef int                i16_fast;
-typedef int                i32_fast;
-typedef long long          i64_fast;
-typedef unsigned char      u8_fast;
-typedef unsigned int       u16_fast;
-typedef unsigned int       u32_fast;
-typedef unsigned long long u64_fast;
-
-typedef long long          isize_max;
-typedef unsigned long long usize_max;
 
 // These macros must exactly match those in the Windows SDK's intsafe.h.
 #define I8_MIN  (-127i8 - 1)

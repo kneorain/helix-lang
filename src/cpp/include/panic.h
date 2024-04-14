@@ -118,7 +118,7 @@ inline const char* abs_path(const char* filename) {
     }
 
     char* result = new char[val.size() + 1];
-    strcpy_s(result, val.size() + 1, val.c_str());
+    std::strcpy(result, val.c_str());
     return result;
 }
 
