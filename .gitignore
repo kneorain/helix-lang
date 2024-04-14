@@ -234,5 +234,4 @@ Mkfile.old
 dkms.conf
 
 #---------------- Custom ----------------
-python/
 .vscode/

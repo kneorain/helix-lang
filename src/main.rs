@@ -131,8 +131,6 @@ fn main() -> io::Result<()> {
     rust::init_rust();
     python::init_python();
     println!("\n---------- PYTHON ----------");
-    python::test::test_kwargs(1, 2, None);
-    println!("{:?}", python::test::test_args(1, 2));
     
     // print the cwd
     println!("\n---------- RUST ----------");
