@@ -86,8 +86,8 @@
 #include <cstring>
 #include "rust/cxx.h"
 #include <exception>
-#include <iostream>
 #include <cstdlib>
+#include <iostream>
 
 #if defined(_WIN32)
     #include <direct.h>

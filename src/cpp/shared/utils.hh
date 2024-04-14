@@ -3,6 +3,7 @@
 
 #include "helix-compiler/src/cpp/shared/panic.hh"
 #include <cstring>
+#include <cstdlib>
 #include <memory>
 #include <string>
 #include <stdexcept>
@@ -75,6 +76,29 @@ namespace utils {
             }
         #endif
     }
+
+    #ifdef _MSC_VER
+        inline std::string get_env_var(const std::string& var_name) {
+            char* buffer = nullptr;
+            size_t size = 0;
+            std::string result;
+
+            if (_dupenv_s(&buffer, &size, var_name.c_str()) == 0 && buffer != nullptr) {
+                result = buffer;
+                free(buffer);
+            }
+
+            return result;
+        }
+    #else
+        std::string get_env_var(const std::string& var_name) {
+            const char* value = std::getenv(var_name.c_str());
+            if (value == nullptr) {
+                return "";
+            }
+            return std::string(value);
+        }
+    #endif
 }
 
 #endif //HELIX_LANG_SHARED_UTILS_hh

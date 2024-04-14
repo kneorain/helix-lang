@@ -1,7 +1,7 @@
 #ifndef DEBUG_H
 #define DEBUG_H
 
-#define debug_enabled std::getenv("DEBUG") != nullptr
+#define debug_enabled !utils::get_env_var("DEBUG").empty()
 #define dbg(x)                                                                 \
     if (debug_enabled) {                                                       \
         std::cout << yellow << "dbg " << green << __FILE__ << ":" << __LINE__  \
