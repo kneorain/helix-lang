@@ -14,38 +14,243 @@ skel! {
     // can use raw num bytes
     any: 0..=255,
 
-    comment: {
-        single_line:Delimited <"//",Any,"\n">
-        multi_line:Delimited <"/*",Any,"*/">
-    },
+
+
+    group keyword {
+        statement TYPE: "type";
+        statement FUNCTION: "fn";
+        statement LET: "let";
+        statement MUT: "mut";
+        statement CONST: "const";
+        statement STATIC: "static";
+        statement EXTERN: "extern";
+        statement MOD: "mod";
+        statement USE: "use";
+        statement AS: "as";
+        statement TRAIT: "trait";
+        statement IMPL: "impl";
+        statement ENUM: "enum";
+        statement STRUCT: "struct";
+        statement UNION: "union";
+
+
+    }
+
+
+
+
+
+
+
+
     // todo: goto keyword
 
-    abstract Delimited<START,MIDDLE,END?>: {
-        start: Literal = START,
-        middle: Pattern= MIDDLE,
-        end: Literal = END ?: START,
+    pattern Delimit(start: Literal, middle: Pattern, end?: Literal = self::start)-> Pattern {
+        self::start self::middle self::end
+    }
 
-        layout() -> {
-            self::start self::middle self::end
+    pattern SquareBrackets(middle:Pattern) -> Delimit(b'[',middle,b']');
+    pattern Parentheses(middle:Pattern) -> Delimit(b'(',middle,b')');
+    pattern CurlyBrackets(middle:Pattern) -> Delimit(b'{',middle,b'}');
+    pattern AngleBrackets(middle:Pattern) -> Delimit(b'<',middle,b'>');
+
+
+    pattern SeparatedList(pattern:Pattern, separator:Pattern, optional_trailing:bool) -> Pattern {
+        (self::pattern self::separator)* if optional_trailing {self::pattern?}
+    }
+
+    pattern CommaSeparated(pattern:Pattern,optional_trailing:bool) -> Separated(self::pattern, b',', self::optional_trailing);
+    pattern SemicolonSeparated(pattern:Pattern,optional_trailing:bool) -> Separated(self::pattern, b';', self::optional_trailing);
+
+    pattern RoundList(middle:Pattern) -> Parentheses(SeparatedList(self::middle, b',', true));
+    pattern SquareList(middle:Pattern) -> SquareBrackets(SeparatedList(self::middle, b',', true));
+    pattern CurlyList(middle:Pattern) -> CurlyBrackets(SeparatedList(self::middle, b',', true));
+    pattern AngleList(middle:Pattern) -> AngleBrackets(SeparatedList(self::middle, b',', true));
+
+    pattern Tuple(elements:Type) as Type -> RoundList(elements);
+    pattern Tuple(elements:Expression) as Expression-> RoundList(elements);
+
+    // TODO: need a way to type an array
+
+    pattern Array(elements:Expression) as Expression -> SquareList(elements);
+
+
+    pattern FunctionCallArguments(name:Pattern, args:Pattern) -> RoundList(args);
+
+    pattern Identifier {
+
+        first: Alpha | Underscore,
+        rest: self::first | Numeric,
+
+        Identifier() -> {
+            self::first self::rest*
         }
-    },
+    }
 
-    struct SquareBrackets<MIDDLE>: Delimited<b'[',MIDDLE,b']'>;
+    pattern TypeGeneric {
+        name: Identifier,
+        generics: AngleList(Type),
 
-    struct Parentheses<MIDDLE>: Delimited<b'(',MIDDLE,b')'>;
+        TypeGeneric() {
+            self::name self::generics?
+        }
+    }
 
-    struct CurlyBrackets<MIDDLE>: Delimited<b'{',MIDDLE,b'}'>;
+    pattern Type {
+        name: Identifier,
+        generics: TypeGeneric,
 
-    type AngleBrackets<MIDDLE>: Delimited<'<',MIDDLE,'>'>;
-
-    struct SingleQuotes<INNER>: Delimited<'\'',INNER>;
-
-    struct DoubleQuotes<INNER>: Delimited<b'"',INNER>;
-
+        Type() -> {
+            self::name self::generics?
+        }
+    }
 
 
+    pattern TypedAssignmentTernary {
 
-    // struct DoubleQuotes<MIDDLE>: Delimited<b'"',MIDDLE,b'"'> {
+
+        type_specifier?: if self::has_type { ':' self::type } 
+        assignment?:  if self::HAS_ASSIGNMENT {'=' self::value},
+        type_part?: if self::TYPE_OPTIONAL self::type_specifier? else self::type_specifier
+
+
+        (name:Identifier, type:Pattern, value:Pattern, TYPE_OPTIONAL:bool; HAS_TYPE:bool, HAS_ASSIGNMENT:bool ) -> {
+            self::name self::type_part self::assignment
+        }
+    }
+
+
+    pattern VariableDefinition(name:Identifier, type:Type, value:Expression)-> TypedAssignmentTernary(self::name, self::type, self::value, false, true);
+
+     
+
+    pattern GenericDefinition {
+
+        name: Identifier,
+
+        generic_item: TypedAssignmentTernary(Identifier, Type, Type),
+
+        generics: AngleList(self::generic_item),
+
+        GenericDefinition() {
+            self::name self::generics
+        }
+    }
+
+
+
+    pattern TypeAlias {
+        keyword = Keyword(keyword::TYPE)
+        name: Identifier,
+        bounds: TypeGeneric,
+        generics: GenericDefinition,
+        setting:TypedAssignmentTernary(self::name self::generics, self::bounds, Type),
+
+        TypeAlias() -> {
+            self::keyword self::setting
+
+
+        }
+    }
+
+    /*
+    #[meta(...)]
+        
+        #[meta(...)]
+     
+        #[protocol(
+        error = "TestError",
+        fields((
+            // if version is not specified it will default to the latest version
+            java(encoding = "be"),
+            bedrock(encoding = "le")
+        ),
+        (
+            java(encoding = "var"),
+            bedrock(encoding = "zigzag")
+        ),
+        (
+            java(version = "2..34",len = "u8", inner(len = "u32_var") ),
+            bedrock(version = "3..22",len = "u8",inner(len = "u32_be"))
+        )
+        )
+    )]
+     
+     */
+
+    
+    pattern Meta {
+        name: Identifier,
+        values:SquareListList(TypedAssignmentTernary(Identifier, Type, Expression)),
+
+        Meta() -> {
+            self::keyword self::name self::values
+        }
+    }
+    
+
+
+    pattern KeywordHeader {
+        keyword = self::
+        name: Identifier,
+        generics: AngleList(Type),
+
+
+        KeywordHeader(keyword:string) -> {
+            self::keyword self::name self::generics
+        }
+    }
+
+
+
+    pattern Struct {
+        keyword = Keyword(keyword::STRUCT),
+        name: Identifier,
+        generics: AngleList(Type),
+        fields: CurlyList(VariableDefinition),
+
+        Struct() -> {
+            self::keyword self::name self::generics self::fields
+        }
+    }
+
+
+
+    pattern Function {
+        keyword: Keyword(keyword::FUNCTION),
+        name: Identifier,
+        parameters: RoundList(VariableDefinition, b',', true),
+        return_type: Type,
+        return_operator: ,
+        body: ,
+
+        Function() -> {
+            self::keyword self::name self::parameters self::return_type self::body
+        }
+    }
+
+
+    //pattern Indexing(index:Pattern) -> SquareBrackets(index);
+
+
+
+
+    // enum QuotePrefix {
+    //     Raw: "r",
+    //     Binary: "b",
+    //     Unicode: "u",
+    //     Formatted: "f",
+    // }
+
+
+
+
+    // pattern Quotes(prefix:QuotePrefix, inner:Pattern) ->{Delimit(b'"',middle)};
+
+
+
+
+    // struct DoubleQuotes<MIDDLE>: Delimit<b'"',MIDDLE,b'"'> {
     //     middle: MIDDLE
     // },
 
@@ -89,7 +294,7 @@ skel! {
 
     /// A structure that
 
-    abstract SeparatedGroup<PAT,SEPARATOR,START,END,END_REQUIRED>: Delimited<START,Separator<PAT,SEPARATOR>,END>{
+    abstract SeparatedGroup<PAT,SEPARATOR,START,END,END_REQUIRED>: Delimit<START,Separator<PAT,SEPARATOR>,END>{
 
     }
 
@@ -126,7 +331,7 @@ skel! {
         }
     },
     /// Notates that something is a type declaration
-    statement TypeDeclaration:Pattern;
+    statement Type:Pattern;
 
 
 
@@ -148,12 +353,19 @@ skel! {
     }
 
 
-    abstract Keyword extends Pattern;
+    pattern Keyword {
+        ident: Identifier,
+
+        Keyword() -> {
+            self::ident ansi::Whitespace
+        }
+    }
 
     abstract Pattern: {
         // Operator-specific documentation must be defined in subclasses
         fn doc(&self) -> String;
     }
+
 
     inbuilt {
         abstract Pattern;
@@ -264,7 +476,7 @@ skel! {
             UnitSeparator: 0x1F;
             Delete: 0x7F;
         }
-        
+
         use Control::{Tab, LineFeed, CarriageReturn, FormFeed, VerticalTab, Space};
 
         enum Whitespace {
@@ -397,24 +609,45 @@ skel! {
 
     use ansi::{Alpha,Whitespace,Numeric,Punctuation::{self,Underscore,Period,DoubleQuote}};
 
-    pattern Identifier {
-        first: Alpha | Underscore,
-        rest: self::first | Numeric,
 
-        Identifier() -> {
-            self::first self::rest*
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    pattern Type: Pattern {
+        name: Identifier,
+        generics: Delimit<CommaList<Type>>,
+
+        Type() -> {
+            self::name self::generics?
         }
     }
 
+
+
+
+
+
+
     marker Primitive: Pattern;
 
-    pattern String: Delimited<DoubleQuote, All> + Primitive {
+    pattern String: Delimit<DoubleQuote, All> + Primitive {
         fn skip() -> {
             self::backslash super::start
         }
     }
 
-    pattern Char: Delimited<SingleQuote, All> + Primitive {
+    pattern Char: Delimit<SingleQuote, All> + Primitive {
         fn skip() -> {
             self::backslash super::start
         }
@@ -467,20 +700,42 @@ skel! {
             }
         }
 
-        pattern Float {
-            integer: Numeric+,
+        pattern Binary:Literal {
+            prefix: Prefix::Binary,
+            number: Numeric,
+
+            Binary() -> {
+                self::prefix self::number
+            }
+        }
+
+        const MAX_INT_SIZE = 128;
+
+
+        enum NumberFormat {
+            Decimal: Numeric+,
+            Binary: "0b" + ('1' | '0'){1,MAX_INT_SIZE},
+            Octal: "o" + ('0'..'7'){1,MAX_INT_SIZE/8},
+            Hexadecimal: "x",
+        }
+
+
+        pattern Float:Literal {
+            negative: math::Subtract,
+            number: ,
             fractional:  Numeric+,
             exponent: Exponent,
             dot:Period,
             suffix: FloatSuffix,
 
             Float() -> {
-                self::integer self::dot self::fractional self::exponent self::suffix?
+                self::negative? self::integer?  (self::dot self::fractional)? self::exponent? self::suffix?
             }
+        }
 
-            Float() -> {
-                self::integer self::suffix
-            }
+        enum NumberDelimiter {
+            Comma: ',',
+            Underscore: '_',
         }
 
 
@@ -505,6 +760,8 @@ skel! {
 
 
 
+
+
     }
 
 
@@ -518,19 +775,164 @@ skel! {
         }
     }
 
+    abstract VariableDefinition
+
+
+
+    group function {
+        abstract Function extends Pattern {
+            // like inline or static
+            meta: Pattern[],
+            name: Identifier?,
+            parameters: Delimit<CommaList<VariableDefinition>>,
+            return_type: Type,
+            body: Brace<Pattern>,
+        }
+
+
+
+
+    }
+
 
     group operator {
 
+        meta Expression is builtin::Pattern;
 
          // Abstract base class for operators to avoid redundancy
-        abstract Operator is builtin::Expression {
+        abstract Operator is Pattern {
             symbol: Pattern;
             identifier: Pattern;
             type: OperatorType;
             precedence: number;
-            associativity: string;
-            Operator( identifier:Pattern,symbol:Pattern,  type:OperatorType,  precedence:Number, associativity:String)
+            associativity: Associativity;
+
+            // converts the op to a function call.
+            fn to_function() -> {
+                self::identifier function::call
+            }
         }
+
+        abstract PrefixOperator{
+
+            rhs: Expression,
+            operator: Operator,
+
+            Prefix(identifier:Pattern, symbol:Pattern,  precedence:Number) -> {
+                self::operator {
+                    identifier,
+                    symbol,
+                    type: OperatorType::Unary,
+                    precedence,
+                    associativity: Associativity::RightToLeft,
+                };
+            }
+
+
+
+
+
+        }
+
+
+
+
+        // what do i call this type of operator |x| where it is surrounded by two things
+
+
+
+
+
+        abstract PrefixExpression is OperatorExpression {
+            PrefixExpression() {
+                operator: Prefix,
+                lhs: Expression,
+            }
+        }
+
+        abstract Infix is OperatorExpression {
+            Infix() {
+                operator: Operator,
+                lhs: Expression,
+                rhs: Expression,
+            }
+        }
+
+
+        abstract Prefix is Operator {
+            Prefix( identifier:Pattern, symbol:Pattern,  precedence:Number) -> {
+                Super {
+                    identifier,
+                    symbol,
+                    type: OperatorType::Unary,
+                    precedence,
+                    associativity: Associativity::RightToLeft,
+                };
+
+                self
+            }
+        }
+
+
+
+
+        abstract Infix is Operator {
+
+            rhs: Expression,
+            lhs: Expression,
+
+
+            Infix() {
+                Super {
+                    identifier,
+                    symbol,
+                    type: OperatorType::Binary,
+                    precedence,
+                    associativity: Associativity::LeftToRight,
+                };
+                self::lhs super self::rhs
+            }
+        }
+
+        abstract Postfix is Operator {
+
+            Postfix() {
+                Super {
+                    identifier,
+                    symbol,
+                    type: OperatorType::Unary,
+                    precedence,
+                    associativity: Associativity::LeftToRight,
+                };
+
+                self::lhs super
+            }
+        }
+
+
+
+
+
+        abstract Ternary<RHO,LHO> is Operator {
+            rhs: RHO,
+            lhs:
+
+
+            Ternary() {
+                Super {
+                    identifier,
+                    symbol,
+                    type: OperatorType::Ternary,
+                    precedence,
+                    associativity: Associativity::LeftToRight,
+                };
+
+                self::lhs super self::middle super self::rhs
+            }
+        }
+
+
+
 
         /// The type of operator
         enum OperatorType {
