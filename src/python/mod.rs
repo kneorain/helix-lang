@@ -12,8 +12,6 @@ mod private;
 
 pub use crate::python::shared::unknown_int::NumericType;
 pub use private::python_import;
-use private::python_import::repr_python;
-use std::env;
 pub use crate::__panic__;
 
 // --------------------------- BEGIN PYTHON IMPORTS ----------------------------
@@ -105,7 +103,7 @@ pub fn __panic__impl<T: Display>(__error: T, _mark: Option<Vec<&str>>, params: s
     return;
 }
 
-#[allow(non_snake_case)]
+#[allow(irrefutable_let_patterns)]
 pub fn panic_cpp_impl<'a>(
     error: &str,
     mark: &[&str],

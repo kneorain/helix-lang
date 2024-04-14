@@ -1,7 +1,9 @@
+#![allow(unused_macros)]
+#![warn(unreachable_patterns)]
 use std::{
     fmt::Debug,
     ptr::slice_from_raw_parts,
-    sync::atomic::{AtomicPtr, Ordering},
+    sync::atomic::{Ordering},
 };
 
 #[derive(Debug)]
@@ -12,8 +14,8 @@ pub struct Token<'cxx> {
 }
 
 impl<'cxx> Token<'cxx> {
-    const TOKEN_ORDERING: Ordering = Ordering::Relaxed;
-
+    //const TOKEN_ORDERING: Ordering = Ordering::Relaxed;
+    // FIXME: this was unused
     pub fn new(chars: &'cxx [u8], row: isize, column: usize) -> Self {
         Token {
             //file,
@@ -154,6 +156,7 @@ pub struct Tokenizer<'cxx> {
     last_row_index: usize,
 }
 
+#[allow(dead_code)]
 impl<'cxx> Tokenizer<'cxx> {
     pub const FIRST_ROW: isize = -1;
     pub const DEFAULT_CHAR: u8 = 0;

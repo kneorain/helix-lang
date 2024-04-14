@@ -1,6 +1,6 @@
-#[allow(unused_imports)]
-#[feature(ptr_metadata)]
-#[feature(portable_simd)]
+#![allow(unused_imports)]
+#![feature(ptr_metadata)]
+#![feature(portable_simd)]
 use pyo3::{ types::PyModule, PyResult, Python };
 #[cfg(test)]
 pub mod tests;
@@ -122,8 +122,6 @@ fn test_threads() {
 
 
 fn main() -> io::Result<()> {
-    let mut instant = PrimedInstant::new();
-
     pretty_env_logger::init(); // TO SEE LOGS run `set RUST_LOG=debug` in terminal
     rust::init_rust();
     python::init_python();
@@ -136,7 +134,7 @@ fn main() -> io::Result<()> {
 
     println!("\n---------- C++ ----------");
     
-    let inst = cpp::File::open(
+    let _inst = cpp::File::open(
         "PORT/src/test.hlx",
         "r",
         "utf-8"

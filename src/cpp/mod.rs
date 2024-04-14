@@ -39,9 +39,6 @@
 mod private;
 pub mod shared;
 
-use cxx::UniquePtr;
-use std::sync::{Arc, Mutex};
-use File::FileIO;
 
 use crate::python::panic_cpp_impl;
 
