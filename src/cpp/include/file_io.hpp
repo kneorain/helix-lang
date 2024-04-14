@@ -137,52 +137,52 @@ namespace file_io {
             );
 
             /* ---------------------------- READ ---------------------------- */
-            const rust::slice<const u8> read     (i64 size);
-            const rust::slice<const u8> readNext (i64 size);
-            const rust::slice<const u8> readLine (u64 line_number);
-            const rust::slice<const u8> readLines(
+            rust::slice<const u8> read     (i64 size)        const;
+            rust::slice<const u8> readNext (i64 size)        const;
+            rust::slice<const u8> readLine (u64 line_number) const;
+            rust::slice<const u8> readLines(
                 u64 start,
                 u64 end
-            ); const rust::slice<const u8> readRange(
+            ) const; rust::slice<const u8> readRange(
                 u64 start,
                 u64 end
-            );
+            ) const;
 
             /* ---------------------------- WRITE --------------------------- */
-            const void write      (const rust::slice<const u8> &data);
-            const void writeLine  (const rust::slice<const u8> &data);
+            void write      (const rust::slice<const u8> &data)  const;
+            void writeLine  (const rust::slice<const u8> &data)  const;
 
             /* ---------------------------- APPEND -------------------------- */
-            const void append     (const rust::slice<const u8> &data);
-            const void appendLine (const rust::slice<const u8> &data);
-            const void appendLines(const rust::slice<const u8> &lines);
+            void append     (const rust::slice<const u8> &data)  const;
+            void appendLine (const rust::slice<const u8> &data)  const;
+            void appendLines(const rust::slice<const u8> &lines) const;
 
             /* ---------------------------- UTILS --------------------------- */
-            const void clear();
-            const void flush();
-            const void insert(
+            void clear() const;
+            void flush() const;
+            void insert(
                 const rust::slice<const u8> &data,
                 u64 position
-            ); const void remove(
+            ) const; void remove(
                 u64 start,
                 u64 end
-            );
+            ) const;
 
             /* ---------------------------- META ---------------------------- */
-            const bool     isOpen();
-            const bool     isError();
-            const bool     isEmpty();
-            const u64 size();
-            const void     close();
+            bool     isOpen()  const;
+            bool     isError() const;
+            bool     isEmpty() const;
+            u64      size()    const;
+            void     close()   const;
 
         protected:
-            const char*    filename;
-            const char*    mode;
-            const char*    encoding;
-            bool     is_open;
-            bool     is_error;
-            bool     is_empty;
-            u64 cursor;
+            const char *filename;
+            const char *mode;
+            const char *encoding;
+            bool        is_open;
+            bool        is_error;
+            bool        is_empty;
+            u64         cursor;
 
         private:
             FileMode mode_flags;

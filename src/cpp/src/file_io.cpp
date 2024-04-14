@@ -128,15 +128,14 @@ FileIO::FileIO(const char *filename, const char *mode, const char *encoding) {
     */
 
     if (   strlen(mode) > 2
-        || (strcmp(mode, "r")  == NULL
-        &&  strcmp(mode, "w")  != NULL
-        &&  strcmp(mode, "a")  != NULL
-        &&  strcmp(mode, "rw") != NULL
-        &&  strcmp(mode, "wr") != NULL
+        || (strcmp(mode, "r")  != 0
+        &&  strcmp(mode, "w")  != 0
+        &&  strcmp(mode, "a")  != 0
+        &&  strcmp(mode, "rw") != 0
+        &&  strcmp(mode, "wr") != 0
     )) {
         panic(
-            std::invalid_argument(
-                "Invalid mode. Valid modes are 'r', 'w', 'a', 'rw', 'wr'."
+            std::invalid_argument("Invalid mode. Valid modes are 'r', 'w', 'a', 'rw', 'wr'."
                 + std::string(" Provided mode: \"") + mode + "\""
             )
         );
@@ -152,83 +151,83 @@ FileIO::FileIO(const char *filename, const char *mode, const char *encoding) {
     std::cout << "\tEncoding: " << encoding   << std::endl;
 }
 
-const rust::slice<const u8> FileIO::read(i64 size) {
+rust::slice<const u8> FileIO::read(i64 size) const {
     return rust::slice<const u8>();
 }
 
-const rust::slice<const u8> FileIO::readNext(i64 size) {
+rust::slice<const u8> FileIO::readNext(i64 size) const {
     return rust::slice<const u8>();
 }
 
-const rust::slice<const u8> FileIO::readLine(u64 line_number) {
+rust::slice<const u8> FileIO::readLine(u64 line_number) const {
     return rust::slice<const u8>();
 }
 
-const rust::slice<const u8> FileIO::readLines(u64 start, u64 end) {
+rust::slice<const u8> FileIO::readLines(u64 start, u64 end) const {
     return rust::slice<const u8>();
 }
 
-const rust::slice<const u8> FileIO::readRange(u64 start, u64 end) {
+rust::slice<const u8> FileIO::readRange(u64 start, u64 end) const {
     return rust::slice<const u8>();
 }
 
-const void FileIO::write(const rust::slice<const u8> &data) {
+void FileIO::write(const rust::slice<const u8> &data) const {
     // Implementation to write data to the file.
 }
 
-const void FileIO::writeLine(const rust::slice<const u8> &data) {
+void FileIO::writeLine(const rust::slice<const u8> &data) const {
     // Implementation to write a line of data to the file.
 }
 
-const void FileIO::append(const rust::slice<const u8> &data) {
+void FileIO::append(const rust::slice<const u8> &data) const {
     // Implementation to append data to the file.
 }
 
-const void FileIO::appendLine(const rust::slice<const u8> &data) {
+void FileIO::appendLine(const rust::slice<const u8> &data) const {
     // Implementation to append a line to the file.
 }
 
-const void FileIO::appendLines(const rust::slice<const u8> &lines) {
+void FileIO::appendLines(const rust::slice<const u8> &lines) const {
     // Implementation to append multiple lines to the file.
 }
 
-const void FileIO::clear() {
+void FileIO::clear() const {
     // Implementation to clear file contents.
 }
 
-const void FileIO::flush() {
+void FileIO::flush() const {
     // Implementation to flush the file buffers.
 }
 
-const void FileIO::insert(const rust::slice<const u8> &data, u64 position) {
+void FileIO::insert(const rust::slice<const u8> &data, u64 position) const {
     // Implementation to insert data at a specific position in the file.
 }
 
-const void FileIO::remove(u64 start, u64 end) {
+void FileIO::remove(u64 start, u64 end) const {
     // Implementation to remove data from 'start' to 'end'.
 }
 
-const bool FileIO::isOpen() {
+bool FileIO::isOpen() const {
     // Check if the file is open.
     return false;
 }
 
-const bool FileIO::isError() {
+bool FileIO::isError() const {
     // Check for errors in file operations.
     return false;
 }
 
-const bool FileIO::isEmpty() {
+bool FileIO::isEmpty() const {
     // Check if the file is empty.
     return false;
 }
 
-const u64 FileIO::size() {
+u64 FileIO::size() const {
     // Get the size of the file.
     return 0;
 }
 
-const void FileIO::close() {
+void FileIO::close() const {
     // Close the file.
 }
  

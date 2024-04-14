@@ -111,7 +111,7 @@ inline const char* abs_path(const char* filename) {
              ? std::string{std::string(buffer) + PATH_SEPARATOR + filename}
              : std::string{filename};
 
-    for (int i = 0; i < val.size(); i++) {
+    for (unsigned long i = 0; i < val.size(); i++) {
         if (val.data()[i] == '\\' || val.data()[i] == '/') {
             val.data()[i] = PATH_SEPARATOR[0];
         }

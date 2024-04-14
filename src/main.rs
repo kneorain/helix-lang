@@ -29,8 +29,6 @@ impl PrimedInstant {
 
     #[inline(always)]
     pub fn new() -> Self {
-        
-        ;
         Self {
             instant: std::time::Instant::now(),
             average_overhead: 0,
@@ -45,7 +43,6 @@ impl PrimedInstant {
         println!("Priming the instruction cache with the instructions related to instant...");
         self.average_overhead = (0..Self::PRIME_ITERATIONS).fold(0, |acc, _| {
             let start = std::time::Instant::now();
-            ;
             let elapsed = start.elapsed();
 
             return acc + elapsed.as_nanos();

@@ -13,7 +13,7 @@ CompileFlags: # Tweak the parse settings, example directory given to show format
     - "-IZ:\\devolopment\\helix\\helix-lang\\target\\release\\build\\helix-compiler-6ce8d69fb64c1771\\out\\cxxbridge\\include"
     - "-IZ:\\devolopment\\helix\\helix-lang\\target\\release\\build\\helix-compiler-6ce8d69fb64c1771\\out\\cxxbridge\\crate"
     
-    - "-I/Volumes/Container/Projects/Helix/helix-lang/target/release/build/helix-compiler-90ca51a99859c479/out/cxxbridge/include"
-    - "-I/Volumes/Container/Projects/Helix/helix-lang/target/release/build/helix-compiler-90ca51a99859c479/out/cxxbridge/crate"
+    - "-I/Volumes/Container/Projects/Helix/helix-lang/target/release/build/helix-compiler-6f9af24887444432/out/cxxbridge/include"
+    - "-I/Volumes/Container/Projects/Helix/helix-lang/target/release/build/helix-compiler-6f9af24887444432/out/cxxbridge/crate"
 
     - "-IZ:\\devolopment\\helix\\helix-lang\\PORT\\src\\cpp"
