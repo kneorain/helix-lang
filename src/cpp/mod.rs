@@ -13,7 +13,7 @@
 //!   `shared` is exposed for broader use.
 //! - `cxx::bridge` attribute: Marks the beginning of the namespace and type
 //!   bridging section. It includes the unsafe C++ blocks for direct inclusion of
-//!   C++ headers such as `better_ints.hpp` and `panic.h` and the definition of
+//!   C++ headers such as `better_ints.hh` and `panic.h` and the definition of
 //!   interfacing functions.
 //! - `panic_cpp_impl`: A Rust function exposed to C++, used for handling error
 //!   scenarios in C++ code that require Rust's intervention.
@@ -37,7 +37,6 @@
 //! [See the license here](http://creativecommons.org/licenses/by/4.0/)
 
 mod private;
-pub mod shared;
 
 
 use crate::python::panic_cpp_impl;
@@ -47,8 +46,10 @@ mod __ {
     //! Anything inside this module either is exposed to C++ or binds headers
 
     unsafe extern "C++" {
-        include!("helix-compiler/src/cpp/include/better_ints.hpp");
-        include!("helix-compiler/src/cpp/include/panic.h");
+        include!("helix-compiler/src/cpp/shared/panic.hh" );
+        include!("helix-compiler/src/cpp/shared/debug.hh" );
+        include!("helix-compiler/src/cpp/shared/colors.hh");
+        include!("helix-compiler/src/cpp/shared/utils.hh" );
     }
 
     extern "Rust" {
@@ -75,7 +76,7 @@ mod __ {
 #[cxx::bridge(namespace = "file_io")]
 pub mod File {
     unsafe extern "C++" {
-        include!("helix-compiler/src/cpp/include/file_io.hpp");
+        include!("helix-compiler/src/cpp/include/file_io.hh");
 
         type FileIO;
 

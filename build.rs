@@ -78,9 +78,14 @@ fn main() -> miette::Result<()> {
 
     let mut binding = cxx_build::bridge("src/cpp/mod.rs");
     let compiler = binding
-        .file("src/cpp/src/file_io.cpp")
+        .files(
+            [
+                "src/cpp/src/file_io.cc",
+                "src/cpp/src/remove_blank_lines.cc",
+
+            ]
+        ).std("c++20")
         //.include("C:\\Programing Languages\\LLVM\\include")
-        .std("c++20")
         // dont show -Wignored-attributes
         //.flag("-Wno-ignored-attributes")
         .flag("-MD")

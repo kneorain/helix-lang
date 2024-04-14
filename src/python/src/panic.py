@@ -1,31 +1,19 @@
 import inspect
 import os
 import re
-
 from sys import exit
 from sys import stdout as sys_stdout
-
 from types import FrameType
 from typing import Any, NoReturn, Optional
 from weakref import ref
+
 from pygments import highlight  # type: ignore
-from pygments.formatters import (  # type: ignore
-    Terminal256Formatter,
-    TerminalTrueColorFormatter,
-)
+from pygments.formatters import (Terminal256Formatter,  # type: ignore
+                                 TerminalTrueColorFormatter)
 from pygments.lexer import RegexLexer, bygroups, include  # type: ignore
 from pygments.lexers import get_lexer_by_name  # type: ignore
-from pygments.token import (  # type: ignore
-    Comment,
-    Keyword,
-    Literal,
-    Name,
-    Number,
-    Operator,
-    Punctuation,
-    String,
-    Whitespace,
-)
+from pygments.token import (Comment, Keyword, Literal, Name,  # type: ignore
+                            Number, Operator, Punctuation, String, Whitespace)
 
 
 class HelixSyntaxHighlightingLexer(RegexLexer):
@@ -430,7 +418,7 @@ def __panic__(
         "mdx": "markdown",
         "rmd": "markdown",
         "h": "c",
-        "hpp": "cpp",
+        "hh": "cpp",
         "hh": "cpp",
         "h++": "cpp",
         "hxx": "cpp",

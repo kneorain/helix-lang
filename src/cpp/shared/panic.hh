@@ -82,11 +82,9 @@
 #ifndef PANIC_H
 #define PANIC_H
 
-#include <cstddef>
 #include <string>
 #include <cstring>
 #include "rust/cxx.h"
-#include <type_traits>
 #include <exception>
 #include <iostream>
 #include <cstdlib>
@@ -118,7 +116,7 @@ inline const char* abs_path(const char* filename) {
     }
 
     char* result = new char[val.size() + 1];
-    std::strcpy(result, val.c_str());
+    
     return result;
 }
 
