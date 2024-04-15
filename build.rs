@@ -44,12 +44,12 @@
 //             )
 //         })
 //         .for_each(|mut path| {
-            
+
 
 //             path = path.replace(&current_dir, "./").split(std::path::MAIN_SEPARATOR)
 //             .collect::<Vec<&str>>().join(std::path::MAIN_SEPARATOR.to_string().as_str());
 
-            
+
 //             println!("cargo:rerun-if-changed={}", path);
 //             bridge.file(path);
 //         });
@@ -69,7 +69,7 @@ const USE_CLANG: bool = false;
 fn main() -> miette::Result<()> {
     // let _user = std::env::current_dir().unwrap();
     // let mut build = cc::Build::new();
-    
+
     //let cpp_files: Vec<PathBuf> = fs::read_dir("src\\cpp").unwrap()
     //    .map(|entry| entry.unwrap().path())
     //    .filter(|path| path.extension().unwrap() == "cpp")
@@ -81,7 +81,7 @@ fn main() -> miette::Result<()> {
         .files(
             [
                 "src/cpp/src/file_io.cc",
-                "src/cpp/src/remove_blank_lines.cc",
+                //"src/cpp/src/remove_blank_lines.cc",
 
             ]
         ).std("c++20")
@@ -91,8 +91,8 @@ fn main() -> miette::Result<()> {
         .flag("-MD")
         .opt_level(3);
         //.cpp_set_stdlib("libc++")
-        
-    
+
+
     if USE_CLANG {
         compiler
             .compiler("clang++")
@@ -108,7 +108,7 @@ fn main() -> miette::Result<()> {
     }
 
     compiler.compile("helix-compiler");
-    
+
     println!("cargo:rerun-if-changed=src/cpp/mod.rs");
     println!("cargo:rerun-if-changed=src/rust/mod.rs");
     println!("cargo:rerun-if-changed=src/cpp/greeting.cpp");

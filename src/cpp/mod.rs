@@ -46,10 +46,11 @@ mod __ {
     //! Anything inside this module either is exposed to C++ or binds headers
 
     unsafe extern "C++" {
-        include!("helix-compiler/src/cpp/shared/panic.hh" );
-        include!("helix-compiler/src/cpp/shared/debug.hh" );
-        include!("helix-compiler/src/cpp/shared/colors.hh");
-        include!("helix-compiler/src/cpp/shared/utils.hh" );
+        include!("helix-compiler/src/cpp/shared/panic.hh"   );
+        include!("helix-compiler/src/cpp/shared/debug.hh"   );
+        include!("helix-compiler/src/cpp/shared/colors.hh"  );
+        include!("helix-compiler/src/cpp/shared/utils.hh"   );
+        include!("helix-compiler/src/cpp/shared/inttypes.hh");
     }
 
     extern "Rust" {

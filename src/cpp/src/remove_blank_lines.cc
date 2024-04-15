@@ -1,4 +1,6 @@
 /**
+ * FIXME: add macos support.
+ *
  * @file remove_blank_lines.cpp
  * @brief Implementation of a function to remove blank lines from a file in C++
  * using the secure functions provided by Visual C++.

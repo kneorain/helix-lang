@@ -1,7 +1,11 @@
 #ifndef DEBUG_H
 #define DEBUG_H
 
+#ifdef _WIN32
 #define debug_enabled !utils::get_env_var("DEBUG").empty()
+#else
+#define debug_enabled true
+#endif
 #define dbg(x)                                                                 \
     if (debug_enabled) {                                                       \
         std::cout << yellow << "dbg " << green << __FILE__ << ":" << __LINE__  \

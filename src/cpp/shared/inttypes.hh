@@ -1,9 +1,9 @@
 /**
- * @file better_ints.hh
+ * @file inttypes.hh
  * @brief Header file that provides enhanced integer types and macros for better
  * readability and compatibility.
  *
- * This file, better_ints.hh, is an improved version of the standard cstdint
+ * This file, inttypes.hh, is an improved version of the standard cstdint
  * header file, modified for enhanced readability and compatibility with Helix
  * and other projects. It includes standard integer types along with fast and
  * maximum size types, providing a broader range of signed and unsigned integers

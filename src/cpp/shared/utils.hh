@@ -49,7 +49,7 @@ namespace utils {
 
         auto size = static_cast<size_t>(size_s);
         std::unique_ptr<char[]> buf(new char[size]);
-        
+
         std::snprintf(
             buf.get(),
             size,
@@ -65,15 +65,11 @@ namespace utils {
 
     inline void safe_strcpy(char* dest, const char* src) {
         size_t size = strlen(src);
-        
+
         #ifdef _MSC_VER
             strncpy_s(dest, size, src, size);
         #else
-            if (dest_size > src.size()) {
-                std::strcpy(dest, src.c_str());
-            } else {
-                std::cerr << "Destination buffer is too small" << std::endl;
-            }
+            strncpy(dest, src, size);
         #endif
     }
 
@@ -91,7 +87,7 @@ namespace utils {
             return result;
         }
     #else
-        std::string get_env_var(const std::string& var_name) {
+        inline std::string get_env_var(const std::string& var_name) {
             const char* value = std::getenv(var_name.c_str());
             if (value == nullptr) {
                 return "";

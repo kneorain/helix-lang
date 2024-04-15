@@ -85,8 +85,8 @@
  */
 #pragma once
 
+#include "helix-compiler/src/cpp/shared/inttypes.hh"
 #include "helix-compiler/src/cpp/shared/panic.hh"
-#include "better_ints.hh"
 #include "rust/cxx.h"
 #include <memory>
 
@@ -95,7 +95,7 @@ namespace file_io {
         bool read;
         bool write;
         bool append;
-        
+
         std::string to_string() const {
             return std::string("FileMode { read: ") + std::to_string(this->read) + ", write: " + std::to_string(this->write) + ", append: " + std::to_string(this->append) + " }";
         }

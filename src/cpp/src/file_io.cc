@@ -87,7 +87,7 @@
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 
-#include "helix-compiler/src/cpp/include/better_ints.hh"
+#include "helix-compiler/src/cpp/shared/inttypes.hh"
 #include "helix-compiler/src/cpp/mod.rs.h"
 #include "rust/cxx.h"
 
@@ -216,7 +216,7 @@ u64 FileIO::size() const {
 void FileIO::close() const {
     // Close the file.
 }
- 
+
 std::unique_ptr<FileIO> open(
     const rust::Str filename,
     const rust::Str mode,
