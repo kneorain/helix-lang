@@ -235,3 +235,4 @@ dkms.conf
 
 #---------------- Custom ----------------
 .vscode/
+.DS_Store
