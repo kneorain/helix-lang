@@ -1,20 +1,4 @@
 CompileFlags: # Tweak the parse settings, example directory given to show format
   Add:
-    - "-std=c++20"
-    - "-IC:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Tools\\MSVC\\14.39.33519\\include"
-    - "-IC:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Tools\\MSVC\\14.39.33519\\ATLMFC\\include"
-    - "-IC:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Auxiliary\\VS\\include"
-    - "-IC:\\Program Files (x86)\\Windows Kits\\10\\include\\10.0.22621.0\\ucrt"
-    - "-IC:\\Program Files (x86)\\Windows Kits\\10\\include\\10.0.22621.0\\um"
-    - "-IC:\\Program Files (x86)\\Windows Kits\\10\\include\\10.0.22621.0\\shared"
-    - "-IC:\\Program Files (x86)\\Windows Kits\\10\\include\\10.0.22621.0\\winrt"
-    - "-IC:\\Program Files (x86)\\Windows Kits\\10\\include\\10.0.22621.0\\cppwinrt"
-    - "-IC:\\Program Files (x86)\\Windows Kits\\NETFXSDK\\4.8\\include\\um"
-  
-    - "-IZ:\\devolopment\\helix\\helix-lang\\target\\release\\build\\helix-compiler-8adb2446e2a9f000\\out\\cxxbridge\\include"
-    - "-IZ:\\devolopment\\helix\\helix-lang\\target\\release\\build\\helix-compiler-8adb2446e2a9f000\\out\\cxxbridge\\crate"
-    
-    - "-I/Volumes/Container/Projects/Helix/helix-lang/target/release/build/helix-compiler-6f9af24887444432/out/cxxbridge/include"
-    - "-I/Volumes/Container/Projects/Helix/helix-lang/target/release/build/helix-compiler-6f9af24887444432/out/cxxbridge/crate"
-
-    - "-IZ:\\devolopment\\helix\\helix-lang\\PORT\\src\\cpp"
+    - "-std=c++2b"
+    - "-I/opt/homebrew/opt/llvm/include"
