@@ -1,12 +1,11 @@
+#include <clang/AST/ASTContext.h>
+#include <clang/AST/RecursiveASTVisitor.h>
+#include <clang/ASTMatchers/ASTMatchFinder.h>
+#include <clang/Frontend/CompilerInstance.h>
+#include <clang/Frontend/FrontendActions.h>
+#include <clang/Tooling/ASTDiff/ASTDiff.h>
 #include <clang/Tooling/CommonOptionsParser.h>
 #include <clang/Tooling/Tooling.h>
-#include <clang/Frontend/FrontendActions.h>
-#include <clang/Frontend/CompilerInstance.h>
-#include <clang/AST/RecursiveASTVisitor.h>
-#include <clang/AST/ASTContext.h>
-#include <clang/ASTMatchers/ASTMatchFinder.h>
-#include <clang/Tooling/Tooling.h>
-#include <clang/Tooling/ASTDiff/ASTDiff.h>
 
 #include <iostream>
 #include <string>
@@ -16,8 +15,9 @@ using namespace clang::tooling;
 using namespace clang::ast_matchers;
 
 class FunctionSignatureVisitor : public RecursiveASTVisitor<FunctionSignatureVisitor> {
-public:
-    explicit FunctionSignatureVisitor(ASTContext *Context) : Context(Context) {}
+  public:
+    explicit FunctionSignatureVisitor(ASTContext *Context)
+        : Context(Context) {}
 
     bool VisitFunctionDecl(FunctionDecl *Func) {
         if (Context->getSourceManager().isInMainFile(Func->getLocation())) {
@@ -37,12 +37,12 @@ public:
         return true;
     }
 
-private:
+  private:
     ASTContext *Context;
 };
 
 class FunctionSignatureConsumer : public ASTConsumer {
-public:
+  public:
     explicit FunctionSignatureConsumer(ASTContext *Context)
         : Visitor(Context) {}
 
@@ -50,13 +50,14 @@ public:
         Visitor.TraverseDecl(Context.getTranslationUnitDecl());
     }
 
-private:
+  private:
     FunctionSignatureVisitor Visitor;
 };
 
 class FunctionSignatureAction : public ASTFrontendAction {
-public:
-    virtual std::unique_ptr<ASTConsumer> CreateASTConsumer(CompilerInstance &CI, StringRef file) override {
+  public:
+    virtual std::unique_ptr<ASTConsumer> CreateASTConsumer(CompilerInstance &CI,
+                                                           StringRef file) override {
         return std::make_unique<FunctionSignatureConsumer>(&CI.getASTContext());
     }
 };
