@@ -187,7 +187,7 @@ switch a {
 // ====-----match -----==== //
 let foo: string | int = match a { // no fall through
     AstNode(
-        kind:  _,
+        kind:  default,
         left:  "(",
         right: ")",
     ) -> {
@@ -196,14 +196,14 @@ let foo: string | int = match a { // no fall through
 
     AstNode(
         kind:  AST::Function,
-        left:  _,
-        right: _,
+        left:  default,
+        right: default,
     ) -> "Is Function",
 
     AstNode(
         kind:  AST::Fish,
-        left:  _,
-        right: _,
+        left:  default,
+        right: default,
     ) -> 3,
 
     "Hello" -> "Is Hello",
@@ -213,7 +213,7 @@ let foo: string | int = match a { // no fall through
     let gish if gish.len() > 5 -> "Longer than 5",
 
 
-    _ -> {
+    default -> {
         return "Not Binary";
     }
 }
@@ -400,13 +400,48 @@ import std::io;
 import std::io as io;
 
 // ====-----using -----==== //
-using "rust" import {size_of} from std::mem;
-// header
-using "c++"  import {parse_json} from "rapidjson.h";
-/// c++ file
-using "c++"  import {parse_json} from "rapidjson.cpp";
-// included dir header equivalent to <rapidjson>
-using "c++"  import {parse_json} from rapidjson;
+/*
+breaks down to the following c++ ir:
+#RS-LINK[std::mem]
+
+template <typename T>
+extern "C" int std::mem::size_of(T t);
+*/
+using "rust" import std::mem;
+extern "C" fn std::mem::size_of<T>(t: T) -> int;
+/*
+--- if i was to use add in helix code ---
+using "python" import tools::calc as py_calc;
+
+fn main() {
+    let a: int = 5;
+    let b: int = 10;
+    let c: int = py_calc.add(a, b);
+    print(c);
+}
+
+it breaks down to the following c++ ir:
+#include <pybind11>
+
+pybind11::py::module py_calc = pybind11::module::import("tools.calc");
+
+int main() {
+    int a = 5;
+    int b = 10;
+    int c = py_calc.attr("add")(a, b).cast<int>();
+    print(c);
+}
+
+
+
+*/
+using "python" import add from tools::calc;
+using "c++" {
+    import parse_json from "rapidjson.h";   // local header
+    import "rapidjson.cpp";                 // local source
+    import parse_json from <rapidjson.h>;   // global header (system)
+    import <string>;                        // global header (system)
+}
 
 // ====-----from -----==== //
 import {print, println} from std::io;

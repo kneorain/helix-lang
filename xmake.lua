@@ -1,25 +1,29 @@
 set_project("helix-lang")
 
 if is_host("macosx") then
-    set_arch("x86_64")
+    set_arch("arm64")
 end
 
 add_requires("llvm")
+
+add_includedirs("/opt/homebrew/opt/llvm/include")
+add_linkdirs("/opt/homebrew/opt/llvm/lib")
+add_links("c++", "unwind", "LLVM", "clangTooling", "clangASTMatchers", "clangAST", "clangBasic", "clangFrontend")
+
 add_rules("mode.debug", "mode.release")
 
 target("helix-lang")
-    set_kind ("binary")
+    set_kind("binary")
     -- add_files("src/**/*.cc")
     add_files("src/*.cc")
     -- set the standard c++ version to c++2b
     set_languages("c++2b")
     set_optimize("fastest")
     -- enable multi-thread compilation
-    add_includedirs("/usr/local/opt/llvm/include")
-    add_linkdirs   ("/usr/local/opt/llvm/lib")
-    add_ldflags    ("-L/usr/local/opt/llvm/lib/c++ -Wl,-rpath,/usr/local/opt/llvm/lib/c++")
-
-    
+    add_ldflags("-L/opt/homebrew/opt/llvm/lib/c++ -Wl,-rpath,/opt/homebrew/opt/llvm/lib/c++")
+    add_defines("LLVM_ENABLE_RTTI")
+    set_toolchains("clang")
+        
 
 -- If you want to known more usage about xmake, please see https://xmake.io
 --
