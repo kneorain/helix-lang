@@ -247,6 +247,23 @@ class Vector2 derives Point {
     }
 }
 
+#[final]
+class Vector3: Vector2 {
+    let priv x: int;
+    let priv y: int;
+
+    fn new(x: int, y: int) {
+        self.x = x;
+        self.y = y;
+    }
+
+    // all dif constructors
+
+    fn add(a: Vector, b: Vector) -> Vector {
+        return Vector(a.x + b.x, a.y + b.y);
+    }
+}
+
 // ====-----struct -----==== //
 struct Point {
     let x: int;
@@ -477,9 +494,9 @@ for i in fibonacci() {
 
 # casting
 
-a as unsafe int       // static_cast<int>(aa)
-reinterpret a as int  // reinterpret_cast<int>(aa)
-eval a as int         // dynamic_cast<int>(a)
+a as unsafe int      // static_cast<int>(aa)
+reinterpret a as int // reinterpret_cast<int>(aa)
+eval a as int        // dynamic_cast<int>(a)
 std::cast::reinterpret<>()
 
 ```cpp
@@ -488,7 +505,7 @@ namespace std {
 
         priv define create_cast(name: str) {
             define name(ty: Type!, val: Identifier! | Literal! ) {
-                extern "C++" name+"_cast"<ty>(val);
+                extern "C++" name%_cast<ty>(val);
             }
         }
 

@@ -1,93 +1,45 @@
 set_project("helix-lang")
 
-if is_host("macosx") then
-    set_arch("arm64")
-end
-
-add_requires("llvm")
-
-add_includedirs("/opt/homebrew/opt/llvm/include")
-add_linkdirs("/opt/homebrew/opt/llvm/lib")
-add_links("c++", "unwind", "LLVM", "clangTooling", "clangASTMatchers", "clangAST", "clangBasic", "clangFrontend")
-
 add_rules("mode.debug", "mode.release")
 
 target("helix-lang")
     set_kind("binary")
-    -- add_files("src/**/*.cc")
     add_files("src/*.cc")
     -- set the standard c++ version to c++2b
     set_languages("c++2b")
     set_optimize("fastest")
     -- enable multi-thread compilation
-    add_ldflags("-L/opt/homebrew/opt/llvm/lib/c++ -Wl,-rpath,/opt/homebrew/opt/llvm/lib/c++")
-    add_defines("LLVM_ENABLE_RTTI")
-    set_toolchains("clang")
+    add_includedirs("/opt/llvm-aarch64/include")
+    add_linkdirs("/opt/llvm-aarch64/lib")
+    add_cxxflags("-stdlib=libc++", "-fno-rtti", "-I/opt/llvm-aarch64/include")
+    add_ldflags("-L/opt/llvm-aarch64/lib", "-lc++abi", "-Wl,-rpath,/opt/llvm-aarch64/lib")
+    -- explicitly add the LLVM libraries
+    add_links("LLVM-18", "clang", "clang-cpp", "c++", "c++abi")
+
+before_build(function (target)
+    import("lib.detect.find_tool")
+    local llvm_config = find_tool("llvm-config", {paths = "/opt/llvm-aarch64/bin"})
+    if llvm_config then
+        local llvm_includedir = os.iorunv(llvm_config.program, {"--includedir"}):trim()
+        local llvm_libdir = os.iorunv(llvm_config.program, {"--libdir"}):trim()
+        target:add("includedirs", llvm_includedir)
+        target:add("linkdirs", llvm_libdir)
+    else
+        raise("llvm-config not found!")
+    end
+end)
         
 
--- If you want to known more usage about xmake, please see https://xmake.io
---
--- ## FAQ
---
--- You can enter the project directory firstly before building project.
---
---   $ cd projectdir
---
--- 1. How to build project?
---
---   $ xmake
---
--- 2. How to configure project?
---
---   $ xmake f -p [macosx|linux|iphoneos ..] -a [x86_64|i386|arm64 ..] -m [debug|release]
---
--- 3. Where is the build output directory?
---
---   The default output directory is `./build` and you can configure the output directory.
---
---   $ xmake f -o outputdir
---   $ xmake
---
--- 4. How to run and debug target after building project?
---
---   $ xmake run [targetname]
---   $ xmake run -d [targetname]
---
--- 5. How to install target to the system directory or other output directory?
---
---   $ xmake install
---   $ xmake install -o installdir
---
--- 6. Add some frequently-used compilation flags in xmake.lua
---
--- @code
---    -- add debug and release modes
---    add_rules("mode.debug", "mode.release")
---
---    -- add macro definition
---    add_defines("NDEBUG", "_GNU_SOURCE=1")
---
---    -- set warning all as error
---    set_warnings("all", "error")
---
---    -- set language: c99, c++11
---    set_languages("c99", "c++11")
---
---    -- set optimization: none, faster, fastest, smallest
---    set_optimize("fastest")
---
---    -- add include search directories
---    add_includedirs("/usr/include", "/usr/local/include")
---
---    -- add link libraries and search directories
---    add_links("tbox")
---    add_linkdirs("/usr/local/lib", "/usr/lib")
---
---    -- add system link libraries
---    add_syslinks("z", "pthread")
---
---    -- add compilation and link flags
---    add_cxflags("-stdnolib", "-fno-strict-aliasing")
---    add_ldflags("-L/usr/local/lib", "-lpthread", {force = true})
---
--- @endcode
+-- llvm install instructions for macos (arm64)
+-- brew install cmake ninja wget
+-- cd ~
+-- mkdir -p ~/built-includes/llvm-install
+-- cd ~/built-includes/llvm-install
+-- wget https://github.com/llvm/llvm-project/releases/download/llvmorg-18.1.6/llvm-project-18.1.6.src.tar.xz
+-- tar -xvf llvm-project-18.1.6.src.tar.xz
+-- cd llvm-project-18.1.6.src
+-- mkdir build
+-- cd build
+-- cmake -G "Ninja" -DLLVM_ENABLE_PROJECTS="clang" -DLLVM_ENABLE_RUNTIMES="libcxx;libcxxabi;libunwind" -DCMAKE_BUILD_TYPE=Release -DLLVM_TARGETS_TO_BUILD="AArch64" -DCMAKE_INSTALL_PREFIX=/opt/llvm-aarch64 ../llvm
+-- ninja
+-- sudo ninja install
