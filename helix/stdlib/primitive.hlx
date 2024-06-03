@@ -1,7 +1,7 @@
 import "ops" as *;
 
 interface Primitive::Ops<Self> {
-    ~~ the super implmentation for all primitive types (int, float, string, char, list)
+    ~~ the super implementation for all primitive types (int, float, string, char, list)
     fn clone(&self) -> Self;
     fn eq(&self, other: Self) -> bool;
     fn ne(&self, other: Self) -> bool;
@@ -17,7 +17,7 @@ interface Primitive::Ops<Self> {
     fn to_char(&self) -> char;
     fn to_list(&self) -> list;
     
-    ~~ !!NOT IMPORANT FOR NOW!!
+    ~~ !!NOT IMPORTANT FOR NOW!!
     ~~ fn to_bytes(&self) -> bytes;
     ~~ fn to_bits(&self) -> bits;
     ~~ fn to_hex(&self) -> hex;
