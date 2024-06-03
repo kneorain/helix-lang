@@ -23,23 +23,7 @@ target("helix-lang")
 
 ----------------------------------------------------------------------------------------------------
 
-target("test")
-    set_kind("binary")
-    set_warnings("all")
-    
-    add_files("test/*.cc")
-    add_files("test/**/*.cc")
-    
-    set_languages("c++2b")
-    set_optimize ("fastest")
-    
-    add_includedirs("/opt/llvm-aarch64/include")
-    add_linkdirs   ("/opt/llvm-aarch64/lib")
-    
-    add_links("LLVM-18", "clang", "clang-cpp", "c++", "c++abi")
-    
-    add_cxxflags("-stdlib=libc++"         , "-fno-rtti", "-I/opt/llvm-aarch64/include"     )
-    add_ldflags ("-L/opt/llvm-aarch64/lib", "-lc++abi" , "-Wl,-rpath,/opt/llvm-aarch64/lib")
+-- TODO: add testing target
 
 ----------------------------------------------------------------------------------------------------
 
