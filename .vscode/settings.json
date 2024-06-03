@@ -172,7 +172,7 @@
         ".clang-tidy": ".clang-format, .clangd, compile_commands.json",
         ".env": "*.env, .env.*, .envrc, env.d.ts",
         ".gitignore": ".gitattributes, .gitmodules, .gitmessage, .mailmap, .git-blame*",
-        "xmake.lua": "readme, license, changelog, code_of_conduct, contributing, todo.md",
+        "xmake.lua": "README*, LICENSE*, changelog, code_of_conduct, contributing, todo.md",
         "BUILD.bazel": "*.bzl, *.bazel, *.bazelrc, bazel.rc, .bazelignore, .bazelproject, WORKSPACE",
         "CMakeLists.txt": "*.cmake, *.cmake.in, .cmake-format.yaml, CMakePresets.json, CMakeCache.txt",
         "Cargo.toml": ".clippy.toml, .rustfmt.toml, cargo.lock, clippy.toml, cross.toml, rust-toolchain.toml, rustfmt.toml",
