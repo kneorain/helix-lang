@@ -1,17 +1,14 @@
-<div align="center">
+<div align="center"> 
   <img src="assets/helix-logo.svg" alt="Helix Programming Language Logo" width="100%">
 </div>
 
 <p align="center">
   | <a href="#helix-programming-language">Introduction</a> |
     <a href="#why-helix">Why Helix?</a> |
-    <a href="#features">Features</a> |
-    <a href="#quick-start">Quick Start</a> |
     <a href="#getting-started-with-helix">Getting Started</a> |
     <a href="#goals">Goals</a> |
     <a href="#community-and-contributing">Community</a> |
     <a href="#license">License</a> |
-    <a href="#acknowledgements">Acknowledgements</a> |
 </p>
 
 # Helix Programming Language
@@ -136,23 +133,27 @@ helix hello_world.hlx
 ## Getting Started with Helix
 ##### Variables and Types
 Helix supports strong typing and flexible variable declarations:
-
-[variables and types example](assets/variable-example.png)
+<div align="left">
+  <img src="assets/variable-exmaple.png" alt="variables and types example" width="350">
+</div>
 
 ##### Functions and Classes
-Define functions with clear and concise syntax:
-
-[functions and classes example](assets/function-example.png)
+Define functions and classes along with other data structures with clear and concise syntax:
+<div align="left">
+  <img src="assets/function-example.png" alt="functions and classes example" width="450">
+</div>
 
 ##### Control Flow
 Helix provides familiar control flow constructs like `if`, `while`, and `for`:
-
-[control flow example](assets/control-flow-example.png)
+<div align="left">
+  <img src="assets/control-flow-exmaple.png" alt="control flow example" width="400">
+</div>
 
 ##### Async Programming
 Handle asynchronous tasks easily with `async` and `await`:
-
-[async programming example](assets/async-example.png)
+<div align="left">
+  <img src="assets/async-example.png" alt="async programming example" width="500">
+</div>
 
 ## Goals
 The Helix project aims to achieve the following goals:
