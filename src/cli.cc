@@ -63,3 +63,5 @@ Usage:
     helios license                        Show the license of Helios.
     helios doc-gen                        Generate documentation.
 */
+
+void parse() {}
