@@ -1,5 +1,5 @@
-<div align="center"> 
-  <img src="assets/helix-logo.svg" alt="Helix Programming Language Logo" width="100%">
+<div align="center">
+  <img src="../assets/helix-logo.svg" alt="Helix Programming Language Logo" width="100%">
 </div>
 
 <p align="center">
@@ -18,7 +18,7 @@ Helix is an experimental language designed for seamless interoperability with Py
 ----
 
 <div>
-<img src="assets/helix-code-example.png" width="450" align="right"
+<img src="../assets/helix-code-example.png" width="450" align="right"
      alt="Code Example">
 </a>
 </div>
@@ -49,7 +49,7 @@ Helix is an experimental language designed for seamless interoperability with Py
 
 <details>
     <summary>Build Instructions for MacOS (ARM64 - Apple Silicon)</summary>
-  
+
   1. Install the required dependencies (homebrew is required):
       ```bash
       brew install cmake ninja wget xmake
@@ -86,7 +86,7 @@ Helix is an experimental language designed for seamless interoperability with Py
 
 <details>
     <summary>Build Instructions for Windows</summary>
- 
+
   1. Install the required dependencies:
      - [xmake](https://xmake.io/#/getting_started)
      ```bash
@@ -113,7 +113,7 @@ Helix is an experimental language designed for seamless interoperability with Py
 
 <details>
     <summary>Build Instructions for Linux</summary>
-  
+
   6. Untested, commands are likely similar to MacOS. Please refer to the MacOS instructions and adjust as needed.
 </details>
 
@@ -138,29 +138,29 @@ helix hello_world.hlx
 ##### Variables and Types
 Helix supports strong typing and flexible variable declarations:
 <div align="left">
-  <img src="assets/variable-exmaple.png" alt="variables and types example" width="350">
-  <a href="#"><img src="assets/bumper.png"></a>
+  <img src="../assets/variable-exmaple.png" alt="variables and types example" width="350">
+  <a href="#"><img src="../assets/bumper.png"></a>
 </div>
 
 ##### Control Flow
 Helix provides familiar control flow constructs like `if`, `while`, and `for`:
 <div align="left">
-  <img src="assets/control-flow-exmaple.png" alt="control flow example" width="400">
-  <a href="#"><img src="assets/bumper.png"></a>
+  <img src="../assets/control-flow-exmaple.png" alt="control flow example" width="400">
+  <a href="#"><img src="../assets/bumper.png"></a>
 </div>
 
 ##### Async Programming
 Handle asynchronous tasks easily with `async` and `await`:
 <div align="left">
-  <img src="assets/async-example.png" alt="async programming example" width="500">
-  <a href="#"><img src="assets/bumper.png"></a>
+  <img src="../assets/async-example.png" alt="async programming example" width="500">
+  <a href="#"><img src="../assets/bumper.png"></a>
 </div>
 
 ##### Functions and Classes
 Define functions and classes along with other data structures with clear and concise syntax:
 <div align="left">
-  <img src="assets/function-example.png" alt="functions and classes example" width="450">
-  <a href="#"><img src="assets/bumper.png"></a>
+  <img src="../assets/function-example.png" alt="functions and classes example" width="450">
+  <a href="#"><img src="../assets/bumper.png"></a>
 </div>
 
 ## Goals
