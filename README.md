@@ -198,6 +198,10 @@ The Helix project is made possible by the hard work and dedication of our contri
   </a>
 </div>
 
+## Stargazers
+
+<img src="https://starchart.cc/kneorain/helix-lang.svg?variant=adaptive" alt="Stargazers over time" style="max-width: 100%">
+
 ---
 
 Happy coding with Helix! 🚀
