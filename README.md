@@ -15,30 +15,31 @@
 
 Helix is an experimental language designed for seamless interoperability with Python, C, C++, and Rust. The project aims to provide developers with a fast, efficient, and easy-to-use language that can leverage the power of existing code and libraries in these languages. With its clean syntax and robust features, Helix aims to simplify the process of writing and maintaining code while maximizing performance.
 
+----
+
 <div>
 <img src="assets/helix-code-example.png" width="450" align="right"
      alt="Code Example">
 </a>
-<a href="#"><img src="assets/bumper.png"></a>
 </div>
 
-## Why Helix?
+### Why Helix?
 
 - **Performance**: Optimized for speed and efficiency, making it ideal for critical applications and systems programming.
 - **Interoperability**: Seamlessly integrates with C++, Rust, and Python, allowing you to leverage existing codebases.
 - **Productivity**: Advanced tooling, including a robust standard library, package manager, and build system.
 - **Safety**: Strong type system and error handling to catch bugs at compile-time and runtime.
 
-## Features
+### Features
 
 - **Concurrent Programming**: Easy-to-use async/await syntax for concurrent tasks.
 - **Pattern Matching**: Powerful pattern matching for more readable and maintainable code.
 - **Macros and Pre-Processors**: Extensible macros and pre-processors for code generation and optimization.
 - **Rich Standard Library**: Extensive libraries to handle various programming tasks out of the box.
 
-## Quick Start
+### Quick Start
 
-### Installation
+#### Installation
 
 > [!WARNING]
 > Helix is currently under development and does not yet have a useable compiler. The following instructions are for development and building the compiler itself.
@@ -48,6 +49,7 @@ Helix is an experimental language designed for seamless interoperability with Py
 
 <details>
     <summary>Build Instructions for MacOS (ARM64 - Apple Silicon)</summary>
+  
   1. Install the required dependencies (homebrew is required):
       ```bash
       brew install cmake ninja wget xmake
@@ -84,7 +86,8 @@ Helix is an experimental language designed for seamless interoperability with Py
 
 <details>
     <summary>Build Instructions for Windows</summary>
- 1. Install the required dependencies:
+ 
+  1. Install the required dependencies:
      - [xmake](https://xmake.io/#/getting_started)
      ```bash
      xrepo install llvm
@@ -94,7 +97,7 @@ Helix is an experimental language designed for seamless interoperability with Py
    git clone https://github.com/kneorain/helix-lang.git
    ```
  3. Prepare the build:
-   ```bash
+     ```bash
      cd helix-lang
      xmake f -p windows
      ```
@@ -110,6 +113,7 @@ Helix is an experimental language designed for seamless interoperability with Py
 
 <details>
     <summary>Build Instructions for Linux</summary>
+  
   6. Untested, commands are likely similar to MacOS. Please refer to the MacOS instructions and adjust as needed.
 </details>
 
@@ -135,24 +139,28 @@ helix hello_world.hlx
 Helix supports strong typing and flexible variable declarations:
 <div align="left">
   <img src="assets/variable-exmaple.png" alt="variables and types example" width="350">
-</div>
-
-##### Functions and Classes
-Define functions and classes along with other data structures with clear and concise syntax:
-<div align="left">
-  <img src="assets/function-example.png" alt="functions and classes example" width="450">
+  <a href="#"><img src="assets/bumper.png"></a>
 </div>
 
 ##### Control Flow
 Helix provides familiar control flow constructs like `if`, `while`, and `for`:
 <div align="left">
   <img src="assets/control-flow-exmaple.png" alt="control flow example" width="400">
+  <a href="#"><img src="assets/bumper.png"></a>
 </div>
 
 ##### Async Programming
 Handle asynchronous tasks easily with `async` and `await`:
 <div align="left">
   <img src="assets/async-example.png" alt="async programming example" width="500">
+  <a href="#"><img src="assets/bumper.png"></a>
+</div>
+
+##### Functions and Classes
+Define functions and classes along with other data structures with clear and concise syntax:
+<div align="left">
+  <img src="assets/function-example.png" alt="functions and classes example" width="450">
+  <a href="#"><img src="assets/bumper.png"></a>
 </div>
 
 ## Goals
