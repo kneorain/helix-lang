@@ -205,6 +205,6 @@ Happy coding with Helix! 🚀
 ---
 
 ### Links
-- [Official Website](https://helix-lang.org)
-- [Documentation](https://helix-lang.org/docs)
-- [Tutorials](https://helix-lang.org/tutorials)
+- [Official Website](https://helix-lang.com)
+- [Documentation](https://helix-lang.com/docs)
+- [Tutorials](https://helix-lang.com/tutorials)
