@@ -1,0 +1,12 @@
+import std::future::{Future};
+
+async fn fetch_data() -> string {
+    std::sleep(2000); // Simulate a long-running task
+    return "Data fetched";
+}
+
+fn main() {
+    let future: Future = spawn fetch_data(); // start a os-manged child process
+    let data = await future;
+    println(data);
+}

@@ -1,0 +1,97 @@
+# Keywords
+## Table of Contents
+- [Async](async.md)
+- [Conditionals](conditionals.md)
+- [Data Structures](data-structures.md)
+- [Error Handling](error-handling.md)
+- [Functions](functions.md)
+- [Generators](generators.md)
+- [Imports](imports.md)
+- [Loops](loops.md)
+- [Macros](macros.md)
+- [Operators](operators.md)
+- [Pattern Matching](pattern-matching.md)
+- [Pre Processor](pre-processor.md)
+- [Type Handling](type-handling.md)
+- [Variable Declaration](variable-declaration.md)
+
+#### Config Options
+- post fix or prefix types
+- public or private by default
+- const or let by default
+
+#### Types
+- `int`
+- `float`
+- `decimal`
+- `string`
+- `char`
+- `bool`
+- `list`
+- `map`
+- `set`
+- `tuple`
+- `void`
+- `null`
+- `i8`
+- `i16`
+- `i32`
+- `i64`
+- `i128`
+- `u8`
+- `u16`
+- `u32`
+- `u64`
+- `u128`
+- `f32`
+- `f64`
+- `usize`
+- `isize`
+
+#### Keywords
+- `abstract`
+- `as`
+- `async`
+- `await`
+- `auto`
+- `break`
+- `case`
+- `catch`
+- `class`
+- `const`
+- `continue`
+- `define`
+- `derives`
+- `default`
+- `else`
+- `enclosing`
+- `enum`
+- `extern`
+- `finally`
+- `for`
+- `from`
+- `fn`
+- `global`
+- `if`
+- `import`
+- `inline`
+- `interface`
+- `is`
+- `let`
+- `macro`
+- `match`
+- `operator`
+- `panic`
+- `priv`
+- `return`
+- `spawn`
+- `struct`
+- `switch`
+- `thread`
+- `try`
+- `type`
+- `unless`
+- `union`
+- `using`
+- `while`
+- `yield`

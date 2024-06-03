@@ -63,6 +63,7 @@ enum keywords {
     CLASS,                     //     class
     UNION,                     //     union
     STRUCT,                    //    struct
+    DERIVES,                   //   derives
     ABSTRACT,                  //  abstract
     INTERFACE,                 // interface
     /* ==------- type checking -------== */
@@ -77,18 +78,21 @@ enum keywords {
     PRIVATE,                   //      priv
     AUTO,                      //      auto
     CONST,                     //     const
-    GLOBAL,                    //    global
+    GLOBAL,                    //    global  // TODO: Add to syntax
     /* ==------- module system -------== */
     FROM,                      //      from
     USING,                     //     using
     IMPORT,                    //    import
-    EXTERN,                    //    extern
+    EXTERN,                    //    extern  // TODO: Add to syntax
+    AS,                        //        as  // TODO: Add to syntax
     /* ==--------- generators --------== */
-    YIELD                      //     yield
+    YIELD ,                    //     yield
+    /* ==----------- others ----------== */
+    NAMESPACE                  // namespace
     /* ==--------- end of list -------== */
 };
 
-constexpr Mapping<keywords, 44> keywords_map{{
+constexpr Mapping<keywords, 47> keywords_map{{
     std::pair{IF, "if"},             std::pair{ELSE, "else"},           std::pair{UNLESS, "unless"},     std::pair{MACRO, "macro"},
     std::pair{DEFINE, "define"},     std::pair{FUNCTION, "fn"},         std::pair{OPERATOR, "op"},       std::pair{INLINE, "inline"},
     std::pair{RETURN, "return"},     std::pair{ENCLOSING, "enclosing"}, std::pair{ASYNC, "async"},
@@ -100,7 +104,7 @@ constexpr Mapping<keywords, 44> keywords_map{{
     std::pair{PANIC, "panic"},       std::pair{CATCH, "catch"},         std::pair{FINALLY, "finally"},   std::pair{LET, "let"},
     std::pair{PRIVATE, "priv"},      std::pair{AUTO, "auto"},           std::pair{CONST, "const"},       std::pair{GLOBAL, "global"},
     std::pair{FROM, "from"},         std::pair{USING, "using"},         std::pair{IMPORT, "import"},     std::pair{EXTERN, "extern"},
-    std::pair{YIELD, "yield"}
+    std::pair{YIELD, "yield"},      std::pair{AS, "as"},               std::pair{DERIVES, "derives"},  std::pair{NAMESPACE, "namespace"}
 }};
 
 enum primitives {

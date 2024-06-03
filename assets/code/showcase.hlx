@@ -1,0 +1,34 @@
+struct Point {
+    let x: int;
+    let y: int;
+
+    fn new(x: int, y: int) -> Point {
+        return Point{ x: x, y: y };
+    }
+
+    fn move(&self, dx: int, dy: int) {
+        self.x += dx;
+        self.y += dy;
+    }
+
+    fn display(&self) {
+        print(f"Point at ({point.x}, {point.y})");
+    }
+}
+
+fn main() {
+    let p: Point = Point::new(0, 0);
+
+    for i in range(1, 4) {
+        p.move(i, i);
+        p.display();
+    }
+
+    let value: int = p.x;
+
+    match value {
+        0 -> print("The point is at the origin"),
+        1 | 2 | 3 -> print("The point is close to the origin"),
+        _ -> print("The point is far from the origin"),
+    }
+}
