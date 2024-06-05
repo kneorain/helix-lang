@@ -1,0 +1,15 @@
+#ifndef __LITERALS_H__
+#define __LITERALS_H__
+
+#define LITERAL_TOKENS_COUNT 7
+
+#define LITERAL_TOKENS(MACRO)                               \
+    MACRO(LITERAL_TRUE, "true")                             \
+    MACRO(LITERAL_FALSE, "false")                           \
+    MACRO(LITERAL_INTEGER, "integer")                       \
+    MACRO(LITERAL_COMPLIER_DIRECTIVE, "complier_directive") \
+    MACRO(LITERAL_FLOATING_POINT, "floating_point")         \
+    MACRO(LITERAL_STRING, "string")                         \
+    MACRO(LITERAL_CHAR, "char")
+
+#endif  // __LITERALS_H__

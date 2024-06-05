@@ -1,0 +1,34 @@
+#ifndef __PRIMITIVES_H__
+#define __PRIMITIVES_H__
+
+#define PRIMITIVE_TOKENS_COUNT 26
+
+#define PRIMITIVE_TOKENS(MACRO) \
+    MACRO(VOID, "void")         \
+    MACRO(BOOL, "bool")         \
+    MACRO(BYTE, "byte")         \
+    MACRO(CHAR, "char")         \
+    MACRO(POINTER, "ptr")       \
+    MACRO(I8, "i8")             \
+    MACRO(U8, "u8")             \
+    MACRO(I16, "i16")           \
+    MACRO(U16, "u16")           \
+    MACRO(I32, "i32")           \
+    MACRO(U32, "u32")           \
+    MACRO(F32, "f32")           \
+    MACRO(I64, "i64")           \
+    MACRO(U64, "u64")           \
+    MACRO(F64, "f64")           \
+    MACRO(FLOAT, "float")       \
+    MACRO(I128, "i128")         \
+    MACRO(U128, "u128")         \
+    MACRO(INT, "int")           \
+    MACRO(DECIMAL, "decimal")   \
+    MACRO(STRING, "string")     \
+    MACRO(LIST, "list")         \
+    MACRO(TUPLE, "tuple")       \
+    MACRO(SET, "set")           \
+    MACRO(MAP, "map")           \
+    MACRO(ANY, "any")
+
+#endif  // __PRIMITIVES_H__

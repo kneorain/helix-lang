@@ -1,0 +1,24 @@
+#ifndef __PUNCTUATION_H__
+#define __PUNCTUATION_H__
+
+#define PUNCTUATION_TOKENS_COUNT 16
+
+#define PUNCTUATION_TOKENS(MACRO)    \
+    MACRO(OPEN_PAREN, "(")           \
+    MACRO(CLOSE_PAREN, ")")          \
+    MACRO(OPEN_BRACE, "{")           \
+    MACRO(CLOSE_BRACE, "}")          \
+    MACRO(OPEN_BRACKET, "[")         \
+    MACRO(CLOSE_BRACKET, "]")        \
+    MACRO(OPEN_ANGLE, "<")           \
+    MACRO(CLOSE_ANGLE, ">")          \
+    MACRO(COMMA, ",")                \
+    MACRO(SEMICOLON, ";")            \
+    MACRO(COLON, ":")                \
+    MACRO(QUESTION_MARK, "?")        \
+    MACRO(DOT, ".")                  \
+    MACRO(SINGLE_LINE_COMMENT, "//") \
+    MACRO(MULTI_LINE_COMMENT, "/*")  \
+    MACRO(HASH, "#")
+
+#endif  // __PUNCTUATION_H__

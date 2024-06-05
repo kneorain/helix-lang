@@ -1,0 +1,41 @@
+#ifndef __TOKENS_H__
+#define __TOKENS_H__
+
+#include "../enums/delimiters.def"
+#include "../enums/keywords.def"
+#include "../enums/literals.def"
+#include "../enums/operators.def"
+#include "../enums/others.def"
+#include "../enums/primitives.def"
+#include "../enums/punctuation.def"
+#include "../types/mapping.hh"
+
+#define MAKE_TOKEN(name, string) name,
+#define MAKE_TOKEN_PAIR(name, string) std::pair{name, string},
+
+#define GENERATE_TOKENS_ENUM_AND_MAPPING()                                                \
+    namespace token {                                                                     \
+    enum tokens { TOKENS(MAKE_TOKEN) };                                                   \
+                                                                                          \
+    constexpr Mapping<tokens, TOKENS_COUNT> tokens_map{{TOKENS(MAKE_TOKEN_PAIR)}}; \
+    }
+    
+#define TOKENS_COUNT                \
+    KEYWORD_TOKENS_COUNT            \
+        + DELIMITER_TOKENS_COUNT    \
+        + LITERAL_TOKENS_COUNT      \
+        + OPERATOR_TOKENS_COUNT     \
+        + OTHER_TOKENS_COUNT        \
+        + PRIMITIVE_TOKENS_COUNT    \
+        + PUNCTUATION_TOKENS_COUNT  \
+
+#define TOKENS(MACRO)       \
+    KEYWORD_TOKENS(MACRO)   \
+    DELIMITER_TOKENS(MACRO) \
+    LITERAL_TOKENS(MACRO)   \
+    OPERATOR_TOKENS(MACRO)  \
+    OTHER_TOKENS(MACRO)     \
+    PRIMITIVE_TOKENS(MACRO) \
+    PUNCTUATION_TOKENS(MACRO)
+
+#endif // __TOKENS_H__

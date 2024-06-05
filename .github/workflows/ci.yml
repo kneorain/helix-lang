@@ -1,0 +1,20 @@
+name: CI
+
+on: [push, pull_request]
+
+jobs:
+    build:
+        runs-on: ubuntu-latest
+
+        steps:
+            - uses: actions/checkout@v2
+            - name: Install xmake
+              run: |
+                  curl -fsSL https://xmake.io/shget.text | sh
+            - name: Configure and build
+              run: |
+                  xmake f -m debug
+                  xmake
+            - name: Run tests
+              run: |
+                  xmake run test

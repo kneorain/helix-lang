@@ -1,4 +1,2 @@
-CompileFlags: # Tweak the parse settings, example directory given to show format
-  Add:
-    - "-std=c++2b"
-    - "-I/opt/homebrew/opt/llvm/include"
+CompileFlags:
+  CompileCommandsDir: .

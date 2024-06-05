@@ -1,0 +1,10 @@
+#ifndef __OTHERS_H__
+#define __OTHERS_H__
+
+#define OTHER_TOKENS_COUNT 2
+
+#define OTHER_TOKENS(MACRO) \
+    MACRO(IDENTIFIER, "id") \
+    MACRO(OTHERS, "other")
+
+#endif  // __OTHERS_H__

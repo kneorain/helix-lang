@@ -5,4 +5,6 @@ build/
 # MacOS Cache
 .DS_Store
 
-
+# Clanged Cache
+.clangd/
+.cache/

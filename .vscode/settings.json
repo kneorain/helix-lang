@@ -3,7 +3,8 @@
         "*.db": "sql",
         "*.v": "verilog",
         "*.fs": "fsharp",
-        "*.py": "python"
+        "*.py": "python",
+        "*.def": "cpp",
     },
     "files.autoSave": "afterDelay",
     "explorer.confirmDelete": false,

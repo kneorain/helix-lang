@@ -1,0 +1,11 @@
+#ifndef __DELIMITERS_H__
+#define __DELIMITERS_H__
+
+#define DELIMITER_TOKENS_COUNT 3
+
+#define DELIMITER_TOKENS(MACRO)    \
+    MACRO(DELIMITER_TAB, "\t")     \
+    MACRO(DELIMITER_NEWLINE, "\n") \
+    MACRO(DELIMITER_SPACE, " ")
+
+#endif  // __DELIMITERS_H__
