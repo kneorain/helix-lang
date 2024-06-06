@@ -16,7 +16,8 @@
 #include <iostream>
 #include <span>
 #include "token/include/lexer.hh"
-#include "parser/ast/ast.hh"
+#include "parser/ast/classes/ast.hh"
+
 int main() {
     std::string source  = lexer::readfile("/Volumes/Container/Projects/Helix/helix-lang/tests/test_tokenize.hlx");
     
@@ -31,7 +32,7 @@ int main() {
     std::span<token::Token> slice{tokens};
 
     // constructs a new ast node
-    AstFunctionHeader node;
+    AstFile node;
 
     node.parse(slice);
 
