@@ -15,10 +15,11 @@
 #ifndef __OTHERS_H__
 #define __OTHERS_H__
 
-#define OTHER_TOKENS_COUNT 2
+#define OTHER_TOKENS_COUNT 3
 
-#define OTHER_TOKENS(MACRO) \
-    MACRO(IDENTIFIER, "id") \
-    MACRO(OTHERS, "other")
+#define OTHER_TOKENS(MACRO)   \
+    MACRO(IDENTIFIER, "<id>") \
+    MACRO(WHITESPACE, "< >")  \
+    MACRO(OTHERS, "<other>")
 
 #endif  // __OTHERS_H__

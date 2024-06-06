@@ -17,36 +17,52 @@
 
 #include <string>
 #include <vector>
+#include <unordered_map>
 
 #include "token.hh"
 
 
 namespace lexer {
-    
-const std::string readfile(const std::string &filename);
+std::string readfile(std::string &filename);
+std::string readfile(const std::string &filename);
 
 class Lexer {
   public:
-    explicit Lexer(const std::string &source);
-    std::vector<token::Token> tokenize();
+    Lexer(std::string source, const std::string &filename);
+    Lexer(const Lexer &lexer) = delete;
+    Lexer(Lexer &&lexer) = delete;
+    Lexer &operator=(const Lexer &lexer) = delete;
+    Lexer &operator=(Lexer &&lexer) = delete;
+    ~Lexer() = default;
+
+    token::TokenList tokenize();
 
   private:
-    inline token::Token nextToken();
-    inline token::Token parseKeyword();
-    inline token::Token parseDelimiter();
-    inline token::Token parseLiteral();
-    inline token::Token parseOperator();
-    inline token::Token parseOther();
-    inline token::Token parsePrimitive();
-    inline token::Token parsePunctuation();
+    inline token::Token next_token();
+    inline token::Token parse_alpha_numeric();
+    inline token::Token parse_compiler_directive();
+    inline token::Token process_single_line_comment();
+    inline token::Token process_multi_line_comment();
+    inline token::Token parse_numeric();
+    inline token::Token parse_string();
+    inline token::Token parse_operator();
+    inline token::Token parse_other();
+    inline token::Token parse_punctuation();
+    inline token::Token process_whitespace();
 
-    inline void skipWhitespace();
     inline char next();
     [[nodiscard]] inline char peek() const;
 
-    std::string  source;
-    char*  currentToken;
-    u64 currentPosition;
+    token::TokenList    tokens;       //> list of tokens
+    std::string  source;       //> source code
+    std::string  file_name;    //> file name
+    u64          currentPos;   //> current position in the source
+    
+    u64 line;   //> line number
+    u64 column; //> position in the line
+    u64 offset; //> position of the end of the token
+    u64 end;    //> end of the source
+
 };
 }  // namespace lexer
 

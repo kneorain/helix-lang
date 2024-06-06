@@ -61,7 +61,7 @@ IncludeCategories:
     Priority:        2
   - Regex:           '.*'
     Priority:        3
-IndentCaseLabels: false
+IndentCaseLabels: true
 IndentWidth:     4
 IndentWrappedFunctionNames: false
 KeepEmptyLinesAtTheStartOfBlocks: true

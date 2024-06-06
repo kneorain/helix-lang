@@ -14,10 +14,12 @@ namespace error {
  * @brief Constructs an Error object with the given error information.
  * @param error The error information.
  */
-Error::Error(const Line &error) {
+Error::Error(const Line &error, const std::string &line) {
     print_start(error.message, error.level);
     print_info(error.message, error.file_name, error.line_number, error.column, error.offset);
-    print_lines({}, error.line_number, error.column, error.offset);
+    print_line(line, error.line_number, error.column, error.offset);
+    //print_lines({}, error.line_number, error.column, error.offset);
+    // FIXME: look up line from file cache
     if (!error.fix.empty()) {
         print_fix(error.fix, error.column, error.offset);
     } else {
@@ -69,7 +71,7 @@ void Error::print_start(const std::string_view message, const Level &level,
     }
 
     if (!file_name.empty()) {
-        std::cout << std::string(colors::reset) << "at " << std::string(colors::fg16::green)
+        std::cout << std::string(colors::reset) << " at " << std::string(colors::fg16::green)
                   << file_name << std::string(colors::reset);
     }
     std::cout << ": " << std::string(colors::reset) << message << '\n';
@@ -86,7 +88,7 @@ void Error::print_start(const std::string_view message, const Level &level,
 void Error::print_info(const std::string_view message, const std::string_view file_name,
                        const u32 &line, const u32 &col, const u32 &offset) {
     std::cout << "     "
-              << "├─> " << std::string(colors::reset) << "at " << std::string(colors::fg16::green)
+              << "├─> " << std::string(colors::reset) << " at " << std::string(colors::fg16::green)
               << file_name << std::string(colors::reset) << ":" << std::string(colors::fg16::yellow)
               << line + 1 << std::string(colors::reset) << ":" << std::string(colors::fg16::yellow)
               << col + 1 << std::string(colors::reset) << '\n';
@@ -116,6 +118,15 @@ void Error::print_lines(const std::vector<std::string> &lines, const u32 &line, 
     }
 }
 
+void Error::print_line(const std::string &line, const u32 &line_number, const u32 &col, const u32 &offset) {
+    std::cout << std::setw(4) << (line_number + 1) << " "
+              << ": " << std::string(colors::reset) << line << '\n';
+    std::cout << "     "
+              << "│ " << std::string(colors::reset) << std::string(col, ' ')
+              << std::string(colors::fg16::yellow) << std::string(offset, '^')
+              << std::string(colors::reset) << '\n';
+}
+
 /**
  * @brief Prints the fix message for the error, if available.
  * @param fix_message The fix message.
@@ -131,8 +142,6 @@ void Error::print_fix(const std::string_view fix_message, const u32 &col, const 
  * @brief Prints a message indicating that no fix is available for the error.
  */
 void Error::print_no_fix() {
-    std::cout << "  " << std::string(colors::fg16::gray) << "fix" << std::string(colors::reset)
-              << ": "
-              << "unable to retrieve fix information" << '\n';
+    std::cout << '\n';
 }
 }  // namespace error

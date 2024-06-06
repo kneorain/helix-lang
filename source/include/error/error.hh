@@ -21,6 +21,7 @@
 
 #include <print>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "../inttypes.hh"
@@ -51,6 +52,16 @@ struct Line {
 
     Level level = ERR;  ///< Error level.
     std::string fix;    ///< Suggested fix message.
+
+    Line(std::string file_name, const u32 &line_number, const u32 &column, const u32 &offset,
+         std::string message, const Level &level = ERR, std::string fix = "")
+        : file_name(std::move(file_name))
+        , line_number(line_number)
+        , column(column)
+        , offset(offset)
+        , message(std::move(message))
+        , level(level)
+        , fix(std::move(fix)) {}
 };
 
 /**
@@ -79,7 +90,7 @@ class Error {
      * @brief Constructor for a Line error.
      * @param error The Line error to handle.
      */
-    explicit Error(const Line &error);
+    explicit Error(const Line &error, const std::string &line);
 
     /**
      * @brief Constructor for a message with a specified level.
@@ -124,6 +135,9 @@ class Error {
      */
     static void print_lines(const std::vector<std::string> &lines, const u32 &line, const u32 &col,
                             const u32 &offset);
+
+    static void print_line(const std::string &line, const u32 &line_number, const u32 &col,
+                           const u32 &offset);
 
     /**
      * @brief Prints the suggested fix for the error.

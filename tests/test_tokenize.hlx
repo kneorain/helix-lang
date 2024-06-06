@@ -1,0 +1,19 @@
+fn main() {
+    let x: int = 10;
+
+    if x > 5 {
+        print("x is greater than 5");
+    } else {
+        print("x is 5 or less");
+    }
+
+    unless x < 53 { // unless is the same as if not
+        print("x is greater than 5");
+    } else {
+        print("x is 5 or less");
+    }
+
+    for /* some multi line comment bs */ let i: int = 0; i < 10; i++ {
+        print(i);
+    }
+}

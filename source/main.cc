@@ -16,18 +16,20 @@
 #include <iostream>
 
 #include "token/include/lexer.hh"
+#include "token/include/token.hh"
 
 int main() {
-    std::string source = lexer::readfile("source/main.cc");
+    std::string source = lexer::readfile("/Volumes/Container/Projects/Helix/helix-lang/tests/test_tokenize.hlx");
+    auto lex = lexer::Lexer(source, "/Volumes/Container/Projects/Helix/helix-lang/tests/test_tokenize.hlx");
     auto start = std::chrono::high_resolution_clock::now();
-    auto tokens = lexer::Lexer(source).tokenize();
+    auto tokens = lex.tokenize();
     auto end = std::chrono::high_resolution_clock::now();
+    
+    token::print_tokens(tokens);
 
+    
     // print time in ns
     std::cout << "Time taken: " << std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count() << "ns\n";
 
-    for (const auto& token : tokens) {
-        std::cout << "Token: " << token.value << " Line: " << token.line << " Column: " << token.column << " Offset: " << token.offset << "\n";
-    }
     return 0;
 }

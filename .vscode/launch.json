@@ -1,0 +1,14 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Launch - debug",
+            "type": "lldb",
+            "request": "launch",
+            "program": "/Volumes/Container/Projects/Helix/helix-lang/build/macosx/arm64/debug/helix",
+            "args": [],
+            "cwd": "/Volumes/Container/Projects/Helix/helix-lang/",
+            "stopOnEntry": false,
+        }
+    ]
+}
