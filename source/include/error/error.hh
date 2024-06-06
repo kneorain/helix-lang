@@ -23,6 +23,7 @@
 #include <string>
 #include <utility>
 #include <vector>
+#include <stdexcept>
 
 #include "../inttypes.hh"
 
@@ -84,7 +85,7 @@ class Error {
     /**
      * @brief Default constructor.
      */
-    Error() = default;
+    Error() = delete;
 
     /**
      * @brief Constructor for a Line error.

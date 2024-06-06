@@ -16,8 +16,6 @@
 #define __LEXER_H__
 
 #include <string>
-#include <vector>
-#include <unordered_map>
 
 #include "token.hh"
 
@@ -50,18 +48,24 @@ class Lexer {
     inline token::Token parse_punctuation();
     inline token::Token process_whitespace();
 
-    inline char next();
-    [[nodiscard]] inline char peek() const;
+    inline char advance(u16 n = 1);
+    inline char current();
+    inline void bare_advance(u16 n = 1);
 
-    token::TokenList    tokens;       //> list of tokens
-    std::string  source;       //> source code
-    std::string  file_name;    //> file name
-    u64          currentPos;   //> current position in the source
+    [[nodiscard]] inline char peek_forward() const;
+    [[nodiscard]] inline char peek_back() const;
+
+    token::TokenList tokens;       //> list of tokens
+    std::string      source;       //> source code
+    std::string      file_name;    //> file name
     
-    u64 line;   //> line number
-    u64 column; //> position in the line
-    u64 offset; //> position of the end of the token
-    u64 end;    //> end of the source
+    char currentChar; //> current character
+    u64  cachePos;    //> cache position
+    u64  currentPos;   //> current position in the source
+    u64  line;         //> line number
+    u64  column;       //> position in the line
+    u64  offset;       //> position of the end of the token
+    u64  end;          //> end of the source
 
 };
 }  // namespace lexer

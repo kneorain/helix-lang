@@ -14,23 +14,22 @@
 
 #include "../include/lexer.hh"
 
+#include <chrono>
 #include <filesystem>
 #include <fstream>
 #include <iostream>
+#include <optional>
 #include <string>
-#include <unordered_map>
-#include <chrono>
 
 #include "../../include/error/error.hh"
 #include "../include/cases.def"
+#include "../types/file_cache.hh"
 
 namespace lexer {
-std::unordered_map<std::string, std::string> FILE_CACHE;
-
 std::string _internal_read_file(const std::string &filename) {
-    auto cache_it = FILE_CACHE.find(filename);
-    if (cache_it != FILE_CACHE.end()) {
-        return cache_it->second;
+    auto cached_file = file_sys::FileCache::get_file(filename);
+    if (cached_file.has_value()) {
+        return cached_file.value();
     }
 
     std::ifstream file(filename, std::ios::binary | std::ios::ate);
@@ -49,7 +48,7 @@ std::string _internal_read_file(const std::string &filename) {
         return "";
     }
 
-    FILE_CACHE[filename] = source;
+    file_sys::FileCache::add_file(filename, source);
 
     return source;
 }
@@ -81,9 +80,9 @@ std::string getline(const std::string &filename, u64 line) {
     u64 start = 0;
     u64 end = 0;
 
-    for (u64 i = 0; i < source.size(); i++) {
+    for (u64 i = 0; i < source.size(); ++i) {
         if (source[i] == '\n') {
-            current_line++;
+            ++current_line;
             if (current_line == line) {
                 start = i + 1;
             } else if (current_line == line + 1) {
@@ -112,25 +111,20 @@ Lexer::Lexer(std::string source, const std::string &filename)
 
 token::TokenList Lexer::tokenize() {
     while ((currentPos + 1) <= end) {
-        auto start = std::chrono::high_resolution_clock::now();
         auto token = next_token();
-        auto end = std::chrono::high_resolution_clock::now();
-        if (token.value == "<<WHITE_SPACE>>") {
+
+        if (token.kind == token::tokens::WHITESPACE) {
             continue;
         }
         tokens.append(token);
-        std::cout << "Time taken: "
-                  << std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count()
-                  << "ns\n";
     }
-
     return tokens;
 }
 
 inline token::Token Lexer::process_single_line_comment() {
     auto start = currentPos;
-    while (source[currentPos] != '\n' && currentPos < end) {
-        next();
+    while (current() != '\n' && currentPos < end) {
+        bare_advance();
     }
     return {line,
             column - (currentPos - start),
@@ -142,26 +136,32 @@ inline token::Token Lexer::process_single_line_comment() {
 
 inline token::Token Lexer::process_multi_line_comment() {
     auto start = currentPos;
-    u32 brace_level = 0;
+    u32 comment_depth = 0;
     while (currentPos < end) {
-        if (source[currentPos] == '/' && source[currentPos + 1] == '*') {
-            brace_level++;
-        } else if (source[currentPos] == '*' && source[currentPos + 1] == '/') {
-            brace_level--;
+        switch (current()) {
+            case '/':
+            case '*':
+                switch (peek_forward()) {
+                    case '*':
+                        ++comment_depth;
+                        break;
+                    case '/':
+                        --comment_depth;
+                        break;
+                }
+                break;
+            case '\n':
+                ++line;
+                column = 0;
+                break;
         }
 
-        if (source[currentPos] == '\n') {
-            line++;
-            column = 0;
-        }
-
-        if (brace_level == 0) {
-            next();
-            next();
+        if (comment_depth == 0) {
+            bare_advance(2);
             break;
         }
 
-        next();
+        bare_advance();
     }
 
     return {line,
@@ -174,11 +174,11 @@ inline token::Token Lexer::process_multi_line_comment() {
 
 inline token::Token Lexer::next_token() {
     switch (source[currentPos]) {
-        case WHITESPACE:
-            next();
+        case WHITE_SPACE:
+            bare_advance();
             return token::Token{};
         case '/':
-            switch (peek()) {
+            switch (peek_forward()) {
                 case '/':
                     return process_single_line_comment();
                 case '*':
@@ -189,11 +189,9 @@ inline token::Token Lexer::next_token() {
             return parse_string();
         case _0_9:
             return parse_numeric();
-            break;
         case STRING_BYPASS:
-            switch (peek()) {
-                case '"':
-                case '\'':
+            switch (peek_forward()) {
+                case STRING:
                     return parse_string();
             }
         case '_':
@@ -201,7 +199,8 @@ inline token::Token Lexer::next_token() {
         case a_z_EXCLUDE_rbuf:  // removed the following cases since they are already
                                 // covered by the STRING_BYPASS: (r, b, f, u)
             return parse_alpha_numeric();
-        case '#':  // so things like #[...] or # [...] are compiler directives and are 1 token
+        case '#':  // so things like #[...] are compiler directives and are 1 token but # [...] is
+                   // a NOT compiler directive and is # token + everything else
             return parse_compiler_directive();
         case OPERATORS:
             return parse_operator();
@@ -209,37 +208,47 @@ inline token::Token Lexer::next_token() {
             return parse_punctuation();
     }
 
-    throw error::Error(error::Compiler{std::string(1, source[currentPos]), "unknown token"});
+    throw error::Error(error::Compiler{std::string(1, current()), "unknown token"});
 }
 
 inline token::Token Lexer::parse_compiler_directive() {
     auto start = currentPos;
     auto end_loop = false;
     u32 brace_level = 0;
-    while (!end_loop && currentPos < end) {
-        if (source[currentPos] == '[') {
-            brace_level++;
-        } else if (source[currentPos] == ']') {
-            brace_level--;
-        }
 
-        if (source[currentPos] == '\n' || (source[currentPos] == ']' && brace_level == 0)) {
-            next();
-            end_loop = true;
-        }
-
-        next();
-    }
-    if (currentPos - start == 1) {  // if just a #
+    if (peek_forward() != '[') {
+        bare_advance();
         return {line, column, 1, offset, source.substr(start, 1)};
     }
-    return {line, column - (currentPos - start), currentPos - start, offset,
-            source.substr(start, currentPos - start)};
+
+    while (!end_loop && currentPos < end) {
+        switch (current()) {
+            case '[':
+                ++brace_level;
+                break;
+            case ']':
+                --brace_level;
+                end_loop = brace_level == 0;
+                break;
+            case '\n':
+                end_loop = true;
+                break;
+        }
+
+        bare_advance();
+    }
+
+    return {line,
+            column - (currentPos - start),
+            currentPos - start,
+            offset,
+            source.substr(start, currentPos - start),
+            "<complier_directive>"};
 }
 
 inline token::Token Lexer::process_whitespace() {
     auto result = token::Token{line, column, 1, offset, source.substr(currentPos, 1), "< >"};
-    next();
+    bare_advance();
     return result;
 }
 
@@ -248,18 +257,17 @@ inline token::Token Lexer::parse_alpha_numeric() {
     bool end_loop = false;
 
     while (!end_loop && currentPos < end) {
-        switch (peek()) {
+        switch (peek_forward()) {
             case '_':
             case A_Z:
             case a_z:
             case _0_9:
-                next();
                 break;
             default:
-                next();
                 end_loop = true;
                 break;
         }
+        bare_advance();
     }
 
     auto result = token::Token{line, column - (currentPos - start), currentPos - start, offset,
@@ -296,17 +304,16 @@ inline token::Token Lexer::parse_numeric() {
     bool end_loop = false;
 
     while (!end_loop && currentPos < end) {
-        switch (peek()) {
+        switch (peek_forward()) {
             case '.':
                 is_float = true;
             case _non_float_numeric:
-                next();
                 break;
             default:
-                next();
                 end_loop = true;
                 break;
         }
+        bare_advance();
     }
 
     // if theres a . then it is a float
@@ -333,30 +340,27 @@ inline token::Token Lexer::parse_string() {
     auto start_column = column;
 
     bool end_loop = false;
-    char quote = source[currentPos];
+    char quote = current();
 
-    switch (source[currentPos]) {
+    switch (current()) {
         case STRING_BYPASS:
-            quote = next();
+            quote = advance();
             break;
     }
 
     // if the quote is followed by a \ then ignore the quote
     while (!end_loop && currentPos < end) {
-        switch (peek()) {
+        switch (peek_forward()) {
             case '\\':
-                next();
-                next();
+                bare_advance();
                 break;
             case STRING:
-                next();
-                end_loop = source[currentPos] == quote;
-                next();
+                end_loop = advance() == quote;
                 break;
             default:
-                next();
                 break;
         }
+        bare_advance();
     }
 
     if (currentPos >= end) {
@@ -389,51 +393,94 @@ inline token::Token Lexer::parse_operator() {
     bool end_loop = false;
 
     while (!end_loop && currentPos < end) {
-        switch (peek()) {
+        switch (peek_forward()) {
             case OPERATORS:
-                next();
                 break;
             default:
-                next();
                 end_loop = true;
                 break;
         }
+        bare_advance();
     }
 
     return {line, column - (currentPos - start), currentPos - start, offset,
             source.substr(start, currentPos - start)};
 }
 
-inline token::Token Lexer::parse_other() {}
-
 inline token::Token Lexer::parse_punctuation() {
     auto result = token::Token{line, column, 1, offset, source.substr(currentPos, 1)};
-    next();
+    bare_advance();
     return result;
 }
 
-inline char Lexer::next() {
+inline char Lexer::advance(u16 n) {
     if (currentPos + 1 > end) {
         return '\0';
     }
 
-    currentPos++;
+    ++currentPos;
 
-    switch (source[currentPos]) {
+    switch (current()) {
         case '\n':
-            line++;
+            ++line;
             column = 0;
             break;
         default:
-            column++;
-            offset++;
+            ++column;
+            ++offset;
             break;
     }
 
-    return source[currentPos];  // FIXME: remove this if not needed
+    if (n > 1) {
+        return advance(n - 1);
+    }
+
+    return current();
 }
 
-[[nodiscard]] inline char Lexer::peek() const {
+inline void Lexer::bare_advance(u16 n) {
+    ++currentPos;
+
+    switch (current()) {
+        case '\n':
+            ++line;
+            column = 0;
+            break;
+        default:
+            ++column;
+            ++offset;
+            break;
+    }
+
+    if (n > 1) {
+        return bare_advance(n - 1);
+    }
+}
+
+inline char Lexer::current() {
+    if (currentPos >= end) {
+        return '\0';
+    }
+
+    if (currentPos == cachePos) {
+        return currentChar;
+    }
+
+    cachePos = currentPos;
+    currentChar = source[currentPos];
+
+    return currentChar;
+}
+
+inline char Lexer::peek_back() const {
+    if (currentPos - 1 < 0) {
+        return '\0';
+    }
+
+    return source[currentPos - 1];
+}
+
+[[nodiscard]] inline char Lexer::peek_forward() const {
     if (currentPos + 1 >= end) {
         return '\0';
     }

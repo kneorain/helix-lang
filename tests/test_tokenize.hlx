@@ -1,19 +1,34 @@
+struct Point {
+    let x: int;
+    let y: int;
+
+    fn new(x: int, y: int) -> Point {
+        return Point{ x: x, y: y };
+    }
+
+    fn move(&self, dx: int, dy: int) {
+        self.x += dx;
+        self.y += dy;
+    }
+
+    fn display(&self) {
+        print(f"Point at ({point.x}, {point.y})");
+    }
+}
+
 fn main() {
-    let x: int = 10;
+    let p: Point = Point::new(0, 0);
 
-    if x > 5 {
-        print("x is greater than 5");
-    } else {
-        print("x is 5 or less");
+    for i in range(1, 4) {
+        p.move(i, i);
+        p.display();
     }
 
-    unless x < 53 { // unless is the same as if not
-        print("x is greater than 5");
-    } else {
-        print("x is 5 or less");
-    }
+    let value: int = p.x;
 
-    for /* some multi line comment bs */ let i: int = 0; i < 10; i++ {
-        print(i);
+    match value {
+        0 -> print("The point is at the origin"),
+        1 | 2 | 3 -> print("The point is close to the origin"),
+        _ -> print("The point is far from the origin"),
     }
 }

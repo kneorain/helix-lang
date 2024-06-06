@@ -16,6 +16,7 @@
 #define __TOKEN_H__
 
 #include <cassert>
+#include <cstddef>
 #include <iostream>
 #include <string>
 #include <string_view>
@@ -31,12 +32,12 @@ namespace token {
  */
 struct Token {
   public:
-    u64 line{};         ///< Line number where the token is located
-    u64 column{};       ///< Column number where the token starts
-    u64 length{};       ///< Length of the token
-    u64 offset{};       ///< Offset from the beginning of the file
-    std::string value;  ///< String value of the token
-    tokens kind;        ///< Kind of the token
+    u64          line{};  ///< Line number where the token is located
+    u64        column{};  ///< Column number where the token starts
+    u64        length{};  ///< Length of the token
+    u64        offset{};  ///< Offset from the beginning of the file
+    tokens       kind{};  ///< Kind of the token
+    std::string value  ;  ///< String value of the token
 
     /**
      * @brief Constructs a Token with the specified attributes.
@@ -71,7 +72,8 @@ struct Token {
     }
 
     Token()
-        : value("<<WHITE_SPACE>>") {}
+        : kind(tokens::WHITESPACE)
+        , value("<<WHITE_SPACE>>") {}
 };
 
 class TokenList {
@@ -143,18 +145,20 @@ inline void print_tokens(token::TokenList &tokens) {
         if (tok.kind == token::tokens::SEMICOLON || tok.kind == token::tokens::OPEN_BRACE ||
             tok.kind == token::tokens::CLOSE_BRACE ||
             tok.kind == token::tokens::SINGLE_LINE_COMMENT) {
-            if (tok.kind != token::tokens::CLOSE_BRACE)
+            if (tok.kind != token::tokens::CLOSE_BRACE) {
                 std::cout << "(" << colors::fg16::red << token::tokens_map.at(tok.kind).value()
                           << colors::reset << ", " << colors::fg16::green << tok.value
                           << colors::reset << ") ";
+}
 
             std::cout << "\n";
-            std::cout << std::string(indent * 4, ' ');
+            std::cout << std::string(static_cast<u16>(indent * 4), ' ');
 
-            if (tok.kind == token::tokens::CLOSE_BRACE)
+            if (tok.kind == token::tokens::CLOSE_BRACE) {
                 std::cout << "(" << colors::fg16::red << token::tokens_map.at(tok.kind).value()
                           << colors::reset << ", " << colors::fg16::green << tok.value
                           << colors::reset << ") ";
+}
 
             continue;
         }
