@@ -15,6 +15,7 @@ jobs:
               run: |
                   xmake f -m debug
                   xmake
+                  -y
             - name: Run tests
               run: |
                   xmake run test
