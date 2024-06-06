@@ -10,7 +10,7 @@ jobs:
             - uses: actions/checkout@v2
             - name: Install xmake
               run: |
-                  curl -fsSL https://xmake.io/shget.text | sh
+                curl -fsSL https://xmake.io/shget.text | bash
             - name: Configure and build
               run: |
                   xmake f -m debug
