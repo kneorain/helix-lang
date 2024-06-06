@@ -15,6 +15,8 @@
 #ifndef __TOKENS_H__
 #define __TOKENS_H__
 
+#include <string>
+
 #include "../enums/delimiters.def"
 #include "../enums/keywords.def"
 #include "../enums/literals.def"
@@ -26,6 +28,11 @@
 
 #define MAKE_TOKEN(name, string) name,
 #define MAKE_TOKEN_PAIR(name, string) std::pair{name, string},
+#define MAKE_TOKEN_CLASS(name, string)                            \
+    class name {                                                  \
+      public:                                                     \
+        constexpr std::string_view make_view() { return string; } \
+    };
 
 #define TOKENS_COUNT                \
     KEYWORD_TOKENS_COUNT            \
@@ -45,19 +52,23 @@
     PRIMITIVE_TOKENS(MACRO) \
     PUNCTUATION_TOKENS(MACRO)
 
-#define GENERATE_TOKENS_ENUM_AND_MAPPING()                                                \
-    enum tokens { TOKENS(MAKE_TOKEN) };                                                   \
-                                                                                          \
-    constexpr Mapping<tokens, TOKENS_COUNT> tokens_map{{TOKENS(MAKE_TOKEN_PAIR)}};        \
+#define GENERATE_TOKENS_ENUM_AND_MAPPING()                                         \
+    enum tokens { TOKENS(MAKE_TOKEN) };                                            \
+                                                                                   \
+    constexpr Mapping<tokens, TOKENS_COUNT> tokens_map{{TOKENS(MAKE_TOKEN_PAIR)}}; \
+                                                                                   \
+    namespace token_classes {                                                      \
+        TOKENS(MAKE_TOKEN_CLASS)                                                   \
+    }
 
 namespace token {
-    GENERATE_TOKENS_ENUM_AND_MAPPING() // generate enum and maps for all tokens
+    GENERATE_TOKENS_ENUM_AND_MAPPING()  // generate enum and maps for all tokens
 
     // undefine the macros to prevent global namespace pollution
     #undef MAKE_TOKEN
     #undef MAKE_TOKEN_PAIR
     #undef GENERATE_TOKENS_ENUM_AND_MAPPING
-    
+
     #undef KEYWORD_TOKENS_COUNT
     #undef DELIMITER_TOKENS_COUNT
     #undef LITERAL_TOKENS_COUNT
@@ -65,7 +76,7 @@ namespace token {
     #undef OTHER_TOKENS_COUNT
     #undef PRIMITIVE_TOKENS_COUNT
     #undef PUNCTUATION_TOKENS_COUNT
-    
+
     #undef TOKENS
     #undef KEYWORD_TOKENS
     #undef DELIMITER_TOKENS
@@ -74,6 +85,6 @@ namespace token {
     #undef OTHER_TOKENS
     #undef PRIMITIVE_TOKENS
     #undef PUNCTUATION_TOKENS
-}
+}  // namespace token
 
-#endif // __TOKENS_H__
+#endif  // __TOKENS_H__

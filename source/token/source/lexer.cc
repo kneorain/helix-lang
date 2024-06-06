@@ -14,7 +14,6 @@
 
 #include "../include/lexer.hh"
 
-#include <chrono>
 #include <filesystem>
 #include <fstream>
 #include <iostream>
@@ -103,6 +102,8 @@ Lexer::Lexer(std::string source, const std::string &filename)
     : tokens(filename)
     , source(std::move(source))
     , file_name(filename)
+    , currentChar('\0')
+    , cachePos(0)
     , currentPos(0)
     , line(1)
     , column(0)
@@ -211,7 +212,7 @@ inline token::Token Lexer::next_token() {
     throw error::Error(error::Compiler{std::string(1, current()), "unknown token"});
 }
 
-inline token::Token Lexer::parse_compiler_directive() {
+__attribute__((always_inline)) inline token::Token Lexer::parse_compiler_directive() {
     auto start = currentPos;
     auto end_loop = false;
     u32 brace_level = 0;
@@ -246,13 +247,13 @@ inline token::Token Lexer::parse_compiler_directive() {
             "<complier_directive>"};
 }
 
-inline token::Token Lexer::process_whitespace() {
+__attribute__((always_inline)) inline token::Token Lexer::process_whitespace() {
     auto result = token::Token{line, column, 1, offset, source.substr(currentPos, 1), "< >"};
     bare_advance();
     return result;
 }
 
-inline token::Token Lexer::parse_alpha_numeric() {
+__attribute__((always_inline)) inline token::Token Lexer::parse_alpha_numeric() {
     auto start = currentPos;
     bool end_loop = false;
 
@@ -294,7 +295,7 @@ inline token::Token Lexer::parse_alpha_numeric() {
             "<id>"};
 }
 
-inline token::Token Lexer::parse_numeric() {
+__attribute__((always_inline)) inline token::Token Lexer::parse_numeric() {
     // all the data within 0-9 is a number
     // a number can have the following chars after the first digit:
     // 0-9, ., F, f, U, u, o, x, b, e, E, A-F, a-f, _
@@ -333,7 +334,7 @@ inline token::Token Lexer::parse_numeric() {
             "<int>"};
 }
 
-inline token::Token Lexer::parse_string() {
+__attribute__((always_inline)) inline token::Token Lexer::parse_string() {
     // all the data within " (<string>) or ' (<char>) is a string
     auto start = currentPos;
     auto start_line = line;
@@ -388,7 +389,7 @@ inline token::Token Lexer::parse_string() {
             token_type};
 }
 
-inline token::Token Lexer::parse_operator() {
+__attribute__((always_inline)) inline token::Token Lexer::parse_operator() {
     auto start = currentPos;
     bool end_loop = false;
 
@@ -407,13 +408,13 @@ inline token::Token Lexer::parse_operator() {
             source.substr(start, currentPos - start)};
 }
 
-inline token::Token Lexer::parse_punctuation() {
+__attribute__((always_inline)) inline token::Token Lexer::parse_punctuation() {
     auto result = token::Token{line, column, 1, offset, source.substr(currentPos, 1)};
     bare_advance();
     return result;
 }
 
-inline char Lexer::advance(u16 n) {
+__attribute__((always_inline)) inline char Lexer::advance(u16 n) {
     if (currentPos + 1 > end) {
         return '\0';
     }
@@ -438,7 +439,7 @@ inline char Lexer::advance(u16 n) {
     return current();
 }
 
-inline void Lexer::bare_advance(u16 n) {
+__attribute__((always_inline)) inline void Lexer::bare_advance(u16 n) {
     ++currentPos;
 
     switch (current()) {
@@ -457,7 +458,7 @@ inline void Lexer::bare_advance(u16 n) {
     }
 }
 
-inline char Lexer::current() {
+__attribute__((always_inline)) inline char Lexer::current() {
     if (currentPos >= end) {
         return '\0';
     }
@@ -472,7 +473,7 @@ inline char Lexer::current() {
     return currentChar;
 }
 
-inline char Lexer::peek_back() const {
+__attribute__((always_inline)) inline char Lexer::peek_back() const {
     if (currentPos - 1 < 0) {
         return '\0';
     }
@@ -480,7 +481,7 @@ inline char Lexer::peek_back() const {
     return source[currentPos - 1];
 }
 
-[[nodiscard]] inline char Lexer::peek_forward() const {
+__attribute__((always_inline)) inline char Lexer::peek_forward() const {
     if (currentPos + 1 >= end) {
         return '\0';
     }

@@ -27,24 +27,28 @@ template <typename Enum, int N>
 struct Mapping {
     std::array<std::pair<Enum, std::string_view>, N> data;
 
-    constexpr Mapping(std::array<std::pair<Enum, std::string_view>, N> init_data) : data(init_data) {}
+    constexpr explicit Mapping(std::array<std::pair<Enum, std::string_view>, N> init_data) : data(init_data) {}
 
-    [[nodiscard]] constexpr std::optional<Enum> at(std::string_view x) const noexcept {
+    [[nodiscard]] constexpr std::optional<Enum> at(std::string_view str) const noexcept {
         for (const auto &[key, value] : data) {
-            if (value == x) {
+            if (value == str) {
                 return key;
             }
         }
         return std::nullopt;
     }
 
-    [[nodiscard]] constexpr std::optional<std::string_view> at(Enum x) const noexcept {
+    [[nodiscard]] constexpr std::optional<std::string_view> at(Enum token_type) const noexcept {
         for (const auto &[key, value] : data) {
-            if (key == x) {
+            if (key == token_type) {
                 return value;
             }
         }
         return std::nullopt;
+    }
+
+    [[nodiscard]] constexpr auto size() const noexcept {
+        return data.size();
     }
 
     [[nodiscard]] constexpr auto begin() const noexcept {

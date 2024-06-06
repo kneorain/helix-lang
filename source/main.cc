@@ -14,22 +14,30 @@
 
 #include <chrono>
 #include <iostream>
-
+#include <span>
 #include "token/include/lexer.hh"
-#include "token/include/token.hh"
-
+#include "parser/ast/ast.hh"
 int main() {
-    std::string source = lexer::readfile("/Volumes/Container/Projects/Helix/helix-lang/tests/test_tokenize.hlx");
+    std::string source  = lexer::readfile("/Volumes/Container/Projects/Helix/helix-lang/tests/test_tokenize.hlx");
+    
     auto lex = lexer::Lexer(source, "/Volumes/Container/Projects/Helix/helix-lang/tests/test_tokenize.hlx");
     auto start = std::chrono::high_resolution_clock::now();
     auto tokens = lex.tokenize();
-    auto end = std::chrono::high_resolution_clock::now();
-    
+    auto end   = std::chrono::high_resolution_clock::now();
+
+
     token::print_tokens(tokens);
 
-    
+    std::span<token::Token> slice{tokens};
+
+    // constructs a new ast node
+    AstFunctionHeader node;
+
+    node.parse(slice);
+
     // print time in ns
     std::cout << "Time taken: " << std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count() << "ns\n";
 
     return 0;
 }
+

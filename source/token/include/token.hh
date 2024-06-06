@@ -32,12 +32,12 @@ namespace token {
  */
 struct Token {
   public:
-    u64          line{};  ///< Line number where the token is located
-    u64        column{};  ///< Column number where the token starts
-    u64        length{};  ///< Length of the token
-    u64        offset{};  ///< Offset from the beginning of the file
-    tokens       kind{};  ///< Kind of the token
-    std::string value  ;  ///< String value of the token
+    u64 line{};         ///< Line number where the token is located
+    u64 column{};       ///< Column number where the token starts
+    u64 length{};       ///< Length of the token
+    u64 offset{};       ///< Offset from the beginning of the file
+    tokens kind{};      ///< Kind of the token
+    std::string value;  ///< String value of the token
 
     /**
      * @brief Constructs a Token with the specified attributes.
@@ -76,20 +76,19 @@ struct Token {
         , value("<<WHITE_SPACE>>") {}
 };
 
-class TokenList {
+class TokenList : public std::vector<token::Token> {
   private:
     std::string filename;
 
   public:
-    std::vector<token::Token> tokens;
     std::vector<token::Token>::iterator it;
 
     explicit TokenList(std::string filename)
         : filename(std::move(filename))
-        , it(tokens.begin()) {}
+        , it(this->begin()) {}
 
     token::Token next() {
-        if (it == tokens.end()) {
+        if (it == this->end()) {
             return token::Token{};
         }
 
@@ -97,7 +96,7 @@ class TokenList {
     }
 
     token::Token peek() {
-        if (it == tokens.end()) {
+        if (it == this->end()) {
             return token::Token{};
         }
 
@@ -105,7 +104,7 @@ class TokenList {
     }
 
     token::Token current() {
-        if (it == tokens.begin()) {
+        if (it == this->begin()) {
             return token::Token{};
         }
 
@@ -113,7 +112,7 @@ class TokenList {
     }
 
     token::Token previous() {
-        if (it == tokens.begin()) {
+        if (it == this->begin()) {
             return token::Token{};
         }
 
@@ -121,16 +120,16 @@ class TokenList {
     }
 
     void remove_left() {
-        tokens.erase(tokens.begin(), it);
-        it = tokens.begin();
+        this->erase(this->begin(), it);
+        it = this->begin();
     }
 
-    void reset() { it = tokens.begin(); }
+    void reset() { it = this->begin(); }
 
-    void append(const token::Token &token) { tokens.push_back(token); }
+    void append(const token::Token &token) { this->push_back(token); }
 
-    std::vector<token::Token>::iterator begin() { return tokens.begin(); }
-    std::vector<token::Token>::iterator end() { return tokens.end(); }
+    std::vector<token::Token>::iterator begin() { return std::vector<token::Token>::begin(); }
+    std::vector<token::Token>::iterator end()   { return std::vector<token::Token>::end(); }
 };
 
 inline void print_tokens(token::TokenList &tokens) {
@@ -149,7 +148,7 @@ inline void print_tokens(token::TokenList &tokens) {
                 std::cout << "(" << colors::fg16::red << token::tokens_map.at(tok.kind).value()
                           << colors::reset << ", " << colors::fg16::green << tok.value
                           << colors::reset << ") ";
-}
+            }
 
             std::cout << "\n";
             std::cout << std::string(static_cast<u16>(indent * 4), ' ');
@@ -158,7 +157,7 @@ inline void print_tokens(token::TokenList &tokens) {
                 std::cout << "(" << colors::fg16::red << token::tokens_map.at(tok.kind).value()
                           << colors::reset << ", " << colors::fg16::green << tok.value
                           << colors::reset << ") ";
-}
+            }
 
             continue;
         }

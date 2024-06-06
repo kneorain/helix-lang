@@ -19,7 +19,6 @@
 
 #include "token.hh"
 
-
 namespace lexer {
 std::string readfile(std::string &filename);
 std::string readfile(const std::string &filename);
@@ -55,19 +54,31 @@ class Lexer {
     [[nodiscard]] inline char peek_forward() const;
     [[nodiscard]] inline char peek_back() const;
 
-    token::TokenList tokens;       //> list of tokens
-    std::string      source;       //> source code
-    std::string      file_name;    //> file name
-    
-    char currentChar; //> current character
-    u64  cachePos;    //> cache position
-    u64  currentPos;   //> current position in the source
-    u64  line;         //> line number
-    u64  column;       //> position in the line
-    u64  offset;       //> position of the end of the token
-    u64  end;          //> end of the source
+    token::TokenList tokens;  //> list of tokens
+    std::string source;       //> source code
+    std::string file_name;    //> file name
 
+    char currentChar;  //> current character
+    u64 cachePos;      //> cache position
+    u64 currentPos;    //> current position in the source
+    u64 line;          //> line number
+    u64 column;        //> position in the line
+    u64 offset;        //> position of the end of the token
+    u64 end;           //> end of the source
 };
+
+// prevent global namespace pollution
+#undef A_Z
+#undef STRING_BYPASS
+#undef a_z_EXCLUDE_rbuf
+#undef a_z
+#undef _0_9
+#undef _non_float_numeric
+#undef WHITE_SPACE
+#undef STRING
+#undef PUNCTUATION
+#undef OPERATORS
+
 }  // namespace lexer
 
 #endif  // __LEXER_H__
