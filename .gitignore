@@ -8,3 +8,5 @@ build/
 # Clanged Cache
 .clangd/
 .cache/
+target/
+vsxmake2022/
