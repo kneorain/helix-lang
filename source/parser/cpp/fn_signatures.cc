@@ -1,3 +1,17 @@
+/**
+ * @author Dhruvan Kartik (Co-authored by ChatGPT)
+ * @copyright Copyright (c) 2024 (CC BY 4.0)
+ *
+ * @note This code is part of the Helix Language Project and is licensed under the Attribution 4.0
+ * International license (CC BY 4.0). You are allowed to use, modify, redistribute, and create
+ * derivative works, even for commercial purposes, provided that you give appropriate credit,
+ * provide a link to the license, and indicate if changes were made. For more information, please
+ * visit: https://creativecommons.org/licenses/by/4.0/ SPDX-License-Identifier: CC-BY-4.0
+ *
+ * @note This code is provided by the creators of Helix. Visit our website at:
+ * https://helix-lang.com/ for more information.
+ */
+
 #include <clang/AST/ASTContext.h>
 #include <clang/AST/RecursiveASTVisitor.h>
 #include <clang/ASTMatchers/ASTMatchFinder.h>
@@ -65,7 +79,7 @@ class FunctionSignatureAction : public ASTFrontendAction {
 
 static llvm::cl::OptionCategory MyToolCategory("my-tool options");
 
-int main(int argc, const char **argv) {
+int main2(int argc, const char **argv) {
     auto OptionsParser = CommonOptionsParser::create(argc, argv, MyToolCategory);
     if (!OptionsParser) {
         llvm::errs() << OptionsParser.takeError();
