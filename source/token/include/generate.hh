@@ -15,8 +15,6 @@
 #ifndef __TOKENS_H__
 #define __TOKENS_H__
 
-#include <string>
-
 #include "../enums/delimiters.def"
 #include "../enums/keywords.def"
 #include "../enums/literals.def"
@@ -41,7 +39,7 @@
         + OPERATOR_TOKENS_COUNT     \
         + OTHER_TOKENS_COUNT        \
         + PRIMITIVE_TOKENS_COUNT    \
-        + PUNCTUATION_TOKENS_COUNT  \
+        + PUNCTUATION_TOKENS_COUNT
 
 #define TOKENS(MACRO)       \
     KEYWORD_TOKENS(MACRO)   \
@@ -50,18 +48,18 @@
     OPERATOR_TOKENS(MACRO)  \
     OTHER_TOKENS(MACRO)     \
     PRIMITIVE_TOKENS(MACRO) \
-    PUNCTUATION_TOKENS(MACRO) \
+    PUNCTUATION_TOKENS(MACRO)
 
 // The enum inside of the struct removes the naming conflict with the token classes.
 
 #define GENERATE_TOKENS_ENUM_AND_MAPPING()                                         \
                                                                                    \
-    struct tokens { enum { TOKENS(MAKE_TOKEN) } };                                 \
+    enum tokens {TOKENS(MAKE_TOKEN) };                                             \
                                                                                    \
                                                                                    \
     constexpr Mapping<tokens, TOKENS_COUNT> tokens_map{{TOKENS(MAKE_TOKEN_PAIR)}}; \
                                                                                    \
-    TOKENS(MAKE_TOKEN_CLASS)                                                       \
+    namespace token_classes { TOKENS(MAKE_TOKEN_CLASS) }
 
 namespace token {
     GENERATE_TOKENS_ENUM_AND_MAPPING()  // generate enum and maps for all tokens

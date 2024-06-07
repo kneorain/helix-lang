@@ -7,6 +7,7 @@
 #include <string_view>
 
 #include "../../../token/include/token.hh"
+using namespace token;
 // token::tokens::...
 // token::token_map::at(token::tokens::...) // to get the string representation of the token type
 
@@ -93,10 +94,10 @@ concept SeparationTypeConcept = requires(SeparationType type) {
 
 
 template <AstParse T>
-using AstCommaSeparated = AstSeparated<T, token::COMMA, SeparationType::OptionalTrailing>;
+using AstCommaSeparated = AstSeparated<T, token_classes::COMMA, SeparationType::OptionalTrailing>;
 
 template <AstParse T>
-using AstSemiColonSeparated = AstSeparated<T, token::SEMICOLON, SeparationType::NoTrailing>;
+using AstSemiColonSeparated = AstSeparated<T, token_classes::SEMICOLON, SeparationType::NoTrailing>;
 
 
 
@@ -116,19 +117,19 @@ class AstDelimited : public AstNode<T> {
 
 /** (T) **/
 template <AstParse T>
-using ParenDelimited = AstDelimited<T, token::OPEN_PAREN, token::CLOSE_PAREN>;
+using ParenDelimited = AstDelimited<T, token_classes::OPEN_PAREN, token_classes::CLOSE_PAREN>;
 
 /** <T> **/
 template <AstParse T>
-using AngleDelimited = AstDelimited<T, token::OPEN_ANGLE, token::CLOSE_ANGLE>;
+using AngleDelimited = AstDelimited<T, token_classes::OPEN_ANGLE, token_classes::CLOSE_ANGLE>;
 
 /** [T] **/
 template <AstParse T>
-using BracketDelimited = AstDelimited<T, token::OPEN_BRACKET,token::CLOSE_BRACKET>;
+using BracketDelimited = AstDelimited<T, token_classes::OPEN_BRACKET,token_classes::CLOSE_BRACKET>;
 
 /** {T} **/
 template<AstParse T>
-using BraceDelimited = AstDelimited<T,token::>
+using BraceDelimited = AstDelimited<T,token_classes::OPEN_BRACE,token_classes::CLOSE_BRACE>;
 
 /** <T, T, ...> **/
 template <AstParse T>
