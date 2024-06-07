@@ -55,7 +55,15 @@ class AstNode : public AstBase {
     std::vector<T> m_children{};
 };
 
-template <AstParse T, TokenConcept sep>
+// ---------------------------------------------- Seperated
+
+/**
+ * 
+ * @tparam T
+ * @tparam sep
+ * @tparam Type This can either be SeparationType::Trailing, SeparationType::OptionalTrailing or SeparationType::NoTrailing
+*/
+template <AstParse T, TokenConcept sep, SeparationTypeConcept Type>
 class AstSeparated : public AstNode<T> {
   public:
     AstSeparated() {}
@@ -64,8 +72,37 @@ class AstSeparated : public AstNode<T> {
     std::expected<std::span<token::Token>, AstError> parse(std::span<token::Token> tokens) override;
 };
 
+// optional trailing T: T, T, T, T or T, T, T, T,
+// separated and trailing T : T, T, T, T,
+// No trailing T : T, T, T
+// using Seperated
+
+enum SeparationType {
+    Trailing,
+    OptionalTrailing,
+    NoTrailing
+};
+
+// make concept that does same as for seperation type enum that does or
+
+concept SeparationTypeConcept = requires(SeparationType type) {
+    { type == SeparationType::Trailing } -> std::same_as<bool>;
+    { type == SeparationType::OptionalTrailing } -> std::same_as<bool>;
+    { type == SeparationType::NoTrailing } -> std::same_as<bool>;
+};
+
+
 template <AstParse T>
-using AstCommaSeparated = AstSeparated<T, token::token_classes::COMMA>;
+using AstCommaSeparated = AstSeparated<T, token::COMMA, SeparationType::OptionalTrailing>;
+
+template <AstParse T>
+using AstSemiColonSeparated = AstSeparated<T, token::SEMICOLON, SeparationType::NoTrailing>;
+
+
+
+
+
+// ---------------------------------------------- Delimited
 
 template <AstParse T, TokenConcept start, TokenConcept end>
 class AstDelimited : public AstNode<T> {
@@ -76,6 +113,46 @@ class AstDelimited : public AstNode<T> {
     std::expected<std::span<token::Token>, AstError> parse(std::span<token::Token> tokens) override;
 };
 
+
+/** (T) **/
+template <AstParse T>
+using ParenDelimited = AstDelimited<T, token::OPEN_PAREN, token::CLOSE_PAREN>;
+
+/** <T> **/
+template <AstParse T>
+using AngleDelimited = AstDelimited<T, token::OPEN_ANGLE, token::CLOSE_ANGLE>;
+
+/** [T] **/
+template <AstParse T>
+using BracketDelimited = AstDelimited<T, token::OPEN_BRACKET,token::CLOSE_BRACKET>;
+
+/** {T} **/
+template<AstParse T>
+using BraceDelimited = AstDelimited<T,token::>
+
+/** <T, T, ...> **/
+template <AstParse T>
+using CommaSeparatedAngleDelimited = AngleDelimited<AstCommaSeparated<T>>;
+
+/** (T, T, ...) **/
+template <AstParse T>
+using CommaSeparatedParenDelimited = ParenDelimited<AstCommaSeparated<T>>;
+
+/** [T, T, ...] **/
+template <AstParse T>
+using CommaSeparatedBracketDelimited = BracketDelimited<AstCommaSeparated<T>>;
+
+/** {T, T, ...} **/
+template <AstParse T>
+using CommaSeparatedBraceDelimited = BraceDelimited<AstCommaSeparated<T>>;
+
+
+
+using CPPAstParameter = RoundCommaDelimited<AstVariable>;
+using CppTemplateArguments = AngleCommaDelimited<AstVariable>;
+
+
+
 class AstVariable : public AstBase {
   public:
     AstVariable() {}
@@ -84,16 +161,6 @@ class AstVariable : public AstBase {
     std::expected<std::span<token::Token>, AstError> parse(std::span<token::Token> tokens) override;
 };
 
-/** (T,T,...) */
-template <AstParse T>
-using RoundCommaDelimited  = AstDelimited<AstCommaSeparated<T>, token::token_classes::OPEN_PAREN, token::token_classes::CLOSE_PAREN>;
-
-/** < T,T,...>*/
-template <AstParse T>
-using AngleCommaDelimited  = AstDelimited<AstCommaSeparated<T>, token::token_classes::OPEN_ANGLE, token::token_classes::CLOSE_ANGLE>;
-
-using CPPAstParameter      = RoundCommaDelimited<AstVariable>;
-using CppTemplateArguments = AngleCommaDelimited<AstVariable>;
 
 class AstLabel : public AstBase {
   public:

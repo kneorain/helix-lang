@@ -29,6 +29,8 @@ void AstBase::parse(std::span<token::Token> tokens) {
 }
 */
 
+// def
+
 template <AstParse T>
 std::expected<std::span<token::Token>, AstError> AstNode<T>::parse(std::span<token::Token> tokens) {
     // Implement parsing logic for AstNode
@@ -42,53 +44,42 @@ AstVariable::parse(std::span<token::Token> tokens) {
     return std::unexpected(AstError::Unimplemented);
 }
 
-template <AstParse T, TokenConcept sep>
+template <AstParse T, TokenConcept sep, SeparationTypeConcept Type >
 std::expected<std::span<token::Token>, AstError>
-AstSeparated<T, sep>::parse(std::span<token::Token> tokens) {
+AstSeparated<T, sep, Type>::parse(std::span<token::Token> tokens) {
 
     // Implement parsing logic for AstSeparated
-    static std::string_view sep_str = sep::MakeView();
+    constexpr std::string_view sep_str = sep::make_view();
+
+    
     return std::unexpected(AstError::Unimplemented);
 }
 
 template <AstParse T, TokenConcept start, TokenConcept end>
 std::expected<std::span<token::Token>, AstError>
 AstDelimited<T, start, end>::parse(std::span<token::Token> tokens) {
-    static std::string_view start_str = start::MakeView();
-    static std::string_view end_str = end::MakeView();
+    static std::string_view start_str = start::make_view();
+    static std::string_view end_str = end::make_view();
 
     if (tokens[0].value != start_str)
         return std::unexpected(AstError::ExpectedToken);
 
     tokens = tokens.subspan(1);
 
-    while (true) {
+    T t;
 
-        T t;
+    auto exp = t.parse(tokens);
 
-        auto exp = t.parse(tokens);
-
-        if (exp) {
-
-            this->m_children.PushBack(tokens);
-
-            if (tokens.first().GetSubTokensAsStr() == sep)
-                tokens = tokens.subspan(1);
-            else
-                break;
-
-        } else
-            return exp;
-    }
     // fn params can be empty
-    /*if (this->m_children.IsEmpty()) {
+    // todo make an enum for empty or non empty requirements 
+   /* if (this->m_children.IsEmpty()) {
 
 
-    }*/
+    }
     if () {};
 
     if (tokens[0].value != end_str)
-        return std::nullopt;
+        return std::nullopt;*/
 
     return std::unexpected(AstError::Unimplemented);
 }

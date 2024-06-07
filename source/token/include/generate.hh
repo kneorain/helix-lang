@@ -50,16 +50,18 @@
     OPERATOR_TOKENS(MACRO)  \
     OTHER_TOKENS(MACRO)     \
     PRIMITIVE_TOKENS(MACRO) \
-    PUNCTUATION_TOKENS(MACRO)
+    PUNCTUATION_TOKENS(MACRO) \
+
+// The enum inside of the struct removes the naming conflict with the token classes.
 
 #define GENERATE_TOKENS_ENUM_AND_MAPPING()                                         \
-    enum tokens { TOKENS(MAKE_TOKEN) };                                            \
+                                                                                   \
+    struct tokens { enum { TOKENS(MAKE_TOKEN) } };                                 \
+                                                                                   \
                                                                                    \
     constexpr Mapping<tokens, TOKENS_COUNT> tokens_map{{TOKENS(MAKE_TOKEN_PAIR)}}; \
                                                                                    \
-    namespace token_classes {                                                      \
-        TOKENS(MAKE_TOKEN_CLASS)                                                   \
-    }
+    TOKENS(MAKE_TOKEN_CLASS)                                                       \
 
 namespace token {
     GENERATE_TOKENS_ENUM_AND_MAPPING()  // generate enum and maps for all tokens
