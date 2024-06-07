@@ -44,44 +44,56 @@ AstVariable::parse(std::span<token::Token> tokens) {
     return std::unexpected(AstError::Unimplemented);
 }
 
-template <AstParse T, TokenConcept sep, SeparationTypeConcept Type >
+template <AstParse T, AstSegment sep, Separation Type >
 std::expected<std::span<token::Token>, AstError>
 AstSeparated<T, sep, Type>::parse(std::span<token::Token> tokens) {
 
     // Implement parsing logic for AstSeparated
     constexpr std::string_view sep_str = sep::make_view();
 
+
+
+    if constexpr (Separation::OptionalTrailing == Type) {}
+
+    if constexpr (Separation::Trailing == Type){}
+    
+    if constexpr (Separation::NoTrailing == Type){}
+
+
+
+
+
     
     return std::unexpected(AstError::Unimplemented);
 }
 
-template <AstParse T, TokenConcept start, TokenConcept end>
-std::expected<std::span<token::Token>, AstError>
-AstDelimited<T, start, end>::parse(std::span<token::Token> tokens) {
-    static std::string_view start_str = start::make_view();
-    static std::string_view end_str = end::make_view();
 
-    if (tokens[0].value != start_str)
+
+template <AstParse T, AstSegment start, AstSegment end>
+std::expected<std::span<token::Token>, AstError> AstDelimited<T, start, end>::parse(std::span<token::Token> tokens) {
+    // Remove the start
+    if (tokens[0].value != start::make_view())
         return std::unexpected(AstError::ExpectedToken);
-
+    
     tokens = tokens.subspan(1);
 
-    T t;
-
-    auto exp = t.parse(tokens);
-
-    // fn params can be empty
-    // todo make an enum for empty or non empty requirements 
-   /* if (this->m_children.IsEmpty()) {
-
-
+    T astNode;
+    // TODO: need methods to add row and column to the astNode
+    std::expected<std::span<token::Token>, AstError> expect = astNode.parse(tokens);
+    
+    if (expect.has_value()) {
+        this->m_children.push_back(astNode);
+    } else {
+        return expect; 
     }
-    if () {};
 
-    if (tokens[0].value != end_str)
-        return std::nullopt;*/
+    // Remove the end
+    if (tokens[0].value != end::make_view())
+        return std::unexpected(AstError::ExpectedToken);
 
-    return std::unexpected(AstError::Unimplemented);
+    
+    // Return the remaining tokens
+    return tokens.subspan(1);
 }
 
 std::expected<std::span<token::Token>, AstError> AstLabel::parse(std::span<token::Token> tokens) {

@@ -29,7 +29,7 @@
 #define MAKE_TOKEN_CLASS(name, string)                            \
     class name {                                                  \
       public:                                                     \
-        constexpr std::string_view make_view() { return string; } \
+        consteval std::string_view make_view() { return string; } \
     };
 
 #define TOKENS_COUNT                \
@@ -59,7 +59,7 @@
                                                                                    \
     constexpr Mapping<tokens, TOKENS_COUNT> tokens_map{{TOKENS(MAKE_TOKEN_PAIR)}}; \
                                                                                    \
-    namespace token_classes { TOKENS(MAKE_TOKEN_CLASS) }
+    namespace classes { TOKENS(MAKE_TOKEN_CLASS) }
 
 namespace token {
     GENERATE_TOKENS_ENUM_AND_MAPPING()  // generate enum and maps for all tokens

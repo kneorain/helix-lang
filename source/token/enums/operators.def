@@ -17,7 +17,7 @@
 
 #define OPERATOR_TOKENS_COUNT 57
 
-#define OPERATOR_TOKENS(MACRO)                   \
+#define OPERATOR_TOKENS(MACRO)                    \
     MACRO(OPERATOR_ADD, "+")                      \
     MACRO(OPERATOR_SUB, "-")                      \
     MACRO(OPERATOR_MUL, "*")                      \
