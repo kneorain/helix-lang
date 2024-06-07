@@ -18,31 +18,31 @@
 #define PRIMITIVE_TOKENS_COUNT 26
 
 #define PRIMITIVE_TOKENS(MACRO) \
-    MACRO(VOID, "void")         \
-    MACRO(BOOL, "bool")         \
-    MACRO(BYTE, "byte")         \
-    MACRO(CHAR, "char")         \
-    MACRO(POINTER, "ptr")       \
-    MACRO(I8, "i8")             \
-    MACRO(U8, "u8")             \
-    MACRO(I16, "i16")           \
-    MACRO(U16, "u16")           \
-    MACRO(I32, "i32")           \
-    MACRO(U32, "u32")           \
-    MACRO(F32, "f32")           \
-    MACRO(I64, "i64")           \
-    MACRO(U64, "u64")           \
-    MACRO(F64, "f64")           \
-    MACRO(FLOAT, "float")       \
-    MACRO(I128, "i128")         \
-    MACRO(U128, "u128")         \
-    MACRO(INT, "int")           \
-    MACRO(DECIMAL, "decimal")   \
-    MACRO(STRING, "string")     \
-    MACRO(LIST, "list")         \
-    MACRO(TUPLE, "tuple")       \
-    MACRO(SET, "set")           \
-    MACRO(MAP, "map")           \
-    MACRO(ANY, "any")
+    MACRO(PRIMITIVE_VOID, "void")         \
+    MACRO(PRIMITIVE_BOOL, "bool")         \
+    MACRO(PRIMITIVE_BYTE, "byte")         \
+    MACRO(PRIMITIVE_CHAR, "char")         \
+    MACRO(PRIMITIVE_POINTER, "ptr")       \
+    MACRO(PRIMITIVE_I8, "i8")             \
+    MACRO(PRIMITIVE_U8, "u8")             \
+    MACRO(PRIMITIVE_I16, "i16")           \
+    MACRO(PRIMITIVE_U16, "u16")           \
+    MACRO(PRIMITIVE_I32, "i32")           \
+    MACRO(PRIMITIVE_U32, "u32")           \
+    MACRO(PRIMITIVE_F32, "f32")           \
+    MACRO(PRIMITIVE_I64, "i64")           \
+    MACRO(PRIMITIVE_U64, "u64")           \
+    MACRO(PRIMITIVE_F64, "f64")           \
+    MACRO(PRIMITIVE_FLOAT, "float")       \
+    MACRO(PRIMITIVE_I128, "i128")         \
+    MACRO(PRIMITIVE_U128, "u128")         \
+    MACRO(PRIMITIVE_INT, "int")           \
+    MACRO(PRIMITIVE_DECIMAL, "decimal")   \
+    MACRO(PRIMITIVE_STRING, "string")     \
+    MACRO(PRIMITIVE_LIST, "list")         \
+    MACRO(PRIMITIVE_TUPLE, "tuple")       \
+    MACRO(PRIMITIVE_SET, "set")           \
+    MACRO(PRIMITIVE_MAP, "map")           \
+    MACRO(PRIMITIVE_ANY, "any")
 
 #endif  // __PRIMITIVES_H__

@@ -18,21 +18,21 @@
 #define PUNCTUATION_TOKENS_COUNT 16
 
 #define PUNCTUATION_TOKENS(MACRO)    \
-    MACRO(OPEN_PAREN, "(")           \
-    MACRO(CLOSE_PAREN, ")")          \
-    MACRO(OPEN_BRACE, "{")           \
-    MACRO(CLOSE_BRACE, "}")          \
-    MACRO(OPEN_BRACKET, "[")         \
-    MACRO(CLOSE_BRACKET, "]")        \
-    MACRO(OPEN_ANGLE, "<")           \
-    MACRO(CLOSE_ANGLE, ">")          \
-    MACRO(COMMA, ",")                \
-    MACRO(SEMICOLON, ";")            \
-    MACRO(COLON, ":")                \
-    MACRO(QUESTION_MARK, "?")        \
-    MACRO(DOT, ".")                  \
-    MACRO(SINGLE_LINE_COMMENT, "//") \
-    MACRO(MULTI_LINE_COMMENT, "/*")  \
-    MACRO(HASH, "#")
+    MACRO(PUNCTUATION_OPEN_PAREN, "(")           \
+    MACRO(PUNCTUATION_CLOSE_PAREN, ")")          \
+    MACRO(PUNCTUATION_OPEN_BRACE, "{")           \
+    MACRO(PUNCTUATION_CLOSE_BRACE, "}")          \
+    MACRO(PUNCTUATION_OPEN_BRACKET, "[")         \
+    MACRO(PUNCTUATION_CLOSE_BRACKET, "]")        \
+    MACRO(PUNCTUATION_OPEN_ANGLE, "<")           \
+    MACRO(PUNCTUATION_CLOSE_ANGLE, ">")          \
+    MACRO(PUNCTUATION_COMMA, ",")                \
+    MACRO(PUNCTUATION_SEMICOLON, ";")            \
+    MACRO(PUNCTUATION_COLON, ":")                \
+    MACRO(PUNCTUATION_QUESTION_MARK, "?")        \
+    MACRO(PUNCTUATION_DOT, ".")                  \
+    MACRO(PUNCTUATION_SINGLE_LINE_COMMENT, "//") \
+    MACRO(PUNCTUATION_MULTI_LINE_COMMENT, "/*")  \
+    MACRO(PUNCTUATION_HASH, "#")
 
 #endif  // __PUNCTUATION_H__

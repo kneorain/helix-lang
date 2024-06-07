@@ -1,3 +1,17 @@
+/**
+ * @author Dhruvan Kartik
+ * @copyright Copyright (c) 2024 (CC BY 4.0)
+ *
+ * @note This code is part of the Helix Language Project and is licensed under the Attribution 4.0
+ * International license (CC BY 4.0). You are allowed to use, modify, redistribute, and create
+ * derivative works, even for commercial purposes, provided that you give appropriate credit,
+ * provide a link to the license, and indicate if changes were made. For more information, please
+ * visit: https://creativecommons.org/licenses/by/4.0/ SPDX-License-Identifier: CC-BY-4.0
+ *
+ * @note This code is provided by the creators of Helix. Visit our website at:
+ * https://helix-lang.com/ for more information.
+ */
+
 #ifndef __AST_H__
 #define __AST_H__
 
@@ -7,7 +21,6 @@
 #include <string_view>
 
 #include "../../../token/include/token.hh"
-using namespace token;
 // token::tokens::...
 // token::token_map::at(token::tokens::...) // to get the string representation of the token type
 
@@ -75,10 +88,10 @@ class AstSeparated : public AstNode<T> {
 // make concept that does same as for seperation type enum that does or
 
 template <AstParse T>
-using AstCommaSeparated = AstSeparated<T, classes::COMMA, Separation::OptionalTrailing>;
+using AstCommaSeparated = AstSeparated<T, token::classes::PUNCTUATION_COMMA, Separation::OptionalTrailing>;
 
 template <AstParse T>
-using AstSemiColonSeparated = AstSeparated<T, classes::SEMICOLON, Separation::NoTrailing>;
+using AstSemiColonSeparated = AstSeparated<T, token::classes::PUNCTUATION_SEMICOLON, Separation::NoTrailing>;
 
 // ---------------------------------------------- Delimited
 
@@ -93,19 +106,19 @@ class AstDelimited : public AstNode<T> {
 
 /** (T) **/
 template <AstParse T>
-using ParenDelimited = AstDelimited<T, classes::OPEN_PAREN, classes::CLOSE_PAREN>;
+using ParenDelimited = AstDelimited<T, token::classes::PUNCTUATION_OPEN_PAREN, token::classes::PUNCTUATION_CLOSE_PAREN>;
 
 /** <T> **/
 template <AstParse T>
-using AngleDelimited = AstDelimited<T, classes::OPEN_ANGLE, classes::CLOSE_ANGLE>;
+using AngleDelimited = AstDelimited<T, token::classes::PUNCTUATION_OPEN_ANGLE, token::classes::PUNCTUATION_CLOSE_ANGLE>;
 
 /** [T] **/
 template <AstParse T>
-using BracketDelimited = AstDelimited<T, classes::OPEN_BRACKET, classes::CLOSE_BRACKET>;
+using BracketDelimited = AstDelimited<T, token::classes::PUNCTUATION_OPEN_BRACKET, token::classes::PUNCTUATION_CLOSE_BRACKET>;
 
 /** {T} **/
 template <AstParse T>
-using BraceDelimited = AstDelimited<T, classes::OPEN_BRACE, classes::CLOSE_BRACE>;
+using BraceDelimited = AstDelimited<T, token::classes::PUNCTUATION_OPEN_BRACE, token::classes::PUNCTUATION_CLOSE_BRACE>;
 
 /** <T, T, ...> **/
 template <AstParse T>

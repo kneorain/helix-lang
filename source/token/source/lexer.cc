@@ -24,6 +24,8 @@
 #include "../include/cases.def"
 #include "../types/file_cache.hh"
 
+using namespace token;
+
 namespace lexer {
 std::string _internal_read_file(const std::string &filename) {
     auto cached_file = file_sys::FileCache::get_file(filename);
@@ -110,11 +112,11 @@ Lexer::Lexer(std::string source, const std::string &filename)
     , offset(0)
     , end(this->source.size()) {}
 
-token::TokenList Lexer::tokenize() {
+TokenList Lexer::tokenize() {
     while ((currentPos + 1) <= end) {
         auto token = next_token();
 
-        if (token.kind == token::tokens::WHITESPACE) {
+        if (token.kind == tokens::WHITESPACE) {
             continue;
         }
         tokens.append(token);
@@ -122,7 +124,7 @@ token::TokenList Lexer::tokenize() {
     return tokens;
 }
 
-inline token::Token Lexer::process_single_line_comment() {
+inline Token Lexer::process_single_line_comment() {
     auto start = currentPos;
     while (current() != '\n' && currentPos < end) {
         bare_advance();
@@ -135,7 +137,7 @@ inline token::Token Lexer::process_single_line_comment() {
             "//"};
 }
 
-inline token::Token Lexer::process_multi_line_comment() {
+inline Token Lexer::process_multi_line_comment() {
     auto start = currentPos;
     u32 comment_depth = 0;
     while (currentPos < end) {
@@ -173,11 +175,11 @@ inline token::Token Lexer::process_multi_line_comment() {
             "/*"};
 }
 
-inline token::Token Lexer::next_token() {
+inline Token Lexer::next_token() {
     switch (source[currentPos]) {
         case WHITE_SPACE:
             bare_advance();
-            return token::Token{};
+            return Token{};
         case '/':
             switch (peek_forward()) {
                 case '/':
@@ -212,7 +214,7 @@ inline token::Token Lexer::next_token() {
     throw error::Error(error::Compiler{std::string(1, current()), "unknown token"});
 }
 
-__attribute__((always_inline)) inline token::Token Lexer::parse_compiler_directive() {
+__attribute__((always_inline)) inline Token Lexer::parse_compiler_directive() {
     auto start = currentPos;
     auto end_loop = false;
     u32 brace_level = 0;
@@ -247,13 +249,13 @@ __attribute__((always_inline)) inline token::Token Lexer::parse_compiler_directi
             "<complier_directive>"};
 }
 
-__attribute__((always_inline)) inline token::Token Lexer::process_whitespace() {
-    auto result = token::Token{line, column, 1, offset, source.substr(currentPos, 1), "< >"};
+__attribute__((always_inline)) inline Token Lexer::process_whitespace() {
+    auto result = Token{line, column, 1, offset, source.substr(currentPos, 1), "< >"};
     bare_advance();
     return result;
 }
 
-__attribute__((always_inline)) inline token::Token Lexer::parse_alpha_numeric() {
+__attribute__((always_inline)) inline Token Lexer::parse_alpha_numeric() {
     auto start = currentPos;
     bool end_loop = false;
 
@@ -271,10 +273,10 @@ __attribute__((always_inline)) inline token::Token Lexer::parse_alpha_numeric() 
         bare_advance();
     }
 
-    auto result = token::Token{line, column - (currentPos - start), currentPos - start, offset,
+    auto result = Token{line, column - (currentPos - start), currentPos - start, offset,
                                source.substr(start, currentPos - start)};
 
-    if (result.kind != token::tokens::OTHERS) {
+    if (result.kind != tokens::OTHERS) {
         return result;
     }
 
@@ -295,7 +297,7 @@ __attribute__((always_inline)) inline token::Token Lexer::parse_alpha_numeric() 
             "<id>"};
 }
 
-__attribute__((always_inline)) inline token::Token Lexer::parse_numeric() {
+__attribute__((always_inline)) inline Token Lexer::parse_numeric() {
     // all the data within 0-9 is a number
     // a number can have the following chars after the first digit:
     // 0-9, ., F, f, U, u, o, x, b, e, E, A-F, a-f, _
@@ -334,7 +336,7 @@ __attribute__((always_inline)) inline token::Token Lexer::parse_numeric() {
             "<int>"};
 }
 
-__attribute__((always_inline)) inline token::Token Lexer::parse_string() {
+__attribute__((always_inline)) inline Token Lexer::parse_string() {
     // all the data within " (<string>) or ' (<char>) is a string
     auto start = currentPos;
     auto start_line = line;
@@ -389,7 +391,7 @@ __attribute__((always_inline)) inline token::Token Lexer::parse_string() {
             token_type};
 }
 
-__attribute__((always_inline)) inline token::Token Lexer::parse_operator() {
+__attribute__((always_inline)) inline Token Lexer::parse_operator() {
     auto start = currentPos;
     bool end_loop = false;
 
@@ -408,8 +410,8 @@ __attribute__((always_inline)) inline token::Token Lexer::parse_operator() {
             source.substr(start, currentPos - start)};
 }
 
-__attribute__((always_inline)) inline token::Token Lexer::parse_punctuation() {
-    auto result = token::Token{line, column, 1, offset, source.substr(currentPos, 1)};
+__attribute__((always_inline)) inline Token Lexer::parse_punctuation() {
+    auto result = Token{line, column, 1, offset, source.substr(currentPos, 1)};
     bare_advance();
     return result;
 }

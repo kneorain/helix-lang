@@ -21,6 +21,7 @@
 #include <string>
 #include <string_view>
 #include <vector>
+#include <shared_mutex>
 
 #include "../../include/colors_ansi.hh"
 #include "../../include/inttypes.hh"
@@ -31,14 +32,14 @@ namespace token {
  * @brief Structure representing a token in the source code.
  */
 struct Token {
+    u64        line{}; ///< Line number where the token is located
+    u64      column{}; ///< Column number where the token starts
+    u64      length{}; ///< Length of the token
+    u64      offset{}; ///< Offset from the beginning of the file
+    tokens     kind{}; ///< Kind of the token
+    std::string value; ///< String value of the token
+    mutable std::shared_mutex mtx; ///< Mutex for thread safety
   public:
-    u64 line{};         ///< Line number where the token is located
-    u64 column{};       ///< Column number where the token starts
-    u64 length{};       ///< Length of the token
-    u64 offset{};       ///< Offset from the beginning of the file
-    tokens kind{};      ///< Kind of the token
-    std::string value;  ///< String value of the token
-
     /**
      * @brief Constructs a Token with the specified attributes.
      *
@@ -74,48 +75,137 @@ struct Token {
     Token()
         : kind(tokens::WHITESPACE)
         , value("<<WHITE_SPACE>>") {}
+
+    Token(const Token& other) : line(other.line), column(other.column), length(other.length), offset(other.offset), kind(other.kind), value(other.value) {
+        std::shared_lock<std::shared_mutex> lock(other.mtx);
+    }
+
+    // Manually implement the copy assignment operator
+    Token& operator=(const Token& other) {
+        if (this == &other) {
+            return *this;
+        }
+        std::unique_lock<std::shared_mutex> lock1(mtx, std::defer_lock);
+        std::shared_lock<std::shared_mutex> lock2(other.mtx, std::defer_lock);
+        std::lock(lock1, lock2);
+
+        line = other.line;
+        column = other.column;
+        length = other.length;
+        offset = other.offset;
+        kind = other.kind;
+        value = other.value;
+
+        return *this;
+    }
+    
+    ~Token() = default;
+
+    u64 getLineNumber() const {
+        std::shared_lock<std::shared_mutex> lock(mtx);
+        return line;
+    }
+
+    u64 getColumnNumber() const {
+        std::shared_lock<std::shared_mutex> lock(mtx);
+        return column;
+    }
+
+    u64 getLength() const {
+        std::shared_lock<std::shared_mutex> lock(mtx);
+        return length;
+    }
+
+    u64 getOffset() const {
+        std::shared_lock<std::shared_mutex> lock(mtx);
+        return offset;
+    }
+
+    tokens getTokenKind() const {
+        std::shared_lock<std::shared_mutex> lock(mtx);
+        return kind;
+    }
+
+    std::string getValue() const {
+        std::shared_lock<std::shared_mutex> lock(mtx);
+        return value;
+    }
+
+    void setLineNumber(u64 line) {
+        std::shared_lock<std::shared_mutex> lock(mtx);
+        this->line = line;
+    }
+
+    void setColumnNumber(u64 column) {
+        std::shared_lock<std::shared_mutex> lock(mtx);
+        this->column = column;
+    }
+
+    void setLength(u64 length) {
+        std::shared_lock<std::shared_mutex> lock(mtx);
+        this->length = length;
+    }
+
+    void setOffset(u64 offset) {
+        std::shared_lock<std::shared_mutex> lock(mtx);
+        this->offset = offset;
+    }
+
+    void setTokenKind(tokens kind) {
+        std::shared_lock<std::shared_mutex> lock(mtx);
+        this->kind = kind;
+    }
+
+    void setValue(std::string value) {
+        std::shared_lock<std::shared_mutex> lock(mtx);
+        this->value = std::move(value);
+    }
 };
 
-class TokenList : public std::vector<token::Token> {
-  private:
+class TokenList : public std::vector<Token> {
+private:
     std::string filename;
 
-  public:
-    std::vector<token::Token>::iterator it;
+public:
+    std::vector<Token>::iterator it;
 
     explicit TokenList(std::string filename)
         : filename(std::move(filename))
         , it(this->begin()) {}
 
-    token::Token next() {
+    Token next() {
         if (it == this->end()) {
-            return token::Token{};
+            return Token{};
         }
-
         return *it++;
     }
 
-    token::Token peek() {
+    Token peek() const {
         if (it == this->end()) {
-            return token::Token{};
+            return Token{};
         }
-
         return *it;
     }
 
-    token::Token current() {
+    Token current() const {
         if (it == this->begin()) {
-            return token::Token{};
+            return Token{};
         }
-
         return *(it - 1);
     }
 
-    token::Token previous() {
-        if (it == this->begin()) {
-            return token::Token{};
-        }
+    std::vector<Token>::const_iterator begin() const {
+        return std::vector<Token>::begin();
+    }
 
+    std::vector<Token>::const_iterator end() const {
+        return std::vector<Token>::end();
+    }
+
+    Token previous() const {
+        if (it == this->begin()) {
+            return Token{};
+        }
         return *(it - 1);
     }
 
@@ -124,12 +214,21 @@ class TokenList : public std::vector<token::Token> {
         it = this->begin();
     }
 
-    void reset() { it = this->begin(); }
+    void reset() {
+        it = this->begin();
+    }
 
-    void append(const token::Token &token) { this->push_back(token); }
+    void append(const Token& token) {
+        this->push_back(token);
+    }
 
-    std::vector<token::Token>::iterator begin() { return std::vector<token::Token>::begin(); }
-    std::vector<token::Token>::iterator end()   { return std::vector<token::Token>::end(); }
+    std::vector<Token>::iterator begin() {
+        return std::vector<Token>::begin();
+    }
+
+    std::vector<Token>::iterator end() {
+        return std::vector<Token>::end();
+    }
 };
 
 inline void print_tokens(token::TokenList &tokens) {
@@ -141,10 +240,11 @@ inline void print_tokens(token::TokenList &tokens) {
         } else if (tok.value == "}") {
             indent--;
         }
-        if (tok.kind == token::tokens::SEMICOLON || tok.kind == token::tokens::OPEN_BRACE ||
-            tok.kind == token::tokens::CLOSE_BRACE ||
-            tok.kind == token::tokens::SINGLE_LINE_COMMENT) {
-            if (tok.kind != token::tokens::CLOSE_BRACE) {
+        if (tok.kind == token::tokens::PUNCTUATION_SEMICOLON ||
+            tok.kind == token::tokens::PUNCTUATION_OPEN_BRACE ||
+            tok.kind == token::tokens::PUNCTUATION_CLOSE_BRACE ||
+            tok.kind == token::tokens::PUNCTUATION_SINGLE_LINE_COMMENT) {
+            if (tok.kind != token::tokens::PUNCTUATION_CLOSE_BRACE) {
                 std::cout << "(" << colors::fg16::red << token::tokens_map.at(tok.kind).value()
                           << colors::reset << ", " << colors::fg16::green << tok.value
                           << colors::reset << ") ";
@@ -153,7 +253,7 @@ inline void print_tokens(token::TokenList &tokens) {
             std::cout << "\n";
             std::cout << std::string(static_cast<u16>(indent * 4), ' ');
 
-            if (tok.kind == token::tokens::CLOSE_BRACE) {
+            if (tok.kind == token::tokens::PUNCTUATION_CLOSE_BRACE) {
                 std::cout << "(" << colors::fg16::red << token::tokens_map.at(tok.kind).value()
                           << colors::reset << ", " << colors::fg16::green << tok.value
                           << colors::reset << ") ";

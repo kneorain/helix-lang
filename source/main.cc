@@ -32,9 +32,9 @@ int main() {
     std::span<token::Token> slice{tokens};
 
     // constructs a new ast node
-    AstFile node;
+    //AstFile node;
 
-    node.parse(slice);
+    //node.parse(slice);
 
     // print time in ns
     std::cout << "Time taken: " << std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count() << "ns\n";
