@@ -12,14 +12,14 @@
  * https://helix-lang.com/ for more information.
  */
 
-#ifndef __DELIMITERS_H__
-#define __DELIMITERS_H__
+#ifndef __DELIMITERS_DEF__
+#define __DELIMITERS_DEF__
 
 #define DELIMITER_TOKENS_COUNT 3
 
-#define DELIMITER_TOKENS(MACRO)    \
-    MACRO(DELIMITER_TAB, "\t")     \
-    MACRO(DELIMITER_NEWLINE, "\n") \
-    MACRO(DELIMITER_SPACE, " ")
+#define DELIMITER_TOKENS(GENERATE)    \
+    GENERATE(DELIMITER_TAB,     "\t") \
+    GENERATE(DELIMITER_NEWLINE, "\n") \
+    GENERATE(DELIMITER_SPACE,   " ")
 
-#endif  // __DELIMITERS_H__
+#endif  // __DELIMITERS_DEF__

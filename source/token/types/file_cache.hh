@@ -12,8 +12,8 @@
  * https://helix-lang.com/ for more information.
  */
 
-#ifndef __FILE_CACHE_H__
-#define __FILE_CACHE_H__
+#ifndef __FILE_CACHE_HH__
+#define __FILE_CACHE_HH__
 
 #include <mutex>
 #include <optional>
@@ -46,4 +46,4 @@ std::unordered_map<std::string, std::string> FileCache::cache_;
 std::mutex FileCache::mutex_;
 } // namespace file_sys
 
-#endif // __FILE_CACHE_H__
+#endif // __FILE_CACHE_HH__

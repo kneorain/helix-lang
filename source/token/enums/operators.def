@@ -12,68 +12,68 @@
  * https://helix-lang.com/ for more information.
  */
 
-#ifndef __OPERATORS_H__
-#define __OPERATORS_H__
+#ifndef __OPERATORS_DEF__
+#define __OPERATORS_DEF__
 
 #define OPERATOR_TOKENS_COUNT 57
 
-#define OPERATOR_TOKENS(MACRO)                    \
-    MACRO(OPERATOR_ADD, "+")                      \
-    MACRO(OPERATOR_SUB, "-")                      \
-    MACRO(OPERATOR_MUL, "*")                      \
-    MACRO(OPERATOR_DIV, "/")                      \
-    MACRO(OPERATOR_MOD, "%")                      \
-    MACRO(OPERATOR_MAT, "@")                      \
-    MACRO(OPERATOR_POW, "**")                     \
-    MACRO(OPERATOR_ABS, "+-")                     \
-    MACRO(OPERATOR_BITWISE_AND, "&")              \
-    MACRO(OPERATOR_BITWISE_NAND, "~&")            \
-    MACRO(OPERATOR_BITWISE_OR, "|")               \
-    MACRO(OPERATOR_BITWISE_NOR, "~|")             \
-    MACRO(OPERATOR_BITWISE_XOR, "^")              \
-    MACRO(OPERATOR_BITWISE_NOT, "~")              \
-    MACRO(OPERATOR_BITWISE_L_SHIFT, "<<")         \
-    MACRO(OPERATOR_BITWISE_R_SHIFT, ">>")         \
-    MACRO(OPERATOR_EQUAL, "==")                   \
-    MACRO(OPERATOR_NOT_EQUAL, "!=")               \
-    MACRO(OPERATOR_GREATER_THAN, ">")             \
-    MACRO(OPERATOR_LESS_THAN, "<")                \
-    MACRO(OPERATOR_GREATER_THAN_EQUALS, ">=")     \
-    MACRO(OPERATOR_LESS_THAN_EQUALS, "<=")        \
-    MACRO(OPERATOR_REF_EQUAL, "===")              \
-    MACRO(OPERATOR_ASSIGN, "=")                   \
-    MACRO(OPERATOR_ADD_ASSIGN, "+=")              \
-    MACRO(OPERATOR_SUB_ASSIGN, "-=")              \
-    MACRO(OPERATOR_MUL_ASSIGN, "*=")              \
-    MACRO(OPERATOR_DIV_ASSIGN, "/=")              \
-    MACRO(OPERATOR_MOD_ASSIGN, "%=")              \
-    MACRO(OPERATOR_MAT_ASSIGN, "@=")              \
-    MACRO(OPERATOR_NOT_ASSIGN, "~=")              \
-    MACRO(OPERATOR_POWER_ASSIGN, "**=")           \
-    MACRO(OPERATOR_AND_ASSIGN, "&&=")             \
-    MACRO(OPERATOR_NAND_ASSIGN, "!&=")            \
-    MACRO(OPERATOR_OR_ASSIGN, "||=")              \
-    MACRO(OPERATOR_NOR_ASSIGN, "!|=")             \
-    MACRO(OPERATOR_XOR_ASSIGN, "^^=")             \
-    MACRO(OPERATOR_BITWISE_AND_ASSIGN, "&=")      \
-    MACRO(OPERATOR_BITWISE_NAND_ASSIGN, "~&=")    \
-    MACRO(OPERATOR_BITWISE_OR_ASSIGN, "|=")       \
-    MACRO(OPERATOR_BITWISE_NOR_ASSIGN, "~|")      \
-    MACRO(OPERATOR_BITWISE_XOR_ASSIGN, "^=")      \
-    MACRO(OPERATOR_BITWISE_NOT_ASSIGN, "~=")      \
-    MACRO(OPERATOR_BITWISE_L_SHIFT_ASSIGN, "<<=") \
-    MACRO(OPERATOR_BITWISE_R_SHIFT_ASSIGN, ">>=") \
-    MACRO(OPERATOR_INC, "++")                     \
-    MACRO(OPERATOR_DEC, "--")                     \
-    MACRO(OPERATOR_LOGICAL_NOT, "!")              \
-    MACRO(OPERATOR_LOGICAL_AND, "&&")             \
-    MACRO(OPERATOR_LOGICAL_NAND, "!&")            \
-    MACRO(OPERATOR_LOGICAL_OR, "||")              \
-    MACRO(OPERATOR_LOGICAL_NOR, "!|")             \
-    MACRO(OPERATOR_LOGICAL_XOR, "^^")             \
-    MACRO(OPERATOR_RANGE, "..")                   \
-    MACRO(OPERATOR_RANGE_INCLUSIVE, "..=")        \
-    MACRO(OPERATOR_ARROW, "->")                   \
-    MACRO(OPERATOR_SCOPE, "::")
+#define OPERATOR_TOKENS(GENERATE)                    \
+    GENERATE(OPERATOR_ADD,                    "+")   \
+    GENERATE(OPERATOR_SUB,                    "-")   \
+    GENERATE(OPERATOR_MUL,                    "*")   \
+    GENERATE(OPERATOR_DIV,                    "/")   \
+    GENERATE(OPERATOR_MOD,                    "%")   \
+    GENERATE(OPERATOR_MAT,                    "@")   \
+    GENERATE(OPERATOR_POW,                    "**")  \
+    GENERATE(OPERATOR_ABS,                    "+-")  \
+    GENERATE(OPERATOR_BITWISE_AND,            "&")   \
+    GENERATE(OPERATOR_BITWISE_NAND,           "~&")  \
+    GENERATE(OPERATOR_BITWISE_OR,             "|")   \
+    GENERATE(OPERATOR_BITWISE_NOR,            "~|")  \
+    GENERATE(OPERATOR_BITWISE_XOR,            "^")   \
+    GENERATE(OPERATOR_BITWISE_NOT,            "~")   \
+    GENERATE(OPERATOR_BITWISE_L_SHIFT,        "<<")  \
+    GENERATE(OPERATOR_BITWISE_R_SHIFT,        ">>")  \
+    GENERATE(OPERATOR_EQUAL,                  "==")  \
+    GENERATE(OPERATOR_NOT_EQUAL,              "!=")  \
+    GENERATE(OPERATOR_GREATER_THAN,           ">")   \
+    GENERATE(OPERATOR_LESS_THAN,              "<")   \
+    GENERATE(OPERATOR_GREATER_THAN_EQUALS,    ">=")  \
+    GENERATE(OPERATOR_LESS_THAN_EQUALS,       "<=")  \
+    GENERATE(OPERATOR_REF_EQUAL,              "===") \
+    GENERATE(OPERATOR_ASSIGN,                 "=")   \
+    GENERATE(OPERATOR_ADD_ASSIGN,             "+=")  \
+    GENERATE(OPERATOR_SUB_ASSIGN,             "-=")  \
+    GENERATE(OPERATOR_MUL_ASSIGN,             "*=")  \
+    GENERATE(OPERATOR_DIV_ASSIGN,             "/=")  \
+    GENERATE(OPERATOR_MOD_ASSIGN,             "%=")  \
+    GENERATE(OPERATOR_MAT_ASSIGN,             "@=")  \
+    GENERATE(OPERATOR_NOT_ASSIGN,             "~=")  \
+    GENERATE(OPERATOR_POWER_ASSIGN,           "**=") \
+    GENERATE(OPERATOR_AND_ASSIGN,             "&&=") \
+    GENERATE(OPERATOR_NAND_ASSIGN,            "!&=") \
+    GENERATE(OPERATOR_OR_ASSIGN,              "||=") \
+    GENERATE(OPERATOR_NOR_ASSIGN,             "!|=") \
+    GENERATE(OPERATOR_XOR_ASSIGN,             "^^=") \
+    GENERATE(OPERATOR_BITWISE_AND_ASSIGN,     "&=")  \
+    GENERATE(OPERATOR_BITWISE_NAND_ASSIGN,    "~&=") \
+    GENERATE(OPERATOR_BITWISE_OR_ASSIGN,      "|=")  \
+    GENERATE(OPERATOR_BITWISE_NOR_ASSIGN,     "~|")  \
+    GENERATE(OPERATOR_BITWISE_XOR_ASSIGN,     "^=")  \
+    GENERATE(OPERATOR_BITWISE_NOT_ASSIGN,     "~=")  \
+    GENERATE(OPERATOR_BITWISE_L_SHIFT_ASSIGN, "<<=") \
+    GENERATE(OPERATOR_BITWISE_R_SHIFT_ASSIGN, ">>=") \
+    GENERATE(OPERATOR_INC,                    "++")  \
+    GENERATE(OPERATOR_DEC,                    "--")  \
+    GENERATE(OPERATOR_LOGICAL_NOT,            "!")   \
+    GENERATE(OPERATOR_LOGICAL_AND,            "&&")  \
+    GENERATE(OPERATOR_LOGICAL_NAND,           "!&")  \
+    GENERATE(OPERATOR_LOGICAL_OR,             "||")  \
+    GENERATE(OPERATOR_LOGICAL_NOR,            "!|")  \
+    GENERATE(OPERATOR_LOGICAL_XOR,            "^^")  \
+    GENERATE(OPERATOR_RANGE,                  "..")  \
+    GENERATE(OPERATOR_RANGE_INCLUSIVE,        "..=") \
+    GENERATE(OPERATOR_ARROW,                  "->")  \
+    GENERATE(OPERATOR_SCOPE,                  "::")
 
-#endif  // __OPERATORS_H__
+#endif  // __OPERATORS_DEF__

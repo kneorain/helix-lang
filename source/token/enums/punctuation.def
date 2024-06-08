@@ -12,27 +12,27 @@
  * https://helix-lang.com/ for more information.
  */
 
-#ifndef __PUNCTUATION_H__
-#define __PUNCTUATION_H__
+#ifndef __PUNCTUATION_DEF__
+#define __PUNCTUATION_DEF__
 
 #define PUNCTUATION_TOKENS_COUNT 16
 
-#define PUNCTUATION_TOKENS(MACRO)    \
-    MACRO(PUNCTUATION_OPEN_PAREN, "(")           \
-    MACRO(PUNCTUATION_CLOSE_PAREN, ")")          \
-    MACRO(PUNCTUATION_OPEN_BRACE, "{")           \
-    MACRO(PUNCTUATION_CLOSE_BRACE, "}")          \
-    MACRO(PUNCTUATION_OPEN_BRACKET, "[")         \
-    MACRO(PUNCTUATION_CLOSE_BRACKET, "]")        \
-    MACRO(PUNCTUATION_OPEN_ANGLE, "<")           \
-    MACRO(PUNCTUATION_CLOSE_ANGLE, ">")          \
-    MACRO(PUNCTUATION_COMMA, ",")                \
-    MACRO(PUNCTUATION_SEMICOLON, ";")            \
-    MACRO(PUNCTUATION_COLON, ":")                \
-    MACRO(PUNCTUATION_QUESTION_MARK, "?")        \
-    MACRO(PUNCTUATION_DOT, ".")                  \
-    MACRO(PUNCTUATION_SINGLE_LINE_COMMENT, "//") \
-    MACRO(PUNCTUATION_MULTI_LINE_COMMENT, "/*")  \
-    MACRO(PUNCTUATION_HASH, "#")
+#define PUNCTUATION_TOKENS(GENERATE)                \
+    GENERATE(PUNCTUATION_OPEN_PAREN,          "(")  \
+    GENERATE(PUNCTUATION_CLOSE_PAREN,         ")")  \
+    GENERATE(PUNCTUATION_OPEN_BRACE,          "{")  \
+    GENERATE(PUNCTUATION_CLOSE_BRACE,         "}")  \
+    GENERATE(PUNCTUATION_OPEN_BRACKET,        "[")  \
+    GENERATE(PUNCTUATION_CLOSE_BRACKET,       "]")  \
+    GENERATE(PUNCTUATION_OPEN_ANGLE,          "<")  \
+    GENERATE(PUNCTUATION_CLOSE_ANGLE,         ">")  \
+    GENERATE(PUNCTUATION_COMMA,               ",")  \
+    GENERATE(PUNCTUATION_SEMICOLON,           ";")  \
+    GENERATE(PUNCTUATION_COLON,               ":")  \
+    GENERATE(PUNCTUATION_QUESTION_MARK,       "?")  \
+    GENERATE(PUNCTUATION_DOT,                 ".")  \
+    GENERATE(PUNCTUATION_SINGLE_LINE_COMMENT, "//") \
+    GENERATE(PUNCTUATION_MULTI_LINE_COMMENT,  "/*") \
+    GENERATE(PUNCTUATION_HASH,                "#")
 
-#endif  // __PUNCTUATION_H__
+#endif  // __PUNCTUATION_DEF__

@@ -1,0 +1,56 @@
+(* Helix Programming Language EBNF *)
+
+(* Lexical tokens *)
+letter              = "a" | "b" | "c" | "d" | "e" | "f" | "g" | "h" | "i" | "j" | "k" | "l" | "m" | "n" | "o" | "p" | "q" | "r" | "s" | "t" | "u" | "v" | "w" | "x" | "y" | "z" |
+                      "A" | "B" | "C" | "D" | "E" | "F" | "G" | "H" | "I" | "J" | "K" | "L" | "M" | "N" | "O" | "P" | "Q" | "R" | "S" | "T" | "U" | "V" | "W" | "X" | "Y" | "Z" ;
+digit               = "0" | "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9" ;
+identifier          = letter, { letter | digit | "_" } ;
+number              = digit, { digit } ;
+string              = "\"", { any character except "\"" }, "\"" ;
+
+(* Program structure *)
+program             = { declaration | function } ;
+
+(* Declarations *)
+declaration         = variableDeclaration | constantDeclaration | importDeclaration ;
+
+variableDeclaration = "let", identifier, ":", type, "=", expression, ";" ;
+constantDeclaration = "const", "let", identifier, ":", type, "=", expression, ";" ;
+importDeclaration   = "import", string, ";" ;
+
+(* Types *)
+type                = primitiveType | compositeType | customType ;
+primitiveType       = "int" | "float" | "bool" | "char" | "string" ;
+compositeType       = arrayType | tupleType ;
+arrayType           = "Array", "<", type, ">" ;
+tupleType           = "Tuple", "<", type, { ",", type }, ">" ;
+customType          = identifier ;
+
+(* Functions *)
+function            = "fn", identifier, "(", [ parameter, { ",", parameter } ], ")", ":", type, block ;
+parameter           = identifier, ":", type ;
+
+(* Statements *)
+statement           = variableDeclaration | constantDeclaration | assignment | ifStatement | whileStatement | forStatement | returnStatement | block ;
+assignment          = identifier, "=", expression, ";" ;
+ifStatement         = "if", "(", expression, ")", block, [ "else", block ] ;
+whileStatement      = "while", "(", expression, ")", block ;
+forStatement        = "for", "(", identifier, "in", expression, ")", block ;
+returnStatement     = "return", [ expression ], ";" ;
+
+(* Blocks *)
+block               = "{", { statement }, "}" ;
+
+(* Expressions *)
+expression          = logicalOrExpression ;
+logicalOrExpression = logicalAndExpression, { "||", logicalAndExpression } ;
+logicalAndExpression= equalityExpression, { "&&", equalityExpression } ;
+equalityExpression  = relationalExpression, { ("==" | "!="), relationalExpression } ;
+relationalExpression= additiveExpression, { ("<" | ">" | "<=" | ">="), additiveExpression } ;
+additiveExpression  = multiplicativeExpression, { ("+" | "-"), multiplicativeExpression } ;
+multiplicativeExpression = unaryExpression, { ("*" | "/" | "%"), unaryExpression } ;
+unaryExpression     = primaryExpression | ("!" | "-"), primaryExpression ;
+primaryExpression   = identifier | number | string | "(", expression, ")" | functionCall ;
+functionCall        = identifier, "(", [ expression, { ",", expression } ], ")" ;
+
+(* End of Helix EBNF *)

@@ -23,8 +23,13 @@ using std::string;
 
 TEST_CASE("Test token::Token constructor", "[token::Token]") {
     SECTION("testing keyword 'if'") {
-        token::Token token = token::Token("if", 1, 1);
+        token::Token token = token::Token(1, 1, 2, 0, "if");
+
+        REQUIRE(token.line_number()   == 1);
+        REQUIRE(token.column_number() == 1);
+        REQUIRE(token.length()        == 2);
+        REQUIRE(token.offset()        == 0);
+        REQUIRE(token.token_kind()    == token::tokens::KEYWORD_IF);
+        REQUIRE(token.value()         == "if");
     }
-
-
 }

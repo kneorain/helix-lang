@@ -16,8 +16,8 @@
  * https://helix-lang.com/ for more information.
  */
 
-#ifndef __ERROR_H__
-#define __ERROR_H__
+#ifndef __ERROR_HH__
+#define __ERROR_HH__
 
 #include <print>
 #include <string>
@@ -156,4 +156,4 @@ class Error {
 
 }  // namespace error
 
-#endif  // __ERROR_H__
+#endif  // __ERROR_HH__

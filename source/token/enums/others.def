@@ -12,14 +12,15 @@
  * https://helix-lang.com/ for more information.
  */
 
-#ifndef __OTHERS_H__
-#define __OTHERS_H__
+#ifndef __OTHERS_DEF__
+#define __OTHERS_DEF__
 
-#define OTHER_TOKENS_COUNT 3
+#define OTHER_TOKENS_COUNT 4
 
-#define OTHER_TOKENS(MACRO)   \
-    MACRO(IDENTIFIER, "<id>") \
-    MACRO(WHITESPACE, "< >")  \
-    MACRO(OTHERS, "<other>")
+#define OTHER_TOKENS(GENERATE)      \
+    GENERATE(IDENTIFIER, "<id>")    \
+    GENERATE(WHITESPACE, "< >")     \
+    GENERATE(OTHERS,     "<other>") \
+    GENERATE(EOF_TOKEN,  "<eof>")
 
-#endif  // __OTHERS_H__
+#endif  // __OTHERS_DEF__

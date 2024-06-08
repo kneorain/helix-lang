@@ -12,18 +12,18 @@
  * https://helix-lang.com/ for more information.
  */
 
-#ifndef __LITERALS_H__
-#define __LITERALS_H__
+#ifndef __LITERALS_DEF__
+#define __LITERALS_DEF__
 
 #define LITERAL_TOKENS_COUNT 7
 
-#define LITERAL_TOKENS(MACRO)                                 \
-    MACRO(LITERAL_TRUE, "<true>")                             \
-    MACRO(LITERAL_FALSE, "<false>")                           \
-    MACRO(LITERAL_INTEGER, "<int>")                           \
-    MACRO(LITERAL_COMPLIER_DIRECTIVE, "<complier_directive>") \
-    MACRO(LITERAL_FLOATING_POINT, "<float>")                  \
-    MACRO(LITERAL_STRING, "<string>")                         \
-    MACRO(LITERAL_CHAR, "<char>")
+#define LITERAL_TOKENS(GENERATE)                                 \
+    GENERATE(LITERAL_TRUE,               "<true>")               \
+    GENERATE(LITERAL_FALSE,              "<false>")              \
+    GENERATE(LITERAL_INTEGER,            "<int>")                \
+    GENERATE(LITERAL_COMPLIER_DIRECTIVE, "<complier_directive>") \
+    GENERATE(LITERAL_FLOATING_POINT,     "<float>")              \
+    GENERATE(LITERAL_STRING,             "<string>")             \
+    GENERATE(LITERAL_CHAR,               "<char>")
 
-#endif  // __LITERALS_H__
+#endif  // __LITERALS_DEF__

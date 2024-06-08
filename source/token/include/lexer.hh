@@ -12,8 +12,8 @@
  * https://helix-lang.com/ for more information.
  */
 
-#ifndef __LEXER_H__
-#define __LEXER_H__
+#ifndef __LEXER_HH__
+#define __LEXER_HH__
 
 #include <string>
 
@@ -53,6 +53,7 @@ class Lexer {
 
     [[nodiscard]] inline char peek_forward() const;
     [[nodiscard]] inline char peek_back() const;
+    [[nodiscard]] inline bool is_eof() const;
 
     token::TokenList tokens;  //> list of tokens
     std::string source;       //> source code
@@ -81,4 +82,4 @@ class Lexer {
 
 }  // namespace lexer
 
-#endif  // __LEXER_H__
+#endif  // __LEXER_HH__

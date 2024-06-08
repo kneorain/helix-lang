@@ -12,37 +12,37 @@
  * https://helix-lang.com/ for more information.
  */
 
-#ifndef __PRIMITIVES_H__
-#define __PRIMITIVES_H__
+#ifndef __PRIMITIVES_DEF__
+#define __PRIMITIVES_DEF__
 
 #define PRIMITIVE_TOKENS_COUNT 26
 
-#define PRIMITIVE_TOKENS(MACRO) \
-    MACRO(PRIMITIVE_VOID, "void")         \
-    MACRO(PRIMITIVE_BOOL, "bool")         \
-    MACRO(PRIMITIVE_BYTE, "byte")         \
-    MACRO(PRIMITIVE_CHAR, "char")         \
-    MACRO(PRIMITIVE_POINTER, "ptr")       \
-    MACRO(PRIMITIVE_I8, "i8")             \
-    MACRO(PRIMITIVE_U8, "u8")             \
-    MACRO(PRIMITIVE_I16, "i16")           \
-    MACRO(PRIMITIVE_U16, "u16")           \
-    MACRO(PRIMITIVE_I32, "i32")           \
-    MACRO(PRIMITIVE_U32, "u32")           \
-    MACRO(PRIMITIVE_F32, "f32")           \
-    MACRO(PRIMITIVE_I64, "i64")           \
-    MACRO(PRIMITIVE_U64, "u64")           \
-    MACRO(PRIMITIVE_F64, "f64")           \
-    MACRO(PRIMITIVE_FLOAT, "float")       \
-    MACRO(PRIMITIVE_I128, "i128")         \
-    MACRO(PRIMITIVE_U128, "u128")         \
-    MACRO(PRIMITIVE_INT, "int")           \
-    MACRO(PRIMITIVE_DECIMAL, "decimal")   \
-    MACRO(PRIMITIVE_STRING, "string")     \
-    MACRO(PRIMITIVE_LIST, "list")         \
-    MACRO(PRIMITIVE_TUPLE, "tuple")       \
-    MACRO(PRIMITIVE_SET, "set")           \
-    MACRO(PRIMITIVE_MAP, "map")           \
-    MACRO(PRIMITIVE_ANY, "any")
+#define PRIMITIVE_TOKENS(GENERATE)         \
+    GENERATE(PRIMITIVE_VOID,    "void")    \
+    GENERATE(PRIMITIVE_BOOL,    "bool")    \
+    GENERATE(PRIMITIVE_BYTE,    "byte")    \
+    GENERATE(PRIMITIVE_CHAR,    "char")    \
+    GENERATE(PRIMITIVE_POINTER, "ptr")     \
+    GENERATE(PRIMITIVE_I8,      "i8")      \
+    GENERATE(PRIMITIVE_U8,      "u8")      \
+    GENERATE(PRIMITIVE_I16,     "i16")     \
+    GENERATE(PRIMITIVE_U16,     "u16")     \
+    GENERATE(PRIMITIVE_I32,     "i32")     \
+    GENERATE(PRIMITIVE_U32,     "u32")     \
+    GENERATE(PRIMITIVE_F32,     "f32")     \
+    GENERATE(PRIMITIVE_I64,     "i64")     \
+    GENERATE(PRIMITIVE_U64,     "u64")     \
+    GENERATE(PRIMITIVE_F64,     "f64")     \
+    GENERATE(PRIMITIVE_FLOAT,   "float")   \
+    GENERATE(PRIMITIVE_I128,    "i128")    \
+    GENERATE(PRIMITIVE_U128,    "u128")    \
+    GENERATE(PRIMITIVE_INT,     "int")     \
+    GENERATE(PRIMITIVE_DECIMAL, "decimal") \
+    GENERATE(PRIMITIVE_STRING,  "string")  \
+    GENERATE(PRIMITIVE_LIST,    "list")    \
+    GENERATE(PRIMITIVE_TUPLE,   "tuple")   \
+    GENERATE(PRIMITIVE_SET,     "set")     \
+    GENERATE(PRIMITIVE_MAP,     "map")     \
+    GENERATE(PRIMITIVE_ANY,     "any")
 
-#endif  // __PRIMITIVES_H__
+#endif  // __PRIMITIVES_DEF__

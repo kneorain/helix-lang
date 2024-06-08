@@ -116,31 +116,37 @@ TokenList Lexer::tokenize() {
     while ((currentPos + 1) <= end) {
         auto token = next_token();
 
-        if (token.kind == tokens::WHITESPACE) {
+        if (token.token_kind() == tokens::WHITESPACE) {
             continue;
         }
         tokens.append(token);
     }
+
+    tokens.append({line, column, 1, offset, "", file_name, "<eof>"});
     return tokens;
 }
 
 inline Token Lexer::process_single_line_comment() {
     auto start = currentPos;
-    while (current() != '\n' && currentPos < end) {
+
+    while (current() != '\n' && !is_eof()) {
         bare_advance();
     }
+
     return {line,
             column - (currentPos - start),
             currentPos - start,
             offset,
             source.substr(start, currentPos - start),
+            file_name,
             "//"};
 }
 
 inline Token Lexer::process_multi_line_comment() {
     auto start = currentPos;
     u32 comment_depth = 0;
-    while (currentPos < end) {
+
+    while (!is_eof()) {
         switch (current()) {
             case '/':
             case '*':
@@ -172,6 +178,7 @@ inline Token Lexer::process_multi_line_comment() {
             currentPos - start,
             offset,
             source.substr(start, currentPos - start),
+            file_name,
             "/*"};
 }
 
@@ -221,10 +228,10 @@ __attribute__((always_inline)) inline Token Lexer::parse_compiler_directive() {
 
     if (peek_forward() != '[') {
         bare_advance();
-        return {line, column, 1, offset, source.substr(start, 1)};
+        return {line, column, 1, offset, source.substr(start, 1), file_name};
     }
 
-    while (!end_loop && currentPos < end) {
+    while (!end_loop && !is_eof()) {
         switch (current()) {
             case '[':
                 ++brace_level;
@@ -246,20 +253,22 @@ __attribute__((always_inline)) inline Token Lexer::parse_compiler_directive() {
             currentPos - start,
             offset,
             source.substr(start, currentPos - start),
+            file_name,
             "<complier_directive>"};
 }
 
 __attribute__((always_inline)) inline Token Lexer::process_whitespace() {
-    auto result = Token{line, column, 1, offset, source.substr(currentPos, 1), "< >"};
+    auto result = Token{line, column, 1, offset, source.substr(currentPos, 1), file_name, "< >"};
     bare_advance();
     return result;
 }
 
 __attribute__((always_inline)) inline Token Lexer::parse_alpha_numeric() {
     auto start = currentPos;
+
     bool end_loop = false;
 
-    while (!end_loop && currentPos < end) {
+    while (!end_loop && !is_eof()) {
         switch (peek_forward()) {
             case '_':
             case A_Z:
@@ -273,19 +282,24 @@ __attribute__((always_inline)) inline Token Lexer::parse_alpha_numeric() {
         bare_advance();
     }
 
-    auto result = Token{line, column - (currentPos - start), currentPos - start, offset,
-                               source.substr(start, currentPos - start)};
+    auto result = Token{line,
+                        column - (currentPos - start),
+                        currentPos - start,
+                        offset,
+                        source.substr(start, currentPos - start),
+                        file_name};
 
-    if (result.kind != tokens::OTHERS) {
+    if (result.token_kind() != tokens::OTHERS) {
         return result;
     }
 
-    if (result.value == "true" || result.value == "false") {
+    if (result.value() == "true" || result.value() == "false") {
         return {line,
                 column - (currentPos - start),
                 currentPos - start,
                 offset,
                 source.substr(start, currentPos - start),
+                file_name,
                 "bool"};
     }
 
@@ -294,6 +308,7 @@ __attribute__((always_inline)) inline Token Lexer::parse_alpha_numeric() {
             currentPos - start,
             offset,
             source.substr(start, currentPos - start),
+            file_name,
             "<id>"};
 }
 
@@ -306,7 +321,7 @@ __attribute__((always_inline)) inline Token Lexer::parse_numeric() {
     bool is_float = false;
     bool end_loop = false;
 
-    while (!end_loop && currentPos < end) {
+    while (!end_loop && !is_eof()) {
         switch (peek_forward()) {
             case '.':
                 is_float = true;
@@ -326,6 +341,7 @@ __attribute__((always_inline)) inline Token Lexer::parse_numeric() {
                 currentPos - start,
                 offset,
                 source.substr(start, currentPos - start),
+                file_name,
                 "<float>"};
     }
     return {line,
@@ -333,6 +349,7 @@ __attribute__((always_inline)) inline Token Lexer::parse_numeric() {
             currentPos - start,
             offset,
             source.substr(start, currentPos - start),
+            file_name,
             "<int>"};
 }
 
@@ -341,6 +358,8 @@ __attribute__((always_inline)) inline Token Lexer::parse_string() {
     auto start = currentPos;
     auto start_line = line;
     auto start_column = column;
+
+    std::string token_type;
 
     bool end_loop = false;
     char quote = current();
@@ -352,7 +371,7 @@ __attribute__((always_inline)) inline Token Lexer::parse_string() {
     }
 
     // if the quote is followed by a \ then ignore the quote
-    while (!end_loop && currentPos < end) {
+    while (!end_loop && !is_eof()) {
         switch (peek_forward()) {
             case '\\':
                 bare_advance();
@@ -366,13 +385,11 @@ __attribute__((always_inline)) inline Token Lexer::parse_string() {
         bare_advance();
     }
 
-    if (currentPos >= end) {
+    if (is_eof()) {
         throw error::Error(
             error::Line(file_name, start_line, start_column, 1, "unterminated string"),
             getline(file_name, start_line));
     }
-
-    std::string token_type;
 
     switch (quote) {
         case '"':
@@ -388,6 +405,7 @@ __attribute__((always_inline)) inline Token Lexer::parse_string() {
             currentPos - start,
             offset,
             source.substr(start, currentPos - start),
+            file_name,
             token_type};
 }
 
@@ -395,7 +413,7 @@ __attribute__((always_inline)) inline Token Lexer::parse_operator() {
     auto start = currentPos;
     bool end_loop = false;
 
-    while (!end_loop && currentPos < end) {
+    while (!end_loop && !is_eof()) {
         switch (peek_forward()) {
             case OPERATORS:
                 break;
@@ -406,12 +424,12 @@ __attribute__((always_inline)) inline Token Lexer::parse_operator() {
         bare_advance();
     }
 
-    return {line, column - (currentPos - start), currentPos - start, offset,
-            source.substr(start, currentPos - start)};
+    return {line,      column - (currentPos - start),           currentPos - start, offset,
+            file_name, source.substr(start, currentPos - start)};
 }
 
 __attribute__((always_inline)) inline Token Lexer::parse_punctuation() {
-    auto result = Token{line, column, 1, offset, source.substr(currentPos, 1)};
+    auto result = Token{line, column, 1, offset, source.substr(currentPos, 1), file_name};
     bare_advance();
     return result;
 }
@@ -461,7 +479,7 @@ __attribute__((always_inline)) inline void Lexer::bare_advance(u16 n) {
 }
 
 __attribute__((always_inline)) inline char Lexer::current() {
-    if (currentPos >= end) {
+    if (is_eof()) {
         return '\0';
     }
 
@@ -490,4 +508,6 @@ __attribute__((always_inline)) inline char Lexer::peek_forward() const {
 
     return source[currentPos + 1];
 }
+
+__attribute__((always_inline)) inline bool Lexer::is_eof() const { return currentPos >= end; }
 }  // namespace lexer

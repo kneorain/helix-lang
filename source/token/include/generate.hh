@@ -12,8 +12,8 @@
  * https://helix-lang.com/ for more information.
  */
 
-#ifndef __TOKENS_H__
-#define __TOKENS_H__
+#ifndef __TOKENS_HH__
+#define __TOKENS_HH__
 
 #include "../enums/delimiters.def"
 #include "../enums/keywords.def"
@@ -87,4 +87,4 @@ namespace token {
     #undef PUNCTUATION_TOKENS
 }  // namespace token
 
-#endif  // __TOKENS_H__
+#endif  // __TOKENS_HH__

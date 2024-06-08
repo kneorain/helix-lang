@@ -12,58 +12,58 @@
  * https://helix-lang.com/ for more information.
  */
 
-#ifndef __KEYWORDS_H__
-#define __KEYWORDS_H__
+#ifndef __KEYWORDS_DEF__
+#define __KEYWORDS_DEF__
 
 #define KEYWORD_TOKENS_COUNT 47
 
-#define KEYWORD_TOKENS(MACRO)             \
-    MACRO(KEYWORD_IF,        "if")        \
-    MACRO(KEYWORD_ELSE,      "else")      \
-    MACRO(KEYWORD_UNLESS,    "unless")    \
-    MACRO(KEYWORD_MACRO,     "macro")     \
-    MACRO(KEYWORD_DEFINE,    "define")    \
-    MACRO(KEYWORD_FUNCTION,  "fn")        \
-    MACRO(KEYWORD_OPERATOR,  "op")        \
-    MACRO(KEYWORD_INLINE,    "inline")    \
-    MACRO(KEYWORD_RETURN,    "return")    \
-    MACRO(KEYWORD_ENCLOSING, "enclosing") \
-    MACRO(KEYWORD_ASYNC,     "async")     \
-    MACRO(KEYWORD_SPAWN,     "spawn")     \
-    MACRO(KEYWORD_AWAIT,     "await")     \
-    MACRO(KEYWORD_THREAD,    "thread")    \
-    MACRO(KEYWORD_FOR,       "for")       \
-    MACRO(KEYWORD_WHILE,     "while")     \
-    MACRO(KEYWORD_BREAK,     "break")     \
-    MACRO(KEYWORD_CONTINUE,  "continue")  \
-    MACRO(KEYWORD_CASE,      "case")      \
-    MACRO(KEYWORD_MATCH,     "match")     \
-    MACRO(KEYWORD_SWITCH,    "switch")    \
-    MACRO(KEYWORD_DEFAULT,   "default")   \
-    MACRO(KEYWORD_ENUM,      "enum")      \
-    MACRO(KEYWORD_TYPE,      "type")      \
-    MACRO(KEYWORD_CLASS,     "class")     \
-    MACRO(KEYWORD_UNION,     "union")     \
-    MACRO(KEYWORD_STRUCT,    "struct")    \
-    MACRO(KEYWORD_ABSTRACT,  "abstract")  \
-    MACRO(KEYWORD_INTERFACE, "interface") \
-    MACRO(KEYWORD_IS,        "is")        \
-    MACRO(KEYWORD_TRY,       "try")       \
-    MACRO(KEYWORD_PANIC,     "panic")     \
-    MACRO(KEYWORD_CATCH,     "catch")     \
-    MACRO(KEYWORD_FINALLY,   "finally")   \
-    MACRO(KEYWORD_LET,       "let")       \
-    MACRO(KEYWORD_PRIVATE,   "priv")      \
-    MACRO(KEYWORD_AUTO,      "auto")      \
-    MACRO(KEYWORD_CONST,     "const")     \
-    MACRO(KEYWORD_GLOBAL,    "global")    \
-    MACRO(KEYWORD_FROM,      "from")      \
-    MACRO(KEYWORD_USING,     "using")     \
-    MACRO(KEYWORD_IMPORT,    "import")    \
-    MACRO(KEYWORD_EXTERN,    "extern")    \
-    MACRO(KEYWORD_YIELD,     "yield")     \
-    MACRO(KEYWORD_AS,        "as")        \
-    MACRO(KEYWORD_DERIVES,   "derives")   \
-    MACRO(KEYWORD_NAMESPACE, "namespace")
+#define KEYWORD_TOKENS(GENERATE)             \
+    GENERATE(KEYWORD_IF,        "if")        \
+    GENERATE(KEYWORD_ELSE,      "else")      \
+    GENERATE(KEYWORD_UNLESS,    "unless")    \
+    GENERATE(KEYWORD_MACRO,     "macro")     \
+    GENERATE(KEYWORD_DEFINE,    "define")    \
+    GENERATE(KEYWORD_FUNCTION,  "fn")        \
+    GENERATE(KEYWORD_OPERATOR,  "op")        \
+    GENERATE(KEYWORD_INLINE,    "inline")    \
+    GENERATE(KEYWORD_RETURN,    "return")    \
+    GENERATE(KEYWORD_ENCLOSING, "enclosing") \
+    GENERATE(KEYWORD_ASYNC,     "async")     \
+    GENERATE(KEYWORD_SPAWN,     "spawn")     \
+    GENERATE(KEYWORD_AWAIT,     "await")     \
+    GENERATE(KEYWORD_THREAD,    "thread")    \
+    GENERATE(KEYWORD_FOR,       "for")       \
+    GENERATE(KEYWORD_WHILE,     "while")     \
+    GENERATE(KEYWORD_BREAK,     "break")     \
+    GENERATE(KEYWORD_CONTINUE,  "continue")  \
+    GENERATE(KEYWORD_CASE,      "case")      \
+    GENERATE(KEYWORD_MATCH,     "match")     \
+    GENERATE(KEYWORD_SWITCH,    "switch")    \
+    GENERATE(KEYWORD_DEFAULT,   "default")   \
+    GENERATE(KEYWORD_ENUM,      "enum")      \
+    GENERATE(KEYWORD_TYPE,      "type")      \
+    GENERATE(KEYWORD_CLASS,     "class")     \
+    GENERATE(KEYWORD_UNION,     "union")     \
+    GENERATE(KEYWORD_STRUCT,    "struct")    \
+    GENERATE(KEYWORD_ABSTRACT,  "abstract")  \
+    GENERATE(KEYWORD_INTERFACE, "interface") \
+    GENERATE(KEYWORD_IS,        "is")        \
+    GENERATE(KEYWORD_TRY,       "try")       \
+    GENERATE(KEYWORD_PANIC,     "panic")     \
+    GENERATE(KEYWORD_CATCH,     "catch")     \
+    GENERATE(KEYWORD_FINALLY,   "finally")   \
+    GENERATE(KEYWORD_LET,       "let")       \
+    GENERATE(KEYWORD_PRIVATE,   "priv")      \
+    GENERATE(KEYWORD_AUTO,      "auto")      \
+    GENERATE(KEYWORD_CONST,     "const")     \
+    GENERATE(KEYWORD_GLOBAL,    "global")    \
+    GENERATE(KEYWORD_FROM,      "from")      \
+    GENERATE(KEYWORD_USING,     "using")     \
+    GENERATE(KEYWORD_IMPORT,    "import")    \
+    GENERATE(KEYWORD_EXTERN,    "extern")    \
+    GENERATE(KEYWORD_YIELD,     "yield")     \
+    GENERATE(KEYWORD_AS,        "as")        \
+    GENERATE(KEYWORD_DERIVES,   "derives")   \
+    GENERATE(KEYWORD_NAMESPACE, "namespace")
 
-#endif  // __KEYWORDS_H__
+#endif  // __KEYWORDS_DEF__

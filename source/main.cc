@@ -19,26 +19,18 @@
 #include "parser/ast/classes/ast.hh"
 
 int main() {
-    std::string source  = lexer::readfile("/Volumes/Container/Projects/Helix/helix-lang/tests/test_tokenize.hlx");
+    std::string file_name = "/Volumes/Container/Projects/Helix/helix-lang/tests/test_tokenize.hlx";
     
-    auto lex = lexer::Lexer(source, "/Volumes/Container/Projects/Helix/helix-lang/tests/test_tokenize.hlx");
     auto start = std::chrono::high_resolution_clock::now();
-    auto tokens = lex.tokenize();
+    auto tokens = lexer::Lexer(lexer::readfile(file_name), file_name).tokenize();
     auto end   = std::chrono::high_resolution_clock::now();
-
-
     token::print_tokens(tokens);
 
-    std::span<token::Token> slice{tokens};
+    // parser::ast::Generator generator(tokens);
+    // auto ast = generator.generate_ast();
 
-    // constructs a new ast node
-    //AstFile node;
-
-    //node.parse(slice);
-
-    // print time in ns
-    std::cout << "Time taken: " << std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count() << "ns\n";
-
+    // parser::ast::print_ast(ast);
+    
     return 0;
 }
 

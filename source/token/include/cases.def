@@ -12,8 +12,8 @@
  * https://helix-lang.com/ for more information.
  */
 
-#ifndef __CASES_H__
-#define __CASES_H__
+#ifndef __CASES_DEF__
+#define __CASES_DEF__
 
 #define A_Z         \
     'A' : case 'B': \
@@ -135,4 +135,4 @@
     case '>':       \
     case '~'
 
-#endif  // __CASES_H__
+#endif  // __CASES_DEF__
