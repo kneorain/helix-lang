@@ -1,0 +1,64 @@
+/// std::io::out - this is the internal code for print
+
+using "c++" priv import <iostream> as cpp__io;
+
+interface Stringable {
+    fn to_string() -> string;
+}
+
+fn print<T: Stringable, U>(
+    args...: T | U, // T if Stringable, U otherwise
+    end:  &string = "\n",
+    flush: bool   = false,
+    sep:  &string = " ") {
+
+    let out: string = "";
+
+    for arg in args {
+        if arg is T {
+            out += arg.to_string();
+        } else {
+            out += f"<Non-Stringable at {*arg as hex}>";
+        }
+    }
+
+    out = out.strip(*sep) + *end;
+
+    extern "C++" {
+        cpp__io::std::cout << out;
+
+        if flush {
+            cpp__io::std::cout.flush();
+        }
+    }
+}
+
+/* ---------------------------------- usage --------------------------------- */
+
+/*
+    Deriving from `Stringable` is optional as long as `Foo` implements all
+    methods of the interface. This allows `Foo` to satisfy generic constraints:
+
+    - `Foo` will pass a generic constraint like `T: Stringable`.
+    - However, `Foo` will fail a direct type check for the interface, e.g.,
+        `if foo is Stringable`. If `Foo` does not explicitly derive `Stringable`,
+        it will fail this check.
+    - Conversely, `Foo` will pass type-based checks such as:
+        `type StringableType<T: Stringable>;`
+        `let foo: StringableType<Foo> = Foo{};`
+
+    In this case, `Foo` would be valid because it contains all the methods of
+    `Stringable` without necessarily deriving from it.
+*/
+struct Foo : Stringable {
+    fn to_string() -> string {
+        return "Foo";
+    }
+}
+
+class Bar {}
+
+fn main() {
+    print("Hello, ", Foo(), "World!"); // Hello, Foo World!
+    print("Hello, ", Bar(), "World!"); // Hello, <Non-Stringable at 0x...> World!
+}

@@ -24,7 +24,8 @@ target("helix")
     add_includedirs("/opt/llvm-aarch64/include")
     add_linkdirs   ("/opt/llvm-aarch64/lib")
     
-    add_links("LLVM-18", "clang", "clang-cpp", "c++", "c++abi") -- explicitly add LLVM libraries
+    add_links("clang", "clang-cpp", "c++", "c++abi") -- explicitly add LLVM libraries
+    -- "LLVM-18" removed
     
     add_cxxflags("-stdlib=libc++", "-fno-rtti", "-I/opt/llvm-aarch64/include")
     add_ldflags ("-L/opt/llvm-aarch64/lib", "-lc++abi", "-Wl,-rpath,/opt/llvm-aarch64/lib")
@@ -48,7 +49,8 @@ target("tests")
         
     add_linkdirs   ("/opt/llvm-aarch64/lib")
     
-    add_links("LLVM-18", "clang", "clang-cpp", "c++", "c++abi", "Catch2", "Catch2Main") -- add LLVM libs
+    add_links("clang", "clang-cpp", "c++", "c++abi", "Catch2", "Catch2Main") -- add LLVM libs
+    -- "LLVM-18" removed
     
     add_cxxflags("-stdlib=libc++"         , "-fno-rtti", "-I/opt/llvm-aarch64/include")
     add_ldflags ("-L/opt/llvm-aarch64/lib", "-lc++abi" , "-Wl,-rpath,/opt/llvm-aarch64/lib")

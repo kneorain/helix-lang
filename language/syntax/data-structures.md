@@ -10,7 +10,7 @@
 ---
 
 ## Table of Contents
-- [Data structures](#data-structures)
+- [Data Structures](#data-structures)
   - [Table of Contents](#table-of-contents)
     - [Class](#class)
     - [Struct](#struct)
@@ -71,10 +71,12 @@ struct Point {
     let x: int;
     let y: int;
 
-    fn new(x: int, y: int)-> Point {
+    fn new(x: int, y: int) -> Point {
         return Point { x, y };
     }
 }
+
+let point: Point = Point::new(0, 0);
 ```
 
 ### Enum
@@ -89,9 +91,9 @@ enum RGBColor {
 ### Union
 ```rs
 union Number {
-    int    some_int;
-    float  some_float;
-    decimal some_double;
+    some_int:    int;
+    some_float:  float;
+    some_double: decimal;
 }
 ```
 
@@ -174,9 +176,9 @@ enum RGBColor {
 }
 
 union Number {
-    int    some_int;
-    float  some_float;
-    double some_double;
+    some_int:    int;
+    some_float:  float;
+    some_double: decimal;
 }
 
 interface Drawable {
