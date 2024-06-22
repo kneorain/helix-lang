@@ -16,7 +16,9 @@ def set_env_vars():
 
 def build_project():
     set_env_vars()
-    #subprocess.run(["xmake", "f", "-p", platform.system().lower(), "-a", "x64"], check=True)
+    # xmake f -p windows --sdk="C:/Program Files/LLVM"
+    if platform.system() == "Windows":
+        subprocess.run(["xmake", "f" "-p" "windows" "--sdk=\"C:/Program Files/LLVM\""])
     subprocess.run(["xmake", "build", "helix"], check=True)
     subprocess.run(["xmake", "run", "helix"], check=True)
 
