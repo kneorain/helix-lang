@@ -123,6 +123,7 @@ TokenList Lexer::tokenize() {
     }
 
     tokens.append({line, column, 1, offset, "", file_name, "<eof>"});
+    tokens.reset();
     return tokens;
 }
 
@@ -291,16 +292,6 @@ __attribute__((always_inline)) inline Token Lexer::parse_alpha_numeric() {
 
     if (result.token_kind() != tokens::OTHERS) {
         return result;
-    }
-
-    if (result.value() == "true" || result.value() == "false") {
-        return {line,
-                column - (currentPos - start),
-                currentPos - start,
-                offset,
-                source.substr(start, currentPos - start),
-                file_name,
-                "bool"};
     }
 
     return {line,

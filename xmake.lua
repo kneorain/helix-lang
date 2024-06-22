@@ -19,7 +19,18 @@ target("helix")
     add_files("source/**/*.cc") -- add all files in the source directory's subdirectories
     
     set_languages("c++2b")      -- set the standard C++ version to C++2b
-    set_optimize ("fastest")
+    
+    if is_mode("debug") then
+        set_symbols("debug")       -- Generate debug symbols
+        set_optimize("none")       -- Disable optimization
+        add_defines("DEBUG")       -- Define DEBUG macro
+        set_runtimes("MDd")        -- Use the debug version of the runtime library
+    else
+        set_symbols("hidden")      -- Hide symbols
+        set_optimize("fastest")    -- Enable maximum optimization
+        add_defines("NDEBUG")      -- Define NDEBUG macro
+        set_runtimes("MD")         -- Use the release version of the runtime library
+    end
     
     add_includedirs("/opt/llvm-aarch64/include")
     add_linkdirs   ("/opt/llvm-aarch64/lib")

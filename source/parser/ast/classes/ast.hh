@@ -19,9 +19,9 @@
 #include <expected>
 #include <memory>
 #include <string>
-#include <utility>
 #include <vector>
 
+#include "../../../include/error/error.hh"
 #include "../../../token/include/token.hh"
 
 /*
@@ -153,31 +153,41 @@ comments
 
 */
 
+#define AST_NODE_METHODS(name)                                 \
+    inline string to_string(u16 depth = 1) const override;     \
+    inline string node_name() const override { return #name; } \
+    ParseResult<name> validate(TokenList tokens) override;     \
+    void accept(class Visitor &visitor) override
+
 namespace parser::ast {
 using std::string;
 using std::string_view;
 using namespace token;
 
-string get_indent(u16 depth) noexcept { return string(static_cast<u16>(depth * 4), ' '); };
+inline string get_indent(u16 depth) noexcept {
+    return string(static_cast<u16>(depth * 4), ' ');
+};
 
 template <typename T>
 struct AstNode;
 
 struct ParseError {
-    // TODO: Add more information
+    explicit ParseError(const error::Compiler &diagnostic) { auto _ = error::Error(diagnostic); }
 };
 
-template <typename T>
-using AstNodePtr = std::unique_ptr<AstNode<T>>;
+using AstNodePtr = std::unique_ptr<AstNode<void>>;
 
 template <typename T>
-using ParseResult = std::expected<AstNodePtr<T>, ParseError>;
+using AstNodeRef = std::shared_ptr<AstNode<T>>;
 
 template <typename T>
-using AstNodeList = std::vector<AstNodePtr<T>>;
+using ParseResult = std::expected<AstNodeRef<T>, ParseError>;
 
-template <typename T>
-struct AstNode {
+template <typename T = void>
+using AstNodeList = std::vector<AstNodeRef<T>>;
+
+template <>
+struct AstNode<void> {
     AstNode() = default;
     AstNode(const AstNode &) = default;
     AstNode &operator=(const AstNode &) = default;
@@ -188,151 +198,29 @@ struct AstNode {
     [[nodiscard]] virtual string to_string(u16 depth = 1) const = 0;
     [[nodiscard]] virtual string node_name() const = 0;
 
-    virtual ParseResult<T> parse(TokenList tokens) = 0;
     virtual void accept(class Visitor &visitor) = 0;
+    [[noreturn]] void validate(TokenList tokens) {
+        ParseError(error::Compiler{
+            .file_name = "unknown",
+            .message = "void ast node pointer called",
+            .fix = "this message would never or should never be seen if it is, report it"});
+    };
 };
 
-struct Location {
-    u64 line;
-    u64 column;
-    u64 offset;
-    u64 length;
-    string_view file;
+template <typename T>
+struct AstNode : public AstNode<void> {
+    AstNode() = default;
+    AstNode(const AstNode &) = default;
+    AstNode &operator=(const AstNode &) = default;
+    AstNode &operator=(AstNode &&) = default;
+    AstNode(AstNode &&) = default;
+    virtual ~AstNode() = default;
 
-    explicit Location(const Token &token) noexcept
-        : line(token.line_number())
-        , column(token.column_number())
-        , offset(token.offset())
-        , length(token.length())
-        , file(token.file_name()) {}
+    [[nodiscard]] virtual string to_string(u16 depth = 1) const override = 0;
+    [[nodiscard]] virtual string node_name() const override = 0;
 
-    // returns a readable string representation of the location
-    [[nodiscard]] string to_string(u16 depth = 1) const noexcept {
-        // file_name:line:column[offset|length]
-        return get_indent(depth) + string(file) + ":" + std::to_string(line) + ":" +
-               std::to_string(column) + "[" + std::to_string(offset) + "|" +
-               std::to_string(length) + "]";
-    }
-};
-
-struct Number : AstNode<Number> {  // 1 | 1.0 | 1.0d | 0x1 | 0b1 | 0o1
-    Location loc;
-    string value;
-    tokens type;  // int | float | decimal | hex | binary | octal
-
-    explicit Number(const Token &token)
-        : loc(token)
-        , value(token.value())
-        , type(token.token_kind()) {}
-
-    [[nodiscard]] string to_string(u16 depth = 1) const override {
-        return get_indent(depth) + "Number(" + value + ")";
-    }
-
-    [[nodiscard]] string node_name() const override { return "Number"; }
-
-    ParseResult<Number> parse(TokenList tokens) override {
-        // Implement parsing logic for Number node
-        return std::make_unique<Number>(tokens.current());
-    }
-
-    void accept(Visitor &visitor) override {
-        // Implement visitor pattern logic
-    }
-};
-
-struct Identifier : AstNode<Identifier> {  // a | _a | a1 | _a1
-    Location loc;
-    string value;
-
-    explicit Identifier(const Token &token)
-        : loc(token)
-        , value(token.value()) {}
-
-    [[nodiscard]] string to_string(u16 depth = 1) const override {
-        return get_indent(depth) + "Identifier(" + value + ")";
-    }
-
-    [[nodiscard]] string node_name() const override { return "Identifier"; }
-
-    ParseResult<Identifier> parse(TokenList tokens) override {
-        // Implement parsing logic for Identifier node
-        return std::make_unique<Identifier>(tokens.current());
-    }
-
-    void accept(Visitor &visitor) override {
-        // Implement visitor pattern logic
-    }
-};
-
-struct String : AstNode<String> {  // "Hello, world!" | 'H'
-    Location loc;
-    string value;
-
-    explicit String(const Token &token)
-        : loc(token)
-        , value(token.value()) {}
-
-    [[nodiscard]] string to_string(u16 depth = 1) const override {
-        return get_indent(depth) + "String(" + value + ")";
-    }
-
-    [[nodiscard]] string node_name() const override { return "String"; }
-
-    ParseResult<String> parse(TokenList tokens) override {
-        // Implement parsing logic for String node
-        return std::make_unique<String>(tokens.current());
-    }
-
-    void accept(Visitor &visitor) override {
-        // Implement visitor pattern logic
-    }
-};
-
-struct Boolean : AstNode<Boolean> {  // true | false
-    Location loc;
-    string value;
-
-    explicit Boolean(const Token &token)
-        : loc(token)
-        , value(token.value()) {}
-
-    [[nodiscard]] string to_string(u16 depth = 1) const override {
-        return get_indent(depth) + "Boolean(" + value + ")";
-    }
-
-    [[nodiscard]] string node_name() const override { return "Boolean"; }
-
-    ParseResult<Boolean> parse(TokenList tokens) override {
-        // Implement parsing logic for Boolean node
-        return std::make_unique<Boolean>(tokens.current());
-    }
-
-    void accept(Visitor &visitor) override {
-        // Implement visitor pattern logic
-    }
-};
-
-struct Null : AstNode<Null> {  // null
-    Location loc;
-
-    explicit Null(const Token &token)
-        : loc(token) {}
-
-    [[nodiscard]] string to_string(u16 depth = 1) const override {
-        return get_indent(depth) + "NULL";
-    }
-
-    [[nodiscard]] string node_name() const override { return "Null"; }
-
-    ParseResult<Null> parse(TokenList tokens) override {
-        // Implement parsing logic for Null node
-        return std::make_unique<Null>(tokens.current());
-    }
-
-    void accept(Visitor &visitor) override {
-        // Implement visitor pattern logic
-    }
+    virtual ParseResult<T> validate(TokenList tokens) = 0;
+    virtual void accept(class Visitor &visitor) override = 0;
 };
 
 // struct Variable : AstNode<Variable> { // a | _a | a1 | _a1
@@ -360,7 +248,6 @@ struct Null : AstNode<Null> {  // null
 //         // Implement visitor pattern logic
 //     }
 // };
-
 
 /*
     the following parsed and translated:
@@ -421,163 +308,8 @@ struct Null : AstNode<Null> {  // null
                     )
                 ]
             )
-        
+
 */
-
-struct Generic : AstNode<Generic> {  // ref<i32> | ptr<i32>
-    Location loc;
-    string   name;
-    AstNodeList<AstNode> arguments;
-
-    explicit Generic(const Token &token)
-        : loc(token)
-        , name(token.value()) {}
-
-    [[nodiscard]] string to_string(u16 depth = 1) const override {
-        string args_str;
-        for (const auto &arg : arguments) {
-            if (!args_str.empty()) {
-                args_str += ", ";
-            }
-            args_str += arg->to_string(depth + 1);
-        }
-        return get_indent(depth) + "Generic(" + name + "<" + args_str + ">)";
-    }
-
-    [[nodiscard]] string node_name() const override { return "Generic"; }
-
-    ParseResult<Generic> parse(TokenList tokens) override {
-        // Implement parsing logic for Generic node
-        return std::make_unique<Generic>(tokens.current());
-    }
-
-    void accept(Visitor &visitor) override {
-        // Implement visitor pattern logic
-    }
-};
-
-struct Variable : AstNode<Variable> {  // a: int<8> | a: i32 = 5 | a: i32? = null
-    Location loc;
-    string   name;
-    string   type;
-    bool     has_value   = false;
-    bool     is_nullable = false;
-    AstNodePtr<AstNode> value;
-    AstNodePtr<Generic> generics;
-
-    explicit Variable(const Token &token)
-        : loc(token)
-        , name(token.value()) {
-            
-        }
-
-    [[nodiscard]] string to_string(u16 depth = 1) const override {
-        return get_indent(depth) + "Variable(" + name + ": " + type + ")";
-    }
-
-    [[nodiscard]] string node_name() const override { return "Variable"; }
-
-    ParseResult<Variable> parse(TokenList tokens) override {
-        // Implement parsing logic for Variable node
-        return std::make_unique<Variable>(tokens.current());
-    }
-
-    void accept(Visitor &visitor) override {
-        // Implement visitor pattern logic
-    }
-};
-
-struct Return : AstNode<Return> {  // return 5 | return null
-    Location loc;
-    AstNodePtr<AstNode> value;
-
-    explicit Return(const Token &token)
-        : loc(token) {}
-
-    [[nodiscard]] string to_string(u16 depth = 1) const override {
-        return get_indent(depth) + "Return(" + (value ? value->to_string(depth + 1) : "null") + ")";
-    }
-
-    [[nodiscard]] string node_name() const override { return "Return"; }
-
-    ParseResult<Return> parse(TokenList tokens) override {
-        // Implement parsing logic for Return node
-        return std::make_unique<Return>(tokens.current());
-    }
-
-    void accept(Visitor &visitor) override {
-        // Implement visitor pattern logic
-    }
-};
-
-struct BinaryOperation : AstNode<BinaryOperation> {  // 2 * (3 + 4) / 5
-    Location loc;
-    AstNodePtr<AstNode> left;
-    string op;
-    AstNodePtr<AstNode> right;
-
-    explicit BinaryOperation(const Token &token)
-        : loc(token) {}
-
-    [[nodiscard]] string to_string(u16 depth = 1) const override {
-        return get_indent(depth) + "BinaryOperation(" +
-               (left ? left->to_string(depth + 1) : "null") + " " + op + " " +
-               (right ? right->to_string(depth + 1) : "null") + ")";
-    }
-
-    [[nodiscard]] string node_name() const override { return "BinaryOperation"; }
-
-    ParseResult<BinaryOperation> parse(TokenList tokens) override {
-        // Implement parsing logic for BinaryOperation node
-        return std::make_unique<BinaryOperation>(tokens.current());
-    }
-
-    void accept(Visitor &visitor) override {
-        // Implement visitor pattern logic
-    }
-};
-
-struct FunctionCall
-    : AstNode<FunctionCall> {  // print("Hello, world!") | print("Hello, world!", end=" ")
-    Location loc;
-    string name;
-    AstNodeList<Argument> arguments;
-    AstNodeList<DefaultArgument> default_arguments;
-
-    explicit FunctionCall(const Token &token)
-        : loc(token)
-        , name(token.value()) {}
-
-    [[nodiscard]] string to_string(u16 depth = 1) const override {
-        string args_str;
-        for (const auto &arg : arguments) {
-            if (!args_str.empty()) {
-                args_str += ", ";
-            }
-            args_str += arg->to_string(depth + 1);
-        }
-        string defaults_str;
-        for (const auto &def_arg : default_arguments) {
-            if (!defaults_str.empty()) {
-                defaults_str += ", ";
-            }
-            defaults_str += def_arg->to_string(depth + 1);
-        }
-        return get_indent(depth) + "FunctionCall(" + name + "(" + args_str + ") defaults(" +
-               defaults_str + "))";
-    }
-
-    [[nodiscard]] string node_name() const override { return "FunctionCall"; }
-
-    ParseResult<FunctionCall> parse(TokenList tokens) override {
-        // Implement parsing logic for FunctionCall node
-        return std::make_unique<FunctionCall>(tokens.current());
-    }
-
-    void accept(Visitor &visitor) override {
-        // Implement visitor pattern logic
-    }
-};
 
 }  // namespace parser::ast
 #endif  // __AST_HH__

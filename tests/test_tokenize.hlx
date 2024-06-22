@@ -1,1 +1,19 @@
-(1, 2)
+true
+false
+1.5
+1.6f
+1.2d
+1
+0x1afb
+0b10011
+0o12671
+1f
+"yessir"
+f"yessir"
+r"string"
+b"bytes"
+'y'
+f'd'
+r'd'
+b'd'
+null

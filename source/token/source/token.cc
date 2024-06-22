@@ -15,13 +15,14 @@
 #include "../include/token.hh"
 
 #include <iostream>
+#include <iterator>
 
 #include "../../include/colors_ansi.hh"
 
 namespace token {
 
-Token::Token(u64 line, u64 column, u64 length, u64 offset, std::string_view value, const std::string& filename,
-             std::string_view token_kind)
+Token::Token(u64 line, u64 column, u64 length, u64 offset, std::string_view value,
+             const std::string &filename, std::string_view token_kind)
     : line(line)
     , column(column)
     , len(length)
@@ -43,20 +44,23 @@ Token::Token(u64 line, u64 column, u64 length, u64 offset, std::string_view valu
     }
 }
 
+// Default Constructor
 Token::Token()
     : kind(tokens::WHITESPACE)
     , val("<<WHITE_SPACE>>") {}
 
-Token::Token(const Token &other)
-    : line(other.line)
-    , column(other.column)
-    , len(other.len)
-    , _offset(other._offset)
-    , kind(other.kind)
-    , val(other.val) {
-    std::shared_lock<std::shared_mutex> lock(other.mtx);
+// Copy Constructor
+Token::Token(const Token &other) {
+    line = other.line;
+    column = other.column;
+    len = other.len;
+    _offset = other._offset;
+    kind = other.kind;
+    val = other.val;
+    filename = other.filename;
 }
 
+// Copy Assignment Operator
 Token &Token::operator=(const Token &other) {
     if (this == &other) {
         return *this;
@@ -71,18 +75,22 @@ Token &Token::operator=(const Token &other) {
     _offset = other._offset;
     kind = other.kind;
     val = other.val;
+    filename = other.filename;
 
     return *this;
 }
 
+// Move Constructor
 Token::Token(Token &&other) noexcept
     : line(other.line)
     , column(other.column)
     , len(other.len)
     , _offset(other._offset)
     , kind(other.kind)
-    , val(std::move(other.val)) {}
+    , val(std::move(other.val))
+    , filename(other.filename) {}
 
+// Move Assignment Operator
 Token &Token::operator=(Token &&other) noexcept {
     if (this == &other) {
         return *this;
@@ -93,9 +101,11 @@ Token &Token::operator=(Token &&other) noexcept {
     _offset = other._offset;
     kind = other.kind;
     val = std::move(other.val);
+    filename = other.filename;
     return *this;
 }
 
+// Destructor
 Token::~Token() = default;
 
 u64 Token::line_number() const {
@@ -172,9 +182,15 @@ TokenList::TokenList(std::string filename)
     : filename(std::move(filename))
     , it(this->begin()) {}
 
+TokenList::TokenList(std::string filename, std::vector<Token>::iterator start,
+                     std::vector<Token>::iterator end)
+    : std::vector<Token>(start, end)
+    , filename(std::move(filename))
+    , it(this->begin()) {}
+
 Token TokenList::next(u32 n) {
     if (it == this->end()) {
-        return Token{};
+        return Token();
     }
 
     if (it + n >= this->end()) {
@@ -186,7 +202,7 @@ Token TokenList::next(u32 n) {
 
 Token TokenList::peek(u32 n) const {
     if (it == this->end()) {
-        return Token{};
+        return Token();
     }
 
     if (it + n >= this->end()) {
@@ -198,14 +214,14 @@ Token TokenList::peek(u32 n) const {
 
 Token TokenList::current() const {
     if (it == this->begin()) {
-        return Token{};
+        return Token();
     }
     return *(it - 1);
 }
 
 Token TokenList::previous(u32 n) const {
     if (it == this->begin()) {
-        return Token{};
+        return Token();
     }
 
     if (it - n < this->begin()) {
@@ -224,25 +240,16 @@ void TokenList::reset() { it = this->begin(); }
 
 void TokenList::append(const Token &token) { this->push_back(token); }
 
-std::vector<Token>::iterator TokenList::begin() { return std::vector<Token>::begin(); }
-
-std::vector<Token>::iterator TokenList::end() { return std::vector<Token>::end(); }
-
 std::string TokenList::file_name() const { return filename; }
 
-TokenList slice(TokenList &tokens, u64 start, u64 end) {
-    TokenList new_tokens(tokens.file_name());
-
-    if (end > tokens.size()) {
-        end = tokens.size();
+TokenList TokenList::slice(u64 start, u64 end) {
+    if (end > this->size()) {
+        end = this->size();
     }
-
-    for (u64 i = start; i < end; i++) {
-        new_tokens.append(tokens[i]);
-    }
-
-    return new_tokens;
+    return TokenList(/*this->filename, this->begin() + start, this->begin() + end*/);
 }
+
+bool TokenList::reached_end() const { return it == this->end(); }
 
 void print_tokens(token::TokenList &tokens) {
     u16 indent = 0;

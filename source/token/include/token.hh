@@ -36,7 +36,7 @@ struct Token {
     u32 _offset{};                  ///< Offset from the beginning of the file
     tokens kind{};                  ///< Kind of the token
     std::string val;                ///< String value of the token
-    std::string_view filename;     ///< Name of the file
+    std::string_view filename;      ///< Name of the file
     mutable std::shared_mutex mtx;  ///< Mutex for thread safety
 
   public:
@@ -50,8 +50,8 @@ struct Token {
      * @param value String value of the token.
      * @param token_kind Optional kind of the token as a string view.
      */
-    Token(u64 line, u64 column, u64 length, u64 offset, std::string_view value, const std::string& filename,
-          std::string_view token_kind = "");
+    Token(u64 line, u64 column, u64 length, u64 offset, std::string_view value,
+          const std::string &filename, std::string_view token_kind = "");
 
     /**
      * @brief Copy constructor.
@@ -151,6 +151,20 @@ struct Token {
      */
     std::string_view file_name() const;
 
+    // as string and ostream
+
+    std::string to_string() const {
+        return std::string("Token(") + std::string("line: ") + std::to_string(line) +
+               std::string(", column: ") + std::to_string(column) + std::string(", len: ") +
+               std::to_string(len) + std::string(", offset: ") + std::to_string(_offset) +
+               std::string(", kind: ") + std::string(token_kind_repr()) + std::string(", val: ") +
+               std::string(val) + ")";
+    }
+
+    std::ostream &operator<<(std::ostream &os) const {
+        return os << to_string();
+    }
+
     /* ====-------------------------- setters ---------------------------==== */
 
     /**
@@ -202,9 +216,14 @@ struct Token {
 class TokenList : public std::vector<Token> {
   private:
     std::string filename;
+    TokenList(std::string filename, std::vector<Token>::iterator start,
+              std::vector<Token>::iterator end);
 
   public:
-    std::vector<Token>::iterator it;
+    using std::vector<Token>::vector;  // Inherit constructors
+    using const_iterator = std::vector<Token>::const_iterator;
+
+    mutable const_iterator it;
 
     /**
      * @brief Constructs a TokenList with the specified filename.
@@ -281,21 +300,14 @@ class TokenList : public std::vector<Token> {
      *
      * @return Iterator to the beginning.
      */
-    std::vector<Token>::iterator begin();
+    // std::vector<Token>::iterator begin();
 
     /**
      * @brief Gets an iterator to the end of the token list.
      *
      * @return Iterator to the end.
      */
-    std::vector<Token>::iterator end();
-
-    /**
-     * @brief Gets the filename of the token list.
-     *
-     * @return Filename.
-     */
-    [[nodiscard]] std::string file_name() const;
+    // std::vector<Token>::iterator end();
 
     /**
      * @brief Slices the token list from the start index to the end index.
@@ -304,7 +316,16 @@ class TokenList : public std::vector<Token> {
      * @param end End index.
      * @return Sliced token list.
      */
-    TokenList slice(u32 start, u32 end);
+    TokenList slice(u64 start, u64 end);
+
+    [[nodiscard]] bool reached_end() const;
+
+    /**
+     * @brief Gets the filename of the token list.
+     *
+     * @return Filename.
+     */
+    [[nodiscard]] std::string file_name() const;
 };
 
 /**
