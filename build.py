@@ -199,7 +199,7 @@ def generate_cmake(target, build_type, llvm_build_dir):
     return build_dir
 
 def compile_project(build_dir):
-    run_command("cmake --build .", cwd=build_dir)
+    run_command("cmake --build . --parallel", cwd=build_dir)
 
 def main():
     global force_install, threads
@@ -258,8 +258,8 @@ def main():
     os.environ["LLVM_SRC_DIR"]   = LLVM_SRC_DIR
     os.environ["LLVM_TABLEGEN"]  = os.path.join(llvm_build_dir_host, "bin", "llvm-tblgen")
     os.environ["CLANG_TABLEGEN"] = os.path.join(llvm_build_dir_host, "bin", "clang-tblgen")
-    #os.environ["CC"]             = os.path.join(llvm_build_dir_host, "bin", "clang-18")
-    #os.environ["CXX"]            = os.path.join(llvm_build_dir_host, "bin", "clang++")
+    os.environ["CC"]             = os.path.join(llvm_build_dir_host, "bin", "clang-18")
+    os.environ["CXX"]            = os.path.join(llvm_build_dir_host, "bin", "clang++")
     print("ENVIRONMENT VARIABLES:\n" +
           '\n    '.join([
                 f"{Colors.red}{key:<30}{Colors.reset} = {Colors.green}\"{os.environ[key]}\"{Colors.reset}"

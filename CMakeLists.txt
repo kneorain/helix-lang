@@ -36,9 +36,6 @@ file(GLOB_RECURSE SOURCE_FILES "source/*.cc")
 # Define the executable
 add_executable(helix ${SOURCE_FILES})
 
-# Add the necessary flags
-target_compile_options(helix PRIVATE -fuse-ld=lld)
-
 # Set runtime output directories
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
     target_compile_definitions(helix PRIVATE DEBUG)
