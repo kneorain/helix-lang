@@ -37,85 +37,59 @@ Helix is an experimental language designed for seamless interoperability with Py
 - **Macros and Pre-Processors**: Extensible macros and pre-processors for code generation and optimization.
 - **Rich Standard Library**: Extensive libraries to handle various programming tasks out of the box.
 
+---
+
 ### Quick Start
 
-#### Installation
+#### Installation & Build
 
 > [!WARNING]
 > Helix is currently under development and does not yet have a useable compiler. The following instructions are for development and building the compiler itself.
 
 > [!NOTE]
-> Windows Build instructions is only tested on 1 machine and may not work for you. Please adjust as needed.
+> Linux is not tested, Most development is done on MacOS, if any issues arise with building on Windows or Linux, please open an issue.
 
-<details>
-    <summary>Build Instructions for MacOS (ARM64 - Apple Silicon)</summary>
+##### Prerequisites
+- [xmake](https://xmake.io/#/)
+- [python](https://www.python.org/downloads/)
+- git
+- C++ Compiler and STL (**clang**, **msvc** or **gcc**)
 
-  1. Install the required dependencies (homebrew is required):
-      ```bash
-      brew install cmake ninja wget xmake
-      cd ~
-      mkdir -p ~/built-includes/llvm-install
-      cd ~/built-includes/llvm-install
-      wget https://github.com/llvm/llvm-project/releases/download/llvmorg-18.1.6/llvm-project-18.1.6.src.tar.xz
-      tar -xvf llvm-project-18.1.6.src.tar.xz
-      cd llvm-project-18.1.6.src
-      mkdir build
-      cd build
-      cmake -G "Ninja" -DLLVM_ENABLE_PROJECTS="clang" -DLLVM_ENABLE_RUNTIMES="libcxx;libcxxabi;libunwind" -DCMAKE_BUILD_TYPE=Release -DLLVM_TARGETS_TO_BUILD="AArch64" -DCMAKE_INSTALL_PREFIX=/opt/llvm-aarch64 ../llvm
-      ninja
-      sudo ninja install
-      ```
-  2. Clone the Helix repository:
-      ```bash
-      git clone https://github.com/kneorain/helix-lang.git
-      ```
-  3. Prepare the build:
-      ```bash
-      cd helix-lang
-      xmake f -p macosx -a arm64 --sdk=/opt/homebrew/opt/llvm
-      ```
-  4. Build the compiler:
-      ```bash
-      xmake
-      ```
-  5. Run the compiler:
-      ```bash
-      ./build/macosx/arm64/release/helix-lang
-      ```
-</details>
+##### Windows
+1. Clone the repo
+    ```sh
+    $ git clone https://github.com/kneorain/helix-lang.git
+    $ cd helix-lang
+    ```
+2. Build
+    ```sh
+    $ xmake build helix
+    ```
+3. Run
+    ```sh
+    $ xmake run helix
+    ```
 
-<details>
-    <summary>Build Instructions for Windows</summary>
+##### MacOS, Unix or Linux
+1. if you don't have python or xmake installed, install using [Homebrew](https://brew.sh/)
+    ```sh
+    $ brew install xmake python
+    ```
+2. Clone the repo
+    ```sh
+    $ git clone https://github.com/kneorain/helix-lang.git
+    $ cd helix-lang
+    ```
+3. Build
+    ```sh
+    $ xmake build helix
+    ```
+4. Run
+    ```sh
+    $ xmake run helix
+    ```
 
-  1. Install the required dependencies:
-     - [xmake](https://xmake.io/#/getting_started)
-     ```bash
-     xrepo install llvm
-     ```
- 2. Clone the Helix repository:
-   ```bash
-   git clone https://github.com/kneorain/helix-lang.git
-   ```
- 3. Prepare the build:
-     ```bash
-     cd helix-lang
-     xmake f -p windows
-     ```
- 4. Build the compiler:
-     ```bash
-     xmake
-     ```
- 5. Run the compiler:
-     ```bash
-     ./build/windows/x86_x64/release/helix-lang
-     ```
-</details>
-
-<details>
-    <summary>Build Instructions for Linux</summary>
-
-  6. Untested, commands are likely similar to MacOS. Please refer to the MacOS instructions and adjust as needed.
-</details>
+---
 
 ### Hello, World!
 
