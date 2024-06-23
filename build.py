@@ -35,7 +35,7 @@ EXPERIMENTAL_TARGETS = {"ARC", "CSKY", "DirectX", "M68k", "SPIRV", "Xtensa"}
 
 
 force_install = False
-threads = multiprocessing.cpu_count() * 2
+threads = multiprocessing.cpu_count() * (2 if sys.platform != "win32" else 1)
 call_stack = []
 
 class Colors:
@@ -56,12 +56,12 @@ def check_prerequisites():
 def clone_llvm_source():
     if not os.path.exists(LLVM_SRC_DIR):
         os.makedirs(os.path.dirname(LLVM_SRC_DIR), exist_ok=True)
-        
+
         if VERSION:
             run_command(f"git clone --branch {LLVM_VERSION_TAG} --depth 1 {LLVM_REPO} {LLVM_SRC_DIR}")
         else:
             run_command(f"git clone --depth 1 {LLVM_REPO} {LLVM_SRC_DIR}")
-        
+
 
 def run_command(command, cwd=None, check=True):
     call_stack.append(command)
@@ -86,7 +86,7 @@ def build_llvm_host(config):
         host_target = input(f"Enter the host target to build stage 0, chose from: "
                             f"[{', '.join([Colors.green + x + Colors.reset for x in allowed_targets])}]"
                             "\n>>> ")
-        
+
         if host_target not in allowed_targets:
             for targ in allowed_targets:
                 if host_target.lower() == targ.lower():
@@ -100,7 +100,7 @@ def build_llvm_host(config):
         save_config(config)
     else:
         host_target = config["host_target"]
-    
+
     if host_target in CORE_TIER_TARGETS:
         target_flag = f"-DLLVM_TARGETS_TO_BUILD={host_target}"
     elif host_target in EXPERIMENTAL_TARGETS:
@@ -110,7 +110,7 @@ def build_llvm_host(config):
     llvm_build_dir = f"{BUILD_DIR}/llvm/llvm-build-host"
     if not os.path.exists(llvm_build_dir) or force_install:
         os.makedirs(llvm_build_dir, exist_ok=True)
-        
+
         cmake_command = (
             f"cmake -S {LLVM_SRC_DIR}/llvm -B {llvm_build_dir} -G Ninja "
             f"{target_flag} -DCMAKE_BUILD_TYPE=Release "
@@ -165,7 +165,7 @@ def build_llvm_target(target, mcpu, llvm_host_build):
     llvm_build_dir = f"{BUILD_DIR}/llvm/llvm-build-{target}-{mcpu}"
     if not os.path.exists(llvm_build_dir) or force_install:
         os.makedirs(llvm_build_dir, exist_ok=True)
-        
+
         cmake_command = (
             f"cmake -S {LLVM_SRC_DIR}/llvm -B {llvm_build_dir} -G Ninja "
             f"-DCMAKE_BUILD_TYPE=Release -DCMAKE_CROSSCOMPILING=True "
@@ -176,24 +176,24 @@ def build_llvm_target(target, mcpu, llvm_host_build):
             f"-DLLVM_TABLEGEN={llvm_host_build}/bin/llvm-tblgen "
             f"-DCLANG_TABLEGEN={llvm_host_build}/bin/clang-tblgen "
         )
-        
+
         run_command(cmake_command, cwd=llvm_build_dir)
         run_command(f"ninja -j {threads} install", cwd=llvm_build_dir)
         run_command(f"ninja clang-tblgen")
         run_command(f"ninja clang-headers")
-    
+
     return llvm_build_dir
 
-def generate_cmake(target, build_type, llvm_build_dir):
+def generate_cmake(target, build_type): # , llvm_build_dir
     build_dir = f"{BUILD_DIR}/build-{target}-{build_type}"
     if not os.path.exists(build_dir) or force_install:
         os.makedirs(build_dir, exist_ok=True)
         cmake_command = (
             f"cmake ../.. -DCMAKE_BUILD_TYPE={build_type} "
-            f"-DLLVM_DIR={llvm_build_dir}/lib/cmake/llvm "
+            #f"-DLLVM_DIR={llvm_build_dir}/lib/cmake/llvm "
             #f"-DCMAKE_CXX_FLAGS=\"-fuse-ld={os.path.join(llvm_build_dir, 'bin', 'ld.lld')}\" "
-            f"-DLLVM_TABLEGEN={llvm_build_dir}/bin/llvm-tblgen "
-            f"-DCLANG_TABLEGEN={llvm_build_dir}/bin/clang-tblgen "
+            #f"-DLLVM_TABLEGEN={llvm_build_dir}/bin/llvm-tblgen "
+            #f"-DCLANG_TABLEGEN={llvm_build_dir}/bin/clang-tblgen "
         )
         run_command(cmake_command, cwd=build_dir)
     return build_dir
@@ -208,8 +208,8 @@ def main():
 
     parser = argparse.ArgumentParser(description="Build script for Helix project")
     parser.add_argument("build_type", choices=["debug", "release"], help="Build type")
-    parser.add_argument("--target", required=True, help="Target triple")
-    parser.add_argument("--mcpu", required=True, help="MCPU type")
+    parser.add_argument("--target", required=False, help="Target triple")
+    parser.add_argument("--mcpu", required=False, help="MCPU type")
     parser.add_argument("--force", action="store_true", help="Force install")
     parser.add_argument("--threads", help="Number of threads to use")
     parser.add_argument("--cross", action="store_true", help="Cross Compile Helix")
@@ -228,38 +228,38 @@ def main():
     config = load_config()
     if "cache" not in config:
         config["cache"] = []
-    
-    if "host" not in config:
-        if "llvm_src_installed" not in config["cache"]:
-            clone_llvm_source()
-            config["cache"].append("llvm_src_installed")
 
-        if "llvm_host_built" not in config["cache"]:
-            llvm_build_dir_host = build_llvm_host(config)
-            config["host"]  = {"llvm_build_dir": llvm_build_dir_host}
-            config["cache"].append("llvm_host_built")
-        
-        save_config(config)
-    else:
-        llvm_build_dir_host = config["host"]["llvm_build_dir"]
+    # if "host" not in config:
+    #     if "llvm_src_installed" not in config["cache"]:
+    #         clone_llvm_source()
+    #         config["cache"].append("llvm_src_installed")
 
-    if target not in config and cross_compile:
-        llvm_build_dir_target = build_llvm_target(target, mcpu, llvm_build_dir_host)
-        config[target] = {"llvm_build_dir": llvm_build_dir_target}
-        save_config(config)
-    else:
-        if cross_compile:
-            llvm_build_dir_target = config[target]["llvm_build_dir"]
-        else:
-            llvm_build_dir_target = llvm_build_dir_host
+    #     if "llvm_host_built" not in config["cache"]:
+    #         llvm_build_dir_host = build_llvm_host(config)
+    #         config["host"]  = {"llvm_build_dir": llvm_build_dir_host}
+    #         config["cache"].append("llvm_host_built")
+    #
+    #     save_config(config)
+    # else:
+    #     llvm_build_dir_host = config["host"]["llvm_build_dir"]
+
+    # if target not in config and cross_compile:
+    #     llvm_build_dir_target = build_llvm_target(target, mcpu, llvm_build_dir_host)
+    #     config[target] = {"llvm_build_dir": llvm_build_dir_target}
+    #     save_config(config)
+    # else:
+    #     if cross_compile:
+    #         llvm_build_dir_target = config[target]["llvm_build_dir"]
+    #     else:
+    #         llvm_build_dir_target = llvm_build_dir_host
 
     # Set the environment variable for LLVM_DIR
-    os.environ["LLVM_DIR"]       = llvm_build_dir_target
-    os.environ["LLVM_SRC_DIR"]   = LLVM_SRC_DIR
-    os.environ["LLVM_TABLEGEN"]  = os.path.join(llvm_build_dir_host, "bin", "llvm-tblgen")
-    os.environ["CLANG_TABLEGEN"] = os.path.join(llvm_build_dir_host, "bin", "clang-tblgen")
-    os.environ["CC"]             = os.path.join(llvm_build_dir_host, "bin", "clang-18")
-    os.environ["CXX"]            = os.path.join(llvm_build_dir_host, "bin", "clang++")
+    # os.environ["LLVM_DIR"]       = llvm_build_dir_target
+    # os.environ["LLVM_SRC_DIR"]   = LLVM_SRC_DIR
+    # os.environ["LLVM_TABLEGEN"]  = os.path.join(llvm_build_dir_host, "bin", "llvm-tblgen")
+    # os.environ["CLANG_TABLEGEN"] = os.path.join(llvm_build_dir_host, "bin", "clang-tblgen")
+    # os.environ["CC"]             = os.path.join(llvm_build_dir_host, "bin", "clang-18")
+    # os.environ["CXX"]            = os.path.join(llvm_build_dir_host, "bin", "clang++")
     print("ENVIRONMENT VARIABLES:\n" +
           '\n    '.join([
                 f"{Colors.red}{key:<30}{Colors.reset} = {Colors.green}\"{os.environ[key]}\"{Colors.reset}"
@@ -267,7 +267,7 @@ def main():
               ]) +
           "\n\n")
 
-    build_dir = generate_cmake(target, build_type, llvm_build_dir_target)
+    build_dir = generate_cmake(target, build_type) # llvm_build_dir_target
 
     if action == "build":
         compile_project(build_dir)
