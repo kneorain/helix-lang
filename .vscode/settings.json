@@ -1,137 +1,38 @@
 {
     "files.associations": {
         "*.db": "sql",
-        "*.v": "verilog",
         "*.fs": "fsharp",
         "*.py": "python",
         "*.def": "cpp",
+        "*.inc": "cpp",
     },
-    "files.autoSave": "afterDelay",
-    "explorer.confirmDelete": false,
-    "git.autofetch": true,
-    "sqltools.useNodeRuntime": true,
-    "workbench.editorAssociations": {
-        "*.db": "sqlite-viewer.option",
-        "*.md": "vscode.markdown.preview.editor",
-        "*.svg": "svgPreviewer.customEditor"
-    },
-    "git.enableSmartCommit": true,
-    "git.confirmSync": false,
-    "terminal.integrated.allowMnemonics": true,
-    "terminal.integrated.cursorBlinking": true,
-    "editor.inlineSuggest.enabled": true,
-    "C_Cpp.intelliSenseEngine": "disabled",
     "editor.foldingMaximumRegions": 20000,
-    "github.copilot.enable": {
-        "*": true,
-        "plaintext": true,
-        "markdown": true,
-        "scminput": false,
-        "yaml": true,
-        "cpp": true
-    },
-    "explorer.confirmDragAndDrop": false,
     "editor.stickyTabStops": true,
-    "terminal.integrated.gpuAcceleration": "off",
-    "explorer.compactFolders": false,
-    "liveshare.presence": true,
     "editor.stickyScroll.enabled": true,
-    "remoteHub.commitDirectlyWarning": "off",
-    "terminal.integrated.profiles.osx": {
-        "zsh": {
-            "path": "zsh",
-            "env": {}
-        }
-    },
-    "terminal.integrated.defaultProfile.osx": "zsh",
-    "terminal.explorerKind": "external",
-    "lldb.library": "/Library/Developer/CommandLineTools/Library/PrivateFrameworks/LLDB.framework/Versions/A/LLDB",
-    "lldb.launch.expressions": "native",
-    "grunt.autoDetect": "on",
     "prettier.tabWidth": 4,
-    "prettier.useTabs": true,
-    "workbench.layoutControl.enabled": false,
+    "prettier.useTabs": false,
     "editor.codeActionsOnSave": {
-        "source.organizeImports": "explicit"
+        "source.organizeImports": "always"
     },
     "editor.linkedEditing": true,
     "editor.rulers": [
         {
-            "column": 80,
+            "column": 100,
             "color": "#00FF0010"
         },
         {
-            "column": 100,
-            "color": "#BDB76B15"
-        },
-        {
             "column": 120,
-            "color": "#FA807219"
+            "color": "#BDB76B15"
         }
     ],
     "editor.unicodeHighlight.includeComments": true,
-    "emmet.variables": {
-        "lang": "en"
-    },
-    "workbench.colorCustomizations": {
-        "[Default Dark Modern]": {
-            "tab.activeBorderTop": "#00FF00",
-            "tab.unfocusedActiveBorderTop": "#00FF0088",
-            "textCodeBlock.background": "#00000055"
-        },
-        "editor.wordHighlightStrongBorder": "#FF6347",
-        "editor.wordHighlightBorder": "#FFD700",
-        "editor.selectionHighlightBorder": "#A9A9A9"
-    },
-    "workbench.editor.revealIfOpen": true,
-    "workbench.tree.indent": 20,
-    "terminal.integrated.scrollback": 1000000,
-    "workbench.list.smoothScrolling": true,
-    "workbench.list.horizontalScrolling": true,
     "editor.smoothScrolling": true,
-    "terminal.integrated.fastScrollSensitivity": 1,
-    "workbench.editor.sharedViewState": true,
-    "workbench.list.fastScrollSensitivity": 2,
-    "terminal.integrated.smoothScrolling": true,
-    "editor.fastScrollSensitivity": 1,
-    "editor.stickyScroll.maxLineCount": 6,
-    "cSpell.enableFiletypes": ["verilog"],
-    "editor.fontFamily": "'Fira Code', Consolas, 'Courier New', monospace",
-    "editor.guides.bracketPairs": "active",
-    "files.maxMemoryForLargeFilesMB": 16024,
-    "window.titleBarStyle": "custom",
-    "workbench.colorTheme": "One Dark Pro Flat",
-    "material-icon-theme.folders.theme": "specific",
-    "workbench.productIconTheme": "fluent-icons",
-    "terminal.external.osxExec": "Warp.app",
-    "liveshare.accessibility.soundsEnabled": false,
-    "redhat.telemetry.enabled": true,
-    "editor.minimap.renderCharacters": false,
-    "editor.minimap.scale": 2,
-    "editor.minimap.autohide": true,
-    "remote.tunnels.access.hostNameOverride": "macbook",
-    "remote.tunnels.access.preventSleep": true,
-    "trailing-spaces.includeEmptyLines": false,
-    "terminal.integrated.enablePersistentSessions": false,
-    "terminal.integrated.tabs.hideCondition": "never",
-    "java.configuration.updateBuildConfiguration": "automatic",
-    "java.debug.settings.hotCodeReplace": "auto",
-    "java.sources.organizeImports.staticStarThreshold": 1,
+    "editor.stickyScroll.maxLineCount": 20,
     "cSpell.diagnosticLevel": "Hint",
     "C_Cpp.default.cStandard": "c23",
-    "c-cpp-flylint.standard": [
-        "c23",
-        "c++23"
-    ],
-    "debug.onTaskErrors": "showErrors",
-    "window.zoomLevel": 1,
-    "clangd.checkUpdates": true,
-    "workbench.sideBar.location": "right",
     "editor.indentSize": 4,
     "editor.detectIndentation": false,
-    "github.copilot.editor.enableAutoCompletions": true,
     "explorer.fileNesting.enabled": true,
-    "explorer.fileNesting.expand": false,
     "explorer.fileNesting.patterns": {
         "//": "Last update at 6/2/2024, 6:44:06 PM",
         "*.asax": "$(capture).*.cs, $(capture).*.vb",
@@ -170,10 +71,10 @@
         "*.xaml": "$(capture).xaml.cs",
         "+layout.svelte": "+layout.ts,+layout.ts,+layout.js,+layout.server.ts,+layout.server.js,+layout.gql",
         "+page.svelte": "+page.server.ts,+page.server.js,+page.ts,+page.js,+page.gql",
-        ".clang-tidy": ".clang-format, .clangd, compile_commands.json",
+        ".clang-tidy": ".clang-format, .clangd, .gitignore",
         ".env": "*.env, .env.*, .envrc, env.d.ts",
         ".gitignore": ".gitattributes, .gitmodules, .gitmessage, .mailmap, .git-blame*",
-        "xmake.lua": "README*, LICENSE*, changelog, code_of_conduct, contributing, todo.md",
+        "xmake.lua": "compile_commands.json, makefile, CMakeLists.txt, build.ninja",
         "BUILD.bazel": "*.bzl, *.bazel, *.bazelrc, bazel.rc, .bazelignore, .bazelproject, WORKSPACE",
         "CMakeLists.txt": "*.cmake, *.cmake.in, .cmake-format.yaml, CMakePresets.json, CMakeCache.txt",
         "Cargo.toml": ".clippy.toml, .rustfmt.toml, cargo.lock, clippy.toml, cross.toml, rust-toolchain.toml, rustfmt.toml",
