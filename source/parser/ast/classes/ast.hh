@@ -172,6 +172,7 @@ template <typename T>
 struct AstNode;
 
 struct ParseError {
+    ParseError() = default;
     explicit ParseError(const error::Compiler &diagnostic) { auto _ = error::Error(diagnostic); }
 };
 

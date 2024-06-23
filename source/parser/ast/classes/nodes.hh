@@ -139,6 +139,7 @@ struct CommentNode : AstNode<CommentNode> {  // // hello this is a comment
     
     ParseResult<CommentNode> validate(TokenList tokens) override {
         // validate
+        return std::unexpected(ParseError());
     }
     
     void accept(class Visitor &visitor) override {
@@ -184,6 +185,7 @@ struct ProgramNode : AstNode<ProgramNode> {
     
     ParseResult<ProgramNode> validate(TokenList tokens) override {
         // validate
+        return std::unexpected(ParseError());
     }
     
     void accept(class Visitor &visitor) override {

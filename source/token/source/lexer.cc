@@ -13,6 +13,7 @@
  */
 
 #include "../include/lexer.hh"
+#include <iostream>
 
 #include <filesystem>
 #include <fstream>
@@ -222,7 +223,7 @@ inline Token Lexer::next_token() {
     throw error::Error(error::Compiler{std::string(1, current()), "unknown token"});
 }
 
-__attribute__((always_inline)) inline Token Lexer::parse_compiler_directive() {
+inline Token Lexer::parse_compiler_directive() {
     auto start = currentPos;
     auto end_loop = false;
     u32 brace_level = 0;
@@ -258,13 +259,13 @@ __attribute__((always_inline)) inline Token Lexer::parse_compiler_directive() {
             "<complier_directive>"};
 }
 
-__attribute__((always_inline)) inline Token Lexer::process_whitespace() {
+   inline Token Lexer::process_whitespace() {
     auto result = Token{line, column, 1, offset, source.substr(currentPos, 1), file_name, "< >"};
     bare_advance();
     return result;
 }
 
-__attribute__((always_inline)) inline Token Lexer::parse_alpha_numeric() {
+   inline Token Lexer::parse_alpha_numeric() {
     auto start = currentPos;
 
     bool end_loop = false;
@@ -303,7 +304,7 @@ __attribute__((always_inline)) inline Token Lexer::parse_alpha_numeric() {
             "<id>"};
 }
 
-__attribute__((always_inline)) inline Token Lexer::parse_numeric() {
+   inline Token Lexer::parse_numeric() {
     // all the data within 0-9 is a number
     // a number can have the following chars after the first digit:
     // 0-9, ., F, f, U, u, o, x, b, e, E, A-F, a-f, _
@@ -344,7 +345,7 @@ __attribute__((always_inline)) inline Token Lexer::parse_numeric() {
             "<int>"};
 }
 
-__attribute__((always_inline)) inline Token Lexer::parse_string() {
+   inline Token Lexer::parse_string() {
     // all the data within " (<string>) or ' (<char>) is a string
     auto start = currentPos;
     auto start_line = line;
@@ -400,7 +401,7 @@ __attribute__((always_inline)) inline Token Lexer::parse_string() {
             token_type};
 }
 
-__attribute__((always_inline)) inline Token Lexer::parse_operator() {
+   inline Token Lexer::parse_operator() {
     auto start = currentPos;
     bool end_loop = false;
 
@@ -419,13 +420,13 @@ __attribute__((always_inline)) inline Token Lexer::parse_operator() {
             file_name, source.substr(start, currentPos - start)};
 }
 
-__attribute__((always_inline)) inline Token Lexer::parse_punctuation() {
+   inline Token Lexer::parse_punctuation() {
     auto result = Token{line, column, 1, offset, source.substr(currentPos, 1), file_name};
     bare_advance();
     return result;
 }
 
-__attribute__((always_inline)) inline char Lexer::advance(u16 n) {
+   inline char Lexer::advance(u16 n) {
     if (currentPos + 1 > end) {
         return '\0';
     }
@@ -450,7 +451,7 @@ __attribute__((always_inline)) inline char Lexer::advance(u16 n) {
     return current();
 }
 
-__attribute__((always_inline)) inline void Lexer::bare_advance(u16 n) {
+   inline void Lexer::bare_advance(u16 n) {
     ++currentPos;
 
     switch (current()) {
@@ -469,7 +470,7 @@ __attribute__((always_inline)) inline void Lexer::bare_advance(u16 n) {
     }
 }
 
-__attribute__((always_inline)) inline char Lexer::current() {
+   inline char Lexer::current() {
     if (is_eof()) {
         return '\0';
     }
@@ -484,7 +485,7 @@ __attribute__((always_inline)) inline char Lexer::current() {
     return currentChar;
 }
 
-__attribute__((always_inline)) inline char Lexer::peek_back() const {
+   inline char Lexer::peek_back() const {
     if (currentPos - 1 < 0) {
         return '\0';
     }
@@ -492,7 +493,7 @@ __attribute__((always_inline)) inline char Lexer::peek_back() const {
     return source[currentPos - 1];
 }
 
-__attribute__((always_inline)) inline char Lexer::peek_forward() const {
+   inline char Lexer::peek_forward() const {
     if (currentPos + 1 >= end) {
         return '\0';
     }
@@ -500,5 +501,5 @@ __attribute__((always_inline)) inline char Lexer::peek_forward() const {
     return source[currentPos + 1];
 }
 
-__attribute__((always_inline)) inline bool Lexer::is_eof() const { return currentPos >= end; }
+   inline bool Lexer::is_eof() const { return currentPos >= end; }
 }  // namespace lexer

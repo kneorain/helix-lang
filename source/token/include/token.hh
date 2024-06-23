@@ -14,7 +14,8 @@
 
 #ifndef __TOKEN_HH__
 #define __TOKEN_HH__
-
+#include <iostream>
+#include <string>
 #include <shared_mutex>
 #include <string>
 #include <string_view>

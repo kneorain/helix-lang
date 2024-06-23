@@ -16,7 +16,6 @@
 #define __LEXER_HH__
 
 #include <string>
-
 #include "token.hh"
 
 namespace lexer {
