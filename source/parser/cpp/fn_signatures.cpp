@@ -25,8 +25,8 @@
 #include <string>
 
 using namespace clang;
-using namespace clang::tooling;
-using namespace clang::ast_matchers;
+using namespace std::clang::tooling;
+using namespace std::clang::ast_matchers;
 
 class FunctionSignatureVisitor : public RecursiveASTVisitor<FunctionSignatureVisitor> {
   public:

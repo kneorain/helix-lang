@@ -1,29 +1,45 @@
 cmake_minimum_required(VERSION 3.14)
 project(helix-lang)
 
+# Set C++ standard
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-# Check if LLVM_DIR is provided; if not, prompt an error
+# Check for LLVM environment variables
 if(NOT DEFINED ENV{LLVM_DIR})
     message(FATAL_ERROR "LLVM_DIR is not set. Please provide the path to the LLVM build directory.")
 endif()
 
-# Set LLVM paths
-set(LLVM_DIR $ENV{LLVM_DIR})
-set(LLVM_INCLUDE_DIR ${LLVM_DIR}/include)
-set(LLVM_LIB_DIR ${LLVM_DIR}/lib)
-set(LLVM_BIN_DIR ${LLVM_DIR}/bin)
+if(NOT DEFINED ENV{LLVM_SRC_DIR})
+    message(FATAL_ERROR "LLVM_SRC_DIR is not set. Please provide the path to the LLVM source directory.")
+endif()
 
-include_directories(${LLVM_INCLUDE_DIR})
-link_directories(${LLVM_LIB_DIR})
+# Set LLVM paths from environment variables
+set(LLVM_DIR $ENV{LLVM_DIR})
+set(LLVM_SRC_DIR $ENV{LLVM_SRC_DIR})
+set(LLVM_TABLEGEN $ENV{LLVM_TABLEGEN})
+set(CLANG_TABLEGEN $ENV{CLANG_TABLEGEN})
+
+# Include LLVM directories
+include_directories(${LLVM_SRC_DIR}/llvm/include)
+include_directories(${LLVM_SRC_DIR}/clang/include)
+include_directories(${LLVM_DIR}/include)
+include_directories(${LLVM_SRC_DIR}/mlir/include)
+
+# Link LLVM libraries
+link_directories(${LLVM_DIR}/lib)
 
 # Automatically include all .cc files in the source directory and its subdirectories
 file(GLOB_RECURSE SOURCE_FILES "source/*.cc")
 
+# Define the executable
 add_executable(helix ${SOURCE_FILES})
 
+# Add the necessary flags
+target_compile_options(helix PRIVATE -fuse-ld=lld)
+
+# Set runtime output directories
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
     target_compile_definitions(helix PRIVATE DEBUG)
     target_compile_options(helix PRIVATE -g -O0 -MDd)
@@ -34,28 +50,70 @@ else()
     set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE ${CMAKE_BINARY_DIR}/bin/Release)
 endif()
 
+# Platform-specific settings
 if(APPLE)
+    # Use the default macOS linker and clang settings
     target_link_libraries(helix PRIVATE clang clang-cpp c++ c++abi)
+    target_compile_options(helix PRIVATE -stdlib=libc++)
 else()
+    # Use lld for non-Apple platforms
+    target_compile_options(helix PRIVATE -fuse-ld=lld)
     target_link_libraries(helix PRIVATE clang clang-cpp libc++ libc++abi)
+    target_compile_options(helix PRIVATE -stdlib=libc++ -fno-rtti)
+    target_link_options(helix PRIVATE -stdlib=libc++ -L${LLVM_DIR}/lib -lc++abi -Wl,-rpath,${LLVM_DIR}/lib)
 endif()
 
-if(WIN32)
-    target_compile_options(helix PRIVATE -stdlib=libc++ -I${LLVM_INCLUDE_DIR} -Xclang -nostdinc++)
-    target_link_options(helix PRIVATE -stdlib=libc++ -L${LLVM_LIB_DIR} -lc++ -lc++abi)
-    target_compile_definitions(helix PRIVATE _CRT_SECURE_NO_WARNINGS)
-else()
-    target_compile_options(helix PRIVATE -stdlib=libc++ -fno-rtti -I${LLVM_INCLUDE_DIR})
-    target_link_options(helix PRIVATE -stdlib=libc++ -L${LLVM_LIB_DIR} -lc++abi -Wl,-rpath,${LLVM_LIB_DIR})
-endif()
-
-find_program(LLVM_CONFIG llvm-config HINTS ${LLVM_BIN_DIR})
+# Find llvm-config and include its directories
+find_program(LLVM_CONFIG llvm-config HINTS ${LLVM_DIR}/bin)
 
 if(LLVM_CONFIG)
     execute_process(COMMAND ${LLVM_CONFIG} --includedir OUTPUT_VARIABLE LLVM_INCLUDEDIR OUTPUT_STRIP_TRAILING_WHITESPACE)
     execute_process(COMMAND ${LLVM_CONFIG} --libdir OUTPUT_VARIABLE LLVM_LIBDIR OUTPUT_STRIP_TRAILING_WHITESPACE)
-    include_directories(BEFORE ${LLVM_INCLUDEDIR})
+    include_directories(${LLVM_INCLUDEDIR})
     link_directories(${LLVM_LIBDIR})
 else()
     message(FATAL_ERROR "llvm-config not found!")
 endif()
+
+# Additional include directories if needed
+include_directories(${LLVM_SRC_DIR}/clang/include)
+include_directories(${LLVM_SRC_DIR}/llvm/include)
+include_directories(${LLVM_SRC_DIR}/mlir/include)
+include_directories(${LLVM_DIR}/tools/clang/include)
+
+# Ensure correct paths
+target_include_directories(helix PRIVATE ${LLVM_SRC_DIR}/clang/include)
+target_include_directories(helix PRIVATE ${LLVM_SRC_DIR}/llvm/include)
+target_include_directories(helix PRIVATE ${LLVM_SRC_DIR}/mlir/include)
+target_include_directories(helix PRIVATE ${LLVM_DIR}/tools/clang/include)
+
+# Link necessary Clang libraries explicitly
+target_link_libraries(helix PRIVATE
+    clang-cpp
+    clang
+    clangAST
+    clangASTMatchers
+    clangBasic
+    clangCodeGen
+    clangFrontend
+    clangFrontendTool
+    clangLex
+    clangParse
+    clangSema
+    clangEdit
+    clangDriver
+    clangTooling
+    clangToolingCore
+    clangToolingInclusions
+    clangFormat
+    clangRewrite
+    clangRewriteFrontend
+    clangAnalysis
+    clangARCMigrate
+    clangCrossTU
+    clangIndex
+    clangSerialization
+    clangStaticAnalyzerCore
+    clangStaticAnalyzerFrontend
+    clangStaticAnalyzerCheckers
+)
