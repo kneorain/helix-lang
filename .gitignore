@@ -10,3 +10,5 @@ build/
 .cache/
 target/
 vsxmake2022/
+
+compile_commands.json

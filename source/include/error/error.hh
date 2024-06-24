@@ -19,7 +19,6 @@
 #ifndef __ERROR_HH__
 #define __ERROR_HH__
 
-#include <print>
 #include <stdexcept>
 #include <string>
 #include <utility>
