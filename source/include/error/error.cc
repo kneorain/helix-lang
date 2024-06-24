@@ -1,9 +1,12 @@
 #include "error.hh"
 
+#include <array>
 #include <iomanip>
 #include <iostream>
+#include <optional>
 
-#include "../colors_ansi.hh"
+#include "include/colors_ansi.hh"
+#include "tools/controllers/include/io.hh"
 
 /**
  @namespace error
@@ -14,12 +17,36 @@ namespace error {
  * @brief Constructs an Error object with the given error information.
  * @param error The error information.
  */
-Error::Error(const Line &error, const std::string &line) {
+Error::Error(const Line &error) {
+    std::array<std::optional<std::string>, LINES_TO_SHOW> lines;
+    io::get_line(error.file_name, error.line_number);
+
+    u32 half_lines_to_show = u32(LINES_TO_SHOW / 2);
+    u32 start_index =
+        (error.line_number < half_lines_to_show) ? 1 : (error.line_number - half_lines_to_show);
+
+    u8 index = 0;
+    for (u32 i = start_index; (i - start_index) < LINES_TO_SHOW; i++) {
+        lines[index] = io::get_line(error.file_name, i);
+        ++index;
+    }
+
+    if (lines[LINES_TO_SHOW].has_value() && lines[LINES_TO_SHOW].value().empty()) {
+        lines[LINES_TO_SHOW] = std::nullopt;
+    }
+
+    std::cout << "file_name: " << error.file_name << "\n"
+              << "line_number: " << error.line_number << "\n"
+              << "column: " << error.column << "\n"
+              << "offset: " << error.offset << "\n"
+              << "message: " << error.message << "\n"
+              << "level: " << error.level << "\n"
+              << "fix: " << error.fix << "\n";
+
     print_start(error.message, error.level);
     print_info(error.message, error.file_name, error.line_number, error.column, error.offset);
-    print_line(line, error.line_number, error.column, error.offset);
-    //print_lines({}, error.line_number, error.column, error.offset);
-    // FIXME: look up line from file cache
+    print_lines(lines, start_index, error.line_number, error.column, error.offset);
+
     if (!error.fix.empty()) {
         print_fix(error.fix, error.column, error.offset);
     } else {
@@ -56,18 +83,18 @@ Error::Error(const Compiler &compiler) {
 void Error::print_start(const std::string_view message, const Level &level,
                         const std::string_view file_name) {
     switch (level) {
-    case NOTE:
-        std::cout << std::string(colors::fg16::cyan) << "note";
-        break;
-    case WARN:
-        std::cout << std::string(colors::fg16::yellow) << "warning";
-        break;
-    case ERR:
-        std::cout << std::string(colors::fg16::red) << "error";
-        break;
-    case FATAL:
-        std::cout << std::string(colors::fg16::red) << std::string(colors::bold) << "fatal";
-        break;
+        case NOTE:
+            std::cout << std::string(colors::fg16::cyan) << "note";
+            break;
+        case WARN:
+            std::cout << std::string(colors::fg16::yellow) << "warning";
+            break;
+        case ERR:
+            std::cout << std::string(colors::fg16::red) << "error";
+            break;
+        case FATAL:
+            std::cout << std::string(colors::fg16::red) << std::string(colors::bold) << "fatal";
+            break;
     }
 
     if (!file_name.empty()) {
@@ -101,26 +128,35 @@ void Error::print_info(const std::string_view message, const std::string_view fi
  * @param col The column number where the error occurred.
  * @param offset The offset where the error occurred.
  */
-void Error::print_lines(const std::vector<std::string> &lines, const u32 &line, const u32 &col,
+void Error::print_lines(const std::array<std::optional<std::string>, LINES_TO_SHOW> &lines,
+                        const u32 &start_index, const u32 &error_line, const u32 &col,
                         const u32 &offset) {
-    for (u32 i = 0; i < lines.size(); i++) {
-        if (i == line) {
-            std::cout << std::setw(4) << (i + 1) << " "
-                      << ": " << std::string(colors::reset) << lines[i] << '\n';
-            std::cout << "     "
-                      << "│ " << std::string(colors::reset) << std::string(col, ' ')
-                      << std::string(colors::fg16::yellow) << std::string(offset, '^')
-                      << std::string(colors::reset) << '\n';
+    u32 index = start_index;
+
+    for (auto line : lines) {
+        if (index != error_line) {
+            if (line.has_value()) {
+                std::cout << std::setw(4) << index << " "
+                          << ": " << std::string(colors::reset) << line.value() << "\n";
+            }
         } else {
-            std::cout << std::setw(4) << (i + 1) << " "
-                      << "│ " << std::string(colors::reset) << lines[i] << '\n';
+            if (line.has_value()) {
+                print_line(line.value(), error_line, col, offset);
+            }
         }
+
+        ++index;
     }
+
+    std::cout << "\n";
 }
 
-void Error::print_line(const std::string &line, const u32 &line_number, const u32 &col, const u32 &offset) {
-    std::cout << std::setw(4) << (line_number + 1) << " "
-              << ": " << std::string(colors::reset) << line << '\n';
+void Error::print_line(const std::string &line, const u32 &line_number, const u32 &col,
+                       const u32 &offset) {
+    std::cout << std::setw(4) << line_number << " "
+              << ": " << std::string(colors::reset) << line.substr(0, col)
+              << std::string(colors::fg16::red) << line.substr(col, offset)
+              << std::string(colors::reset) << line.substr(offset + col) << "\n";
     std::cout << "     "
               << "│ " << std::string(colors::reset) << std::string(col, ' ')
               << std::string(colors::fg16::yellow) << std::string(offset, '^')
@@ -141,7 +177,7 @@ void Error::print_fix(const std::string_view fix_message, const u32 &col, const 
 /**
  * @brief Prints a message indicating that no fix is available for the error.
  */
-void Error::print_no_fix() {
-    std::cout << '\n';
-}
+void Error::print_no_fix() { std::cout << '\n'; }
 }  // namespace error
+
+#undef LINES_TO_SHOW

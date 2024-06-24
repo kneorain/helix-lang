@@ -11,24 +11,29 @@
  * @note This code is provided by the creators of Helix. Visit our website at:
  * https://helix-lang.com/ for more information.
  */
-
-#ifndef __FILE_CACHE_HH__
-#define __FILE_CACHE_HH__
+#ifndef __IO_H__
+#define __IO_H__
 
 #include <mutex>
 #include <optional>
 #include <string>
 #include <unordered_map>
+#include "include/inttypes.hh"
 
-namespace file_sys {
+namespace io {
+std::string read_file(std::string &filename);
+std::string read_file(const std::string &filename);
+
+std::optional<std::string> get_line(const std::string &filename, u64 line);
+
 class FileCache {
-public:
-    static void add_file(const std::string& key, const std::string& value) {
+  public:
+    static void add_file(const std::string &key, const std::string &value) {
         std::lock_guard<std::mutex> lock(mutex_);
         cache_[key] = value;
     }
 
-    static std::optional<std::string> get_file(const std::string& key) {
+    static std::optional<std::string> get_file(const std::string &key) {
         std::lock_guard<std::mutex> lock(mutex_);
         auto cache_it = cache_.find(key);
         if (cache_it != cache_.end()) {
@@ -37,13 +42,10 @@ public:
         return std::nullopt;
     }
 
-private:
+  private:
     static std::unordered_map<std::string, std::string> cache_;
     static std::mutex mutex_;
 };
+}  // namespace io
 
-std::unordered_map<std::string, std::string> FileCache::cache_;
-std::mutex FileCache::mutex_;
-} // namespace file_sys
-
-#endif // __FILE_CACHE_HH__
+#endif  // __IO_H__

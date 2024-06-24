@@ -20,15 +20,17 @@
 #define __ERROR_HH__
 
 #include <print>
+#include <stdexcept>
 #include <string>
 #include <utility>
 #include <vector>
-#include <stdexcept>
 
-#include "../inttypes.hh"
+#include "include/inttypes.hh"
+#include "token/include/token.hh"
+
+#define LINES_TO_SHOW 5
 
 namespace error {
-
 /**
  * @enum Level
  * @brief Enumeration representing the level of an error.
@@ -63,6 +65,16 @@ struct Line {
         , message(std::move(message))
         , level(level)
         , fix(std::move(fix)) {}
+
+    Line(const token::Token &token, std::string message, const Level &level = ERR,
+         std::string fix = "")
+        : file_name(token.file_name())
+        , line_number(token.line_number())
+        , column(token.column_number())
+        , offset(token.value().size())
+        , message(std::move(message))
+        , level(level)
+        , fix(std::move(fix)) {}
 };
 
 /**
@@ -91,7 +103,7 @@ class Error {
      * @brief Constructor for a Line error.
      * @param error The Line error to handle.
      */
-    explicit Error(const Line &error, const std::string &line);
+    explicit Error(const Line &error);
 
     /**
      * @brief Constructor for a message with a specified level.
@@ -134,7 +146,8 @@ class Error {
      * @param col The column number of the error.
      * @param offset The offset within the line.
      */
-    static void print_lines(const std::vector<std::string> &lines, const u32 &line, const u32 &col,
+    static void print_lines(const std::array<std::optional<std::string>, LINES_TO_SHOW> &lines,
+                            const u32 &start_index, const u32 &error_line, const u32 &col,
                             const u32 &offset);
 
     static void print_line(const std::string &line, const u32 &line_number, const u32 &col,
@@ -153,7 +166,6 @@ class Error {
      */
     static void print_no_fix();
 };
-
 }  // namespace error
 
 #endif  // __ERROR_HH__

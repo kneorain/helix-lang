@@ -12,14 +12,16 @@
  * https://helix-lang.com/ for more information.
  */
 
-#include "ast.hh"
-#include "../../../token/include/token.hh"
-#include <optional>
-#include <string>
+#ifndef __ABI_DEF__
+#define __ABI_DEF__
 
-using namespace token;
-using namespace parser::ast;
+#define RESERVED_ABI_COUNT 5
 
-namespace parser::ast {
+#define RESERVED_ABI(GENERATE)     \
+    GENERATE(ABI_CXX,     "\"c++\"")   \
+    GENERATE(ABI_C,       "\"c\"")     \
+    GENERATE(ABI_HELIX,   "\"helix\"") \
+    GENERATE(ABI_RUST,    "\"rust\"")  \
+    GENERATE(ABI_PYTHON,  "\"python\"")
 
-} // namespace parser::ast
+#endif // __ABI_H__

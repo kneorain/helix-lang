@@ -5,11 +5,12 @@ target("helix")
     set_kind("binary")
     set_warnings("all")
     
-    add_files("source/*.cc")    -- add all files in the source directory
-    add_files("source/**/*.cc") -- add all files in the source directory's subdirectories
+    add_files("source/**.cc")    -- add all files in the source directory
     
+    add_headerfiles("source/**.hh")    -- add all headers in the source directory
+    add_includedirs("source")
     set_languages("c++latest")      -- set the standard C++ version to C++23
-    
+
     if is_mode("debug") then
         set_symbols("debug")       -- Generate debug symbols
         set_optimize("none")       -- Disable optimization
@@ -20,11 +21,6 @@ target("helix")
         set_optimize("fastest")    -- Enable maximum optimization
         add_defines("NDEBUG")      -- Define NDEBUG macro
         set_runtimes("MD")         -- Use the release version of the runtime library
-    end
-
-    if is_plat("macosx") then
-        lib_cpp = "c++"
-        lip_abi = "c++abi"
     end
 
 if is_mode("debug") then

@@ -12,13 +12,13 @@
  * https://helix-lang.com/ for more information.
  */
 
-#include "../include/token.hh"
+#include "token/include/token.hh"
 
 #include <iostream>
-#include <shared_mutex>
 #include <mutex>
+#include <shared_mutex>
 
-#include "../../include/colors_ansi.hh"
+#include "include/colors_ansi.hh"
 
 namespace token {
 
@@ -110,73 +110,39 @@ Token &Token::operator=(Token &&other) noexcept {
 Token::~Token() = default;
 
 u64 Token::line_number() const {
-    std::shared_lock<std::shared_mutex> lock(mtx);
     return line;
 }
 
 u64 Token::column_number() const {
-    std::shared_lock<std::shared_mutex> lock(mtx);
     return column;
 }
 
 u64 Token::length() const {
-    std::shared_lock<std::shared_mutex> lock(mtx);
     return len;
 }
 
 u64 Token::offset() const {
-    std::shared_lock<std::shared_mutex> lock(mtx);
     return _offset;
 }
 
 tokens Token::token_kind() const {
-    std::shared_lock<std::shared_mutex> lock(mtx);
     return kind;
 }
 
 std::string Token::value() const {
-    std::shared_lock<std::shared_mutex> lock(mtx);
     return val;
 }
 
 std::string_view Token::token_kind_repr() const {
-    std::shared_lock<std::shared_mutex> lock(mtx);
     return tokens_map.at(kind).value();
 }
 
 std::string_view Token::file_name() const {
-    std::shared_lock<std::shared_mutex> lock(mtx);
     return filename;
 }
 
-void Token::set_line_number(u64 line) {
-    std::shared_lock<std::shared_mutex> lock(mtx);
-    this->line = line;
-}
-
-void Token::set_column_number(u64 column) {
-    std::shared_lock<std::shared_mutex> lock(mtx);
-    this->column = column;
-}
-
-void Token::set_length(u64 length) {
-    std::shared_lock<std::shared_mutex> lock(mtx);
-    this->len = length;
-}
-
-void Token::set_offset(u64 offset) {
-    std::shared_lock<std::shared_mutex> lock(mtx);
-    this->_offset = offset;
-}
-
-void Token::set_token_kind(tokens kind) {
-    std::shared_lock<std::shared_mutex> lock(mtx);
-    this->kind = kind;
-}
-
-void Token::set_value(std::string value) {
-    std::shared_lock<std::shared_mutex> lock(mtx);
-    this->val = std::move(value);
+void Token::set_file_name(const std::string& file_name) {
+    this->filename = std::string(file_name);
 }
 
 TokenList::TokenList(std::string filename)
@@ -189,9 +155,9 @@ TokenList::TokenList(std::string filename, std::vector<Token>::iterator start,
     , filename(std::move(filename))
     , it(this->begin()) {}
 
-Token TokenList::next(u32 n) {
+Token TokenList::next(u32 n) const {
     if (it == this->end()) {
-        return Token();
+        return {};
     }
 
     if (it + n >= this->end()) {
@@ -203,7 +169,7 @@ Token TokenList::next(u32 n) {
 
 Token TokenList::peek(u32 n) const {
     if (it == this->end()) {
-        return Token();
+        return {};
     }
 
     if (it + n >= this->end()) {
@@ -215,14 +181,14 @@ Token TokenList::peek(u32 n) const {
 
 Token TokenList::current() const {
     if (it == this->begin()) {
-        return Token();
+        return {};
     }
     return *(it - 1);
 }
 
 Token TokenList::previous(u32 n) const {
     if (it == this->begin()) {
-        return Token();
+        return {};
     }
 
     if (it - n < this->begin()) {
@@ -248,6 +214,28 @@ TokenList TokenList::slice(u64 start, u64 end) {
         end = this->size();
     }
     return TokenList(/*this->filename, this->begin() + start, this->begin() + end*/);
+}
+
+/**
+ * @brief Replaces tokens in the list from start to end with the provided tokens.
+ *
+ * This function removes tokens from the specified start index up to, but not including, 
+ * the end index, and then inserts the tokens from the provided TokenList at the start index.
+ *
+ * @param tokens TokenList to insert.
+ * @param start Start index of the range to remove.
+ * @param end End index of the range to remove.
+ */
+void TokenList::insert_remove(TokenList &tokens, u64 start, u64 end) {
+    if (start > end || end > this->size()) {
+        throw std::out_of_range("Invalid start or end index");
+    }
+
+    auto start_it = this->begin() + static_cast<std::vector<Token>::difference_type>(start);
+    auto end_it = this->begin() + static_cast<std::vector<Token>::difference_type>(end);
+
+    this->erase (start_it, end_it);
+    this->insert(start_it, tokens.begin(), tokens.end());
 }
 
 bool TokenList::reached_end() const { return it == this->end(); }

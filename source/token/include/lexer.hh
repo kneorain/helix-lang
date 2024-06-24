@@ -19,9 +19,6 @@
 #include "token.hh"
 
 namespace lexer {
-std::string readfile(std::string &filename);
-std::string readfile(const std::string &filename);
-
 class Lexer {
   public:
     Lexer(std::string source, const std::string &filename);
@@ -45,6 +42,7 @@ class Lexer {
     inline token::Token parse_other();
     inline token::Token parse_punctuation();
     inline token::Token process_whitespace();
+    inline token::Token get_eof();
 
     inline char advance(u16 n = 1);
     inline char current();

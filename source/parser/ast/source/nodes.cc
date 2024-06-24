@@ -11,7 +11,7 @@
  * @note This code is provided by the creators of Helix. Visit our website at:
  * https://helix-lang.com/ for more information.
  */
-#include "nodes.hh"
+#include "parser/ast/include/nodes.hh"
 
 namespace parser::ast {
 

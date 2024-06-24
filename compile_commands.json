@@ -1,36 +1,46 @@
 [
 {
   "directory": "/Volumes/Container/Projects/Helix/helix-lang",
-  "arguments": ["/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang", "-c", "-Qunused-arguments", "-target", "arm64-apple-macos14.5", "-isysroot", "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX14.5.sdk", "-fvisibility=hidden", "-fvisibility-inlines-hidden", "-Wall", "-O3", "-std=c++2b", "-DNDEBUG", "-o", "build/.objs/helix/macosx/arm64/release/source/main.cc.o", "source/main.cc"],
-  "file": "source/main.cc"
-},
-{
-  "directory": "/Volumes/Container/Projects/Helix/helix-lang",
-  "arguments": ["/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang", "-c", "-Qunused-arguments", "-target", "arm64-apple-macos14.5", "-isysroot", "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX14.5.sdk", "-fvisibility=hidden", "-fvisibility-inlines-hidden", "-Wall", "-O3", "-std=c++2b", "-DNDEBUG", "-o", "build/.objs/helix/macosx/arm64/release/source/token/source/lexer.cc.o", "source/token/source/lexer.cc"],
+  "arguments": ["/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang", "-c", "-Qunused-arguments", "-target", "arm64-apple-macos14.5", "-isysroot", "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX14.5.sdk", "-g", "-Wall", "-O0", "-std=c++2b", "-Isource", "-DDEBUG", "-o", "build/.objs/helix/macosx/arm64/debug/source/token/source/lexer.cc.o", "source/token/source/lexer.cc"],
   "file": "source/token/source/lexer.cc"
 },
 {
   "directory": "/Volumes/Container/Projects/Helix/helix-lang",
-  "arguments": ["/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang", "-c", "-Qunused-arguments", "-target", "arm64-apple-macos14.5", "-isysroot", "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX14.5.sdk", "-fvisibility=hidden", "-fvisibility-inlines-hidden", "-Wall", "-O3", "-std=c++2b", "-DNDEBUG", "-o", "build/.objs/helix/macosx/arm64/release/source/token/source/token.cc.o", "source/token/source/token.cc"],
+  "arguments": ["/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang", "-c", "-Qunused-arguments", "-target", "arm64-apple-macos14.5", "-isysroot", "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX14.5.sdk", "-g", "-Wall", "-O0", "-std=c++2b", "-Isource", "-DDEBUG", "-o", "build/.objs/helix/macosx/arm64/debug/source/token/source/token.cc.o", "source/token/source/token.cc"],
   "file": "source/token/source/token.cc"
 },
 {
   "directory": "/Volumes/Container/Projects/Helix/helix-lang",
-  "arguments": ["/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang", "-c", "-Qunused-arguments", "-target", "arm64-apple-macos14.5", "-isysroot", "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX14.5.sdk", "-fvisibility=hidden", "-fvisibility-inlines-hidden", "-Wall", "-O3", "-std=c++2b", "-DNDEBUG", "-o", "build/.objs/helix/macosx/arm64/release/source/include/error/error.cc.o", "source/include/error/error.cc"],
+  "arguments": ["/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang", "-c", "-Qunused-arguments", "-target", "arm64-apple-macos14.5", "-isysroot", "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX14.5.sdk", "-g", "-Wall", "-O0", "-std=c++2b", "-Isource", "-DDEBUG", "-o", "build/.objs/helix/macosx/arm64/debug/source/main.cc.o", "source/main.cc"],
+  "file": "source/main.cc"
+},
+{
+  "directory": "/Volumes/Container/Projects/Helix/helix-lang",
+  "arguments": ["/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang", "-c", "-Qunused-arguments", "-target", "arm64-apple-macos14.5", "-isysroot", "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX14.5.sdk", "-g", "-Wall", "-O0", "-std=c++2b", "-Isource", "-DDEBUG", "-o", "build/.objs/helix/macosx/arm64/debug/source/tools/controllers/source/io.cc.o", "source/tools/controllers/source/io.cc"],
+  "file": "source/tools/controllers/source/io.cc"
+},
+{
+  "directory": "/Volumes/Container/Projects/Helix/helix-lang",
+  "arguments": ["/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang", "-c", "-Qunused-arguments", "-target", "arm64-apple-macos14.5", "-isysroot", "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX14.5.sdk", "-g", "-Wall", "-O0", "-std=c++2b", "-Isource", "-DDEBUG", "-o", "build/.objs/helix/macosx/arm64/debug/source/include/error/error.cc.o", "source/include/error/error.cc"],
   "file": "source/include/error/error.cc"
 },
 {
   "directory": "/Volumes/Container/Projects/Helix/helix-lang",
-  "arguments": ["/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang", "-c", "-Qunused-arguments", "-target", "arm64-apple-macos14.5", "-isysroot", "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX14.5.sdk", "-fvisibility=hidden", "-fvisibility-inlines-hidden", "-Wall", "-O3", "-std=c++2b", "-DNDEBUG", "-o", "build/.objs/helix/macosx/arm64/release/source/cli/cli.cc.o", "source/cli/cli.cc"],
+  "arguments": ["/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang", "-c", "-Qunused-arguments", "-target", "arm64-apple-macos14.5", "-isysroot", "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX14.5.sdk", "-g", "-Wall", "-O0", "-std=c++2b", "-Isource", "-DDEBUG", "-o", "build/.objs/helix/macosx/arm64/debug/source/cli/cli.cc.o", "source/cli/cli.cc"],
   "file": "source/cli/cli.cc"
 },
 {
   "directory": "/Volumes/Container/Projects/Helix/helix-lang",
-  "arguments": ["/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang", "-c", "-Qunused-arguments", "-target", "arm64-apple-macos14.5", "-isysroot", "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX14.5.sdk", "-fvisibility=hidden", "-fvisibility-inlines-hidden", "-Wall", "-O3", "-std=c++2b", "-DNDEBUG", "-o", "build/.objs/helix/macosx/arm64/release/source/parser/ast/classes/nodes.cc.o", "source/parser/ast/classes/nodes.cc"],
-  "file": "source/parser/ast/classes/nodes.cc"
+  "arguments": ["/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang", "-c", "-Qunused-arguments", "-target", "arm64-apple-macos14.5", "-isysroot", "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX14.5.sdk", "-g", "-Wall", "-O0", "-std=c++2b", "-Isource", "-DDEBUG", "-o", "build/.objs/helix/macosx/arm64/debug/source/parser/ast/source/nodes.cc.o", "source/parser/ast/source/nodes.cc"],
+  "file": "source/parser/ast/source/nodes.cc"
 },
 {
   "directory": "/Volumes/Container/Projects/Helix/helix-lang",
-  "arguments": ["/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang", "-c", "-Qunused-arguments", "-target", "arm64-apple-macos14.5", "-isysroot", "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX14.5.sdk", "-fvisibility=hidden", "-fvisibility-inlines-hidden", "-Wall", "-O3", "-std=c++2b", "-DNDEBUG", "-o", "build/.objs/helix/macosx/arm64/release/source/parser/ast/classes/ast.cc.o", "source/parser/ast/classes/ast.cc"],
-  "file": "source/parser/ast/classes/ast.cc"
+  "arguments": ["/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang", "-c", "-Qunused-arguments", "-target", "arm64-apple-macos14.5", "-isysroot", "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX14.5.sdk", "-g", "-Wall", "-O0", "-std=c++2b", "-Isource", "-DDEBUG", "-o", "build/.objs/helix/macosx/arm64/debug/source/parser/ast/source/ast.cc.o", "source/parser/ast/source/ast.cc"],
+  "file": "source/parser/ast/source/ast.cc"
+},
+{
+  "directory": "/Volumes/Container/Projects/Helix/helix-lang",
+  "arguments": ["/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang", "-c", "-Qunused-arguments", "-target", "arm64-apple-macos14.5", "-isysroot", "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX14.5.sdk", "-g", "-Wall", "-O0", "-std=c++2b", "-Isource", "-DDEBUG", "-o", "build/.objs/helix/macosx/arm64/debug/source/parser/preprocessor/source/pre.cc.o", "source/parser/preprocessor/source/pre.cc"],
+  "file": "source/parser/preprocessor/source/pre.cc"
 }]

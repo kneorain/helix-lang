@@ -13,94 +13,15 @@
  */
 
 #include "../include/lexer.hh"
-#include <iostream>
 
-#include <filesystem>
-#include <fstream>
-#include <iostream>
-#include <optional>
 #include <string>
 
 #include "../../include/error/error.hh"
 #include "../include/cases.def"
-#include "../types/file_cache.hh"
 
 using namespace token;
 
 namespace lexer {
-std::string _internal_read_file(const std::string &filename) {
-    auto cached_file = file_sys::FileCache::get_file(filename);
-    if (cached_file.has_value()) {
-        return cached_file.value();
-    }
-
-    std::ifstream file(filename, std::ios::binary | std::ios::ate);
-
-    if (!file) {
-        error::Error(error::Compiler{filename, "file not found."});
-        return "";
-    }
-
-    std::streamsize size = file.tellg();
-    file.seekg(0, std::ios::beg);
-
-    std::string source(size, '\0');
-    if (!file.read(source.data(), size)) {
-        error::Error(error::Compiler{filename, "failed to read file."});
-        return "";
-    }
-
-    file_sys::FileCache::add_file(filename, source);
-
-    return source;
-}
-
-std::string readfile(std::string &filename) {
-    std::filesystem::path cwd = std::filesystem::current_path();
-    std::filesystem::path abs_path = std::filesystem::absolute(cwd / filename);
-    filename = abs_path.string();
-
-    return _internal_read_file(filename);
-}
-
-// TODO: make all readfiles after the first one be relative to the first one
-/// Example: readfile("file1.hlx") -> /path/to/file1.hlx
-///          readfile("test/file2.hlx") -> /path/to/test/file2.hlx
-///          readfile("../file3.hlx") -> /path/to/file3.hlx
-
-std::string readfile(const std::string &filename) {
-    std::filesystem::path cwd = std::filesystem::current_path();
-    std::filesystem::path abs_path = std::filesystem::absolute(cwd / filename);
-
-    return _internal_read_file(abs_path.string());
-}
-
-std::string getline(const std::string &filename, u64 line) {
-    std::string source = readfile(filename);
-
-    u64 current_line = 1;
-    u64 start = 0;
-    u64 end = 0;
-
-    for (u64 i = 0; i < source.size(); ++i) {
-        if (source[i] == '\n') {
-            ++current_line;
-            if (current_line == line) {
-                start = i + 1;
-            } else if (current_line == line + 1) {
-                end = i;
-                break;
-            }
-        }
-
-        if (i == source.size() - 1) {
-            end = source.size();
-        }
-    }
-
-    return source.substr(start, end - start);
-}
-
 Lexer::Lexer(std::string source, const std::string &filename)
     : tokens(filename)
     , source(std::move(source))
@@ -114,18 +35,29 @@ Lexer::Lexer(std::string source, const std::string &filename)
     , end(this->source.size()) {}
 
 TokenList Lexer::tokenize() {
+    token::Token token;
+
     while ((currentPos + 1) <= end) {
-        auto token = next_token();
+        token = next_token();
 
         if (token.token_kind() == tokens::WHITESPACE) {
             continue;
         }
+
+        token.set_file_name(file_name);
         tokens.append(token);
     }
 
-    tokens.append({line, column, 1, offset, "", file_name, "<eof>"});
+    token = get_eof();
+    token.set_file_name(file_name);
+    tokens.append(token);
+
     tokens.reset();
     return tokens;
+}
+
+inline Token Lexer::get_eof() {
+    return {line, column, 1, offset, "\0", file_name, "<eof>"};
 }
 
 inline Token Lexer::process_single_line_comment() {
@@ -148,6 +80,9 @@ inline Token Lexer::process_multi_line_comment() {
     auto start = currentPos;
     u32 comment_depth = 0;
 
+    u32 start_line = line;
+    u32 start_col = column;
+
     while (!is_eof()) {
         switch (current()) {
             case '/':
@@ -162,7 +97,6 @@ inline Token Lexer::process_multi_line_comment() {
                 }
                 break;
             case '\n':
-                ++line;
                 column = 0;
                 break;
         }
@@ -173,6 +107,11 @@ inline Token Lexer::process_multi_line_comment() {
         }
 
         bare_advance();
+    }
+
+    if (comment_depth != 0) {
+        throw error::Error(
+            error::Line(file_name, start_line, start_col, 2, "unterminated block comment"));
     }
 
     return {line,
@@ -259,13 +198,13 @@ inline Token Lexer::parse_compiler_directive() {
             "<complier_directive>"};
 }
 
-   inline Token Lexer::process_whitespace() {
+inline Token Lexer::process_whitespace() {
     auto result = Token{line, column, 1, offset, source.substr(currentPos, 1), file_name, "< >"};
     bare_advance();
     return result;
 }
 
-   inline Token Lexer::parse_alpha_numeric() {
+inline Token Lexer::parse_alpha_numeric() {
     auto start = currentPos;
 
     bool end_loop = false;
@@ -304,7 +243,7 @@ inline Token Lexer::parse_compiler_directive() {
             "<id>"};
 }
 
-   inline Token Lexer::parse_numeric() {
+inline Token Lexer::parse_numeric() {
     // all the data within 0-9 is a number
     // a number can have the following chars after the first digit:
     // 0-9, ., F, f, U, u, o, x, b, e, E, A-F, a-f, _
@@ -345,7 +284,7 @@ inline Token Lexer::parse_compiler_directive() {
             "<int>"};
 }
 
-   inline Token Lexer::parse_string() {
+inline Token Lexer::parse_string() {
     // all the data within " (<string>) or ' (<char>) is a string
     auto start = currentPos;
     auto start_line = line;
@@ -379,8 +318,7 @@ inline Token Lexer::parse_compiler_directive() {
 
     if (is_eof()) {
         throw error::Error(
-            error::Line(file_name, start_line, start_column, 1, "unterminated string"),
-            getline(file_name, start_line));
+            error::Line(file_name, start_line, start_column, 1, "unterminated string"));
     }
 
     switch (quote) {
@@ -401,7 +339,7 @@ inline Token Lexer::parse_compiler_directive() {
             token_type};
 }
 
-   inline Token Lexer::parse_operator() {
+inline Token Lexer::parse_operator() {
     auto start = currentPos;
     bool end_loop = false;
 
@@ -420,20 +358,18 @@ inline Token Lexer::parse_compiler_directive() {
             file_name, source.substr(start, currentPos - start)};
 }
 
-   inline Token Lexer::parse_punctuation() {
+inline Token Lexer::parse_punctuation() {
     auto result = Token{line, column, 1, offset, source.substr(currentPos, 1), file_name};
     bare_advance();
     return result;
 }
 
-   inline char Lexer::advance(u16 n) {
+inline char Lexer::advance(u16 n) {
     if (currentPos + 1 > end) {
         return '\0';
     }
 
-    ++currentPos;
-
-    switch (current()) {
+    switch (source[currentPos]) {
         case '\n':
             ++line;
             column = 0;
@@ -443,6 +379,8 @@ inline Token Lexer::parse_compiler_directive() {
             ++offset;
             break;
     }
+
+    ++currentPos;
 
     if (n > 1) {
         return advance(n - 1);
@@ -451,10 +389,8 @@ inline Token Lexer::parse_compiler_directive() {
     return current();
 }
 
-   inline void Lexer::bare_advance(u16 n) {
-    ++currentPos;
-
-    switch (current()) {
+inline void Lexer::bare_advance(u16 n) {
+    switch (source[currentPos]) {
         case '\n':
             ++line;
             column = 0;
@@ -465,12 +401,14 @@ inline Token Lexer::parse_compiler_directive() {
             break;
     }
 
+    ++currentPos;
+
     if (n > 1) {
         return bare_advance(n - 1);
     }
 }
 
-   inline char Lexer::current() {
+inline char Lexer::current() {
     if (is_eof()) {
         return '\0';
     }
@@ -485,7 +423,7 @@ inline Token Lexer::parse_compiler_directive() {
     return currentChar;
 }
 
-   inline char Lexer::peek_back() const {
+inline char Lexer::peek_back() const {
     if (currentPos - 1 < 0) {
         return '\0';
     }
@@ -493,7 +431,7 @@ inline Token Lexer::parse_compiler_directive() {
     return source[currentPos - 1];
 }
 
-   inline char Lexer::peek_forward() const {
+inline char Lexer::peek_forward() const {
     if (currentPos + 1 >= end) {
         return '\0';
     }
@@ -501,5 +439,5 @@ inline Token Lexer::parse_compiler_directive() {
     return source[currentPos + 1];
 }
 
-   inline bool Lexer::is_eof() const { return currentPos >= end; }
+inline bool Lexer::is_eof() const { return currentPos >= end; }
 }  // namespace lexer

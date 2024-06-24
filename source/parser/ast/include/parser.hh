@@ -77,7 +77,8 @@ all possiblities to parse:
 class Parser {
   private:
     ast::AstNodeList<> body;
-    token::TokenList &tokens;
+    ast::AstNodeList<> stack;
+    token::TokenList  &tokens;
 
     /*
     StringLiteral

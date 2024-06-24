@@ -21,8 +21,8 @@
 #include <string_view>
 #include <vector>
 
-#include "../../include/inttypes.hh"
-#include "./generate.hh"
+#include "include/inttypes.hh"
+#include "token/include/generate.hh"
 
 namespace token {
 
@@ -37,7 +37,7 @@ struct Token {
     u32 _offset{};                  ///< Offset from the beginning of the file
     tokens kind{};                  ///< Kind of the token
     std::string val;                ///< String value of the token
-    std::string_view filename;      ///< Name of the file
+    std::string filename;           ///< Name of the file
     mutable std::shared_mutex mtx;  ///< Mutex for thread safety
 
   public:
@@ -169,46 +169,11 @@ struct Token {
     /* ====-------------------------- setters ---------------------------==== */
 
     /**
-     * @brief Sets the line number where the token is located.
+     * @brief Sets the filename of where the token belongs.
      *
-     * @param line Line number.
+     * @param value String file name.
      */
-    void set_line_number(u64 line);
-
-    /**
-     * @brief Sets the column number where the token starts.
-     *
-     * @param column Column number.
-     */
-    void set_column_number(u64 column);
-
-    /**
-     * @brief Sets the length of the token.
-     *
-     * @param length Length of the token.
-     */
-    void set_length(u64 length);
-
-    /**
-     * @brief Sets the offset from the beginning of the file.
-     *
-     * @param offset Offset from the beginning of the file.
-     */
-    void set_offset(u64 offset);
-
-    /**
-     * @brief Sets the kind of the token.
-     *
-     * @param kind Kind of the token.
-     */
-    void set_token_kind(tokens kind);
-
-    /**
-     * @brief Sets the string value of the token.
-     *
-     * @param value String value of the token.
-     */
-    void set_value(std::string value);
+    void set_file_name(const std::string& file_name);
 };
 
 /**
@@ -238,7 +203,7 @@ class TokenList : public std::vector<Token> {
      *
      * @return Next token.
      */
-    Token next(u32 n = 1);
+    Token next(u32 n = 1) const;
 
     /**
      * @brief Peeks at the current token in the list without advancing the iterator.
@@ -327,6 +292,18 @@ class TokenList : public std::vector<Token> {
      * @return Filename.
      */
     [[nodiscard]] std::string file_name() const;
+
+    /**
+    * @brief Replaces tokens in the list from start to end with the provided tokens.
+    *
+    * This function removes tokens from the specified start index up to, but not including, 
+    * the end index, and then inserts the tokens from the provided TokenList at the start index.
+    *
+    * @param tokens TokenList to insert.
+    * @param start Start index of the range to remove.
+    * @param end End index of the range to remove.
+    */
+    void insert_remove(TokenList &tokens, u64 start, u64 end);
 };
 
 /**

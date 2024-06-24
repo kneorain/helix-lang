@@ -14,32 +14,42 @@
 
 #include <chrono>
 #include <iostream>
-#include <span>
-#include "parser/ast/classes/parser.hh"
+#include "parser/ast/include/parser.hh"
+#include "parser/preprocessor/include/pre.hh"
 #include "token/include/lexer.hh"
-#include "parser/ast/classes/ast.hh"
+#include "tools/controllers/include/io.hh"
+#include "tools/controllers/include/file_sys.hh"
+#include "token/include/token.hh"
 
 int main() {
-    std::string file_name = "/Volumes/Container/Projects/Helix/helix-lang/tests/test_tokenize.hlx";
+    std::string file_name = "/Volumes/Container/Projects/Helix/helix-lang/tests/main.hlx";
     
     auto start = std::chrono::high_resolution_clock::now();
-    auto tokens = lexer::Lexer(lexer::readfile(file_name), file_name).tokenize();
+    auto tokens = lexer::Lexer(io::read_file(file_name), file_name).tokenize();
     auto end   = std::chrono::high_resolution_clock::now();
+
+    //std::cout << "time taken: " << std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count() << "\n";
     
-    for (token::Token _token : tokens) {
-        std::cout << _token.to_string() << "\n";
-    }
+    // token::print_tokens(tokens);
+    //for (token::Token _token : tokens) {
+    //    std::cout << _token.to_string() << "\n";
+    //}
 
-    // parser::ast::Generator generator(tokens);
-    // auto ast = generator.generate_ast();
+    auto preprocessor = parser::preprocessor::Preprocessor(tokens);
 
-    // parser::ast::print_ast(ast);
+    preprocessor.parse();
 
-    auto _parser = parser::Parser(tokens);
+    std::string rootPath = "/Volumes/Container/Projects/Helix/helix-lang";
+    file_system::SourceTree tree(rootPath);
 
-    std::unique_ptr<parser::ast::ProgramNode> _ast = _parser.parse();
+    std::cout << "Source Tree for .hlx files:\n";
+    tree.print();
+
+    //auto _parser = parser::Parser(tokens);
+
+    //std::unique_ptr<parser::ast::ProgramNode> _ast = _parser.parse();
     
-    std::cout << _ast->to_string(0) << "\n";
+    //std::cout << _ast->to_string(0) << "\n";
 
 
 

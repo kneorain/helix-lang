@@ -16,13 +16,14 @@
 #define __AST_HH__
 
 #include <cstddef>
+#include <cstdlib>
 #include <expected>
 #include <memory>
 #include <string>
 #include <vector>
 
-#include "../../../include/error/error.hh"
-#include "../../../token/include/token.hh"
+#include "include/error/error.hh"
+#include "token/include/token.hh"
 
 /*
 something like: 2 * (3 + 4) / 5
@@ -173,7 +174,10 @@ struct AstNode;
 
 struct ParseError {
     ParseError() = default;
-    explicit ParseError(const error::Compiler &diagnostic) { auto _ = error::Error(diagnostic); }
+    explicit ParseError(const error::Compiler &diagnostic) {
+        (error::Error(diagnostic));
+        std::exit(1);
+    }
 };
 
 using AstNodePtr = std::unique_ptr<AstNode<void>>;
@@ -205,6 +209,8 @@ struct AstNode<void> {
             .file_name = "unknown",
             .message = "void ast node pointer called",
             .fix = "this message would never or should never be seen if it is, report it"});
+
+        std::exit(1);
     };
 };
 
