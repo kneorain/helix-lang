@@ -6,7 +6,7 @@
 #include <optional>
 
 #include "include/colors_ansi.hh"
-#include "tools/controllers/include/io.hh"
+#include <tools/controllers/include/file_system.hh>
 
 /**
  @namespace error
@@ -19,7 +19,7 @@ namespace error {
  */
 Error::Error(const Line &error) {
     std::array<std::optional<std::string>, LINES_TO_SHOW> lines;
-    io::get_line(error.file_name, error.line_number);
+    file_system::get_line(error.file_name, error.line_number);
 
     u32 half_lines_to_show = u32(LINES_TO_SHOW / 2);
     u32 start_index =
@@ -27,7 +27,7 @@ Error::Error(const Line &error) {
 
     u8 index = 0;
     for (u32 i = start_index; (i - start_index) < LINES_TO_SHOW; i++) {
-        lines[index] = io::get_line(error.file_name, i);
+        lines[index] = file_system::get_line(error.file_name, i);
         ++index;
     }
 

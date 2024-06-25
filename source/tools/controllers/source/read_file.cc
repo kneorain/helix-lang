@@ -12,8 +12,6 @@
  * https://helix-lang.com/ for more information.
  */
 
-#include "tools/controllers/include/io.hh"
-
 #include <filesystem>
 #include <fstream>
 #include <iostream>
@@ -21,13 +19,28 @@
 #include <string>
 
 #include "include/error/error.hh"
+#include <tools/controllers/include/file_system.hh>
 
-namespace io {
+namespace file_system {
 std::unordered_map<std::string, std::string> FileCache::cache_;
 std::mutex FileCache::mutex_;
 
+void FileCache::add_file(const std::string &key, const std::string &value) {
+    std::lock_guard<std::mutex> lock(mutex_);
+    cache_[key] = value;
+}
+
+std::optional<std::string> FileCache::get_file(const std::string &key) {
+    std::lock_guard<std::mutex> lock(mutex_);
+    auto cache_it = cache_.find(key);
+    if (cache_it != cache_.end()) {
+        return cache_it->second;
+    }
+    return std::nullopt;
+}
+
 std::optional<std::string> get_line(const std::string &filename, u64 line) {
-    std::string source = io::read_file(filename);
+    std::string source = file_system::read_file(filename);
 
     u64 current_line = 1;
     u64 start = 0;
@@ -84,11 +97,13 @@ std::string _internal_read_file(const std::string &filename) {
 }
 
 std::string read_file(std::string &filename) {
-    std::filesystem::path cwd = std::filesystem::current_path();
-    std::filesystem::path abs_path = std::filesystem::absolute(cwd / filename);
-    filename = abs_path.string();
+    std::optional<std::filesystem::path> path = file_system::resolve_path(filename);
+    if (!path.has_value()) {
+        error::Error(error::Compiler{filename, "file not found."});
+        std::exit(1);
+    }
 
-    return _internal_read_file(filename);
+    return _internal_read_file(path.value().string());
 }
 
 // TODO: make all readfiles after the first one be relative to the first one
@@ -97,9 +112,12 @@ std::string read_file(std::string &filename) {
 ///          readfile("../file3.hlx") -> /path/to/file3.hlx
 
 std::string read_file(const std::string &filename) {
-    std::filesystem::path cwd = std::filesystem::current_path();
-    std::filesystem::path abs_path = std::filesystem::absolute(cwd / filename);
+    std::optional<std::filesystem::path> path = file_system::resolve_path(filename);
+    if (!path.has_value()) {
+        error::Error(error::Compiler{filename, "file not found."});
+        std::exit(1);
+    }
 
-    return _internal_read_file(abs_path.string());
+    return _internal_read_file(path.value().string());
 }
-}  // namespace io
+}  // namespace file_system

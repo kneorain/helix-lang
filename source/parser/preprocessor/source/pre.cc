@@ -18,6 +18,8 @@
 #include <string>
 
 #include "include/error/error.hh"
+#include "token/include/generate.hh"
+#include "token/include/token.hh"
 
 namespace parser::preprocessor {
 /* The AST parser dependents resolver would fail without knowing context such as imports,
@@ -51,9 +53,12 @@ void Preprocessor::parse() {
     */
     tokens current_token_type{};
 
-    bool in_using = false;
-    bool is_using_block = false;  // using "..." { ... }
 
+    /* order of parsing (first to last)
+    imports - working on now
+    defines - working on now
+    macros
+    */
     while (not_end()) {
         const Token &current_token = current();
         current_token_type = current_token.token_kind();
@@ -62,8 +67,7 @@ void Preprocessor::parse() {
             case tokens::KEYWORD_USING:
                 parse_using();
                 break;
-            case tokens::KEYWORD_IMPORT:  // 2 possibles its in an using statement or its a helix
-                                          // import
+            case tokens::KEYWORD_IMPORT:
                 parse_import();
                 break;
             default:
@@ -73,19 +77,90 @@ void Preprocessor::parse() {
 
         increment_pos();
     }
+
+    print_tokens(source_tokens);
 }
 
 /*=====---------------------------------- private function ----------------------------------=====*/
 
-void Preprocessor::parse_import() {}
+void Preprocessor::parse_import() {
+    // helix imports are relative to the base file, or module file.
+    /* example while compiling src/hello.hlx
 
-void Preprocessor::parse_using() {
+    src/hello.hlx:
+    ```helix
+    import helper // this is excepted to be at src/helper.hlx
+    import foo::bar // excepted to be at src/foo/helper.hlx
+    ```
+
+    src/zam/zam.hlx:
+    ```
+    import zoom::far // excepted to be at src/zam/zoom/far.hlx
+    // another way of writing this import would be import zam::zoom::far
+    ```
+
+    src/zam/zoom/far.hlx:
+    ```
+    import helper // excepted at src/zam/helper.hlx not src/helper.hlx,
+                  // since making a src/zam/zam.hlx is a module declaration
+                  // and src/zam is considered as its own standalone module.
+    ```
+    */
+
+    
+}
+
+void Preprocessor::parse_using() { // FIXME: Refactor and fix the code QL
     auto next_token = peek();
     if (next_token.has_value()) {
         if (next_token->token_kind() == tokens::LITERAL_STRING &&
             std::find(allowed_abi.begin(), allowed_abi.end(), next_token->value()) !=
                 allowed_abi.end()) {
+            advance();
 
+            if (peek().has_value() && (peek()->token_kind() == tokens::KEYWORD_IMPORT ||
+                                       peek()->token_kind() == tokens::PUNCTUATION_OPEN_BRACE)) {
+                u32 brace_count = 0;
+
+                if (peek()->token_kind() == tokens::PUNCTUATION_OPEN_BRACE) {
+                    ++brace_count;
+                }
+
+                advance();
+                bool ended = false;
+                while (!ended && not_end()) {
+                    advance();
+                    if (peek().has_value()) {
+                        switch (peek()->token_kind()) {
+                            case tokens::PUNCTUATION_OPEN_BRACE:
+                                ++brace_count;
+                                break;
+                            case tokens::PUNCTUATION_CLOSE_BRACE:
+                                --brace_count;
+                                if (brace_count == 0) {
+                                    ended = true;
+                                }
+                                break;
+                            case KEYWORD_IMPORT:
+                                if (brace_count == 0) {
+                                    [this] {
+                                        bool end_of_import = false;
+                                        while (!end_of_import && not_end()) {
+                                            if (peek().has_value() &&
+                                                peek()->token_kind() ==
+                                                    tokens::PUNCTUATION_SEMICOLON) {
+                                                end_of_import = true;
+                                            }
+
+                                            advance();
+                                        }
+                                    }();
+                                }
+                            default:
+                        }
+                    }
+                }
+            }
         } else {
             std::string abi_options;
 
@@ -106,9 +181,9 @@ void Preprocessor::parse_using() {
 
 void Preprocessor::increment_pos(u32 n) { current_pos += n; }
 
-token::Token Preprocessor::current() { return source_tokens[current_pos]; }
+Token Preprocessor::current() { return source_tokens[current_pos]; }
 
-std::optional<token::Token> Preprocessor::peek(u32 n) {
+std::optional<Token> Preprocessor::peek(u32 n) {
     if (not_end(n)) {
         return source_tokens[current_pos + n];
     }
@@ -116,7 +191,7 @@ std::optional<token::Token> Preprocessor::peek(u32 n) {
     return std::nullopt;
 }
 
-std::optional<token::Token> Preprocessor::peek_back(u32 n) {
+std::optional<Token> Preprocessor::peek_back(u32 n) {
     if (not_start(n)) {
         return source_tokens[current_pos - n];
     }
@@ -124,7 +199,7 @@ std::optional<token::Token> Preprocessor::peek_back(u32 n) {
     return std::nullopt;
 }
 
-std::optional<token::Token> Preprocessor::advance(u32 n) {
+std::optional<Token> Preprocessor::advance(u32 n) {
     if (not_end(n)) {
         return source_tokens[current_pos += n];
     }
@@ -132,7 +207,7 @@ std::optional<token::Token> Preprocessor::advance(u32 n) {
     return std::nullopt;
 }
 
-std::optional<token::Token> Preprocessor::reverse(u32 n) {
+std::optional<Token> Preprocessor::reverse(u32 n) {
     if (not_start(n)) {
         return source_tokens[current_pos -= n];
     }

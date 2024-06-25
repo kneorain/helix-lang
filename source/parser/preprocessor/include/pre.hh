@@ -14,7 +14,10 @@
 #ifndef __PRE_H__
 #define __PRE_H__
 
+#include <map>
 #include <optional>
+#include <string>
+#include <utility>
 #include <vector>
 
 #include "token/include/token.hh"
@@ -26,17 +29,22 @@ using namespace token;
  * and output a full context aware token list that would contain everything the ast dependents
  * resolver would need to work.
  */
-struct processed {
-    u32 start{};
-    u32 end{};
-    token::TokenList tokens;
+
+struct import {
+    std::string filename; // src/foo/hello.hlx - a part of the foo module
+    std::string module;  // foo
+    std::string module_base; // src/foo/foo.hlx
+    std::string relative; // foo - the namespace to include it too
+    TokenList   source;  // source tokens to go in place
 };
 
 class Preprocessor {
   private:
     std::array<std::string, abi::reserved_map.size()> allowed_abi;
-    token::TokenList source_tokens;
-    processed processor;
+    std::vector<import> imports;
+    std::vector<std::string> rel_path; // if importing a module that would be the current rel path
+
+    TokenList source_tokens;
     u32 current_pos{};
     u32 end;
 
@@ -45,22 +53,22 @@ class Preprocessor {
 
     void increment_pos(u32 n = 1);
 
-    token::Token current();
+    Token current();
 
-    std::optional<token::Token> peek(u32 n = 1);
+    std::optional<Token> peek(u32 n = 1);
 
-    std::optional<token::Token> peek_back(u32 n = 1);
+    std::optional<Token> peek_back(u32 n = 1);
 
-    std::optional<token::Token> advance(u32 n = 1);
+    std::optional<Token> advance(u32 n = 1);
 
-    std::optional<token::Token> reverse(u32 n = 1);
+    std::optional<Token> reverse(u32 n = 1);
 
     inline bool not_end(u32 n = 0) const;
 
     inline bool not_start(u32 n = 0) const;
 
   public:
-    explicit Preprocessor(token::TokenList &tokens)
+    explicit Preprocessor(TokenList &tokens)
         : source_tokens(tokens)
         , end(tokens.size() - 1) {
         std::transform(abi::reserved_map.begin(), abi::reserved_map.end(), allowed_abi.begin(),

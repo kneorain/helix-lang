@@ -14,18 +14,17 @@
 
 #include <chrono>
 #include <iostream>
-#include "parser/ast/include/parser.hh"
-#include "parser/preprocessor/include/pre.hh"
-#include "token/include/lexer.hh"
-#include "tools/controllers/include/io.hh"
-#include "tools/controllers/include/file_sys.hh"
-#include "token/include/token.hh"
+#include <parser/ast/include/parser.hh>
+#include <parser/preprocessor/include/pre.hh>
+#include <token/include/lexer.hh>
+#include <tools/controllers/include/file_system.hh>
+#include <token/include/token.hh>
 
 int main() {
-    std::string file_name = "/Volumes/Container/Projects/Helix/helix-lang/tests/main.hlx";
+    std::string file_name = "tests/main.hlx";
     
     auto start = std::chrono::high_resolution_clock::now();
-    auto tokens = lexer::Lexer(io::read_file(file_name), file_name).tokenize();
+    auto tokens = lexer::Lexer(file_system::read_file(file_name), file_name).tokenize();
     auto end   = std::chrono::high_resolution_clock::now();
 
     //std::cout << "time taken: " << std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count() << "\n";
@@ -39,7 +38,7 @@ int main() {
 
     preprocessor.parse();
 
-    std::string rootPath = "/Volumes/Container/Projects/Helix/helix-lang";
+    std::string rootPath = "../";
     file_system::SourceTree tree(rootPath);
 
     std::cout << "Source Tree for .hlx files:\n";

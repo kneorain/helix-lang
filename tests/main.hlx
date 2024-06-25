@@ -1,4 +1,9 @@
-using "c++" import some_import;
+using "c++" {
+    import "test"; // test.cc
+    import "test.hh"; // redundant
+}
+
+using "c++" import "test.hh";
 
 /* `import some_import` would expand too:
 

@@ -24,7 +24,7 @@
 #include <utility>
 #include <vector>
 
-#include "include/inttypes.hh"
+#include <include/inttypes.hh>
 #include "token/include/token.hh"
 
 #define LINES_TO_SHOW 5
