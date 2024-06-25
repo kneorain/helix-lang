@@ -35,13 +35,13 @@ Error::Error(const Line &error) {
         lines[LINES_TO_SHOW] = std::nullopt;
     }
 
-    std::cout << "file_name: " << error.file_name << "\n"
-              << "line_number: " << error.line_number << "\n"
-              << "column: " << error.column << "\n"
-              << "offset: " << error.offset << "\n"
-              << "message: " << error.message << "\n"
-              << "level: " << error.level << "\n"
-              << "fix: " << error.fix << "\n";
+    // std::cout << "file_name: " << error.file_name << "\n"
+    //           << "line_number: " << error.line_number << "\n"
+    //           << "column: " << error.column << "\n"
+    //           << "offset: " << error.offset << "\n"
+    //           << "message: " << error.message << "\n"
+    //           << "level: " << error.level << "\n"
+    //           << "fix: " << error.fix << "\n";
 
     print_start(error.message, error.level);
     print_info(error.message, error.file_name, error.line_number, error.column, error.offset);
@@ -84,24 +84,24 @@ void Error::print_start(const std::string_view message, const Level &level,
                         const std::string_view file_name) {
     switch (level) {
         case NOTE:
-            std::cout << std::string(colors::fg16::cyan) << "note";
+            std::cout << std::string(colors::fg8::cyan) << std::string(colors::effects::bold) << "note";
             break;
         case WARN:
-            std::cout << std::string(colors::fg16::yellow) << "warning";
+            std::cout << std::string(colors::fg8::yellow) << std::string(colors::effects::bold) << "warning";
             break;
         case ERR:
-            std::cout << std::string(colors::fg16::red) << "error";
+            std::cout << std::string(colors::fg8::red) << std::string(colors::effects::bold) << "error";
             break;
         case FATAL:
-            std::cout << std::string(colors::fg16::red) << std::string(colors::bold) << "fatal";
+            std::cout << std::string(colors::fg8::red) << std::string(colors::effects::blink) << std::string(colors::bold) << "fatal";
             break;
     }
 
     if (!file_name.empty()) {
-        std::cout << std::string(colors::reset) << " at " << std::string(colors::fg16::green)
+        std::cout << std::string(colors::reset) << " at " << std::string(colors::fg8::green)
                   << file_name << std::string(colors::reset);
     }
-    std::cout << ": " << std::string(colors::reset) << message << '\n';
+    std::cout << std::string(colors::reset) << ": " << message << '\n';
 }
 
 /**
@@ -115,9 +115,9 @@ void Error::print_start(const std::string_view message, const Level &level,
 void Error::print_info(const std::string_view message, const std::string_view file_name,
                        const u32 &line, const u32 &col, const u32 &offset) {
     std::cout << "     "
-              << "├─> " << std::string(colors::reset) << " at " << std::string(colors::fg16::green)
-              << file_name << std::string(colors::reset) << ":" << std::string(colors::fg16::yellow)
-              << line + 1 << std::string(colors::reset) << ":" << std::string(colors::fg16::yellow)
+              << "├─> " << std::string(colors::reset) << " at " << std::string(colors::fg8::green)
+              << file_name << std::string(colors::reset) << ":" << std::string(colors::fg8::yellow)
+              << line << std::string(colors::reset) << ":" << std::string(colors::fg8::yellow)
               << col + 1 << std::string(colors::reset) << '\n';
 }
 
@@ -137,7 +137,7 @@ void Error::print_lines(const std::array<std::optional<std::string>, LINES_TO_SH
         if (index != error_line) {
             if (line.has_value()) {
                 std::cout << std::setw(4) << index << " "
-                          << ": " << std::string(colors::reset) << line.value() << "\n";
+                          << "│ " << std::string(colors::reset) << line.value() << "\n";
             }
         } else {
             if (line.has_value()) {
@@ -154,12 +154,12 @@ void Error::print_lines(const std::array<std::optional<std::string>, LINES_TO_SH
 void Error::print_line(const std::string &line, const u32 &line_number, const u32 &col,
                        const u32 &offset) {
     std::cout << std::setw(4) << line_number << " "
-              << ": " << std::string(colors::reset) << line.substr(0, col)
-              << std::string(colors::fg16::red) << line.substr(col, offset)
+              << "│ " << std::string(colors::reset) << line.substr(0, col)
+              << std::string(colors::fg8::red) << line.substr(col, offset)
               << std::string(colors::reset) << line.substr(offset + col) << "\n";
     std::cout << "     "
-              << "│ " << std::string(colors::reset) << std::string(col, ' ')
-              << std::string(colors::fg16::yellow) << std::string(offset, '^')
+              << ": " << std::string(colors::reset) << std::string(col, ' ')
+              << std::string(colors::fg8::red) << std::string(offset, '^')
               << std::string(colors::reset) << '\n';
 }
 
@@ -170,7 +170,7 @@ void Error::print_line(const std::string &line, const u32 &line_number, const u3
  * @param offset The offset where the error occurred.
  */
 void Error::print_fix(const std::string_view fix_message, const u32 &col, const u32 &offset) {
-    std::cout << "  " << std::string(colors::fg16::green) << "fix" << std::string(colors::reset)
+    std::cout << "  " << std::string(colors::fg8::green) << "fix" << std::string(colors::reset)
               << ": " << fix_message << '\n';
 }
 

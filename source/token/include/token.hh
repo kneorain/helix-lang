@@ -14,14 +14,13 @@
 
 #ifndef __TOKEN_HH__
 #define __TOKEN_HH__
+#include <include/inttypes.hh>
 #include <iostream>
-#include <string>
 #include <shared_mutex>
 #include <string>
 #include <string_view>
 #include <vector>
 
-#include <include/inttypes.hh>
 #include "token/include/generate.hh"
 
 namespace token {
@@ -162,9 +161,7 @@ struct Token {
                std::string(val) + ")";
     }
 
-    std::ostream &operator<<(std::ostream &os) const {
-        return os << to_string();
-    }
+    std::ostream &operator<<(std::ostream &os) const { return os << to_string(); }
 
     /* ====-------------------------- setters ---------------------------==== */
 
@@ -173,7 +170,7 @@ struct Token {
      *
      * @param value String file name.
      */
-    void set_file_name(const std::string& file_name);
+    void set_file_name(const std::string &file_name);
 };
 
 /**
@@ -182,14 +179,16 @@ struct Token {
 class TokenList : public std::vector<Token> {
   private:
     std::string filename;
-    TokenList(std::string filename, std::vector<Token>::iterator start,
-              std::vector<Token>::iterator end);
+    TokenList(std::string filename, std::vector<Token>::const_iterator start,
+              std::vector<Token>::const_iterator end);
 
   public:
     using std::vector<Token>::vector;  // Inherit constructors
     using const_iterator = std::vector<Token>::const_iterator;
 
     mutable const_iterator it;
+
+    TokenList() = default;
 
     /**
      * @brief Constructs a TokenList with the specified filename.
@@ -262,20 +261,6 @@ class TokenList : public std::vector<Token> {
     void append(const Token &token);
 
     /**
-     * @brief Gets an iterator to the beginning of the token list.
-     *
-     * @return Iterator to the beginning.
-     */
-    // std::vector<Token>::iterator begin();
-
-    /**
-     * @brief Gets an iterator to the end of the token list.
-     *
-     * @return Iterator to the end.
-     */
-    // std::vector<Token>::iterator end();
-
-    /**
      * @brief Slices the token list from the start index to the end index.
      *
      * @param start Start index.
@@ -294,15 +279,15 @@ class TokenList : public std::vector<Token> {
     [[nodiscard]] std::string file_name() const;
 
     /**
-    * @brief Replaces tokens in the list from start to end with the provided tokens.
-    *
-    * This function removes tokens from the specified start index up to, but not including, 
-    * the end index, and then inserts the tokens from the provided TokenList at the start index.
-    *
-    * @param tokens TokenList to insert.
-    * @param start Start index of the range to remove.
-    * @param end End index of the range to remove.
-    */
+     * @brief Replaces tokens in the list from start to end with the provided tokens.
+     *
+     * This function removes tokens from the specified start index up to, but not including,
+     * the end index, and then inserts the tokens from the provided TokenList at the start index.
+     *
+     * @param tokens TokenList to insert.
+     * @param start Start index of the range to remove.
+     * @param end End index of the range to remove.
+     */
     void insert_remove(TokenList &tokens, u64 start, u64 end);
 };
 

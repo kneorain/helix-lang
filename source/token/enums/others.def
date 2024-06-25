@@ -18,9 +18,11 @@
 #define OTHER_TOKENS_COUNT 4
 
 #define OTHER_TOKENS(GENERATE)      \
-    GENERATE(IDENTIFIER, "<id>")    \
-    GENERATE(WHITESPACE, "< >")     \
+    GENERATE(IDENTIFIER, "<id>"   ) \
+    GENERATE(WHITESPACE, "< >"    ) \
     GENERATE(OTHERS,     "<other>") \
-    GENERATE(EOF_TOKEN,  "<eof>")
+    GENERATE(EOF_TOKEN,  "<eof>"  )
+
+// NOTE: IF THIS GENERATION IS CHANGED DO NOT FORGET TO UPDATE COUNT
 
 #endif  // __OTHERS_DEF__

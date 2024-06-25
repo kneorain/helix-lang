@@ -18,31 +18,33 @@
 #define PRIMITIVE_TOKENS_COUNT 26
 
 #define PRIMITIVE_TOKENS(GENERATE)         \
-    GENERATE(PRIMITIVE_VOID,    "void")    \
-    GENERATE(PRIMITIVE_BOOL,    "bool")    \
-    GENERATE(PRIMITIVE_BYTE,    "byte")    \
-    GENERATE(PRIMITIVE_CHAR,    "char")    \
-    GENERATE(PRIMITIVE_POINTER, "ptr")     \
-    GENERATE(PRIMITIVE_I8,      "i8")      \
-    GENERATE(PRIMITIVE_U8,      "u8")      \
-    GENERATE(PRIMITIVE_I16,     "i16")     \
-    GENERATE(PRIMITIVE_U16,     "u16")     \
-    GENERATE(PRIMITIVE_I32,     "i32")     \
-    GENERATE(PRIMITIVE_U32,     "u32")     \
-    GENERATE(PRIMITIVE_F32,     "f32")     \
-    GENERATE(PRIMITIVE_I64,     "i64")     \
-    GENERATE(PRIMITIVE_U64,     "u64")     \
-    GENERATE(PRIMITIVE_F64,     "f64")     \
-    GENERATE(PRIMITIVE_FLOAT,   "float")   \
-    GENERATE(PRIMITIVE_I128,    "i128")    \
-    GENERATE(PRIMITIVE_U128,    "u128")    \
-    GENERATE(PRIMITIVE_INT,     "int")     \
+    GENERATE(PRIMITIVE_VOID,    "void"   ) \
+    GENERATE(PRIMITIVE_BOOL,    "bool"   ) \
+    GENERATE(PRIMITIVE_BYTE,    "byte"   ) \
+    GENERATE(PRIMITIVE_CHAR,    "char"   ) \
+    GENERATE(PRIMITIVE_POINTER, "ptr"    ) \
+    GENERATE(PRIMITIVE_I8,      "i8"     ) \
+    GENERATE(PRIMITIVE_U8,      "u8"     ) \
+    GENERATE(PRIMITIVE_I16,     "i16"    ) \
+    GENERATE(PRIMITIVE_U16,     "u16"    ) \
+    GENERATE(PRIMITIVE_I32,     "i32"    ) \
+    GENERATE(PRIMITIVE_U32,     "u32"    ) \
+    GENERATE(PRIMITIVE_F32,     "f32"    ) \
+    GENERATE(PRIMITIVE_I64,     "i64"    ) \
+    GENERATE(PRIMITIVE_U64,     "u64"    ) \
+    GENERATE(PRIMITIVE_F64,     "f64"    ) \
+    GENERATE(PRIMITIVE_FLOAT,   "float"  ) \
+    GENERATE(PRIMITIVE_I128,    "i128"   ) \
+    GENERATE(PRIMITIVE_U128,    "u128"   ) \
+    GENERATE(PRIMITIVE_INT,     "int"    ) \
     GENERATE(PRIMITIVE_DECIMAL, "decimal") \
-    GENERATE(PRIMITIVE_STRING,  "string")  \
-    GENERATE(PRIMITIVE_LIST,    "list")    \
-    GENERATE(PRIMITIVE_TUPLE,   "tuple")   \
-    GENERATE(PRIMITIVE_SET,     "set")     \
-    GENERATE(PRIMITIVE_MAP,     "map")     \
-    GENERATE(PRIMITIVE_ANY,     "any")
+    GENERATE(PRIMITIVE_STRING,  "string" ) \
+    GENERATE(PRIMITIVE_LIST,    "list"   ) \
+    GENERATE(PRIMITIVE_TUPLE,   "tuple"  ) \
+    GENERATE(PRIMITIVE_SET,     "set"    ) \
+    GENERATE(PRIMITIVE_MAP,     "map"    ) \
+    GENERATE(PRIMITIVE_ANY,     "any"    )
+
+// NOTE: IF THIS GENERATION IS CHANGED DO NOT FORGET TO UPDATE COUNT
 
 #endif  // __PRIMITIVES_DEF__

@@ -17,11 +17,13 @@
 
 #define RESERVED_ABI_COUNT 5
 
-#define RESERVED_ABI(GENERATE)     \
-    GENERATE(ABI_CXX,     "\"c++\"")   \
-    GENERATE(ABI_C,       "\"c\"")     \
-    GENERATE(ABI_HELIX,   "\"helix\"") \
-    GENERATE(ABI_RUST,    "\"rust\"")  \
+#define RESERVED_ABI(GENERATE)          \
+    GENERATE(ABI_CXX,     "\"c++\""   ) \
+    GENERATE(ABI_C,       "\"c\""     ) \
+    GENERATE(ABI_HELIX,   "\"helix\"" ) \
+    GENERATE(ABI_RUST,    "\"rust\""  ) \
     GENERATE(ABI_PYTHON,  "\"python\"")
+
+// NOTE: IF THIS GENERATION IS CHANGED DO NOT FORGET TO UPDATE COUNT
 
 #endif // __ABI_H__

@@ -109,51 +109,32 @@ Token &Token::operator=(Token &&other) noexcept {
 // Destructor
 Token::~Token() = default;
 
-u64 Token::line_number() const {
-    return line;
-}
+u64 Token::line_number() const { return line; }
 
-u64 Token::column_number() const {
-    return column;
-}
+u64 Token::column_number() const { return column; }
 
-u64 Token::length() const {
-    return len;
-}
+u64 Token::length() const { return len; }
 
-u64 Token::offset() const {
-    return _offset;
-}
+u64 Token::offset() const { return _offset; }
 
-tokens Token::token_kind() const {
-    return kind;
-}
+tokens Token::token_kind() const { return kind; }
 
-std::string Token::value() const {
-    return val;
-}
+std::string Token::value() const { return val; }
 
-std::string_view Token::token_kind_repr() const {
-    return tokens_map.at(kind).value();
-}
+std::string_view Token::token_kind_repr() const { return tokens_map.at(kind).value(); }
 
-std::string_view Token::file_name() const {
-    return filename;
-}
+std::string_view Token::file_name() const { return filename; }
 
-void Token::set_file_name(const std::string& file_name) {
-    this->filename = std::string(file_name);
-}
+void Token::set_file_name(const std::string &file_name) { this->filename = std::string(file_name); }
 
 TokenList::TokenList(std::string filename)
     : filename(std::move(filename))
     , it(this->begin()) {}
 
-TokenList::TokenList(std::string filename, std::vector<Token>::iterator start,
-                     std::vector<Token>::iterator end)
+TokenList::TokenList(std::string filename, std::vector<Token>::const_iterator start,
+                     std::vector<Token>::const_iterator end)
     : std::vector<Token>(start, end)
-    , filename(std::move(filename))
-    , it(this->begin()) {}
+    , filename(std::move(filename)) {}
 
 Token TokenList::next(u32 n) const {
     if (it == this->end()) {
@@ -213,13 +194,18 @@ TokenList TokenList::slice(u64 start, u64 end) {
     if (end > this->size()) {
         end = this->size();
     }
-    return TokenList(/*this->filename, this->begin() + start, this->begin() + end*/);
+    
+    auto start_index = static_cast<std::vector<Token>::difference_type>(start);
+    auto end_index = static_cast<std::vector<Token>::difference_type>(end);
+    
+    return {this->filename, this->begin() + start_index, this->begin() + end_index};
 }
+
 
 /**
  * @brief Replaces tokens in the list from start to end with the provided tokens.
  *
- * This function removes tokens from the specified start index up to, but not including, 
+ * This function removes tokens from the specified start index up to, but not including,
  * the end index, and then inserts the tokens from the provided TokenList at the start index.
  *
  * @param tokens TokenList to insert.
@@ -234,7 +220,7 @@ void TokenList::insert_remove(TokenList &tokens, u64 start, u64 end) {
     auto start_it = this->begin() + static_cast<std::vector<Token>::difference_type>(start);
     auto end_it = this->begin() + static_cast<std::vector<Token>::difference_type>(end);
 
-    this->erase (start_it, end_it);
+    this->erase(start_it, end_it);
     this->insert(start_it, tokens.begin(), tokens.end());
 }
 

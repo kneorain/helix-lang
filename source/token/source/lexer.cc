@@ -354,14 +354,29 @@ inline Token Lexer::parse_operator() {
         bare_advance();
     }
 
-    return {line,      column - (currentPos - start),           currentPos - start, offset,
-            file_name, source.substr(start, currentPos - start)};
+    return {line, column - (currentPos - start), currentPos - start, offset, source.substr(start, currentPos - start), file_name};
 }
 
-inline Token Lexer::parse_punctuation() {
-    auto result = Token{line, column, 1, offset, source.substr(currentPos, 1), file_name};
-    bare_advance();
-    return result;
+inline Token Lexer::parse_punctuation() { // gets here bacause of something like . | :
+    Token result;
+
+    switch (peek_forward()) {
+        case '.': // ..
+            bare_advance();
+            if (peek_forward() == '.') { //...
+                result = Token{line, column, 3, offset, source.substr(currentPos - 1, 3), file_name};
+                bare_advance(2); // advance by 3 before return
+                return result;
+            }
+        case ':':
+            result = Token{line, column, 2, offset, source.substr(currentPos, 2), file_name};
+            bare_advance(2);
+            return result;
+        default:
+            result = Token{line, column, 1, offset, source.substr(currentPos, 1), file_name};
+            bare_advance();
+            return result;
+    }
 }
 
 inline char Lexer::advance(u16 n) {

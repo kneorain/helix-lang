@@ -3,7 +3,15 @@ using "c++" {
     import "test.hh"; // redundant
 }
 
-using "c++" import "test.hh";
+import some_import;
+
+import foo::bar;
+
+import foo::bar as other_thing;
+
+import foo::bar::{print, this};
+
+import std::foo::{bar} as foo;
 
 /* `import some_import` would expand too:
 

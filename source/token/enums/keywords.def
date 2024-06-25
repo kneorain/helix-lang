@@ -18,52 +18,54 @@
 #define KEYWORD_TOKENS_COUNT 47
 
 #define KEYWORD_TOKENS(GENERATE)             \
-    GENERATE(KEYWORD_IF,        "if")        \
-    GENERATE(KEYWORD_ELSE,      "else")      \
-    GENERATE(KEYWORD_UNLESS,    "unless")    \
-    GENERATE(KEYWORD_MACRO,     "macro")     \
-    GENERATE(KEYWORD_DEFINE,    "define")    \
-    GENERATE(KEYWORD_FUNCTION,  "fn")        \
-    GENERATE(KEYWORD_OPERATOR,  "op")        \
-    GENERATE(KEYWORD_INLINE,    "inline")    \
-    GENERATE(KEYWORD_RETURN,    "return")    \
+    GENERATE(KEYWORD_IF,        "if"       ) \
+    GENERATE(KEYWORD_ELSE,      "else"     ) \
+    GENERATE(KEYWORD_UNLESS,    "unless"   ) \
+    GENERATE(KEYWORD_MACRO,     "macro"    ) \
+    GENERATE(KEYWORD_DEFINE,    "define"   ) \
+    GENERATE(KEYWORD_FUNCTION,  "fn"       ) \
+    GENERATE(KEYWORD_OPERATOR,  "op"       ) \
+    GENERATE(KEYWORD_INLINE,    "inline"   ) \
+    GENERATE(KEYWORD_RETURN,    "return"   ) \
     GENERATE(KEYWORD_ENCLOSING, "enclosing") \
-    GENERATE(KEYWORD_ASYNC,     "async")     \
-    GENERATE(KEYWORD_SPAWN,     "spawn")     \
-    GENERATE(KEYWORD_AWAIT,     "await")     \
-    GENERATE(KEYWORD_THREAD,    "thread")    \
-    GENERATE(KEYWORD_FOR,       "for")       \
-    GENERATE(KEYWORD_WHILE,     "while")     \
-    GENERATE(KEYWORD_BREAK,     "break")     \
-    GENERATE(KEYWORD_CONTINUE,  "continue")  \
-    GENERATE(KEYWORD_CASE,      "case")      \
-    GENERATE(KEYWORD_MATCH,     "match")     \
-    GENERATE(KEYWORD_SWITCH,    "switch")    \
-    GENERATE(KEYWORD_DEFAULT,   "default")   \
-    GENERATE(KEYWORD_ENUM,      "enum")      \
-    GENERATE(KEYWORD_TYPE,      "type")      \
-    GENERATE(KEYWORD_CLASS,     "class")     \
-    GENERATE(KEYWORD_UNION,     "union")     \
-    GENERATE(KEYWORD_STRUCT,    "struct")    \
-    GENERATE(KEYWORD_ABSTRACT,  "abstract")  \
+    GENERATE(KEYWORD_ASYNC,     "async"    ) \
+    GENERATE(KEYWORD_SPAWN,     "spawn"    ) \
+    GENERATE(KEYWORD_AWAIT,     "await"    ) \
+    GENERATE(KEYWORD_THREAD,    "thread"   ) \
+    GENERATE(KEYWORD_FOR,       "for"      ) \
+    GENERATE(KEYWORD_WHILE,     "while"    ) \
+    GENERATE(KEYWORD_BREAK,     "break"    ) \
+    GENERATE(KEYWORD_CONTINUE,  "continue" ) \
+    GENERATE(KEYWORD_CASE,      "case"     ) \
+    GENERATE(KEYWORD_MATCH,     "match"    ) \
+    GENERATE(KEYWORD_SWITCH,    "switch"   ) \
+    GENERATE(KEYWORD_DEFAULT,   "default"  ) \
+    GENERATE(KEYWORD_ENUM,      "enum"     ) \
+    GENERATE(KEYWORD_TYPE,      "type"     ) \
+    GENERATE(KEYWORD_CLASS,     "class"    ) \
+    GENERATE(KEYWORD_UNION,     "union"    ) \
+    GENERATE(KEYWORD_STRUCT,    "struct"   ) \
+    GENERATE(KEYWORD_ABSTRACT,  "abstract" ) \
     GENERATE(KEYWORD_INTERFACE, "interface") \
-    GENERATE(KEYWORD_IS,        "is")        \
-    GENERATE(KEYWORD_TRY,       "try")       \
-    GENERATE(KEYWORD_PANIC,     "panic")     \
-    GENERATE(KEYWORD_CATCH,     "catch")     \
-    GENERATE(KEYWORD_FINALLY,   "finally")   \
-    GENERATE(KEYWORD_LET,       "let")       \
-    GENERATE(KEYWORD_PRIVATE,   "priv")      \
-    GENERATE(KEYWORD_AUTO,      "auto")      \
-    GENERATE(KEYWORD_CONST,     "const")     \
-    GENERATE(KEYWORD_GLOBAL,    "global")    \
-    GENERATE(KEYWORD_FROM,      "from")      \
-    GENERATE(KEYWORD_USING,     "using")     \
-    GENERATE(KEYWORD_IMPORT,    "import")    \
-    GENERATE(KEYWORD_EXTERN,    "extern")    \
-    GENERATE(KEYWORD_YIELD,     "yield")     \
-    GENERATE(KEYWORD_AS,        "as")        \
-    GENERATE(KEYWORD_DERIVES,   "derives")   \
+    GENERATE(KEYWORD_IS,        "is"       ) \
+    GENERATE(KEYWORD_TRY,       "try"      ) \
+    GENERATE(KEYWORD_PANIC,     "panic"    ) \
+    GENERATE(KEYWORD_CATCH,     "catch"    ) \
+    GENERATE(KEYWORD_FINALLY,   "finally"  ) \
+    GENERATE(KEYWORD_LET,       "let"      ) \
+    GENERATE(KEYWORD_PRIVATE,   "priv"     ) \
+    GENERATE(KEYWORD_AUTO,      "auto"     ) \
+    GENERATE(KEYWORD_CONST,     "const"    ) \
+    GENERATE(KEYWORD_GLOBAL,    "global"   ) \
+    GENERATE(KEYWORD_FROM,      "from"     ) \
+    GENERATE(KEYWORD_USING,     "using"    ) \
+    GENERATE(KEYWORD_IMPORT,    "import"   ) \
+    GENERATE(KEYWORD_EXTERN,    "extern"   ) \
+    GENERATE(KEYWORD_YIELD,     "yield"    ) \
+    GENERATE(KEYWORD_AS,        "as"       ) \
+    GENERATE(KEYWORD_DERIVES,   "derives"  ) \
     GENERATE(KEYWORD_NAMESPACE, "namespace")
+
+// NOTE: IF THIS GENERATION IS CHANGED DO NOT FORGET TO UPDATE COUNT
 
 #endif  // __KEYWORDS_DEF__

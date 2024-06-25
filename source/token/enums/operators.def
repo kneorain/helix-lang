@@ -18,62 +18,64 @@
 #define OPERATOR_TOKENS_COUNT 57
 
 #define OPERATOR_TOKENS(GENERATE)                    \
-    GENERATE(OPERATOR_ADD,                    "+")   \
-    GENERATE(OPERATOR_SUB,                    "-")   \
-    GENERATE(OPERATOR_MUL,                    "*")   \
-    GENERATE(OPERATOR_DIV,                    "/")   \
-    GENERATE(OPERATOR_MOD,                    "%")   \
-    GENERATE(OPERATOR_MAT,                    "@")   \
-    GENERATE(OPERATOR_POW,                    "**")  \
-    GENERATE(OPERATOR_ABS,                    "+-")  \
-    GENERATE(OPERATOR_BITWISE_AND,            "&")   \
-    GENERATE(OPERATOR_BITWISE_NAND,           "~&")  \
-    GENERATE(OPERATOR_BITWISE_OR,             "|")   \
-    GENERATE(OPERATOR_BITWISE_NOR,            "~|")  \
-    GENERATE(OPERATOR_BITWISE_XOR,            "^")   \
-    GENERATE(OPERATOR_BITWISE_NOT,            "~")   \
-    GENERATE(OPERATOR_BITWISE_L_SHIFT,        "<<")  \
-    GENERATE(OPERATOR_BITWISE_R_SHIFT,        ">>")  \
-    GENERATE(OPERATOR_EQUAL,                  "==")  \
-    GENERATE(OPERATOR_NOT_EQUAL,              "!=")  \
-    GENERATE(OPERATOR_GREATER_THAN,           ">")   \
-    GENERATE(OPERATOR_LESS_THAN,              "<")   \
-    GENERATE(OPERATOR_GREATER_THAN_EQUALS,    ">=")  \
-    GENERATE(OPERATOR_LESS_THAN_EQUALS,       "<=")  \
+    GENERATE(OPERATOR_ADD,                    "+"  ) \
+    GENERATE(OPERATOR_SUB,                    "-"  ) \
+    GENERATE(OPERATOR_MUL,                    "*"  ) \
+    GENERATE(OPERATOR_DIV,                    "/"  ) \
+    GENERATE(OPERATOR_MOD,                    "%"  ) \
+    GENERATE(OPERATOR_MAT,                    "@"  ) \
+    GENERATE(OPERATOR_BITWISE_AND,            "&"  ) \
+    GENERATE(OPERATOR_BITWISE_OR,             "|"  ) \
+    GENERATE(OPERATOR_BITWISE_XOR,            "^"  ) \
+    GENERATE(OPERATOR_BITWISE_NOT,            "~"  ) \
+    GENERATE(OPERATOR_ASSIGN,                 "="  ) \
+    GENERATE(OPERATOR_GREATER_THAN,           ">"  ) \
+    GENERATE(OPERATOR_LOGICAL_NOT,            "!"  ) \
+    GENERATE(OPERATOR_LESS_THAN,              "<"  ) \
+    GENERATE(OPERATOR_POW,                    "**" ) \
+    GENERATE(OPERATOR_ABS,                    "+-" ) \
+    GENERATE(OPERATOR_BITWISE_L_SHIFT,        "<<" ) \
+    GENERATE(OPERATOR_BITWISE_NAND,           "~&" ) \
+    GENERATE(OPERATOR_BITWISE_R_SHIFT,        ">>" ) \
+    GENERATE(OPERATOR_BITWISE_NOR,            "~|" ) \
+    GENERATE(OPERATOR_EQUAL,                  "==" ) \
+    GENERATE(OPERATOR_NOT_EQUAL,              "!=" ) \
+    GENERATE(OPERATOR_GREATER_THAN_EQUALS,    ">=" ) \
+    GENERATE(OPERATOR_INC,                    "++" ) \
+    GENERATE(OPERATOR_DEC,                    "--" ) \
+    GENERATE(OPERATOR_LESS_THAN_EQUALS,       "<=" ) \
+    GENERATE(OPERATOR_ADD_ASSIGN,             "+=" ) \
+    GENERATE(OPERATOR_SUB_ASSIGN,             "-=" ) \
+    GENERATE(OPERATOR_MUL_ASSIGN,             "*=" ) \
+    GENERATE(OPERATOR_BITWISE_AND_ASSIGN,     "&=" ) \
+    GENERATE(OPERATOR_BITWISE_OR_ASSIGN,      "|=" ) \
+    GENERATE(OPERATOR_BITWISE_NOR_ASSIGN,     "~|" ) \
+    GENERATE(OPERATOR_BITWISE_XOR_ASSIGN,     "^=" ) \
+    GENERATE(OPERATOR_BITWISE_NOT_ASSIGN,     "~=" ) \
+    GENERATE(OPERATOR_DIV_ASSIGN,             "/=" ) \
+    GENERATE(OPERATOR_MOD_ASSIGN,             "%=" ) \
+    GENERATE(OPERATOR_MAT_ASSIGN,             "@=" ) \
+    GENERATE(OPERATOR_LOGICAL_AND,            "&&" ) \
+    GENERATE(OPERATOR_LOGICAL_NAND,           "!&" ) \
+    GENERATE(OPERATOR_LOGICAL_OR,             "||" ) \
+    GENERATE(OPERATOR_LOGICAL_NOR,            "!|" ) \
+    GENERATE(OPERATOR_LOGICAL_XOR,            "^^" ) \
+    GENERATE(OPERATOR_RANGE,                  ".." ) \
+    GENERATE(OPERATOR_ARROW,                  "->" ) \
+    GENERATE(OPERATOR_NOT_ASSIGN,             "~=" ) \
+    GENERATE(OPERATOR_SCOPE,                  "::" ) \
     GENERATE(OPERATOR_REF_EQUAL,              "===") \
-    GENERATE(OPERATOR_ASSIGN,                 "=")   \
-    GENERATE(OPERATOR_ADD_ASSIGN,             "+=")  \
-    GENERATE(OPERATOR_SUB_ASSIGN,             "-=")  \
-    GENERATE(OPERATOR_MUL_ASSIGN,             "*=")  \
-    GENERATE(OPERATOR_DIV_ASSIGN,             "/=")  \
-    GENERATE(OPERATOR_MOD_ASSIGN,             "%=")  \
-    GENERATE(OPERATOR_MAT_ASSIGN,             "@=")  \
-    GENERATE(OPERATOR_NOT_ASSIGN,             "~=")  \
     GENERATE(OPERATOR_POWER_ASSIGN,           "**=") \
     GENERATE(OPERATOR_AND_ASSIGN,             "&&=") \
     GENERATE(OPERATOR_NAND_ASSIGN,            "!&=") \
     GENERATE(OPERATOR_OR_ASSIGN,              "||=") \
     GENERATE(OPERATOR_NOR_ASSIGN,             "!|=") \
     GENERATE(OPERATOR_XOR_ASSIGN,             "^^=") \
-    GENERATE(OPERATOR_BITWISE_AND_ASSIGN,     "&=")  \
     GENERATE(OPERATOR_BITWISE_NAND_ASSIGN,    "~&=") \
-    GENERATE(OPERATOR_BITWISE_OR_ASSIGN,      "|=")  \
-    GENERATE(OPERATOR_BITWISE_NOR_ASSIGN,     "~|")  \
-    GENERATE(OPERATOR_BITWISE_XOR_ASSIGN,     "^=")  \
-    GENERATE(OPERATOR_BITWISE_NOT_ASSIGN,     "~=")  \
     GENERATE(OPERATOR_BITWISE_L_SHIFT_ASSIGN, "<<=") \
     GENERATE(OPERATOR_BITWISE_R_SHIFT_ASSIGN, ">>=") \
-    GENERATE(OPERATOR_INC,                    "++")  \
-    GENERATE(OPERATOR_DEC,                    "--")  \
-    GENERATE(OPERATOR_LOGICAL_NOT,            "!")   \
-    GENERATE(OPERATOR_LOGICAL_AND,            "&&")  \
-    GENERATE(OPERATOR_LOGICAL_NAND,           "!&")  \
-    GENERATE(OPERATOR_LOGICAL_OR,             "||")  \
-    GENERATE(OPERATOR_LOGICAL_NOR,            "!|")  \
-    GENERATE(OPERATOR_LOGICAL_XOR,            "^^")  \
-    GENERATE(OPERATOR_RANGE,                  "..")  \
-    GENERATE(OPERATOR_RANGE_INCLUSIVE,        "..=") \
-    GENERATE(OPERATOR_ARROW,                  "->")  \
-    GENERATE(OPERATOR_SCOPE,                  "::")
+    GENERATE(OPERATOR_RANGE_INCLUSIVE,        "..=")
+
+// NOTE: IF THIS GENERATION IS CHANGED DO NOT FORGET TO UPDATE COUNT
 
 #endif  // __OPERATORS_DEF__

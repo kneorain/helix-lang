@@ -18,13 +18,15 @@
 #define LITERAL_TOKENS_COUNT 8
 
 #define LITERAL_TOKENS(GENERATE)                                 \
-    GENERATE(LITERAL_TRUE,               "true")                 \
-    GENERATE(LITERAL_FALSE,              "false")                \
-    GENERATE(LITERAL_INTEGER,            "<int>")                \
+    GENERATE(LITERAL_TRUE,               "true"                ) \
+    GENERATE(LITERAL_FALSE,              "false"               ) \
+    GENERATE(LITERAL_INTEGER,            "<int>"               ) \
     GENERATE(LITERAL_COMPLIER_DIRECTIVE, "<complier_directive>") \
-    GENERATE(LITERAL_FLOATING_POINT,     "<float>")              \
-    GENERATE(LITERAL_STRING,             "<string>")             \
-    GENERATE(LITERAL_CHAR,               "<char>")               \
-    GENERATE(LITERAL_NULL,               "null")
+    GENERATE(LITERAL_FLOATING_POINT,     "<float>"             ) \
+    GENERATE(LITERAL_STRING,             "<string>"            ) \
+    GENERATE(LITERAL_CHAR,               "<char>"              ) \
+    GENERATE(LITERAL_NULL,               "null"                )
+
+// NOTE: IF THIS GENERATION IS CHANGED DO NOT FORGET TO UPDATE COUNT
 
 #endif  // __LITERALS_DEF__
