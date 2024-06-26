@@ -15,7 +15,6 @@
  * @note This code is provided by the creators of Helix. Visit our website at:
  * https://helix-lang.com/ for more information.
  */
-
 #ifndef __ERROR_HH__
 #define __ERROR_HH__
 
@@ -25,7 +24,7 @@
 #include <vector>
 
 #include <include/inttypes.hh>
-#include "token/include/token.hh"
+#include <token/include/token.hh>
 
 #define LINES_TO_SHOW 5
 

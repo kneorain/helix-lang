@@ -18,7 +18,7 @@
 #include <string>
 #include <vector>
 
-#include "token/include/token.hh"
+#include <token/include/token.hh>
 
 namespace parser::preprocessor {
 using namespace token;

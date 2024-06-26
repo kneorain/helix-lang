@@ -22,8 +22,8 @@
 #include <string>
 #include <vector>
 
-#include "include/error/error.hh"
-#include "token/include/token.hh"
+#include <include/error/error.hh>
+#include <token/include/token.hh>
 
 /*
 something like: 2 * (3 + 4) / 5

@@ -64,4 +64,6 @@ Usage:
     helios doc-gen                        Generate documentation.
 */
 
+#include <cli/include/args.hh>
+
 void parse() {}

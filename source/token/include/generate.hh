@@ -14,15 +14,15 @@
 #ifndef __TOKENS_HH__
 #define __TOKENS_HH__
 
-#include "token/enums/abi.def"
-#include "token/enums/delimiters.def"
-#include "token/enums/keywords.def"
-#include "token/enums/literals.def"
-#include "token/enums/operators.def"
-#include "token/enums/others.def"
-#include "token/enums/primitives.def"
-#include "token/enums/punctuation.def"
-#include "token/types/mapping.hh"
+#include <token/enums/abi.def>
+#include <token/enums/delimiters.def>
+#include <token/enums/keywords.def>
+#include <token/enums/literals.def>
+#include <token/enums/operators.def>
+#include <token/enums/others.def>
+#include <token/enums/primitives.def>
+#include <token/enums/punctuation.def>
+#include <token/types/mapping.hh>
 
 #define MAKE_TOKEN(name, string) name,
 #define MAKE_TOKEN_PAIR(name, string) std::pair{name, string},

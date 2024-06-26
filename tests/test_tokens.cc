@@ -17,7 +17,7 @@
 #include <string>
 #include <string_view>
 
-#include "../source/token/include/lexer.hh"
+#include <../source/token/include/lexer.hh>
 
 using std::string;
 

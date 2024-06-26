@@ -1,11 +1,27 @@
-#include "error.hh"
+/**
+ * @author Dhruvan Kartik
+ * @date 2024
+ * @copyright Copyright (c) 2024 (CC BY 4.0)
+ *
+ * @brief Defines error handling structures and classes for the Helix Language Project.
+ *
+ * @note This code is part of the Helix Language Project and is licensed under the Attribution 4.0
+ * International license (CC BY 4.0). You are allowed to use, modify, redistribute, and create
+ * derivative works, even for commercial purposes, provided that you give appropriate credit,
+ * provide a link to the license, and indicate if changes were made. For more information, please
+ * visit: https://creativecommons.org/licenses/by/4.0/ SPDX-License-Identifier: CC-BY-4.0
+ *
+ * @note This code is provided by the creators of Helix. Visit our website at:
+ * https://helix-lang.com/ for more information.
+ */
+#include <include/error/error.hh>
 
 #include <array>
 #include <iomanip>
 #include <iostream>
 #include <optional>
 
-#include "include/colors_ansi.hh"
+#include <include/colors_ansi.hh>
 #include <tools/controllers/include/file_system.hh>
 
 /**

@@ -17,7 +17,7 @@
 #include <memory>
 #include <utility>
 
-#include "ast.hh"
+#include <parser/ast/include/ast.hh>
 
 namespace parser::ast {
 /*                                            Literals                                           */

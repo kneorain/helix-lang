@@ -21,7 +21,7 @@
 #include <string_view>
 #include <vector>
 
-#include "token/include/generate.hh"
+#include <token/include/generate.hh>
 
 namespace token {
 

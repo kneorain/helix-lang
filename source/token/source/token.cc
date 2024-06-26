@@ -12,13 +12,13 @@
  * https://helix-lang.com/ for more information.
  */
 
-#include "token/include/token.hh"
+#include <token/include/token.hh>
 
 #include <iostream>
 #include <mutex>
 #include <shared_mutex>
 
-#include "include/colors_ansi.hh"
+#include <include/colors_ansi.hh>
 
 namespace token {
 

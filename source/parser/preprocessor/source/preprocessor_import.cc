@@ -11,15 +11,15 @@
  * @note This code is provided by the creators of Helix. Visit our website at:
  * https://helix-lang.com/ for more information.
  */
-#include "parser/preprocessor/include/preprocessor.hh"
+#include <parser/preprocessor/include/preprocessor.hh>
 
 #include <algorithm>
 #include <string>
 #include <vector>
 
-#include "include/error/error.hh"
-#include "token/include/generate.hh"
-#include "token/include/token.hh"
+#include <include/error/error.hh>
+#include <token/include/generate.hh>
+#include <token/include/token.hh>
 
 namespace parser::preprocessor {
 

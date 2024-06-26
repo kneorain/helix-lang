@@ -17,8 +17,8 @@
 #include <iostream>
 #include <memory>
 
-#include "ast.hh"
-#include "nodes.hh"
+#include <parser/ast/include/ast.hh>
+#include <parser/ast/include/nodes.hh>
 
 namespace parser {
 // generate an ast from a list of tokens

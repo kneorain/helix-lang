@@ -12,12 +12,12 @@
  * https://helix-lang.com/ for more information.
  */
 
-#include "../include/lexer.hh"
+#include <token/include/lexer.hh>
 
 #include <string>
 
-#include "../../include/error/error.hh"
-#include "../include/cases.def"
+#include <include/error/error.hh>
+#include <token/include/cases.def>
 
 using namespace token;
 
