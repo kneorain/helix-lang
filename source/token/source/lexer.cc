@@ -13,11 +13,9 @@
  */
 
 #include <token/include/lexer.hh>
-
-#include <string>
-
 #include <include/error/error.hh>
 #include <token/include/cases.def>
+#include <string>
 
 using namespace token;
 
@@ -56,9 +54,7 @@ TokenList Lexer::tokenize() {
     return tokens;
 }
 
-inline Token Lexer::get_eof() {
-    return {line, column, 1, offset, "\0", file_name, "<eof>"};
-}
+inline Token Lexer::get_eof() { return {line, column, 1, offset, "\0", file_name, "<eof>"}; }
 
 inline Token Lexer::process_single_line_comment() {
     auto start = currentPos;
@@ -153,10 +149,10 @@ inline Token Lexer::next_token() {
         case '#':  // so things like #[...] are compiler directives and are 1 token but # [...] is
                    // a NOT compiler directive and is # token + everything else
             return parse_compiler_directive();
-        case OPERATORS:
-            return parse_operator();
         case PUNCTUATION:
             return parse_punctuation();
+        case OPERATORS:
+            return parse_operator();
     }
 
     throw error::Error(error::Compiler{std::string(1, current()), "unknown token"});
@@ -247,18 +243,28 @@ inline Token Lexer::parse_numeric() {
     // all the data within 0-9 is a number
     // a number can have the following chars after the first digit:
     // 0-9, ., F, f, U, u, o, x, b, e, E, A-F, a-f, _
+    // TODO: add sci notation
     auto start = currentPos;
 
+    u32 dot_count = 0;
     bool is_float = false;
     bool end_loop = false;
+    bool sci_notation = false;
 
     while (!end_loop && !is_eof()) {
         switch (peek_forward()) {
             case '.':
+                ++dot_count;
                 is_float = true;
             case _non_float_numeric:
+                if (peek_forward() == 'e') {
+                    sci_notation = true;
+                }
                 break;
             default:
+                if (sci_notation && (peek_forward() == '-' || peek_forward() == '+')) {
+                    break;
+                }
                 end_loop = true;
                 break;
         }
@@ -267,6 +273,10 @@ inline Token Lexer::parse_numeric() {
 
     // if theres a . then it is a float
     if (is_float) {
+        if (dot_count > 1) {
+            throw error::Error(error::Line(file_name, line, column - (currentPos - start),
+                                           currentPos - start, "invalid float"));
+        }
         return {line,
                 column - (currentPos - start),
                 currentPos - start,
@@ -354,18 +364,24 @@ inline Token Lexer::parse_operator() {
         bare_advance();
     }
 
-    return {line, column - (currentPos - start), currentPos - start, offset, source.substr(start, currentPos - start), file_name};
+    return {line,
+            column - (currentPos - start),
+            currentPos - start,
+            offset,
+            source.substr(start, currentPos - start),
+            file_name};
 }
 
-inline Token Lexer::parse_punctuation() { // gets here bacause of something like . | :
+inline Token Lexer::parse_punctuation() {  // gets here bacause of something like . | :
     Token result;
 
     switch (peek_forward()) {
-        case '.': // ..
+        case '.':  // ..
             bare_advance();
-            if (peek_forward() == '.') { //...
-                result = Token{line, column, 3, offset, source.substr(currentPos - 1, 3), file_name};
-                bare_advance(2); // advance by 3 before return
+            if (peek_forward() == '.') {  //...
+                result =
+                    Token{line, column, 3, offset, source.substr(currentPos - 1, 3), file_name};
+                bare_advance(2);  // advance by 3 before return
                 return result;
             }
         case ':':

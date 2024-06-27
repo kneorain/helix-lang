@@ -15,7 +15,7 @@
 #ifndef __OPERATORS_DEF__
 #define __OPERATORS_DEF__
 
-#define OPERATOR_TOKENS_COUNT 57
+#define OPERATOR_TOKENS_COUNT 55
 
 #define OPERATOR_TOKENS(GENERATE)                    \
     GENERATE(OPERATOR_ADD,                    "+"  ) \
@@ -29,9 +29,7 @@
     GENERATE(OPERATOR_BITWISE_XOR,            "^"  ) \
     GENERATE(OPERATOR_BITWISE_NOT,            "~"  ) \
     GENERATE(OPERATOR_ASSIGN,                 "="  ) \
-    GENERATE(OPERATOR_GREATER_THAN,           ">"  ) \
     GENERATE(OPERATOR_LOGICAL_NOT,            "!"  ) \
-    GENERATE(OPERATOR_LESS_THAN,              "<"  ) \
     GENERATE(OPERATOR_POW,                    "**" ) \
     GENERATE(OPERATOR_ABS,                    "+-" ) \
     GENERATE(OPERATOR_BITWISE_L_SHIFT,        "<<" ) \

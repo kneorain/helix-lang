@@ -34,6 +34,12 @@ namespace error {
  * @param error The error information.
  */
 Error::Error(const Line &error) {
+    if (error.file_name.starts_with("<") && error.file_name.ends_with(">")) {
+        print_start(error.message, error.level);
+        print_info(error.message, error.file_name, error.line_number, error.column, error.offset);
+        return;
+    }
+    
     std::array<std::optional<std::string>, LINES_TO_SHOW> lines;
     file_system::get_line(error.file_name, error.line_number);
 

@@ -1,21 +1,142 @@
 name: CI
 
-on: [push, pull_request]
+on:
+  pull_request:
+  push:
+    branches:
+      - compiler
+
+concurrency:
+  group: ${{ github.head_ref || github.run_id }}-${{ github.actor }}
+  cancel-in-progress: true
 
 jobs:
-    build:
-        runs-on: ubuntu-latest
+  x86_64-linux-debug:
+    timeout-minutes: 420
+    runs-on: [self-hosted, Linux, x86_64]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Install xmake
+        run: |
+          curl -fsSL https://xmake.io/shget.text | bash
+          source ~/.xmake/profile
+      - name: Build and Test
+        run: sh .github/ci/x86_64-linux-debug.sh
 
-        steps:
-            - uses: actions/checkout@v2
-            - name: Install xmake
-              run: |
-                curl -fsSL https://xmake.io/shget.text | bash
-            - name: Configure and build
-              run: |
-                  xmake f -m debug
-                  xmake
-                  -y
-            - name: Run tests
-              run: |
-                  xmake run test
+  x86_64-linux-release:
+    timeout-minutes: 420
+    runs-on: [self-hosted, Linux, x86_64]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Install xmake
+        run: |
+          curl -fsSL https://xmake.io/shget.text | bash
+          source ~/.xmake/profile
+      - name: Build and Test
+        run: sh .github/ci/x86_64-linux-release.sh
+
+  aarch64-linux-debug:
+    timeout-minutes: 480
+    runs-on: [self-hosted, Linux, aarch64]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Install xmake
+        run: |
+          curl -fsSL https://xmake.io/shget.text | bash
+          source ~/.xmake/profile
+      - name: Build and Test
+        run: sh .github/ci/aarch64-linux-debug.sh
+
+  aarch64-linux-release:
+    timeout-minutes: 480
+    runs-on: [self-hosted, Linux, aarch64]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Install xmake
+        run: |
+          curl -fsSL https://xmake.io/shget.text | bash
+          source ~/.xmake/profile
+      - name: Build and Test
+        run: sh .github/ci/aarch64-linux-release.sh
+
+  x86_64-macos-release:
+    runs-on: "macos-11"
+    env:
+      ARCH: "x86_64"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Install xmake
+        run: |
+          curl -fsSL https://xmake.io/shget.text | bash
+          source ~/.xmake/profile
+      - name: Build and Test
+        run: .github/ci/x86_64-macos-release.sh
+
+  aarch64-macos-debug:
+    runs-on: [self-hosted, macOS, aarch64]
+    env:
+      ARCH: "aarch64"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Install xmake
+        run: |
+          curl -fsSL https://xmake.io/shget.text | bash
+          source ~/.xmake/profile
+      - name: Build and Test
+        run: .github/ci/aarch64-macos-debug.sh
+
+  aarch64-macos-release:
+    runs-on: [self-hosted, macOS, aarch64]
+    env:
+      ARCH: "aarch64"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Install xmake
+        run: |
+          curl -fsSL https://xmake.io/shget.text | bash
+          source ~/.xmake/profile
+      - name: Build and Test
+        run: .github/ci/aarch64-macos-release.sh
+
+  x86_64-windows-debug:
+    runs-on: [self-hosted, Windows, x86_64]
+    env:
+      ARCH: "x86_64"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Install xmake
+        run: .github/ci/install_xmake.ps1
+      - name: Build and Test
+        run: .github/ci/x86_64-windows-debug.ps1
+
+  x86_64-windows-release:
+    runs-on: [self-hosted, Windows, x86_64]
+    env:
+      ARCH: "x86_64"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Install xmake
+        run: .github/ci/install_xmake.ps1
+      - name: Build and Test
+        run: .github/ci/x86_64-windows-release.ps1
+
+  aarch64-windows:
+    runs-on: [self-hosted, Windows, aarch64]
+    env:
+      ARCH: "aarch64"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Install xmake
+        run: .github/ci/install_xmake.ps1
+      - name: Build and Test
+        run: .github/ci/aarch64-windows.ps1
