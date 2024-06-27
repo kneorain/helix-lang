@@ -1,5 +1,8 @@
 #!/bin/sh
 
+# Load xmake environment
+source ~/.xmake/profile
+
 # setup xmake for release or debug mode
 xmake f -m debug
 
