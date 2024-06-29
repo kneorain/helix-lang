@@ -34,6 +34,7 @@ namespace error {
  * @param error The error information.
  */
 Error::Error(const Line &error) {
+    HAS_ERRORED = true;
     if (error.file_name.starts_with("<") && error.file_name.ends_with(">")) {
         print_start(error.message, error.level);
         print_info(error.message, error.file_name, error.line_number, error.column, error.offset);
@@ -81,13 +82,14 @@ Error::Error(const Line &error) {
  * @param message The error message.
  * @param level The level of the error.
  */
-Error::Error(const std::string &message, const Level &level) { print_start(message, level); }
+Error::Error(const std::string &message, const Level &level) { HAS_ERRORED = true; print_start(message, level); }
 
 /**
  * @brief Constructs an Error object with the given compiler information.
  * @param compiler The compiler information.
  */
 Error::Error(const Compiler &compiler) {
+    HAS_ERRORED = true;
     print_start(compiler.message, compiler.level, compiler.file_name);
     if (!compiler.fix.empty()) {
         print_fix(compiler.fix, 0, 0);

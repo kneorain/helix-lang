@@ -73,6 +73,22 @@ struct Line {
         , message(std::move(message))
         , level(level)
         , fix(std::move(fix)) {}
+
+    Line(const token::TokenList &tokens, std::string message, const Level &level = ERR,
+         std::string fix = "")
+        : file_name(tokens[0].file_name())
+        , line_number(tokens[0].line_number())
+        , column(tokens[0].column_number())
+        , offset(0)
+        , message(std::move(message))
+        , level(level)
+        , fix(std::move(fix)) {
+            for (const auto &tok : tokens) {
+                if (tok.line_number() == line_number) {
+                    offset += tok.value().size();
+                }
+            }
+        }
 };
 
 /**
@@ -85,6 +101,8 @@ struct Compiler {
     Level level = ERR;      ///< Error level.
     std::string fix;        ///< Suggested fix message.
 };
+
+inline bool HAS_ERRORED = false;
 
 /**
  * @class Error

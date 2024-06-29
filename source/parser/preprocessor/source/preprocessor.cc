@@ -11,15 +11,21 @@
  * @note This code is provided by the creators of Helix. Visit our website at:
  * https://helix-lang.com/ for more information.
  */
+#include <memory>
+#include <optional>
 #include <parser/preprocessor/include/preprocessor.hh>
 
 #include <iostream>
+#include <ranges>
 #include <string>
+#include <unordered_set>
 #include <vector>
 
-#include <include/error/error.hh>
 #include <token/include/generate.hh>
+#include <include/error/error.hh>
 #include <token/include/token.hh>
+#include <tools/controllers/include/file_system.hh>
+#include <token/include/lexer.hh>
 
 namespace parser::preprocessor {
 /**
@@ -28,10 +34,10 @@ namespace parser::preprocessor {
  * all such context dependencies and producing a fully context-aware token list. This token
  * list includes all necessary information for the AST dependency resolver to operate effectively.
  */
-void Preprocessor::parse() {
+TokenList Preprocessor::parse(ImportNode *parent_node) {
     /// print_tokens(source_tokens);
     /// std::cout << std::string(60, '-') << "\n";
-    
+
     /* things parsed here:
         - imports:
             - import xyz
@@ -61,13 +67,9 @@ void Preprocessor::parse() {
         imports - working on now
         defines - working on now
         macros
-
-        imports
-        rel_path
-        source_tokens
-        current_pos
-        end
     */
+    import_helix _import;
+
     while (not_end()) {
         const Token &current_token = current();
         current_token_type = current_token.token_kind();
@@ -77,22 +79,243 @@ void Preprocessor::parse() {
                 parse_using();
                 break;
             case tokens::KEYWORD_IMPORT:
-                parse_import();
+                _import = parse_import(import_tree, parent_node);
                 break;
             default:
                 // std::cout << (peek().has_value() ? peek()->file_name() : "null") << "\n";
                 break;
         }
 
+        if (!_import.source.empty()) {
+            source_tokens.insert_remove(_import.source, _import.start, _import.end + 1);
+            current_pos += _import.source.size() - ((_import.end + 1) - _import.start);
+            end += _import.source.size();
+            _import.source.clear();
+        }
+
         increment_pos();
     }
 
-
+    return source_tokens;
 
     /// print_tokens(source_tokens);
     /// std::cout << std::string(60, '-') << "\n";
 }
 
+inline void print_debug(auto explicit_imports, auto import_path, auto alias, auto current_feature,
+                        auto import_start, auto import_end, auto source_tokens);
+
+/*=====---------------------------------- private function ----------------------------------=====*/
+
+bool is_circular_import(ImportNode *node) {
+    std::unordered_set<std::string> visited;
+    ImportNode *current = node;
+
+    while (current != nullptr) {
+        if (visited.find(current->module_name) != visited.end()) {
+            return true;  // Circular import detected
+        }
+        visited.insert(current->module_name);
+        current = current->parent;
+    }
+    return false;
+}
+
+import_helix Preprocessor::parse_import(std::unique_ptr<ImportTree> &import_tree, ImportNode *parent_node) {
+    std::vector<TokenList> explicit_imports;
+    TokenList import_path;
+    TokenList alias;
+    TokenList current_feature;
+    import_helix complete_import;
+
+    u32 import_start = current_pos;
+    u32 import_end = current_pos;
+    u32 brace_level = 0;
+
+    bool captured_import = false;
+    bool captured_specific = false;
+
+    if (peek().has_value() && peek()->token_kind() != tokens::IDENTIFIER) {
+        error::Error(error::Line(peek().value(), "expected an identifier but got a string",
+                                 error::ERR, "change the string import to a direct import."));
+    }
+
+    while (!captured_import && not_end()) {
+        advance();
+        handle_import_tokens(brace_level, captured_import, captured_specific, explicit_imports,
+                             import_path, current_feature, alias, import_end);
+    }
+
+    if (!current_feature.empty()) {
+        error::Error(error::Line(current_feature, "incomplete import statement", error::FATAL,
+                                 "complete the import statement."));
+        std::exit(1);
+    }
+
+    std::string string_import_path = resolve_import_path(import_path);
+
+    std::optional<std::filesystem::path> temp_path =
+        file_system::resolve_path(string_import_path + ".hlx", rel_path.back().string());
+
+    if (!temp_path.has_value()) {
+        string_import_path = resolve_import_path(import_path.slice(0, import_path.size() - 2));
+        temp_path =
+            file_system::resolve_path(string_import_path + ".hlx", rel_path.back().string());
+        explicit_imports.push_back(import_path.slice(import_path.size() - 1, import_path.size()));
+    }
+
+    if (!temp_path.has_value()) {
+        string_import_path = resolve_import_path_with_namespace(import_path);
+        temp_path =
+            file_system::resolve_path(string_import_path + ".hlx", rel_path.back().string());
+
+        if (!temp_path.has_value()) {
+            TokenList tmp;
+            if_missing_relative_parent(string_import_path, temp_path, tmp, import_path, 1);
+        }
+    }
+
+    // TODO: handle module imports from PATH and manually included dirs.
+
+    if (!temp_path.has_value()) {
+        error::Error(error::Line(import_path, "import path not found", error::FATAL,
+                                 "validate the import path provided. if you meant to do an "
+                                 "explicit import, use import ..::{...} syntax."));
+    }
+
+    string_import_path = temp_path->string();
+
+    // add the import to the import tree
+    ImportNode *current_node = import_tree->add_import(string_import_path, parent_node);
+    // check for circular imports
+    if (is_circular_import(current_node)) {
+        error::Error(error::Line(import_path, "circular import detected", error::FATAL,
+                                 "the module is already imported earlier in the import chain."));
+    }
+
+    if (error::HAS_ERRORED) {
+        std::exit(1);
+    }
+
+    TokenList namespace_name = alias.empty() ? import_path : alias;
+    TokenList parsed_source =
+        lexer::Lexer(file_system::read_file(string_import_path), string_import_path).tokenize();
+
+    parsed_source = parser::preprocessor::Preprocessor(parsed_source).parse(current_node);
+    parsed_source.pop_back();
+    parsed_source.insert(parsed_source.begin(),
+                         Token(tokens::PUNCTUATION_OPEN_BRACE, string_import_path));
+
+    for (auto const &tok : std::ranges::reverse_view(namespace_name)) {
+        parsed_source.insert(parsed_source.begin(), tok);
+    }
+
+    parsed_source.insert(parsed_source.begin(),
+                         Token(tokens::KEYWORD_NAMESPACE, string_import_path));
+    parsed_source.insert(parsed_source.end(),
+                         Token(tokens::PUNCTUATION_CLOSE_BRACE, string_import_path));
+
+    complete_import = {
+        .filepath = temp_path.value(),
+        .module_base = rel_path.back(),
+        .module = import_path,
+        .relative = namespace_name,
+        .source = parsed_source,
+        .explicit_imports = explicit_imports,
+        .start = import_start,
+        .end = import_end,
+    };
+
+    imports.push_back(complete_import);
+
+    return complete_import;
+}
+
+bool Preprocessor::if_missing_relative_parent(std::string &string_import_path,
+                                              std::optional<std::filesystem::path> &temp_path,
+                                              TokenList &explicit_imports, TokenList &import_path,
+                                              u32 depth) {
+    if (depth > u32(import_path.size() / 2)) {
+        return false;
+    }
+
+    // try resolving with namespace and without last token
+    string_import_path =
+        resolve_import_path_with_namespace(import_path.slice(0, import_path.size() - (depth + 1)));
+
+    temp_path = file_system::resolve_path(string_import_path + ".hlx", rel_path.back().string());
+
+    // add the last token back as explicit import
+    explicit_imports.push_back(
+        import_path.slice(import_path.size() - depth, import_path.size())[0]);
+
+    import_path = import_path.slice(0, import_path.size() - (depth + 1));
+
+    return true;
+}
+
+// void Preprocessor::process_import_path(TokenList &import_path,
+//                                        std::vector<TokenList> &explicit_imports,
+//                                        bool &module_import) {
+//     if (explicit_imports.size() == 1) {  // handle single explicit import
+//         Token temp = explicit_imports[0][0];
+//         import_path.push_back(Token(temp.line_number(), temp.column_number(), temp.length(),
+//                                     temp.offset(), "::", std::string(temp.file_name())));
+//
+//         for (const auto &tok_list : explicit_imports) {
+//             for (const auto &tok : tok_list) {
+//                 import_path.push_back(Token(tok.line_number(), tok.column_number(), tok.length(),
+//                                             tok.offset(), tok.value(),
+//                                             std::string(tok.file_name()),
+//                                             tok.token_kind_repr()));
+//             }
+//         }
+//
+//         explicit_imports.clear();  // clear explicit imports after processing
+//     }
+// }
+
+std::string Preprocessor::resolve_import_path(const TokenList &import_path) {
+    std::string string_import_path;
+    for (const auto &tok : import_path) {
+        switch (tok.token_kind()) {
+            case tokens::IDENTIFIER:
+                string_import_path += tok.value();  // append identifier to path
+                break;
+            case tokens::OPERATOR_SCOPE:
+                string_import_path += "/";  // replace scope operator with path separator
+                break;
+            default:
+                break;
+        }
+    }
+    return string_import_path;  // return the resolved path as a string
+}
+
+std::string Preprocessor::resolve_import_path_with_namespace(const TokenList &import_path) {
+    std::string string_import_path;
+    Token _tok;
+
+    for (const auto &tok : import_path) {
+        switch (tok.token_kind()) {
+            case tokens::IDENTIFIER:
+                string_import_path += tok.value();  // append identifier to path
+                _tok = tok;
+                break;
+            case tokens::OPERATOR_SCOPE:
+                string_import_path += "/";  // replace scope operator with path separator
+                break;
+            default:
+                break;
+        }
+    }
+
+    string_import_path += "/";           // add a path separator before the last token
+    string_import_path += _tok.value();  // append the last token value to the path
+    return string_import_path;           // return the resolved path with namespace as a string
+}
+
+/*=====----------------------------------- debug functions ----------------------------------=====*/
 inline void print_debug(auto explicit_imports, auto import_path, auto alias, auto current_feature,
                         auto import_start, auto import_end, auto source_tokens) {
     std::cout << "explicit_imports: "
@@ -116,60 +339,5 @@ inline void print_debug(auto explicit_imports, auto import_path, auto alias, aut
               << "\n";
     print_tokens(temp_sec);
     std::cout << std::string(60, '-') << "\n";
-}
-
-/*=====---------------------------------- private function ----------------------------------=====*/
-
-void Preprocessor::parse_import() {
-    // helix imports are relative to the base file, or module file.
-    /*
-    example while compiling src/hello.hlx
-
-    src/hello.hlx:
-    ```helix
-    import helper // this is expected to be at src/helper.hlx
-    import foo::bar // expected to be at src/foo/helper.hlx
-    ```
-
-    src/zam/zam.hlx:
-    ```
-    import zoom::far // expected to be at src/zam/zoom/far.hlx
-    // another way of writing this import would be import zam::zoom::far
-    ```
-
-    src/zam/zoom/far.hlx:
-    ```
-    import helper // expected at src/zam/helper.hlx not src/helper.hlx,
-                  // since making a src/zam/zam.hlx is a module declaration
-                  // and src/zam is considered as its own standalone module.
-    ```
-    */
-
-    std::vector<TokenList> explicit_imports;
-    TokenList import_path;
-    TokenList alias;
-    TokenList current_feature;
-    import_helix complete_import;
-
-    u32 import_start = current_pos;
-    u32 import_end = current_pos;
-    u32 brace_level = 0;
-
-    bool captured_import = false;
-    bool captured_specific = false;
-
-    if (peek().has_value() && peek()->token_kind() != tokens::IDENTIFIER) {
-        error::Error(error::Line(peek().value(), "got string instead of identifier", error::ERR,
-                                 "change the string import to a direct import."));
-    }
-
-    while (!captured_import && not_end()) {
-        advance();
-        handle_import_tokens(brace_level, captured_import, captured_specific, explicit_imports,
-                             import_path, current_feature, alias, import_end);
-    }
-
-    // print_debug(explicit_imports, import_path, alias, current_feature, import_start, import_end,
-    // source_tokens);
 }
 }  // namespace parser::preprocessor

@@ -19,9 +19,8 @@
 #include <shared_mutex>
 #include <string>
 #include <string_view>
-#include <vector>
-
 #include <token/include/generate.hh>
+#include <vector>
 
 namespace token {
 
@@ -87,6 +86,8 @@ struct Token {
      * @brief Default constructor that initializes the token to whitespace.
      */
     Token();
+
+    explicit Token(tokens token_type, const std::string &filename, std::string value = "");
 
     /**
      * @brief Destructor.
@@ -171,6 +172,12 @@ struct Token {
      * @param value String file name.
      */
     void set_file_name(const std::string &file_name);
+
+    bool operator==(const Token &rhs) const {
+        return (line == rhs.line && column == rhs.column && len == rhs.len &&
+                _offset == rhs._offset && kind == rhs.kind && val == rhs.val &&
+                filename == rhs.filename);
+    }
 };
 
 /**
@@ -289,6 +296,22 @@ class TokenList : public std::vector<Token> {
      * @param end End index of the range to remove.
      */
     void insert_remove(TokenList &tokens, u64 start, u64 end);
+
+    bool operator==(const TokenList &rhs) const {
+        // First, compare sizes
+        if (size() != rhs.size()) {
+            return false;
+        }
+
+        // Then, compare each element
+        for (size_t i = 0; i < size(); ++i) {
+            if (at(i) != rhs.at(i)) {  // Assuming Token has operator==
+                return false;
+            }
+        }
+
+        return true;
+    }
 };
 
 /**

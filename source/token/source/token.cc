@@ -12,13 +12,13 @@
  * https://helix-lang.com/ for more information.
  */
 
-#include <token/include/token.hh>
-
+#include <include/colors_ansi.hh>
 #include <iostream>
 #include <mutex>
 #include <shared_mutex>
+#include <token/include/token.hh>
 
-#include <include/colors_ansi.hh>
+#include "token/include/generate.hh"
 
 namespace token {
 
@@ -49,6 +49,19 @@ Token::Token(u64 line, u64 column, u64 length, u64 offset, std::string_view valu
 Token::Token()
     : kind(tokens::WHITESPACE)
     , val("<<WHITE_SPACE>>") {}
+
+// custom intrinsics constructor
+Token::Token(tokens token_type, const std::string &filename, std::string value)
+    : kind(token_type)
+    , filename(filename) {
+    
+    if (value.empty()) {
+        value = std::string(tokens_map.at(token_type).value());
+    }
+
+    len = value.length();
+    val = std::move(value);
+}
 
 // Copy Constructor
 Token::Token(const Token &other) {
@@ -194,13 +207,12 @@ TokenList TokenList::slice(u64 start, u64 end) {
     if (end > this->size()) {
         end = this->size();
     }
-    
+
     auto start_index = static_cast<std::vector<Token>::difference_type>(start);
     auto end_index = static_cast<std::vector<Token>::difference_type>(end);
-    
+
     return {this->filename, this->begin() + start_index, this->begin() + end_index};
 }
-
 
 /**
  * @brief Replaces tokens in the list from start to end with the provided tokens.

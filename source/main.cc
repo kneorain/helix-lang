@@ -21,40 +21,32 @@
 #include <token/include/token.hh>
 
 int main() {
+    // start the timer to measure execution time
     auto start = std::chrono::high_resolution_clock::now();
 
-    #if defined(_WIN32) || defined(_WIN64)
-        std::string file_name = "tests/main.hlx";
-    #else
-        std::string file_name = "/Volumes/Container/Projects/Helix/helix-lang/tests/main.hlx";
-    #endif // !1
+    // define the input file name
+    std::string file_name = "tests/main.hlx";
+
+    // read the file and tokenize its contents
     auto tokens = lexer::Lexer(file_system::read_file(file_name), file_name).tokenize();
 
+    // preprocess the tokens
+    tokens = parser::preprocessor::Preprocessor(tokens, "main").parse();
+
+    // print the import tree
+    parser::preprocessor::import_tree->print_tree(parser::preprocessor::import_tree->get_root());
+
+    // print the preprocessed tokens
     // token::print_tokens(tokens);
-    //for (token::Token _token : tokens) {
-    //    std::cout << _token.to_string() << "\n";
-    //}
 
-    auto preprocessor = parser::preprocessor::Preprocessor(tokens);
-
-    preprocessor.parse();
-
-    //std::string rootPath = "../";
-    //file_system::SourceTree tree(rootPath);
-
-    //std::cout << "Source Tree for .hlx files:\n";
-    //tree.print();
-
-    //auto _parser = parser::Parser(tokens);
-
-    //std::unique_ptr<parser::ast::ProgramNode> _ast = _parser.parse();
-    
-    //std::cout << _ast->to_string(0) << "\n";
-
+    // end the timer and calculate the duration
     auto end = std::chrono::high_resolution_clock::now();
-    const std::chrono::duration<double> diff = end - start;
-    std::cout << "time taken: " << diff.count()*1e+9 << "ns\n";
-    std::cout << "            " << diff.count()*1000 << "ms\n";
+    std::chrono::duration<double> diff = end - start;
+
+    // Print the time taken in nanoseconds and milliseconds
+    std::cout << "time taken: " << diff.count() * 1e+9 << " ns\n";
+    std::cout << "            " << diff.count() * 1000 << " ms\n";
+
     return 0;
 }
 

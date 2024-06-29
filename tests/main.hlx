@@ -1,26 +1,5 @@
-using "c++" {
-    import "test"; // test.cc
-    import "test.hh"; // redundant
-}
-
-import some_import;
-
-import foo::bar;
-
-import foo::bar as other_thing;
-
-import foo::bar::{print, this};
-
-import std::foo::{bar} as foo;
-
-/* `import some_import` would expand too:
-
-namespace some_import {
-    fn add_sum(a: int, b: int) -> int {
-        return a + b;
-    }
-}
-*/
+import test_imports; // module import
+import test_imports::some_import; // file import
 
 fn main() {
     print("hey there");

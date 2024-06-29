@@ -62,11 +62,6 @@ std::optional<std::filesystem::path> resolve_path(const std::string &resolve,
         return path;
     }
 
-    std::filesystem::path parent_path = path.parent_path();
-    if (std::filesystem::exists(parent_path)) {
-        return path;
-    }
-
     return std::nullopt;
 }
 }
