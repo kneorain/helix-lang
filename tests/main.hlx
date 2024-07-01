@@ -1,5 +1,6 @@
 import test_imports; // module import
 import test_imports::some_import; // file import
+import test_imports::test;
 
 fn main() {
     print("hey there");
