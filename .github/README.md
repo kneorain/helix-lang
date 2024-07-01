@@ -3,7 +3,7 @@
 </div>
 
 <p align="center">
-  | <a href="www.helix-lang.com">Website</a> |
+  | <a href="https://www.helix-lang.com">Website</a> |
     <a href="#helix-programming-language">Introduction</a> |
     <a href="#why-helix">Why Helix?</a> |
     <a href="#getting-started-with-helix">Getting Started</a> |
