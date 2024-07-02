@@ -11,8 +11,8 @@
  * @note This code is provided by the creators of Helix. Visit our website at:
  * https://helix-lang.com/ for more information.
  */
-#ifndef __FILE_SYSTEM_H__
-#define __FILE_SYSTEM_H__
+#ifndef __FILE_SYSTEM_HH__
+#define __FILE_SYSTEM_HH__
 
 #include <cerrno>
 #include <filesystem>
@@ -66,4 +66,4 @@ class SourceTree {
 };
 }  // namespace file_system
 
-#endif  // __FILE_SYSTEM_H__
+#endif  // __FILE_SYSTEM_HH__

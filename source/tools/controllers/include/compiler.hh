@@ -11,8 +11,8 @@
  * @note This code is provided by the creators of Helix. Visit our website at:
  * https://helix-lang.com/ for more information.
  */
-#ifndef __COMPILER_H__
-#define __COMPILER_H__
+#ifndef __COMPILER_HH__
+#define __COMPILER_HH__
 
 #include <vector>
 
@@ -37,4 +37,4 @@ class Compiler {
 }
 
 
-#endif // __COMPILER_H__
+#endif // __COMPILER_HH__

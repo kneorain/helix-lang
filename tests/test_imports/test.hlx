@@ -1,1 +1,1 @@
-import test_imports;
+import some_import;

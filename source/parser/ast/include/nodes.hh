@@ -11,8 +11,8 @@
  * @note This code is provided by the creators of Helix. Visit our website at:
  * https://helix-lang.com/ for more information.
  */
-#ifndef __NODES_H__
-#define __NODES_H__
+#ifndef __NODES_HH__
+#define __NODES_HH__
 
 #include <memory>
 #include <utility>
@@ -194,4 +194,4 @@ struct ProgramNode : AstNode<ProgramNode> {
 };
 }  // namespace parser::ast
 
-#endif  // __NODES_H__
+#endif  // __NODES_HH__

@@ -155,7 +155,15 @@ inline Token Lexer::next_token() {
             return parse_operator();
     }
 
-    throw error::Error(error::Compiler{std::string(1, current()), "unknown token"});
+    throw error::Error(
+        error::Line(
+            file_name,
+            line,
+            column,
+            1,
+            "unknown token '" + std::string(1, current()) + "'"
+        )
+    );
 }
 
 inline Token Lexer::parse_compiler_directive() {
@@ -178,7 +186,7 @@ inline Token Lexer::parse_compiler_directive() {
                 end_loop = brace_level == 0;
                 break;
             case '\n':
-                end_loop = true;
+                end_loop = brace_level == 0;
                 break;
         }
 
@@ -189,7 +197,7 @@ inline Token Lexer::parse_compiler_directive() {
             column - (currentPos - start),
             currentPos - start,
             offset,
-            source.substr(start, currentPos - start),
+            source.substr(start+2, (currentPos - start) - 3),
             file_name,
             "<complier_directive>"};
 }

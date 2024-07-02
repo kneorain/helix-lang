@@ -11,8 +11,8 @@
  * @note This code is provided by the creators of Helix. Visit our website at:
  * https://helix-lang.com/ for more information.
  */
-#ifndef __PARSER_H__
-#define __PARSER_H__
+#ifndef __PARSER_HH__
+#define __PARSER_HH__
 
 #include <iostream>
 #include <memory>
@@ -154,4 +154,4 @@ class Parser {
 };
 }  // namespace parser
 
-#endif  // __PARSER_H__
+#endif  // __PARSER_HH__

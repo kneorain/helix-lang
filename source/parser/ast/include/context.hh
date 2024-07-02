@@ -11,19 +11,13 @@
  * @note This code is provided by the creators of Helix. Visit our website at:
  * https://helix-lang.com/ for more information.
  */
+#ifndef __CONTEXT_HH__
+#define __CONTEXT_HH__
 
-#ifndef __ABI_DEF__
-#define __ABI_DEF__
+namespace ast {
+    class ASTContext {
+        
+    };
+}
 
-#define RESERVED_ABI_COUNT 5
-
-#define RESERVED_ABI(GENERATE)          \
-    GENERATE(ABI_CXX,     "\"c++\""   ) \
-    GENERATE(ABI_C,       "\"c\""     ) \
-    GENERATE(ABI_HELIX,   "\"helix\"" ) \
-    GENERATE(ABI_RUST,    "\"rust\""  ) \
-    GENERATE(ABI_PYTHON,  "\"python\"")
-
-// NOTE: IF THIS GENERATION IS CHANGED DO NOT FORGET TO UPDATE COUNT
-
-#endif // __ABI_DEF__
+#endif // __CONTEXT_HH__

@@ -13,40 +13,41 @@
  */
 
 #include <chrono>
-#include <iostream>
-#include <parser/ast/include/parser.hh>
-#include <parser/preprocessor/include/preprocessor.hh>
-#include <token/include/lexer.hh>
-#include <tools/controllers/include/file_system.hh>
-#include <token/include/token.hh>
+#include <include/printV2>
+
+#include "token/include/lexer.hh"
+#include "token/include/token.hh"
+#include "parser/ast/include/parser.hh"
+#include "tools/controllers/include/file_system.hh"
+#include "parser/preprocessor/include/preprocessor.hh"
 
 int main() {
-    // start the timer to measure execution time
+    using namespace token;
+    using namespace parser;
+    using namespace lexer;
+
     auto start = std::chrono::high_resolution_clock::now();
 
-    // define the input file name
-    std::string file_name = "tests/main.hlx";
+    std::string file_name = "/Volumes/Container/Projects/Helix/helix-lang/tests/main.hlx"; // relative to current working dir in POSIX shell (cmd/bash)
 
-    // read the file and tokenize its contents
-    auto tokens = lexer::Lexer(file_system::read_file(file_name), file_name).tokenize();
+    // read the file and tokenize its contents : stage 0
+    TokenList tokens = Lexer(file_system::read_file(file_name), file_name).tokenize();
 
-    // preprocess the tokens
-    tokens = parser::preprocessor::Preprocessor(tokens, "main").parse();
-
-    // print the import tree
-    parser::preprocessor::import_tree->print_tree(parser::preprocessor::import_tree->get_root());
-
-    // print the preprocessed tokens
-    // token::print_tokens(tokens);
+    // preprocess the tokens : stage 1
+    Preprocessor(tokens, "main").parse();
 
     // end the timer and calculate the duration
     auto end = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double> diff = end - start;
 
+    // preprocessor::import_tree->print_tree(preprocessor::import_tree->get_root());
+
+    // print the preprocessed tokens
+    print_tokens(tokens);
+
     // Print the time taken in nanoseconds and milliseconds
-    std::cout << "time taken: " << diff.count() * 1e+9 << " ns\n";
-    std::cout << "            " << diff.count() * 1000 << " ms\n";
+    print("time taken: ", diff.count() * 1e+9, " ns");
+    print("            ", diff.count() * 1000, " ms");
 
     return 0;
 }
-

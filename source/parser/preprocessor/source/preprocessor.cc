@@ -11,30 +11,32 @@
  * @note This code is provided by the creators of Helix. Visit our website at:
  * https://helix-lang.com/ for more information.
  */
-#include <memory>
-#include <optional>
-#include <parser/preprocessor/include/preprocessor.hh>
+#include "parser/preprocessor/include/preprocessor.hh"
 
 #include <iostream>
+#include <memory>
+#include <optional>
 #include <ranges>
 #include <string>
 #include <unordered_set>
+#include <utility>
 #include <vector>
 
-#include <token/include/generate.hh>
-#include <include/error/error.hh>
-#include <token/include/token.hh>
-#include <tools/controllers/include/file_system.hh>
-#include <token/include/lexer.hh>
+#include "include/colors_ansi.hh"
+#include "include/error/error.hh"
+#include "token/include/generate.hh"
+#include "token/include/lexer.hh"
+#include "token/include/token.hh"
+#include "tools/controllers/include/file_system.hh"
 
-namespace parser::preprocessor {
+namespace parser {
 /**
  * The AST parser's dependency resolver requires context information, such as imports
  * and macro expansions, to function correctly. The Preprocessor handles this by resolving
  * all such context dependencies and producing a fully context-aware token list. This token
  * list includes all necessary information for the AST dependency resolver to operate effectively.
  */
-TokenList Preprocessor::parse(ImportNode *parent_node) {
+TokenList Preprocessor::parse(std::shared_ptr<preprocessor::ImportNode> parent_node) {
     /// print_tokens(source_tokens);
     /// std::cout << std::string(60, '-') << "\n";
 
@@ -61,28 +63,39 @@ TokenList Preprocessor::parse(ImportNode *parent_node) {
         - compiler directives:
             - #[no-entry]
     */
-    tokens current_token_type{};
 
     /* order of parsing (first to last)
         imports - working on now
         defines - working on now
         macros
     */
-    import_helix _import;
+    preprocessor::import_helix _import;
 
     while (not_end()) {
-        const Token &current_token = current();
-        current_token_type = current_token.token_kind();
-
-        switch (current_token_type) {
-            case tokens::KEYWORD_USING:
+        switch (current().token_kind()) {
+            case tokens::KEYWORD_USING:  // abi import
                 parse_using();
                 break;
-            case tokens::KEYWORD_IMPORT:
-                _import = parse_import(import_tree, parent_node);
+            case tokens::KEYWORD_IMPORT:  // module import
+                _import = parse_import(preprocessor::import_tree, parent_node);
                 break;
+            case tokens::OPERATOR_LOGICAL_NOT:  // define invocation
+                if (peek_back()->token_kind() == tokens::IDENTIFIER) {
+                    error::Error(error::Line(source_tokens.slice(current_pos - 1, current_pos + 1),
+                                             "undefined macro invocation", error::FATAL,
+                                             std::string(colors::fg16::red) +
+                                                 "marcos are not yet implemented." +
+                                                 colors::reset));
+                    std::exit(1);
+                }
+            case tokens::KEYWORD_DEFINE:
+            case tokens::KEYWORD_MACRO:  // TODO: implement proc macros and defines into the
+                                         // preprocessor
+                error::Error(error::Line(current(), "macro behaviour unknown", error::FATAL,
+                                         std::string(colors::fg16::red) +
+                                             "marcos are not yet implemented." + colors::reset));
+                std::exit(1);
             default:
-                // std::cout << (peek().has_value() ? peek()->file_name() : "null") << "\n";
                 break;
         }
 
@@ -107,26 +120,28 @@ inline void print_debug(auto explicit_imports, auto import_path, auto alias, aut
 
 /*=====---------------------------------- private function ----------------------------------=====*/
 
-bool is_circular_import(ImportNode *node) {
+bool is_circular_import(const std::shared_ptr<preprocessor::ImportNode> &node) {
     std::unordered_set<std::string> visited;
-    ImportNode *current = node;
+    std::shared_ptr<preprocessor::ImportNode> current = node;
 
     while (current != nullptr) {
         if (visited.find(current->module_name) != visited.end()) {
             return true;  // Circular import detected
         }
         visited.insert(current->module_name);
-        current = current->parent;
+        current = current->parent.lock();
     }
     return false;
 }
 
-import_helix Preprocessor::parse_import(std::unique_ptr<ImportTree> &import_tree, ImportNode *parent_node) {
+preprocessor::import_helix
+Preprocessor::parse_import(std::unique_ptr<preprocessor::ImportTree> &import_tree,
+                           std::shared_ptr<preprocessor::ImportNode> parent_node) {
     std::vector<TokenList> explicit_imports;
     TokenList import_path;
     TokenList alias;
     TokenList current_feature;
-    import_helix complete_import;
+    preprocessor::import_helix complete_import;
 
     u32 import_start = current_pos;
     u32 import_end = current_pos;
@@ -141,7 +156,10 @@ import_helix Preprocessor::parse_import(std::unique_ptr<ImportTree> &import_tree
     }
 
     while (!captured_import && not_end()) {
-        advance();
+        if (!advance().has_value()) {
+            throw error::Error(error::Line(current(), "invalid syntax, maybe missing a semicolon"));
+        }
+
         handle_import_tokens(brace_level, captured_import, captured_specific, explicit_imports,
                              import_path, current_feature, alias, import_end);
     }
@@ -186,7 +204,8 @@ import_helix Preprocessor::parse_import(std::unique_ptr<ImportTree> &import_tree
     string_import_path = temp_path->string();
 
     // add the import to the import tree
-    ImportNode *current_node = import_tree->add_import(string_import_path, parent_node);
+    std::shared_ptr<preprocessor::ImportNode> current_node =
+        import_tree->add_import(string_import_path, std::move(parent_node));
     // check for circular imports
     if (is_circular_import(current_node)) {
         error::Error(error::Line(import_path, "circular import detected", error::FATAL,
@@ -201,7 +220,7 @@ import_helix Preprocessor::parse_import(std::unique_ptr<ImportTree> &import_tree
     TokenList parsed_source =
         lexer::Lexer(file_system::read_file(string_import_path), string_import_path).tokenize();
 
-    parsed_source = parser::preprocessor::Preprocessor(parsed_source).parse(current_node);
+    parsed_source = Preprocessor(parsed_source).parse(current_node);
     parsed_source.pop_back();
     parsed_source.insert(parsed_source.begin(),
                          Token(tokens::PUNCTUATION_OPEN_BRACE, string_import_path));
@@ -226,7 +245,7 @@ import_helix Preprocessor::parse_import(std::unique_ptr<ImportTree> &import_tree
         .end = import_end,
     };
 
-    imports.push_back(complete_import);
+    preprocessor::imports.push_back(complete_import);
 
     return complete_import;
 }
@@ -340,4 +359,4 @@ inline void print_debug(auto explicit_imports, auto import_path, auto alias, aut
     print_tokens(temp_sec);
     std::cout << std::string(60, '-') << "\n";
 }
-}  // namespace parser::preprocessor
+}  // namespace parser

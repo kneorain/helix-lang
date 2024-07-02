@@ -21,7 +21,7 @@
 #include <token/include/generate.hh>
 #include <token/include/token.hh>
 
-namespace parser::preprocessor {
+namespace parser {
 
 void Preprocessor::handle_import_tokens(u32 &brace_level, bool &captured_import,
                                         bool &captured_specific,
@@ -62,7 +62,8 @@ void Preprocessor::handle_import_tokens(u32 &brace_level, bool &captured_import,
         default:
             error::Error(error::Line(
                 current(), "unexpected token found in import statement `" + current().value() + "'",
-                error::ERR, "use valid helix import syntax."));
+                error::ERR, "perhaps forgot a semicolon?"));
+                std::exit(1);
             break;
     }
 }
@@ -103,7 +104,7 @@ void Preprocessor::handle_open_brace_in_import(u32 &brace_level, bool &captured_
                 error::Error(error::Line(current(),
                                          "unexpected token found in import statement `" +
                                              current().value() + "'",
-                                         error::ERR, "use valid helix import syntax."));
+                                         error::ERR, "perhaps forgot a semicolon?"));
                 break;
         }
     }
@@ -146,7 +147,7 @@ void Preprocessor::parse_import_alias(TokenList &alias,
                 error::Error(error::Line(current(),
                                          "unexpected token found in import statement `" +
                                              current().value() + "'",
-                                         error::ERR, "use valid helix import syntax."));
+                                         error::ERR, "perhaps forgot a semicolon?"));
                 break;
         }
     }

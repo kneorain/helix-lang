@@ -11,8 +11,8 @@
  * @note This code is provided by the creators of Helix. Visit our website at:
  * https://helix-lang.com/ for more information.
  */
-#ifndef __PRE_H__
-#define __PRE_H__
+#ifndef __PRE_HH__
+#define __PRE_HH__
 
 #include <cstddef>
 #include <filesystem>
@@ -29,21 +29,32 @@ using namespace token;
 
 struct ImportNode {
     std::string module_name;
-    std::vector<ImportNode *> children;
-    ImportNode *parent;
+    std::vector<std::shared_ptr<ImportNode>> children;
+    std::weak_ptr<ImportNode> parent;
 
-    explicit ImportNode(std::string name, ImportNode *parent_node = nullptr)
-        : module_name(std::move(name))
-        , parent(parent_node) {}
+    explicit ImportNode(std::string name, std::shared_ptr<ImportNode> parent_node = nullptr)
+        : module_name(std::move(name)), parent(parent_node) {}
+
+    ~ImportNode() = default;
+    ImportNode(ImportNode &&other) = default;
+    ImportNode(const ImportNode &other) = delete;
+    ImportNode& operator=(ImportNode &&other) = delete;
+    ImportNode& operator=(const ImportNode &other) = delete;
 };
 
 class ImportTree {
   public:
     explicit ImportTree(std::string name)
-        : root(new ImportNode(std::move(name))) {}
+        : root(std::make_shared<ImportNode>(std::move(name))) {}
 
-    ImportNode *add_import(const std::string &module_name, ImportNode *parent = nullptr) {
-        auto *node = new ImportNode(module_name, parent);
+    ~ImportTree() = default;
+    ImportTree(ImportTree &&other) = default;
+    ImportTree(const ImportTree &other) = delete;
+    ImportTree& operator=(ImportTree &&other) = delete;
+    ImportTree& operator=(const ImportTree &other) = delete;
+
+    std::shared_ptr<ImportNode> add_import(const std::string &module_name, std::shared_ptr<ImportNode> parent = nullptr) {
+        auto node = std::make_shared<ImportNode>(module_name, parent);
         if (parent != nullptr) {
             parent->children.push_back(node);
         } else {
@@ -52,7 +63,7 @@ class ImportTree {
         return node;
     }
 
-    void print_tree(ImportNode *node, const std::string& prefix = "", bool is_last = true, int depth = 0) {
+    void print_tree(const std::shared_ptr<ImportNode>& node, const std::string& prefix = "", bool is_last = true, int depth = 0) {
         if (node == nullptr) {
             return;
         }
@@ -78,10 +89,10 @@ class ImportTree {
         }
     }
 
-    ImportNode *get_root() { return root; }
+    std::shared_ptr<ImportNode> get_root() { return root; }
 
   private:
-    ImportNode *root;
+    std::shared_ptr<ImportNode> root;
 };
 
 /**
@@ -154,8 +165,12 @@ struct import_helix {
 };
 
 inline std::unique_ptr<ImportTree> import_tree;
-inline std::vector<import_helix> imports;
+inline std::vector<import_helix>   imports;
 
+} //  namespace parser::preprocessor
+
+namespace parser {
+using namespace token;
 /**
  * The Preprocessor class is responsible for handling context-dependent elements in the source code,
  * such as imports and macro expansions. It processes the source tokens to produce a fully
@@ -204,11 +219,11 @@ class Preprocessor {
     std::vector<std::filesystem::path>
         rel_path;  // if importing a module that would be the current rel path
 
-    TokenList source_tokens;
-    u32 current_pos{};
+    TokenList &source_tokens;
+    u32 current_pos;
     u32 end;
 
-    import_helix parse_import(std::unique_ptr<ImportTree> &import_tree, ImportNode *parent_node = nullptr);
+    preprocessor::import_helix parse_import(std::unique_ptr<preprocessor::ImportTree> &import_tree, std::shared_ptr<preprocessor::ImportNode> parent_node = nullptr);
 
     void parse_import_alias(TokenList &alias, const std::vector<TokenList> &explicit_imports);
     void handle_import_tokens(u32 &brace_level, bool &captured_import, bool &captured_specific,
@@ -266,26 +281,38 @@ class Preprocessor {
         return std::nullopt;
     }
 
-    inline bool not_end(u32 n = 0) const { return (current_pos + n) < end; }
+    inline bool not_end(u32 n = 0) const { return (current_pos + n) <= end; }
 
     inline bool not_start(u32 n = 0) const { return current_pos >= n; }
 
   public:
     explicit Preprocessor(TokenList &tokens, const std::string& name = "")
         : source_tokens(tokens)
-        , end(tokens.size() - 1) {
+        , current_pos(0)
+        , end(tokens.size() - 2) { // accounting the eof token
         rel_path.push_back(std::filesystem::path(tokens[0].file_name()).parent_path());
         std::transform(abi::reserved_map.begin(), abi::reserved_map.end(), allowed_abi.begin(),
                        [](const auto &pair) { return std::string(pair.second); });
         
         if (!name.empty() || name == "main") {
-            import_tree = std::make_unique<ImportTree>(std::string(tokens[0].file_name()));
+            preprocessor::import_tree = std::make_unique<preprocessor::ImportTree>(std::string(tokens[0].file_name()));
         }
     }
 
-    TokenList parse(ImportNode *parent_node = nullptr);
+    ~Preprocessor() = default;
+
+    Preprocessor(Preprocessor &&other) = default;
+    Preprocessor(const Preprocessor &other) = default;
+    Preprocessor& operator=(const Preprocessor &other) = delete;
+    Preprocessor& operator=(Preprocessor &&other) = delete;
+
+    TokenList parse(std::shared_ptr<preprocessor::ImportNode> parent_node = nullptr);
+    
+    static void finalize() {
+        preprocessor::import_tree.reset();
+    };
 };
 
 }  // namespace parser::preprocessor
 
-#endif  // __PRE_H__
+#endif  // __PRE_HH__
