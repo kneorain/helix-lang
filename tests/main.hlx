@@ -42,6 +42,10 @@ import test_imports::test;
     it allows for users to write clea and readable comments.
     ")
 ]
-fn main() {
+fn main() -> int? { // becomes std::optional<int>
+    print("hey there", "hello");
+}
+
+fn main2() -> int {
     print("hey there", "hello");
 }

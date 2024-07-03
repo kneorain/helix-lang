@@ -123,7 +123,7 @@ class Parser {
     std::unique_ptr<ast::ProgramNode> parse() {
         token::tokens current_token_type{};
 
-        for (auto it = tokens.begin(); it != tokens.end();) {
+        for (auto it = tokens.cbegin(); it != tokens.cend();) {
             const token::Token &current_token = *it;
             current_token_type = current_token.token_kind();
 

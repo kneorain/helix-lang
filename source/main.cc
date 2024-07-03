@@ -45,6 +45,13 @@ int main() {
     // print the preprocessed tokens
     print_tokens(tokens);
 
+    for (auto &tok_ref : tokens) {
+        if (tok_ref->token_kind() == tokens::KEYWORD_FUNCTION) {
+            tok_ref.peek();
+            std::cout << tok_ref.peek()->get().value() << "\n";
+        }
+    }
+
     // Print the time taken in nanoseconds and milliseconds
     print("time taken: ", diff.count() * 1e+9, " ns");
     print("            ", diff.count() * 1000, " ms");

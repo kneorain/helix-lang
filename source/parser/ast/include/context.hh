@@ -14,6 +14,9 @@
 #ifndef __CONTEXT_HH__
 #define __CONTEXT_HH__
 
+#include <map>
+#include "parser/ast/include/nodes.hh"
+
 namespace ast {
     class ASTContext {
         

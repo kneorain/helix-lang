@@ -72,7 +72,7 @@ struct Variable : AstNode<Variable> {  // a: int<8> | a: i32 = 5 | a: i32? = nul
     AstNodePtr value;                  // 5 | null
     bool is_nullable;
     Token reference;  // & | &&
-    Token pointer;    // * | *
+    Token pointer;    // *
     explicit Variable(AstNodeRef<Identifier> name, AstNodeRef<GenericArgument> type,
                       AstNodePtr value, bool is_nullable = false, Token reference = Token(),
                       Token pointer = Token());

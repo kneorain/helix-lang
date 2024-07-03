@@ -128,8 +128,8 @@ struct import_helix {
     std::string get_module() {
         std::string mod;
 
-        for (auto const &tok : module) {
-            mod += tok.value();
+        for (auto &tok : module) {
+            mod += tok->value();
         }
 
         return mod;
@@ -138,8 +138,8 @@ struct import_helix {
     std::string get_namespace() {
         std::string name_space;
 
-        for (auto const &tok : relative) {
-            name_space += tok.value();
+        for (auto &tok : relative) {
+            name_space += tok->value();
         }
 
         return name_space;

@@ -125,7 +125,7 @@ bool is_circular_import(const std::shared_ptr<preprocessor::ImportNode> &node) {
     std::shared_ptr<preprocessor::ImportNode> current = node;
 
     while (current != nullptr) {
-        if (visited.find(current->module_name) != visited.end()) {
+        if (visited.find(current->module_name) != visited.cend()) {
             return true;  // Circular import detected
         }
         visited.insert(current->module_name);
@@ -222,16 +222,16 @@ Preprocessor::parse_import(std::unique_ptr<preprocessor::ImportTree> &import_tre
 
     parsed_source = Preprocessor(parsed_source).parse(current_node);
     parsed_source.pop_back();
-    parsed_source.insert(parsed_source.begin(),
+    parsed_source.insert(parsed_source.cbegin(),
                          Token(tokens::PUNCTUATION_OPEN_BRACE, string_import_path));
 
-    for (auto const &tok : std::ranges::reverse_view(namespace_name)) {
-        parsed_source.insert(parsed_source.begin(), tok);
+    for (auto it = namespace_name.rbegin(); it != namespace_name.rend(); ++it) {
+        parsed_source.insert(parsed_source.cbegin(), *it);
     }
 
-    parsed_source.insert(parsed_source.begin(),
+    parsed_source.insert(parsed_source.cbegin(),
                          Token(tokens::KEYWORD_NAMESPACE, string_import_path));
-    parsed_source.insert(parsed_source.end(),
+    parsed_source.insert(parsed_source.cend(),
                          Token(tokens::PUNCTUATION_CLOSE_BRACE, string_import_path));
 
     complete_import = {

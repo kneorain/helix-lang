@@ -9,7 +9,7 @@ target("helix")
     
     add_headerfiles("source/**.hh")    -- add all headers in the source directory
     add_includedirs("source")
-    set_languages("c++latest")      -- set the standard C++ version to C++23
+    set_languages("c++2b")      -- set the standard C++ version to C++23
 
     if is_mode("debug") then
         set_symbols("debug")       -- Generate debug symbols
