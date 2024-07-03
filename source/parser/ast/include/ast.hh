@@ -15,6 +15,7 @@
 #ifndef __AST_HH__
 #define __AST_HH__
 
+#include <concepts>
 #include <cstddef>
 #include <cstdlib>
 #include <expected>
@@ -22,8 +23,7 @@
 #include <string>
 #include <vector>
 
-#include <include/error/error.hh>
-#include <token/include/token.hh>
+#include "token/include/token.hh"
 
 /*
 something like: 2 * (3 + 4) / 5
@@ -154,108 +154,6 @@ comments
 
 */
 
-#define AST_NODE_METHODS(name)                                 \
-    inline string to_string(u16 depth = 1) const override;     \
-    inline string node_name() const override { return #name; } \
-    ParseResult<name> validate(TokenList tokens) override;     \
-    void accept(class Visitor &visitor) override
-
-namespace parser::ast {
-using std::string;
-using std::string_view;
-using namespace token;
-
-inline string get_indent(u16 depth) noexcept {
-    return string(static_cast<u16>(depth * 4), ' ');
-};
-
-template <typename T>
-struct AstNode;
-
-struct ParseError {
-    ParseError() = default;
-    explicit ParseError(const error::Compiler &diagnostic) {
-        (error::Error(diagnostic));
-        std::exit(1);
-    }
-};
-
-using AstNodePtr = std::unique_ptr<AstNode<void>>;
-
-template <typename T>
-using AstNodeRef = std::shared_ptr<AstNode<T>>;
-
-template <typename T>
-using ParseResult = std::expected<AstNodeRef<T>, ParseError>;
-
-template <typename T = void>
-using AstNodeList = std::vector<AstNodeRef<T>>;
-
-template <>
-struct AstNode<void> {
-    AstNode() = default;
-    AstNode(const AstNode &) = default;
-    AstNode &operator=(const AstNode &) = default;
-    AstNode &operator=(AstNode &&) = default;
-    AstNode(AstNode &&) = default;
-    virtual ~AstNode() = default;
-
-    [[nodiscard]] virtual string to_string(u16 depth = 1) const = 0;
-    [[nodiscard]] virtual string node_name() const = 0;
-
-    virtual void accept(class Visitor &visitor) = 0;
-    [[noreturn]] void validate(TokenList tokens) {
-        ParseError(error::Compiler{
-            .file_name = "unknown",
-            .message = "void ast node pointer called",
-            .fix = "this message would never or should never be seen if it is, report it"});
-
-        std::exit(1);
-    };
-};
-
-template <typename T>
-struct AstNode : public AstNode<void> {
-    AstNode() = default;
-    AstNode(const AstNode &) = default;
-    AstNode &operator=(const AstNode &) = default;
-    AstNode &operator=(AstNode &&) = default;
-    AstNode(AstNode &&) = default;
-    virtual ~AstNode() = default;
-
-    [[nodiscard]] virtual string to_string(u16 depth = 1) const override = 0;
-    [[nodiscard]] virtual string node_name() const override = 0;
-
-    virtual ParseResult<T> validate(TokenList tokens) = 0;
-    virtual void accept(class Visitor &visitor) override = 0;
-};
-
-// struct Variable : AstNode<Variable> { // a | _a | a1 | _a1
-//     Location loc;
-//     string name;
-//
-//     explicit Variable(const Token &token)
-//         : loc(token)
-//         , name(token.value()) {}
-//
-//     [[nodiscard]] string to_string(u16 depth = 1) const override {
-//         return get_indent(depth) + "Variable(" + name + ")";
-//     }
-//
-//     [[nodiscard]] string node_name() const override {
-//         return "Variable";
-//     }
-//
-//     ParseResult<Variable> parse(TokenList tokens) override {
-//         // Implement parsing logic for Variable node
-//         return std::make_unique<Variable>(tokens.current());
-//     }
-//
-//     void accept(Visitor &visitor) override {
-//         // Implement visitor pattern logic
-//     }
-// };
-
 /*
     the following parsed and translated:
         a: i16;                 // i16 a();
@@ -318,5 +216,62 @@ struct AstNode : public AstNode<void> {
 
 */
 
+namespace parser::ast {
+inline string get_indent(u16 depth) noexcept { return string(static_cast<u16>(depth * 4), ' '); };
+
+struct ParseError {};
+
+// concept AstBase = requires(T t) {
+//     { t.parse(token::TokenList) } -> std::expected<std::weak_ptr<ASTBase>, ParseError>;
+//     { t.to_string() } -> std::string;
+// };
+
+using ParseResult = std::optional<ParseError>;
+
+using TokenListRef = std::reference_wrapper<token::TokenList>;
+
+template <typename T>
+struct ASTBase;
+
+template <>
+struct ASTBase<void>:  {
+    //     virtual std::expected<std::span<Token>,AstError> parse(std::span<Token> tokens) = 0;
+    virtual ~ASTBase() = default;
+    ASTBase() = default;
+    ASTBase(ASTBase &&) = default;
+    ASTBase(const ASTBase &) = default;
+    ASTBase &operator=(ASTBase &&) = default;
+    ASTBase &operator=(const ASTBase &) = delete;
+
+    [[nodiscard]] virtual ParseResult parse() = 0;
+    [[nodiscard]] virtual std::string to_string() const = 0;
+};
+
+template <typename T>
+struct ASTBase : ASTBase<void> {
+    virtual ~ASTBase() = default;
+    ASTBase() = default;
+    explicit ASTBase(TokenListRef parse_tokens);
+    ASTBase(ASTBase &&) = default;
+    ASTBase(const ASTBase &) = default;
+    ASTBase &operator=(ASTBase &&) = default;
+    ASTBase &operator=(const ASTBase &) = delete;
+};
+
+template <typename T>
+concept ASTNode = std::derived_from<T, ASTBase<T>>;
+
+template <typename T = void>
+using ASTNodePtr = std::unique_ptr<ASTBase<T>>;
+
+template <typename T = void>
+using ASTNodeList = std::vector<ASTNodePtr<T>>;
+
+template <typename T = void>
+using ASTNodeRef = std::reference_wrapper<ASTBase<T>>;
+
+template <typename T = void>
+using ASTSlice = const std::reference_wrapper<ASTNodeList<T>>;
+
 }  // namespace parser::ast
-#endif  // __AST_HH__
+#endif  // __AST_HH__44

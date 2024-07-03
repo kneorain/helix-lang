@@ -12,6 +12,7 @@
  * https://helix-lang.com/ for more information.
  */
 
+#include <functional>
 #include <iostream>
 #include <stdexcept>
 
@@ -28,49 +29,6 @@ TokenList::TokenList(std::string filename, std::vector<Token>::const_iterator st
                      std::vector<Token>::const_iterator end)
     : std::vector<Token>(start, end)
     , filename(std::move(filename)) {}
-
-Token TokenList::next(u32 n) const {
-    if (it == this->cend()) {
-        return {};
-    }
-
-    if (it + n >= this->cend()) {
-        return *(this->cend() - 1);
-    }
-
-    return *(it + n++);
-}
-
-Token TokenList::peek(u32 n) const {
-    if (it == this->cend()) {
-        return {};
-    }
-
-    if (it + n >= this->cend()) {
-        return *(this->cend() - 1);
-    }
-
-    return *(it + n);
-}
-
-Token TokenList::current() const {
-    if (it == this->cbegin()) {
-        return {};
-    }
-    return *(it - 1);
-}
-
-Token TokenList::previous(u32 n) const {
-    if (it == this->cbegin()) {
-        return {};
-    }
-
-    if (it - n < this->cbegin()) {
-        return *(this->cbegin());
-    }
-
-    return *(it - n);
-}
 
 void TokenList::remove_left() {
     this->erase(this->cbegin(), it);
@@ -115,8 +73,6 @@ void TokenList::insert_remove(TokenList &tokens, u64 start, u64 end) {
     this->erase(start_it, end_it);
     this->insert(start_it, tokens.cbegin(), tokens.cend());
 }
-
-bool TokenList::reached_end() const { return it == this->cend(); }
 
 void print_tokens(token::TokenList &tokens) {
     u16 indent = 0;
@@ -180,9 +136,10 @@ bool TokenList::TokenListIter::operator==(const TokenListIter &other) const {
     return cursor_position == other.cursor_position;
 }
 
-std::unique_ptr<Token> TokenList::TokenListIter::operator->() {
-    return std::make_unique<Token>(tokens.get()[cursor_position]);
-}  // TODO: change if a shared ptr is needed
+// FIXME : This is a temporary fix, need to change this to a a reference 
+Token* TokenList::TokenListIter::operator->() {
+    return &tokens.get()[cursor_position];
+}  // TODO: change if a shared ptr is needed 
 
 TokenList::TokenListIter &TokenList::TokenListIter::operator*() { return *this; }
 

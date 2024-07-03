@@ -134,16 +134,18 @@ std::string Token::value() const { return val; }
 
 std::string_view Token::token_kind_repr() const { return tokens_map.at(kind).value(); }
 
-std::string_view Token::file_name() const { return filename; }
+std::string Token::file_name() const { return filename; }
 
 void Token::set_file_name(const std::string &file_name) { this->filename = std::string(file_name); }
+
+void Token::set_value(const std::string &other) { this->val = std::string(other); }
 
 std::string Token::to_string() const {
     return std::string("Token(") + std::string("line: ") + std::to_string(line) +
            std::string(", column: ") + std::to_string(column) + std::string(", len: ") +
            std::to_string(len) + std::string(", offset: ") + std::to_string(_offset) +
-           std::string(", kind: ") + std::string(token_kind_repr()) + std::string(", val: ") +
-           std::string(val) + ")";
+           std::string(", kind: ") + std::string(token_kind_repr()) + std::string(", val: \"") +
+           std::string(val) + "\")";
 }
 
 bool Token::operator==(const Token &rhs) const {

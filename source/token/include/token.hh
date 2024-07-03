@@ -48,6 +48,7 @@ struct Token {
     Token &operator=(const Token &other);
     Token(Token &&other) noexcept;
     Token &operator=(Token &&other) noexcept;
+    Token &operator=(const std::string &other);
     Token();
 
     explicit Token(tokens token_type, const std::string &filename, std::string value = "");
@@ -61,7 +62,7 @@ struct Token {
     tokens token_kind() const;
     std::string value() const;
     std::string_view token_kind_repr() const;
-    std::string_view file_name() const;
+    std::string file_name() const;
 
     std::string to_string() const;
     bool operator==(const Token &rhs) const;
@@ -70,6 +71,7 @@ struct Token {
     /* ====-------------------------- setters ---------------------------==== */
 
     void set_file_name(const std::string &file_name);
+    void set_value(const std::string &other);
 };
 
 /**
@@ -95,7 +97,7 @@ class TokenList : public std::vector<Token> {
 
         bool operator!=(const TokenListIter &other) const;
         bool operator==(const TokenListIter &other) const;
-        std::unique_ptr<Token> operator->();  // TODO: change if a shared ptr is needed
+        Token* operator->();  // TODO: change if a shared ptr is needed
         TokenListIter &operator*();
         std::reference_wrapper<TokenListIter> operator--();
         std::reference_wrapper<TokenListIter> operator++();
@@ -111,14 +113,9 @@ class TokenList : public std::vector<Token> {
     using const_iterator = std::vector<Token>::const_iterator;
 
     mutable const_iterator it;
-    std::optional<Token> yes();
+
     TokenList() = default;
     explicit TokenList(std::string filename);
-    Token next(u32 n = 1) const;
-    [[nodiscard]] Token peek(u32 n = 1) const;
-    [[nodiscard]] Token current() const;
-    TokenListIter begin() { return TokenListIter(*this); }
-    TokenListIter end() { return TokenListIter(*this, this->size() - 1); }
 
     [[nodiscard]] std::vector<Token>::const_iterator cbegin() const {
         return std::vector<Token>::begin();
@@ -134,13 +131,14 @@ class TokenList : public std::vector<Token> {
         return std::vector<Token>::end();
     }
 
-    [[nodiscard]] Token previous(u32 n = 1) const;
+    TokenListIter begin() { return TokenListIter(*this); }
+    TokenListIter end() { return TokenListIter(*this, this->size() - 1); }
+
     void remove_left();
     void reset();
     void append(const Token &token);
     TokenList slice(u64 start, u64 end);
 
-    [[nodiscard]] bool reached_end() const;
     [[nodiscard]] std::string file_name() const;
     void insert_remove(TokenList &tokens, u64 start, u64 end);
 

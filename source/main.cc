@@ -14,19 +14,24 @@
 
 #include <chrono>
 #include <include/printV2>
+#include <memory>
 
 #include "token/include/lexer.hh"
 #include "token/include/token.hh"
-#include "parser/ast/include/parser.hh"
+#include "parser/ast/include/nodes.hh"
+#include "cli/include/cli.hh"
+#include "parser/ast/include/ast.hh"
 #include "tools/controllers/include/file_system.hh"
 #include "parser/preprocessor/include/preprocessor.hh"
 
-int main() {
+int main(int argc, char **argv) {
     using namespace token;
     using namespace parser;
     using namespace lexer;
 
     auto start = std::chrono::high_resolution_clock::now();
+
+
 
     std::string file_name = "/Volumes/Container/Projects/Helix/helix-lang/tests/main.hlx"; // relative to current working dir in POSIX shell (cmd/bash)
 
@@ -43,15 +48,15 @@ int main() {
     // preprocessor::import_tree->print_tree(preprocessor::import_tree->get_root());
 
     // print the preprocessed tokens
-    print_tokens(tokens);
+    // print_tokens(tokens);
 
-    for (auto &tok_ref : tokens) {
-        if (tok_ref->token_kind() == tokens::KEYWORD_FUNCTION) {
-            tok_ref.peek();
-            std::cout << tok_ref.peek()->get().value() << "\n";
-        }
-    }
 
+    auto node = std::make_unique<ast::Parentheses<ast::StringLiteral>>(tokens);
+    
+    node->parse();
+
+    print(node->to_string());
+    
     // Print the time taken in nanoseconds and milliseconds
     print("time taken: ", diff.count() * 1e+9, " ns");
     print("            ", diff.count() * 1000, " ms");

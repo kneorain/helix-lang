@@ -30,7 +30,7 @@ target("tests")
     add_files("tests/**.cc")    -- add all files in the tests directory
     add_files("source/**.cc")   -- add all .cc files in the source directory and its subdirectories
     remove_files("source/main.cc")  -- exclude main.cc from the source directory
-
+    
     add_headerfiles("source/**.hh")    -- add all headers in the source directory
     add_headerfiles("tests/**.hh")    -- add all headers in the tests directory
     
