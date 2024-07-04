@@ -11,15 +11,16 @@
  * @note This code is provided by the creators of Helix. Visit our website at:
  * https://helix-lang.com/ for more information.
  */
+#include "lexer/include/lexer.hh"
 
-#include <token/include/lexer.hh>
-#include <include/error/error.hh>
-#include <token/include/cases.def>
 #include <string>
 
-using namespace token;
+#include "core/error/error.hh"
+#include "lexer/include/cases.def"
 
 namespace lexer {
+using namespace token;
+
 Lexer::Lexer(std::string source, const std::string &filename)
     : tokens(filename)
     , source(std::move(source))
@@ -155,15 +156,8 @@ inline Token Lexer::next_token() {
             return parse_operator();
     }
 
-    throw error::Error(
-        error::Line(
-            file_name,
-            line,
-            column,
-            1,
-            "unknown token '" + std::string(1, current()) + "'"
-        )
-    );
+    throw error::Error(error::Line(file_name, line, column, 1,
+                                   "unknown token '" + std::string(1, current()) + "'"));
 }
 
 inline Token Lexer::parse_compiler_directive() {
@@ -197,7 +191,7 @@ inline Token Lexer::parse_compiler_directive() {
             column - (currentPos - start),
             currentPos - start,
             offset,
-            source.substr(start+2, (currentPos - start) - 3),
+            source.substr(start + 2, (currentPos - start) - 3),
             file_name,
             "<complier_directive>"};
 }

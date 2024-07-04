@@ -11,22 +11,21 @@
  * @note This code is provided by the creators of Helix. Visit our website at:
  * https://helix-lang.com/ for more information.
  */
-
 #include <functional>
 #include <iostream>
 #include <stdexcept>
 
-#include "include/colors_ansi.hh"
-#include "parser/ast/include/context.hh"
+#include "core/utils/colors_ansi.hh"
 #include "token/include/generate.hh"
 #include "token/include/token.hh"
+#include "token/include/token_list.hh"
 
 namespace token {
 TokenList::TokenList(std::string filename)
     : filename(std::move(filename))
     , it(this->cbegin()) {}
 
-TokenList::TokenList(const std::string& filename, std::vector<Token>::const_iterator start,
+TokenList::TokenList(const std::string &filename, std::vector<Token>::const_iterator start,
                      std::vector<Token>::const_iterator end)
     : std::vector<Token>(start, end)
     , filename(filename) {}
@@ -38,12 +37,15 @@ void TokenList::remove_left() {
 
 void TokenList::reset() { it = this->cbegin(); }
 
+const std::string &TokenList::file_name() const { return filename; }
 
-const std::string& TokenList::file_name() const { return filename; }
+TokenList TokenList::slice(u64 start, i64 end) {
+    if (end < 0) {
+        end = i64(this->size()) - (-end);
+    }
 
-TokenList TokenList::slice(u64 start, u64 end) {
-    if (end > this->size()) {
-        end = this->size();
+    if (end > i64(this->size())) {
+        end = i64(this->size());
     }
 
     auto start_index = static_cast<std::vector<Token>::difference_type>(start);
@@ -51,7 +53,6 @@ TokenList TokenList::slice(u64 start, u64 end) {
 
     return {this->filename, this->cbegin() + start_index, this->cbegin() + end_index};
 }
-
 
 /**
  * @brief Replaces tokens in the list from start to end with the provided tokens.
@@ -137,10 +138,10 @@ bool TokenList::TokenListIter::operator==(const TokenListIter &other) const {
     return cursor_position == other.cursor_position;
 }
 
-// FIXME : This is a temporary fix, need to change this to a a reference 
-Token* TokenList::TokenListIter::operator->() {
+// FIXME : This is a temporary fix, need to change this to a a reference
+Token *TokenList::TokenListIter::operator->() {
     return &tokens.get()[cursor_position];
-}  // TODO: change if a shared ptr is needed 
+}  // TODO: change if a shared ptr is needed
 
 TokenList::TokenListIter &TokenList::TokenListIter::operator*() { return *this; }
 

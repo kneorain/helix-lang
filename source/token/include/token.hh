@@ -11,26 +11,18 @@
  * @note This code is provided by the creators of Helix. Visit our website at:
  * https://helix-lang.com/ for more information.
  */
-
 #ifndef __TOKEN_HH__
 #define __TOKEN_HH__
+
 #include <iostream>
-#include <memory>
-#include <optional>
 #include <shared_mutex>
-#include <span>
 #include <string>
 #include <string_view>
-#include <vector>
 
-#include "include/inttypes.hh"
+#include "core/types/hx_ints"
 #include "token/include/generate.hh"
 
 namespace token {
-
-/**
- * @brief Structure representing a token in the source code.
- */
 struct Token {
   private:
     u32 line{};                     ///< Line number where the token is located
@@ -74,84 +66,6 @@ struct Token {
     void set_file_name(const std::string &file_name);
     void set_value(const std::string &other);
 };
-
-/**
- * @brief Class representing a list of tokens.
- */
-class TokenList : public std::vector<Token> {
-  private:
-    std::string filename;
-    TokenList(const std::string &filename, std::vector<Token>::const_iterator start,
-              std::vector<Token>::const_iterator end);
-
-    class TokenListIter {
-      private:
-        std::reference_wrapper<TokenList> tokens;
-        u64 cursor_position;
-        u64 end;
-
-      public:
-        explicit TokenListIter(TokenList &token_list, u64 pos = 0)
-            : tokens(token_list)
-            , cursor_position(pos)
-            , end(token_list.size() - 1) {}
-
-        bool operator!=(const TokenListIter &other) const;
-        bool operator==(const TokenListIter &other) const;
-        Token *operator->();  // TODO: change if a shared ptr is needed
-        TokenListIter &operator*();
-        std::reference_wrapper<TokenListIter> operator--();
-        std::reference_wrapper<TokenListIter> operator++();
-        std::reference_wrapper<Token> advance(int n = 1);
-        std::reference_wrapper<Token> reverse(int n = 1);
-        std::optional<std::reference_wrapper<Token>> peek(int n = 1);
-        std::optional<std::reference_wrapper<Token>> peek_back(int n = 1);
-        std::reference_wrapper<Token> current();
-    };
-
-  public:
-    using std::vector<Token>::vector;  // Inherit constructors
-    using const_iterator = std::vector<Token>::const_iterator;
-
-    mutable const_iterator it;
-
-    TokenList() = default;
-    explicit TokenList(std::string filename);
-
-    [[nodiscard]] std::vector<Token>::const_iterator cbegin() const {
-        return std::vector<Token>::begin();
-    }
-    [[nodiscard]] std::vector<Token>::const_iterator cend() const {
-        return std::vector<Token>::end();
-    }
-
-    [[nodiscard]] std::vector<Token>::const_iterator begin() const {
-        return std::vector<Token>::begin();
-    }
-    [[nodiscard]] std::vector<Token>::const_iterator end() const {
-        return std::vector<Token>::end();
-    }
-
-    TokenListIter begin() { return TokenListIter(*this); }
-    TokenListIter end() { return TokenListIter(*this, this->size() - 1); }
-
-    void remove_left();
-    void reset();
-    TokenList slice(u64 start, u64 end);
-
-    [[nodiscard]] const std::string &file_name() const;
-    void insert_remove(TokenList &tokens, u64 start, u64 end);
-
-    bool operator==(const TokenList &rhs) const;
-};
-
-/**
- * @brief Prints the tokens in the provided token list.
- *
- * @param tokens Token list to be printed.
- */
-void print_tokens(token::TokenList &tokens);
-
 }  // namespace token
 
 #endif  // __TOKEN_HH__

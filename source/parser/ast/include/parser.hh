@@ -17,8 +17,10 @@
 #include <iostream>
 #include <memory>
 
-#include <parser/ast/include/ast.hh>
-#include <parser/ast/include/nodes.hh>
+#include "parser/ast/include/ast.hh"
+#include "parser/ast/include/nodes.hh"
+#include "token/include/token.hh"
+#include "token/include/token_list.hh"
 
 namespace parser {
 // generate an ast from a list of tokens
@@ -74,8 +76,8 @@ all possiblities to parse:
     - [] fn yes<T>() -> int {...}
 */
 
-class Parser {
-  
+class ASTParser {
+    explicit ASTParser(token::TokenList tokens);
 };
 }  // namespace parser
 

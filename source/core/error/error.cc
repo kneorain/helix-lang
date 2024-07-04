@@ -14,16 +14,15 @@
  * @note This code is provided by the creators of Helix. Visit our website at:
  * https://helix-lang.com/ for more information.
  */
-#include "include/error/error.hh"
+#include "core/error/error.hh"
 
 #include <array>
-#include <include/printV2>
 #include <iomanip>
-#include <iostream>
 #include <optional>
 
-#include "include/colors_ansi.hh"
-#include "tools/controllers/include/file_system.hh"
+#include "controllers/include/file_system.hh"
+#include "core/utils/colors_ansi.hh"
+#include "core/utils/hx_print"
 
 /**
  @namespace error

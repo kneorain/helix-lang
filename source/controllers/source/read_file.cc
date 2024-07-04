@@ -11,15 +11,14 @@
  * @note This code is provided by the creators of Helix. Visit our website at:
  * https://helix-lang.com/ for more information.
  */
-
 #include <filesystem>
 #include <fstream>
 #include <iostream>
 #include <optional>
 #include <string>
 
-#include <include/error/error.hh>
-#include <tools/controllers/include/file_system.hh>
+#include "controllers/include/file_system.hh"
+#include "core/error/error.hh"
 
 namespace file_system {
 std::unordered_map<std::string, std::string> FileCache::cache_;

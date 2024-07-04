@@ -11,12 +11,11 @@
  * @note This code is provided by the creators of Helix. Visit our website at:
  * https://helix-lang.com/ for more information.
  */
-//#include "parser/ast/include/nodes.hh"
-
 #include <memory>
 #include <optional>
-#include "include/error/error.hh"
-#include "include/printV2"
+
+#include "core/error/error.hh"
+#include "core/utils/hx_print"
 namespace parser::ast {
 using namespace token;
 

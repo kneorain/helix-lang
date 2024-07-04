@@ -11,18 +11,18 @@
  * @note This code is provided by the creators of Helix. Visit our website at:
  * https://helix-lang.com/ for more information.
  */
-#include <parser/preprocessor/include/preprocessor.hh>
+#include "parser/preprocessor/include/preprocessor.hh"
 
 #include <algorithm>
 #include <string>
 #include <vector>
 
-#include <include/error/error.hh>
-#include <token/include/generate.hh>
-#include <token/include/token.hh>
+#include "core/error/error.hh"
+#include "token/include/generate.hh"
+#include "token/include/token.hh"
+#include "token/include/token_list.hh"
 
 namespace parser {
-
 void Preprocessor::handle_import_tokens(u32 &brace_level, bool &captured_import,
                                         bool &captured_specific,
                                         std::vector<TokenList> &explicit_imports,
@@ -63,7 +63,7 @@ void Preprocessor::handle_import_tokens(u32 &brace_level, bool &captured_import,
             error::Error(error::Line(
                 current(), "unexpected token found in import statement `" + current().value() + "'",
                 error::ERR, "perhaps forgot a semicolon?"));
-                std::exit(1);
+            std::exit(1);
             break;
     }
 }
@@ -223,4 +223,4 @@ void Preprocessor::handle_invalid_abi_option(const std::optional<Token> &next_to
                              "disallowed abi option, abi should only be a string.", error::ERR,
                              "use one of allowed abi options [" + abi_options + "]"));
 }
-}  // namespace parser::preprocessor
+}  // namespace parser

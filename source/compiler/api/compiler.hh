@@ -20,21 +20,20 @@ namespace clang {
 using namespace std;
 
 struct Arguments {
-    vector<string> args; //> additional arguments to pass
-    vector<string> libs; //> lib dirs, such as for libcxx
-    vector<string> incs; //> include dirs
-    vector<string> link; //> link dirs
+    vector<string> args;  //> additional arguments to pass
+    vector<string> libs;  //> lib dirs, such as for libcxx
+    vector<string> incs;  //> include dirs
+    vector<string> link;  //> link dirs
 };
 
 class Compiler {
-    private:
-        Arguments args;
+  private:
+    Arguments args;
 
-    public:
-        Compiler() = default;
-        explicit Compiler(Arguments args);
+  public:
+    Compiler() = default;
+    explicit Compiler(Arguments args);
 };
-}
+}  // namespace clang
 
-
-#endif // __COMPILER_HH__
+#endif  // __COMPILER_HH__

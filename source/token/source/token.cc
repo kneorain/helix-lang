@@ -11,7 +11,6 @@
  * @note This code is provided by the creators of Helix. Visit our website at:
  * https://helix-lang.com/ for more information.
  */
-
 #include "token/include/token.hh"
 
 #include <mutex>

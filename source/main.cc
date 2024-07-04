@@ -13,16 +13,14 @@
  */
 
 #include <chrono>
-#include <include/printV2>
 #include <memory>
 
-#include "token/include/lexer.hh"
-#include "token/include/token.hh"
-#include "parser/ast/include/nodes.hh"
 #include "cli/include/cli.hh"
-#include "parser/ast/include/ast.hh"
-#include "tools/controllers/include/file_system.hh"
+#include "controllers/include/file_system.hh"
+#include "core/utils/hx_print"
+#include "parser/cst/include/nodes.hh"
 #include "parser/preprocessor/include/preprocessor.hh"
+#include "lexer/include/lexer.hh"
 
 int main(int argc, char **argv) {
     using namespace token;
@@ -32,9 +30,10 @@ int main(int argc, char **argv) {
     auto start = std::chrono::high_resolution_clock::now();
 
     // "D:\projects\helix-lang\tests\main.hlx"
-    //std::string file_name = "/Volumes/Container/Projects/Helix/helix-lang/tests/main.hlx"; // relative to current working dir in POSIX shell (cmd/bash)
+    // std::string file_name = "/Volumes/Container/Projects/Helix/helix-lang/tests/main.hlx"; //
+    // relative to current working dir in POSIX shell (cmd/bash)
     std::string file_name =
-        "D:\\projects\\helix-lang\\tests\\main.hlx"; // relative to current working dir in Windows shell (cmd/powershell)
+        "tests/main.hlx";  // relative to current working dir in Windows shell (cmd/powershell)
     // read the file and tokenize its contents : stage 0
     TokenList tokens = Lexer(file_system::read_file(file_name), file_name).tokenize();
 
@@ -50,10 +49,10 @@ int main(int argc, char **argv) {
     // print the preprocessed tokens
     // print_tokens(tokens);
 
-    auto toks = static_cast<std::vector<Token>>(tokens);
-    auto node = std::make_unique<ast::Parentheses<ast::StringLiteral>>(toks);
+    auto node =
+        std::make_unique<cst::Parentheses<cst::StringLiteral>>(std::make_shared<TokenList>(tokens));
 
-    node->parse();
+    auto tmp = node->parse();
 
     print(node->to_string());
     /// PRINT THE NODES AND THE NODES WITH

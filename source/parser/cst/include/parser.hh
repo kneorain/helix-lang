@@ -11,25 +11,21 @@
  * @note This code is provided by the creators of Helix. Visit our website at:
  * https://helix-lang.com/ for more information.
  */
-#include <array>
-#include <tools/controllers/include/file_system.hh>
+#ifndef __PARSER_HH__
+#define __PARSER_HH__
 
-#if defined(_WIN32) || defined(_WIN64)
-#   include <windows.h>
-#   define PATH_MAX MAX_PATH
-#else
-#   include <unistd.h>
-#   include <climits>
-#   include <cstring>
-#endif
+#include <iostream>
+#include <memory>
 
-namespace file_system {
-std::string get_cwd() {
-#   if defined(_WIN32) || defined(_WIN64)
-#       include <tools/controllers/lib/__win32_cwd.inc>
-#   else
-#       include <tools/controllers/lib/__unix_cwd.inc>
-#   endif
-    return {buffer.data()};
-}
-}
+#include "parser/cst/include/cst.hh"
+#include "parser/cst/include/nodes.hh"
+#include "token/include/token.hh"
+#include "token/include/token_list.hh"
+
+namespace parser {
+class CSTParser {
+    explicit CSTParser(token::TokenList tokens);
+};
+}  // namespace parser
+
+#endif  // __PARSER_HH__

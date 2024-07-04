@@ -11,15 +11,26 @@
  * @note This code is provided by the creators of Helix. Visit our website at:
  * https://helix-lang.com/ for more information.
  */
-#ifndef __CONTEXT_HH__
-#define __CONTEXT_HH__
+#include <array>
 
-#include <map>
+#include "controllers/include/file_system.hh"
 
-#include "parser/ast/include/nodes.hh"
+#if defined(_WIN32) || defined(_WIN64)
+#   include <windows.h>
+#   define PATH_MAX MAX_PATH
+#else
+#   include <unistd.h>
+#   include <climits>
+#   include <cstring>
+#endif
 
-namespace ast {
-class ASTContext {};
-}  // namespace ast
-
-#endif  // __CONTEXT_HH__
+namespace file_system {
+std::string get_cwd() {
+#   if defined(_WIN32) || defined(_WIN64)
+#       include "controllers/lib/__win32_cwd.inc"
+#   else
+#       include "controllers/lib/__unix_cwd.inc"
+#   endif
+    return {buffer.data()};
+}
+}  // namespace file_system

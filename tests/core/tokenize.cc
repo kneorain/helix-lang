@@ -14,9 +14,11 @@
 #include <catch2>
 #include <string>
 #include <string_view>
-#include <token/include/lexer.hh>
-#include <include/error/error.hh>
+
+#include "core/error/error.hh"
+#include "lexer/include/lexer.hh"
 #include "token/include/token.hh"
+#include "token/include/token_list.hh"
 
 using namespace token;
 using namespace lexer;
@@ -63,16 +65,16 @@ TEST_CASE("Test Lexer tokenization", "[lexer::Lexer]") {
         TokenList tokens = lexer.tokenize();
 
         REQUIRE(tokens.size() == 12);
-        REQUIRE(tokens[0].token_kind()  == tokens::KEYWORD_IF);
-        REQUIRE(tokens[1].token_kind()  == tokens::PUNCTUATION_OPEN_PAREN);
-        REQUIRE(tokens[2].token_kind()  == tokens::IDENTIFIER);
-        REQUIRE(tokens[3].token_kind()  == tokens::PUNCTUATION_CLOSE_ANGLE);
-        REQUIRE(tokens[4].token_kind()  == tokens::LITERAL_INTEGER);
-        REQUIRE(tokens[5].token_kind()  == tokens::PUNCTUATION_CLOSE_PAREN);
-        REQUIRE(tokens[6].token_kind()  == tokens::PUNCTUATION_OPEN_BRACE);
-        REQUIRE(tokens[7].token_kind()  == tokens::KEYWORD_RETURN);
-        REQUIRE(tokens[8].token_kind()  == tokens::LITERAL_TRUE);
-        REQUIRE(tokens[9].token_kind()  == tokens::PUNCTUATION_SEMICOLON);
+        REQUIRE(tokens[0].token_kind() == tokens::KEYWORD_IF);
+        REQUIRE(tokens[1].token_kind() == tokens::PUNCTUATION_OPEN_PAREN);
+        REQUIRE(tokens[2].token_kind() == tokens::IDENTIFIER);
+        REQUIRE(tokens[3].token_kind() == tokens::PUNCTUATION_CLOSE_ANGLE);
+        REQUIRE(tokens[4].token_kind() == tokens::LITERAL_INTEGER);
+        REQUIRE(tokens[5].token_kind() == tokens::PUNCTUATION_CLOSE_PAREN);
+        REQUIRE(tokens[6].token_kind() == tokens::PUNCTUATION_OPEN_BRACE);
+        REQUIRE(tokens[7].token_kind() == tokens::KEYWORD_RETURN);
+        REQUIRE(tokens[8].token_kind() == tokens::LITERAL_TRUE);
+        REQUIRE(tokens[9].token_kind() == tokens::PUNCTUATION_SEMICOLON);
         REQUIRE(tokens[10].token_kind() == tokens::PUNCTUATION_CLOSE_BRACE);
     }
 
@@ -82,16 +84,16 @@ TEST_CASE("Test Lexer tokenization", "[lexer::Lexer]") {
         TokenList tokens = lexer.tokenize();
 
         REQUIRE(tokens.size() == 18);
-        REQUIRE(tokens[0].token_kind()  == tokens::KEYWORD_LET);
-        REQUIRE(tokens[1].token_kind()  == tokens::IDENTIFIER);
-        REQUIRE(tokens[2].token_kind()  == tokens::OPERATOR_ASSIGN);
-        REQUIRE(tokens[3].token_kind()  == tokens::PUNCTUATION_OPEN_PAREN);
-        REQUIRE(tokens[4].token_kind()  == tokens::IDENTIFIER);
-        REQUIRE(tokens[5].token_kind()  == tokens::OPERATOR_ADD);
-        REQUIRE(tokens[6].token_kind()  == tokens::IDENTIFIER);
-        REQUIRE(tokens[7].token_kind()  == tokens::PUNCTUATION_CLOSE_PAREN);
-        REQUIRE(tokens[8].token_kind()  == tokens::OPERATOR_MUL);
-        REQUIRE(tokens[9].token_kind()  == tokens::PUNCTUATION_OPEN_PAREN);
+        REQUIRE(tokens[0].token_kind() == tokens::KEYWORD_LET);
+        REQUIRE(tokens[1].token_kind() == tokens::IDENTIFIER);
+        REQUIRE(tokens[2].token_kind() == tokens::OPERATOR_ASSIGN);
+        REQUIRE(tokens[3].token_kind() == tokens::PUNCTUATION_OPEN_PAREN);
+        REQUIRE(tokens[4].token_kind() == tokens::IDENTIFIER);
+        REQUIRE(tokens[5].token_kind() == tokens::OPERATOR_ADD);
+        REQUIRE(tokens[6].token_kind() == tokens::IDENTIFIER);
+        REQUIRE(tokens[7].token_kind() == tokens::PUNCTUATION_CLOSE_PAREN);
+        REQUIRE(tokens[8].token_kind() == tokens::OPERATOR_MUL);
+        REQUIRE(tokens[9].token_kind() == tokens::PUNCTUATION_OPEN_PAREN);
         REQUIRE(tokens[10].token_kind() == tokens::IDENTIFIER);
         REQUIRE(tokens[11].token_kind() == tokens::OPERATOR_SUB);
         REQUIRE(tokens[12].token_kind() == tokens::IDENTIFIER);
@@ -203,11 +205,11 @@ TEST_CASE("Test Lexer operator handling", "[lexer::Lexer]") {
         TokenList tokens = lexer.tokenize();
 
         REQUIRE(tokens.size() == 15);
-        REQUIRE(tokens[1].token_kind()  == tokens::OPERATOR_EQUAL);
-        REQUIRE(tokens[3].token_kind()  == tokens::OPERATOR_NOT_EQUAL);
-        REQUIRE(tokens[5].token_kind()  == tokens::PUNCTUATION_OPEN_ANGLE);
-        REQUIRE(tokens[7].token_kind()  == tokens::PUNCTUATION_CLOSE_ANGLE);
-        REQUIRE(tokens[9].token_kind()  == tokens::OPERATOR_LESS_THAN_EQUALS);
+        REQUIRE(tokens[1].token_kind() == tokens::OPERATOR_EQUAL);
+        REQUIRE(tokens[3].token_kind() == tokens::OPERATOR_NOT_EQUAL);
+        REQUIRE(tokens[5].token_kind() == tokens::PUNCTUATION_OPEN_ANGLE);
+        REQUIRE(tokens[7].token_kind() == tokens::PUNCTUATION_CLOSE_ANGLE);
+        REQUIRE(tokens[9].token_kind() == tokens::OPERATOR_LESS_THAN_EQUALS);
         REQUIRE(tokens[11].token_kind() == tokens::OPERATOR_GREATER_THAN_EQUALS);
     }
 }

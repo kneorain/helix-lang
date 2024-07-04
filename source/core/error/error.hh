@@ -1,5 +1,4 @@
 /**
- * @file error.h
  * @author Dhruvan Kartik
  * @date 2024
  * @copyright Copyright (c) 2024 (CC BY 4.0)
@@ -18,13 +17,13 @@
 #ifndef __ERROR_HH__
 #define __ERROR_HH__
 
-#include <stdexcept>
 #include <string>
 #include <utility>
 #include <vector>
 
-#include <include/inttypes.hh>
-#include <token/include/token.hh>
+#include "core/types/hx_ints"
+#include "token/include/token.hh"
+#include "token/include/token_list.hh"
 
 #define LINES_TO_SHOW 5
 
@@ -83,12 +82,12 @@ struct Line {
         , message(std::move(message))
         , level(level)
         , fix(std::move(fix)) {
-            for (const auto &tok : tokens) {
-                if (tok.line_number() == line_number) {
-                    offset += tok.value().size();
-                }
+        for (const auto &tok : tokens) {
+            if (tok.line_number() == line_number) {
+                offset += tok.value().size();
             }
         }
+    }
 };
 
 /**

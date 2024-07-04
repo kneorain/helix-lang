@@ -11,12 +11,10 @@
  * @note This code is provided by the creators of Helix. Visit our website at:
  * https://helix-lang.com/ for more information.
  */
-
-//#include <parser/ast/include/ast.hh>
-#include <token/include/token.hh>
 #include <optional>
 #include <string>
 
-namespace parser::ast {
+#include "token/include/token.hh"
+#include "token/include/token_list.hh"
 
-}  // namespace parser::ast
+namespace parser::ast {}  // namespace parser::ast

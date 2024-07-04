@@ -11,11 +11,11 @@
  * @note This code is provided by the creators of Helix. Visit our website at:
  * https://helix-lang.com/ for more information.
  */
-#include "tools/controllers/include/file_system.hh"
-
 #include <filesystem>
 #include <optional>
 #include <string>
+
+#include "controllers/include/file_system.hh"
 
 namespace file_system {
 std::optional<std::filesystem::path> resolve_path(const std::string &resolve) {
@@ -64,4 +64,4 @@ std::optional<std::filesystem::path> resolve_path(const std::string &resolve,
 
     return std::nullopt;
 }
-}
+}  // namespace file_system

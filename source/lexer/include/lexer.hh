@@ -11,12 +11,13 @@
  * @note This code is provided by the creators of Helix. Visit our website at:
  * https://helix-lang.com/ for more information.
  */
-
 #ifndef __LEXER_HH__
 #define __LEXER_HH__
 
 #include <string>
-#include <token/include/token.hh>
+
+#include "token/include/token.hh"
+#include "token/include/token_list.hh"
 
 namespace lexer {
 class Lexer {

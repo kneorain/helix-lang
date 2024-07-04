@@ -22,7 +22,8 @@
 #include <unordered_map>
 #include <utility>
 #include <vector>
-#include <include/inttypes.hh>
+
+#include "core/types/hx_ints"
 
 namespace file_system {
 std::string get_cwd();

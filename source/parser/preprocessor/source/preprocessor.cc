@@ -16,18 +16,17 @@
 #include <iostream>
 #include <memory>
 #include <optional>
-#include <ranges>
 #include <string>
 #include <unordered_set>
 #include <utility>
 #include <vector>
 
-#include "include/colors_ansi.hh"
-#include "include/error/error.hh"
+#include "core/utils/colors_ansi.hh"
+#include "core/error/error.hh"
 #include "token/include/generate.hh"
-#include "token/include/lexer.hh"
+#include "lexer/include/lexer.hh"
 #include "token/include/token.hh"
-#include "tools/controllers/include/file_system.hh"
+#include "controllers/include/file_system.hh"
 
 namespace parser {
 /**
