@@ -31,10 +31,10 @@ int main(int argc, char **argv) {
 
     auto start = std::chrono::high_resolution_clock::now();
 
-
-
-    std::string file_name = "/Volumes/Container/Projects/Helix/helix-lang/tests/main.hlx"; // relative to current working dir in POSIX shell (cmd/bash)
-
+    // "D:\projects\helix-lang\tests\main.hlx"
+    //std::string file_name = "/Volumes/Container/Projects/Helix/helix-lang/tests/main.hlx"; // relative to current working dir in POSIX shell (cmd/bash)
+    std::string file_name =
+        "D:\\projects\\helix-lang\\tests\\main.hlx"; // relative to current working dir in Windows shell (cmd/powershell)
     // read the file and tokenize its contents : stage 0
     TokenList tokens = Lexer(file_system::read_file(file_name), file_name).tokenize();
 
@@ -50,13 +50,15 @@ int main(int argc, char **argv) {
     // print the preprocessed tokens
     // print_tokens(tokens);
 
+    auto toks = static_cast<std::vector<Token>>(tokens);
+    auto node = std::make_unique<ast::Parentheses<ast::StringLiteral>>(toks);
 
-    auto node = std::make_unique<ast::Parentheses<ast::StringLiteral>>(tokens);
-    
     node->parse();
 
     print(node->to_string());
-    
+    /// PRINT THE NODES AND THE NODES WITH
+    ///
+
     // Print the time taken in nanoseconds and milliseconds
     print("time taken: ", diff.count() * 1e+9, " ns");
     print("            ", diff.count() * 1000, " ms");

@@ -16,12 +16,14 @@
 
 #include <concepts>
 #include <functional>
+#include <include/printV2>
 #include <memory>
 #include <optional>
 #include <type_traits>
 #include <utility>
 #include <variant>
 
+#include "../../../../tests/lib/catch2"
 #include "include/error/error.hh"
 #include "parser/ast/include/ast.hh"
 #include "token/include/token.hh"
@@ -37,7 +39,7 @@
     name &operator=(const name &) = delete;  \
                                              \
   private:                                   \
-    std::optional<TokenListRef> tokens;
+    TokenListRef tokens;
 
 namespace parser::ast {
 using namespace token;
@@ -45,7 +47,7 @@ using namespace token;
 // TODO: Rename to StringLiteral
 
 template <const char quote, const tokens toke_type>
-struct Quoted : ASTBase<Quoted<quote, toke_type>> {
+struct Quoted final : ASTBase<Quoted<quote, toke_type>> {
   public:
     enum class Format : char {
         Invalid,
@@ -58,10 +60,11 @@ struct Quoted : ASTBase<Quoted<quote, toke_type>> {
 
     AST_NODE_METHODS(Quoted);
 
-public:
+  public:
     ParseResult parse() override {
         // Do we have suffixes?
-        Token &toke = tokens->get().front();
+        Token &toke = tokens.front();
+        auto toks = tokens;
 
         if (toke.token_kind() != toke_type) {
             error::Error(error::Line(toke, "Expected a quote literal"));
@@ -72,29 +75,24 @@ public:
 
         if (format == Format::Invalid) {
             error::Error(error::Line(toke.file_name(), toke.line_number(), toke.column_number(), 1,
-                                    "Invalid format specifier"));
+                                     "Invalid format specifier"));
         }
 
         this->value = toke;
-
+        auto siz = this->format == Format::None ? 1 : 2;
         // Remove the format specifier (if it is there) and quotes
-        this->value.set_value(toke.value().substr(
-            this->format == Format::None ?  // Check if the there is a format specifier
-                1  // Remove the quotes only
-                :
-                2, // Remove the quotes and the format specifier
-            toke.value().size() - 3));
+        this->value.set_value(toke.value().substr(siz, toke.value().size() - (siz + 1)));
         // - 1 is the actual length
         // - 2 is removing the \0
         // - 3 removes the quote
 
-        print(this->value.value());
+        this->tokens = this->tokens.subspan(0, 1);
 
         // Check for format
         // TODO: make f"hi {name if !name.empty() else "john doe"}" -> string: "hi {}", fmt_args
         // (astExpr): name if !name.empty() else "john doe"
 
-        return std::nullopt;
+        return toks.subspan(1);
     };
 
     std::string to_string() const override {
@@ -118,7 +116,7 @@ public:
                 break;
         }
 
-        return format + quote + this->value.to_string() + quote;
+        return format + quote + this->value.value() + quote;
     };
 
   private:
@@ -126,7 +124,7 @@ public:
     Format format = Format::None;
 };
 
-struct BoolLiteral : ASTBase<BoolLiteral> {
+struct BoolLiteral final : ASTBase<BoolLiteral> {
   public:
     enum class BoolValue : std::uint8_t {
         True = 't',
@@ -145,69 +143,78 @@ struct BoolLiteral : ASTBase<BoolLiteral> {
 using StringLiteral = Quoted<'"', tokens::LITERAL_STRING>;
 using CharLiteral = Quoted<'\'', tokens::LITERAL_CHAR>;
 
-
-template < tokens StartToken, const char StartChar, typename Middle, const char EndChar, const tokens EndTokens>
-struct Delimited:ASTBase<Delimited<StartToken, StartChar, Middle, EndChar, EndTokens>> {
+template <const tokens StartToken, const char StartChar, typename Middle, const char EndChar,
+          const tokens EndTokens>
+struct Delimited final : ASTBase<Delimited<StartToken, StartChar, Middle, EndChar, EndTokens>> {
   public:
     AST_NODE_METHODS(Delimited);
+
   public:
-
-    Delimited(TokenList parse_tokens) : tokens(parse_tokens) {}
-
     // const char start = StartChar;
     // const char end = EndChar;
-    
 
-    ParseResult parse() {
+    virtual ParseResult parse() override final {
+
+        auto toks = tokens;
+
         // Check if the first token is the start token
-        if (tokens->get().front().token_kind() != StartToken) {
-            error::Error(error::Line(tokens->get().front(), "Expected a start token"));
+        if (tokens.front().token_kind() != StartToken) {
+            error::Error(error::Line(tokens.front(), "Expected a start token"));
+        };
+
+        toks = toks.subspan(1);
+
+        this->value.emplace(std::make_unique<Middle>(toks));
+
+        ParseResult foo = this->value.value()->parse();
+
+        if (foo.has_value()) {
+        } else {
+            // TODO: ERROR
         }
-
-        // construct the middle
-        // make unique 
-
-        this->value = Middle{tokens};
-        
-        // Parse the middle
-        this->value.get().parse();
+        toks = foo.value();
         
         // Check if the last token is the end token
-        if (tokens->get().back().token_kind() != EndTokens) {
-            error::Error(error::Line(tokens->get().back(), "Expected an end token"));
+        if (toks.front().token_kind() != EndTokens) {
+            error::Error(error::Line(toks.front(), "Expected an end token"));
         }
-        
 
+        toks = toks.subspan(1);
+        this->tokens =
+            this->tokens.subspan(0, static_cast<size_t>(std::addressof(toks.back()) -
+                                                        std::addressof(this->tokens.front()) - 1));
 
-        return std::nullopt;
+        return toks;
     }
 
-    std::string to_string() const {
-        return StartChar + this->value.get().to_string() + EndChar;
+    std::string to_string() const override {
+        // return StartChar + this->value.to_string() + EndChar;
+        return StartChar + this->value.value()->to_string() + EndChar;
     }
-    
+
   private:
-    std::optional<Middle> value = std::nullopt;
+    std::optional<std::unique_ptr<Middle>> value;
 };
 
 template <ASTNode T>
-using Parentheses = Delimited<tokens::PUNCTUATION_OPEN_PAREN,'(', T, ')', tokens::PUNCTUATION_CLOSE_PAREN>;
+using Parentheses =
+    Delimited<tokens::PUNCTUATION_OPEN_PAREN, '(', T, ')', tokens::PUNCTUATION_CLOSE_PAREN>;
 
 template <ASTNode T>
-using CurlyBraces = Delimited<tokens::PUNCTUATION_OPEN_BRACE, '{', T, '}', tokens::PUNCTUATION_CLOSE_BRACE>;
+using CurlyBraces =
+    Delimited<tokens::PUNCTUATION_OPEN_BRACE, '{', T, '}', tokens::PUNCTUATION_CLOSE_BRACE>;
 
 template <ASTNode T>
-using SquareBrack = Delimited<tokens::PUNCTUATION_OPEN_BRACKET, '[', T, ']', tokens::PUNCTUATION_CLOSE_BRACKET>;
+using SquareBrack =
+    Delimited<tokens::PUNCTUATION_OPEN_BRACKET, '[', T, ']', tokens::PUNCTUATION_CLOSE_BRACKET>;
 
 template <ASTNode T>
-using AngleBrace  = Delimited<tokens::PUNCTUATION_OPEN_ANGLE, '<', T, '>', tokens::PUNCTUATION_CLOSE_ANGLE>;
+using AngleBrace =
+    Delimited<tokens::PUNCTUATION_OPEN_ANGLE, '<', T, '>', tokens::PUNCTUATION_CLOSE_ANGLE>;
 
 template <ASTNode T>
-using PipeDelimited = Delimited<tokens::OPERATOR_BITWISE_OR, '|', T, '|', tokens::OPERATOR_BITWISE_OR>;
-
-
-
-
+using PipeDelimited =
+    Delimited<tokens::OPERATOR_BITWISE_OR, '|', T, '|', tokens::OPERATOR_BITWISE_OR>;
 
 /*
     the following parsed and translated:

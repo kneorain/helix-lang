@@ -18,6 +18,7 @@
 #include <memory>
 #include <optional>
 #include <shared_mutex>
+#include <span>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -80,7 +81,7 @@ struct Token {
 class TokenList : public std::vector<Token> {
   private:
     std::string filename;
-    TokenList(std::string filename, std::vector<Token>::const_iterator start,
+    TokenList(const std::string &filename, std::vector<Token>::const_iterator start,
               std::vector<Token>::const_iterator end);
 
     class TokenListIter {
@@ -97,7 +98,7 @@ class TokenList : public std::vector<Token> {
 
         bool operator!=(const TokenListIter &other) const;
         bool operator==(const TokenListIter &other) const;
-        Token* operator->();  // TODO: change if a shared ptr is needed
+        Token *operator->();  // TODO: change if a shared ptr is needed
         TokenListIter &operator*();
         std::reference_wrapper<TokenListIter> operator--();
         std::reference_wrapper<TokenListIter> operator++();
@@ -136,10 +137,9 @@ class TokenList : public std::vector<Token> {
 
     void remove_left();
     void reset();
-    void append(const Token &token);
     TokenList slice(u64 start, u64 end);
 
-    [[nodiscard]] std::string file_name() const;
+    [[nodiscard]] const std::string &file_name() const;
     void insert_remove(TokenList &tokens, u64 start, u64 end);
 
     bool operator==(const TokenList &rhs) const;

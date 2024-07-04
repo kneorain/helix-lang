@@ -226,15 +226,15 @@ struct ParseError {};
 //     { t.to_string() } -> std::string;
 // };
 
-using ParseResult = std::optional<ParseError>;
+using TokenListRef = std::span<token::Token>;
+using ParseResult = std::expected<TokenListRef,ParseError>;
 
-using TokenListRef = std::reference_wrapper<token::TokenList>;
 
 template <typename T>
 struct ASTBase;
 
 template <>
-struct ASTBase<void>:  {
+struct ASTBase<void>  {
     //     virtual std::expected<std::span<Token>,AstError> parse(std::span<Token> tokens) = 0;
     virtual ~ASTBase() = default;
     ASTBase() = default;
@@ -248,7 +248,7 @@ struct ASTBase<void>:  {
 };
 
 template <typename T>
-struct ASTBase : ASTBase<void> {
+struct ASTBase {
     virtual ~ASTBase() = default;
     ASTBase() = default;
     explicit ASTBase(TokenListRef parse_tokens);
@@ -256,6 +256,9 @@ struct ASTBase : ASTBase<void> {
     ASTBase(const ASTBase &) = default;
     ASTBase &operator=(ASTBase &&) = default;
     ASTBase &operator=(const ASTBase &) = delete;
+        
+        [[nodiscard]] virtual ParseResult parse() = 0;
+        [[nodiscard]] virtual std::string to_string() const = 0;
 };
 
 template <typename T>

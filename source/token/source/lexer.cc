@@ -43,12 +43,12 @@ TokenList Lexer::tokenize() {
         }
 
         token.set_file_name(file_name);
-        tokens.append(token);
+        tokens.push_back(token);
     }
 
     token = get_eof();
     token.set_file_name(file_name);
-    tokens.append(token);
+    tokens.push_back(token);
 
     tokens.reset();
     return tokens;

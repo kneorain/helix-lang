@@ -17,6 +17,7 @@
 #include <stdexcept>
 
 #include "include/colors_ansi.hh"
+#include "parser/ast/include/context.hh"
 #include "token/include/generate.hh"
 #include "token/include/token.hh"
 
@@ -25,10 +26,10 @@ TokenList::TokenList(std::string filename)
     : filename(std::move(filename))
     , it(this->cbegin()) {}
 
-TokenList::TokenList(std::string filename, std::vector<Token>::const_iterator start,
+TokenList::TokenList(const std::string& filename, std::vector<Token>::const_iterator start,
                      std::vector<Token>::const_iterator end)
     : std::vector<Token>(start, end)
-    , filename(std::move(filename)) {}
+    , filename(filename) {}
 
 void TokenList::remove_left() {
     this->erase(this->cbegin(), it);
@@ -37,9 +38,8 @@ void TokenList::remove_left() {
 
 void TokenList::reset() { it = this->cbegin(); }
 
-void TokenList::append(const Token &token) { this->push_back(token); }
 
-std::string TokenList::file_name() const { return filename; }
+const std::string& TokenList::file_name() const { return filename; }
 
 TokenList TokenList::slice(u64 start, u64 end) {
     if (end > this->size()) {
@@ -51,6 +51,7 @@ TokenList TokenList::slice(u64 start, u64 end) {
 
     return {this->filename, this->cbegin() + start_index, this->cbegin() + end_index};
 }
+
 
 /**
  * @brief Replaces tokens in the list from start to end with the provided tokens.
