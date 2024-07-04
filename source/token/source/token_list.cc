@@ -16,6 +16,7 @@
 #include <stdexcept>
 
 #include "core/utils/colors_ansi.hh"
+#include "core/utils/josnify.hh"
 #include "token/include/generate.hh"
 #include "token/include/token.hh"
 #include "token/include/token_list.hh"
@@ -205,6 +206,23 @@ std::optional<std::reference_wrapper<Token>> TokenList::TokenListIter::peek_back
 
 std::reference_wrapper<Token> TokenList::TokenListIter::current() {
     return tokens.get()[cursor_position];
+}
+
+TO_JSON_SIGNATURE_EXTEND(TokenList) {
+    std::string result = "{\n"
+    + jsonify::indent(depth+1) + "\"tokens\" : [\n";
+
+    for (auto &tok : *this) {
+        result += tok.to_json(depth+2, true) + ",\n";
+    }
+
+    if (!this->empty()) {
+        result.erase(result.size() - 2, 2);
+    }
+
+    result += "\n";
+
+    return result + jsonify::indent(depth+1) + "]\n" + jsonify::indent(depth) + "}\n";
 }
 
 }  // namespace token

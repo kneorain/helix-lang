@@ -55,6 +55,7 @@ int main(int argc, char **argv) {
     auto tmp = node->parse();
 
     print(node->to_string());
+    print(tokens.to_json());
     /// PRINT THE NODES AND THE NODES WITH
     ///
 

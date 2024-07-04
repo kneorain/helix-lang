@@ -21,6 +21,7 @@
 
 #include "core/error/error.hh"
 #include "core/utils/hx_print"
+#include "core/utils/josnify.hh"
 #include "parser/cst/include/cst.hh"
 #include "token/include/token.hh"
 #include "token/include/token_list.hh"
@@ -40,7 +41,6 @@
 
 namespace parser::cst {
 using namespace token;
-inline std::string indent(u32 depth = 0) { return std::string(static_cast<u32>(depth * 4), ' '); }
 
 template <const char quote, const tokens toke_type>
 struct Quoted final : CSTBase<Quoted<quote, toke_type>> {
@@ -120,20 +120,12 @@ struct Quoted final : CSTBase<Quoted<quote, toke_type>> {
         },
         */
 
-        return indent(depth) + "\"Quoted\" : {\n" + indent(depth + 1) + R"("openSymbol" : ')" +
-               std::string(1, quote) + "\',\n" + indent(depth + 1) + "\"value\" : {\n" +
-               indent(depth + 2) + "\"token\" : {\n" + indent(depth + 3) + R"("filename" : ")" +
-               this->value.file_name() + "\",\n" + indent(depth + 3) +
-               "\"line_number\" : " + std::to_string(this->value.line_number()) + ",\n" +
-               indent(depth + 3) +
-               "\"column_number\" : " + std::to_string(this->value.column_number()) + ",\n" +
-               indent(depth + 3) + "\"length\" : " + std::to_string(this->value.length()) + ",\n" +
-               indent(depth + 3) + "\"offset\" : " + std::to_string(this->value.offset()) + ",\n" +
-               indent(depth + 3) + R"("token_kind" : ")" +
-               std::string(this->value.token_kind_repr()) + "\",\n" + indent(depth + 3) +
-               R"("value" : ")" + this->value.value() + "\"\n" + indent(depth + 2) + "}\n" +
-               indent(depth + 1) + "},\n" + indent(depth + 1) + R"("closeSymbol" : ')" +
-               std::string(1, quote) + "\'\n" + indent(depth) + "}\n";
+        return jsonify::indent(depth) + "\"Quoted\" : {\n"
+                  + jsonify::to_json(jsonify::escape(std::string(1, quote)), depth + 1, "openSymbol") + ",\n"
+                  + jsonify::indent(depth + 1) + "\"value\" : "
+                     + this->value.to_json(depth + 1, false) + ",\n"
+                  + jsonify::to_json(jsonify::escape(std::string(1, quote)), depth + 1, "closeSymbol") + "\n"
+             + jsonify::indent(depth) + "}\n";
     };
 
   private:
@@ -210,11 +202,13 @@ struct Delimited final : CSTBase<Delimited<StartToken, StartChar, Middle, EndCha
         },
         */
 
-        return indent(depth) + "\"Delimited\" : {\n" + indent(depth + 1) + R"("openSymbol" : ')" +
-               std::string(1, StartChar) + "\',\n" + indent(depth + 1) + "\"value\" : {\n" +
-               this->value.value()->to_string(depth + 2) + indent(depth + 1) + "},\n" +
-               indent(depth + 1) + R"("closeSymbol" : ')" + std::string(1, EndChar) + "\'\n" +
-               "},\n";
+        return jsonify::indent(depth) + "\"Delimited\" : {\n"
+                 + jsonify::to_json(jsonify::escape(std::string(1, StartChar)), depth + 1, "openSymbol") + ",\n"
+                 + jsonify::indent(depth + 1) + "\"value\" : {\n"
+                     + this->value.value()->to_string(depth + 2)
+                 + jsonify::indent(depth + 1) + "},\n"
+                 + jsonify::to_json(jsonify::escape(std::string(1, EndChar)), depth + 1, "closeSymbol") + "\n"
+             + jsonify::indent(depth) + "}\n";
     }
 
   private:

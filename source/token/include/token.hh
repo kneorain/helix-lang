@@ -20,6 +20,7 @@
 #include <string_view>
 
 #include "core/types/hx_ints"
+#include "core/utils/josnify.hh"
 #include "token/include/generate.hh"
 
 namespace token {
@@ -56,8 +57,9 @@ struct Token {
     std::string value() const;
     std::string_view token_kind_repr() const;
     std::string file_name() const;
-
     std::string to_string() const;
+    TO_JSON_SIGNATURE;
+
     bool operator==(const Token &rhs) const;
     std::ostream &operator<<(std::ostream &os) const;
 

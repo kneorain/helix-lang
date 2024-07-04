@@ -19,6 +19,7 @@
 #include <vector>
 
 #include "core/types/hx_ints"
+#include "core/utils/josnify.hh"
 #include "token/include/token.hh"
 
 namespace token {
@@ -114,6 +115,7 @@ class TokenList : public std::vector<Token> {
     void remove_left();
     void reset();
     TokenList slice(u64 start, i64 end = -1);
+    TO_JSON_SIGNATURE;
 
     [[nodiscard]] const std::string &file_name() const;
     void insert_remove(TokenList &tokens, u64 start, u64 end);
