@@ -18,8 +18,8 @@
 
 #include "parser/ast/include/nodes.hh"
 
-namespace ast {
-class ASTContext {};
+namespace parser::ast {
+class Context {};
 }  // namespace ast
 
 #endif  // __CONTEXT_HH__

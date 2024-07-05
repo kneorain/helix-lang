@@ -11,13 +11,11 @@
  * @note This code is provided by the creators of Helix. Visit our website at:
  * https://helix-lang.com/ for more information.
  */
-#ifndef __NODES_H__
-#define __NODES_H__
+#ifndef __LLVM_EMITTER_H__
+#define __LLVM_EMITTER_H__
 
-#include "parser/ast/include/ast.hh"
-
-namespace parser::ast::node {
-    struct Program : ASTBase<Program> {};
+namespace codegen::llvm {
+    
 }
 
-#endif // __NODES_H__
+#endif // __LLVM_EMITTER_H__

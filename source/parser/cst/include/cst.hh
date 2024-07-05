@@ -50,7 +50,7 @@ struct CSTBase<void> {
     CSTBase(const CSTBase &)            = default;
     CSTBase &operator=(CSTBase &&)      = default;
     CSTBase &operator=(const CSTBase &) = delete;
-   ~CSTBase()                           = default;
+    virtual ~CSTBase()                  = default;
 
     [[nodiscard]] virtual ParseResult parse() = 0;
     [[nodiscard]] virtual std::string to_json(u32 depth = 0) const = 0;

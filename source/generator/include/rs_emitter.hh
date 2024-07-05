@@ -11,4 +11,11 @@
  * @note This code is provided by the creators of Helix. Visit our website at:
  * https://helix-lang.com/ for more information.
  */
+#ifndef __RUST_EMITTER_H__
+#define __RUST_EMITTER_H__
 
+namespace codegen::rust {
+    
+}
+
+#endif // __RUST_EMITTER_H__

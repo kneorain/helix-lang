@@ -11,4 +11,11 @@
  * @note This code is provided by the creators of Helix. Visit our website at:
  * https://helix-lang.com/ for more information.
  */
+#ifndef __PYTHON_EMITTER_H__
+#define __PYTHON_EMITTER_H__
 
+namespace codegen::python {
+    
+}
+
+#endif // __PYTHON_EMITTER_H__
