@@ -19,10 +19,10 @@
 #include "cli/include/cli.hh"
 #include "controllers/include/file_system.hh"
 #include "core/utils/hx_print"
+#include "lexer/include/lexer.hh"
 #include "parser/cst/include/cst.hh"
 #include "parser/cst/include/nodes.hh"
 #include "parser/preprocessor/include/preprocessor.hh"
-#include "lexer/include/lexer.hh"
 
 int main(int argc, char **argv) {
     using namespace token;
@@ -34,6 +34,8 @@ int main(int argc, char **argv) {
     // "D:\projects\helix-lang\tests\main.hlx"
     // std::string file_name = "/Volumes/Container/Projects/Helix/helix-lang/tests/main.hlx"; //
     // relative to current working dir in POSIX shell (cmd/bash)
+    command_line::CLIArgs(argc, argv);
+
     std::string file_name =
         "tests/main.hlx";  // relative to current working dir in Windows shell (cmd/powershell)
     // read the file and tokenize its contents : stage 0

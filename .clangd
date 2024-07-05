@@ -1,4 +1,4 @@
 CompileFlags:
   CompileCommandsDir: .
   Add:
-    - "-std=c++2b"
+    - "-std=c++23"
