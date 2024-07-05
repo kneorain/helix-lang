@@ -14,10 +14,12 @@
 
 #include <chrono>
 #include <memory>
+#include <vector>
 
 #include "cli/include/cli.hh"
 #include "controllers/include/file_system.hh"
 #include "core/utils/hx_print"
+#include "parser/cst/include/cst.hh"
 #include "parser/cst/include/nodes.hh"
 #include "parser/preprocessor/include/preprocessor.hh"
 #include "lexer/include/lexer.hh"
@@ -41,8 +43,6 @@ int main(int argc, char **argv) {
     Preprocessor(tokens, "main").parse();
 
     // end the timer and calculate the duration
-    auto end = std::chrono::high_resolution_clock::now();
-    std::chrono::duration<double> diff = end - start;
 
     // preprocessor::import_tree->print_tree(preprocessor::import_tree->get_root());
 
@@ -50,14 +50,19 @@ int main(int argc, char **argv) {
     // print_tokens(tokens);
 
     auto node =
-        std::make_unique<cst::Parentheses<cst::StringLiteral>>(std::make_shared<TokenList>(tokens));
+        std::make_shared<cst::Parentheses<cst::StringLiteral>>(std::make_shared<TokenList>(tokens));
 
     auto tmp = node->parse();
 
-    print(node->to_string());
+    cst::CSTNodeList<> list;
+
+    list.push_back(node);
+
+    auto end = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double> diff = end - start;
+
+    print(node->to_json());
     print(tokens.to_json());
-    /// PRINT THE NODES AND THE NODES WITH
-    ///
 
     // Print the time taken in nanoseconds and milliseconds
     print("time taken: ", diff.count() * 1e+9, " ns");

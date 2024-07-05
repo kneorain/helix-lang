@@ -11,8 +11,8 @@
  * @note This code is provided by the creators of Helix. Visit our website at:
  * https://helix-lang.com/ for more information.
  */
-#ifndef __NODES_HH__
-#define __NODES_HH__
+#ifndef __CST_NODES_HH__
+#define __CST_NODES_HH__
 
 #include <cstddef>
 #include <memory>
@@ -27,7 +27,7 @@
 #include "token/include/token_list.hh"
 
 #define CST_NODE_METHODS(name)               \
-    virtual ~name() = default;               \
+    ~name() = default;                       \
     explicit name(TokenListRef parse_tokens) \
         : tokens(std::move(parse_tokens)){}; \
     name() = default;                        \
@@ -57,7 +57,7 @@ struct Quoted final : CSTBase<Quoted<quote, toke_type>> {
     CST_NODE_METHODS(Quoted);
 
   public:
-    ParseResult parse() override {
+    ParseResult parse() final {
         // Do we have suffixes?
         Token &toke = tokens->front();
         auto toks = tokens;
@@ -92,7 +92,7 @@ struct Quoted final : CSTBase<Quoted<quote, toke_type>> {
         return std::make_shared<TokenList>(toks->slice(0));
     };
 
-    std::string to_string(u32 depth = 0) const override {
+    std::string to_json(u32 depth = 0) const final {
 
         std::string format;
 
@@ -120,12 +120,12 @@ struct Quoted final : CSTBase<Quoted<quote, toke_type>> {
         },
         */
 
-        return jsonify::indent(depth) + "\"Quoted\" : {\n"
-                  + jsonify::to_json(jsonify::escape(std::string(1, quote)), depth + 1, "openSymbol") + ",\n"
-                  + jsonify::indent(depth + 1) + "\"value\" : "
-                     + this->value.to_json(depth + 1, false) + ",\n"
-                  + jsonify::to_json(jsonify::escape(std::string(1, quote)), depth + 1, "closeSymbol") + "\n"
-             + jsonify::indent(depth) + "}\n";
+        return jsonify::indent(depth) + "\"Quoted\" : {\n" +
+               jsonify::to_json(jsonify::escape(std::string(1, quote)), depth + 1, "openSymbol") +
+               ",\n" + jsonify::indent(depth + 1) +
+               "\"value\" : " + this->value.to_json(depth + 1, false) + ",\n" +
+               jsonify::to_json(jsonify::escape(std::string(1, quote)), depth + 1, "closeSymbol") +
+               "\n" + jsonify::indent(depth) + "}\n";
     };
 
   private:
@@ -141,8 +141,8 @@ struct BoolLiteral final : CSTBase<BoolLiteral> {
     };
 
     CST_NODE_METHODS(BoolLiteral);
-    ParseResult parse() override;
-    std::string to_string(u32 depth = 0) const override;
+    ParseResult parse() final;
+    std::string to_json(u32 depth = 0) const final;
 
   private:
     Token value;
@@ -162,7 +162,7 @@ struct Delimited final : CSTBase<Delimited<StartToken, StartChar, Middle, EndCha
     // const char start = StartChar;
     // const char end = EndChar;
 
-    virtual ParseResult parse() override final {
+    virtual ParseResult parse() final {
 
         auto toks = tokens;
 
@@ -194,7 +194,7 @@ struct Delimited final : CSTBase<Delimited<StartToken, StartChar, Middle, EndCha
         return toks;
     }
 
-    std::string to_string(u32 depth = 0) const override {
+    std::string to_json(u32 depth = 0) const final {
         /*
         "Delimited" : {
             "value" : ...
@@ -202,13 +202,14 @@ struct Delimited final : CSTBase<Delimited<StartToken, StartChar, Middle, EndCha
         },
         */
 
-        return jsonify::indent(depth) + "\"Delimited\" : {\n"
-                 + jsonify::to_json(jsonify::escape(std::string(1, StartChar)), depth + 1, "openSymbol") + ",\n"
-                 + jsonify::indent(depth + 1) + "\"value\" : {\n"
-                     + this->value.value()->to_string(depth + 2)
-                 + jsonify::indent(depth + 1) + "},\n"
-                 + jsonify::to_json(jsonify::escape(std::string(1, EndChar)), depth + 1, "closeSymbol") + "\n"
-             + jsonify::indent(depth) + "}\n";
+        return jsonify::indent(depth) + "\"Delimited\" : {\n" +
+               jsonify::to_json(jsonify::escape(std::string(1, StartChar)), depth + 1,
+                                "openSymbol") +
+               ",\n" + jsonify::indent(depth + 1) + "\"value\" : {\n" +
+               this->value.value()->to_json(depth + 2) + jsonify::indent(depth + 1) + "},\n" +
+               jsonify::to_json(jsonify::escape(std::string(1, EndChar)), depth + 1,
+                                "closeSymbol") +
+               "\n" + jsonify::indent(depth) + "}\n";
     }
 
   private:
@@ -238,4 +239,4 @@ using PipeDelimited =
 }  // namespace parser::cst
 
 #undef CST_NODE_METHODS
-#endif  // __NODES_HH__
+#endif  // __CST_NODES_HH__
