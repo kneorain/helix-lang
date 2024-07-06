@@ -34,12 +34,11 @@ int main(int argc, char **argv) {
     // "D:\projects\helix-lang\tests\main.hlx"
     // std::string file_name = "/Volumes/Container/Projects/Helix/helix-lang/tests/main.hlx"; //
     // relative to current working dir in POSIX shell (cmd/bash)
-    command_line::CLIArgs(argc, argv);
+    command_line::CLIArgs parsed_args(argc, argv, "0.0.1");
+    check_exit(parsed_args);
 
-    std::string file_name =
-        "tests/main.hlx";  // relative to current working dir in Windows shell (cmd/powershell)
     // read the file and tokenize its contents : stage 0
-    TokenList tokens = Lexer(file_system::read_file(file_name), file_name).tokenize();
+    TokenList tokens = Lexer(file_system::read_file(parsed_args.file), parsed_args.file).tokenize();
 
     // preprocess the tokens : stage 1
     Preprocessor(tokens, "main").parse();
@@ -49,22 +48,22 @@ int main(int argc, char **argv) {
     // preprocessor::import_tree->print_tree(preprocessor::import_tree->get_root());
 
     // print the preprocessed tokens
-    // print_tokens(tokens);
+    if (parsed_args.emit_tokens) {
+        print(tokens.to_json());
+    }
 
-    auto node =
-        std::make_shared<cst::Parentheses<cst::StringLiteral>>(std::make_shared<TokenList>(tokens));
+    auto cst = std::make_shared<cst::Parentheses<cst::StringLiteral>>(std::make_shared<TokenList>(tokens));
 
-    auto tmp = node->parse();
+    auto tmp = cst->parse();
 
-    cst::CSTNodeList<> list;
-
-    list.push_back(node);
+    if (parsed_args.emit_cst) {
+        print(cst->to_json());
+    }
 
     auto end = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double> diff = end - start;
 
-    print(node->to_json());
-    print(tokens.to_json());
+
 
     // Print the time taken in nanoseconds and milliseconds
     print("time taken: ", diff.count() * 1e+9, " ns");

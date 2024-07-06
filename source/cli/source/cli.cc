@@ -91,33 +91,241 @@ abi-options:
 
 #include "cli/include/cli.hh"
 
-#include <array>
 #include <cstddef>
 #include <iostream>
 #include <optional>
 #include <string>
 
 #include "cli/include/args.hh"
-#include "core/types/hx_ints"
 
 namespace command_line {
-CLIArgs::CLIArgs(int argc, char **argv) {
-    // Parse command line arguments
-    args::ArgumentParser parser("helix parser");
-    args::Group commands(parser, "commands");
-    args::Command version(commands, {"-v", "--version"}, "displays version");
-    args::Command lisence(commands, "--lisence", "displays lisence");
+CLIArgs::CLIArgs(int argc, char **argv, const std::string& _version) {
+    args::ArgumentParser parser("Helix Compiler Command Line Interface", R"(
+Helix CLI - The Next-Generation Compiler for Modern Development
+
+Usage Examples:
+  1. Compile a Helix source file:
+     helix input_file.hlx
+
+  2. Compile with optimization level 2:
+     helix -O2 -o output_file input_file.hlx
+
+  3. Generate LLVM Intermediate Representation (IR):
+     helix --emit-llvm -o output.ll input_file.hlx
+
+  4. Cross-compile for a specific target:
+     helix --target x86_64-linux-gnu -o output_file input_file.hlx
+
+  5. Compile as a library with Rust ABI:
+     helix --lib --rust -o liboutput.a input_file.hlx
+
+For more detailed documentation, visit:
+  https://helix-lang.com/docs
+
+For support or to report issues, contact:
+  support@helix-lang.com
+
+Thank you for using Helix!
+)");
+    args::HelpFlag help(parser, "help", "Display this help menu", {'h', "help"});
+    args::Flag version(parser, "version", "Display the version information", {'v', "version"});
+    args::Flag license(parser, "license", "Display license information", {"license"});
+
+    args::Flag verbose(parser, "verbose", "Enable verbose output", {"verbose"});
+    args::Flag quiet(parser, "quiet", "Suppress all output", {"quiet"});
+
+    args::Flag emit_tokens(parser, "emit-tokens", "Output tokenized source code", {"emit-tokens"});
+    args::Flag emit_llvm(parser, "emit-llvm", "Output LLVM Intermediate Representation (IR)",
+                         {"emit-llvm"});
+    args::Flag emit_asm(parser, "emit-asm", "Output assembly code", {"emit-asm"});
+    args::Flag emit_ast(parser, "emit-ast", "Output Abstract Syntax Tree (AST) in JSON format",
+                        {"emit-ast"});
+    args::Flag emit_cst(parser, "emit-cst", "Output Concrete Syntax Tree (CST) in JSON format",
+                        {"emit-cst"});
+    args::Flag emit_ir(parser, "emit-ir", "Output intermediate representation (C++)", {"emit-ir"});
+    args::Flag emit_doc(parser, "emit-doc",
+                        "Extract and output doc-comments along with signatures in JSON format",
+                        {"emit-doc"});
+
+    args::Group toolchain_group(parser, "Cross Compilation Toolchain Options",
+                                args::Group::Validators::AtMostOne);
+    args::ValueFlag<std::string> toolchain_target(
+        parser, "target", "Specify target triple for cross-compilation", {"target"});
+    args::ValueFlag<std::string> toolchain_arch(parser, "arch", "Specify target architecture",
+                                                {"arch"});
+    args::ValueFlag<std::string> toolchain_cpu(parser, "cpu", "Specify target MCPU", {"cpu"});
+    args::ValueFlag<std::string> toolchain_sdk(parser, "sdk", "Specify optional path to SDK",
+                                               {"sdk"});
+
+    args::ValueFlag<std::string> config_file(parser, "config", "Specify path to configuration file",
+                                             {"config"});
+    args::ValueFlag<std::string> output_file(parser, "output", "Specify output file path", {'o'});
+
+    args::Flag release(parser, "release", "Build in release mode with optimizations",
+                       {'r', "release"});
+    args::Flag debug(parser, "debug", "Build in debug mode with debugging symbols", {'d', "debug"});
+
+    args::Group optimization_group(parser, "Optimization Levels",
+                                   args::Group::Validators::AtMostOne);
+    args::Flag optimize1(optimization_group, "optimize1", "Enable optimization level 1",
+                         {"O1", "optimize1"});
+    args::Flag optimize2(optimization_group, "optimize2", "Enable optimization level 2",
+                         {"O2", "optimize2"});
+    args::Flag optimize3(optimization_group, "optimize3", "Enable optimization level 3",
+                         {"O3", "optimize3"});
+    args::Flag optimize4(optimization_group, "optimize4", "Enable optimization level 4",
+                         {"O4", "optimize4"});
+    args::Flag optimize5(optimization_group, "optimize5", "Enable optimization level 5",
+                         {"O5", "optimize5"});
+
+    args::Flag lib(parser, "lib", "Compile as a library", {"lib"});
+
+    args::Group abi_group(parser, "ABI Options", args::Group::Validators::AtMostOne);
+    args::Flag python_abi(abi_group, "python",
+                          "Generate Python stub files and compile to a Python library",
+                          {"py", "python"});
+    args::Flag rust_abi(abi_group, "rust",
+                        "Generate Rust source files and compile to a Rust library", {"rs", "rust"});
+    args::Flag cxx_abi(abi_group, "cxx",
+                       "Generate C++ header files and compile to a linkable object file",
+                       {"cxx", "cxx"});
+    args::Flag helix_abi(abi_group, "helix", "Generate Helix ABI-compatible library",
+                         {"hlx", "helix"});
+
+    args::ValueFlagList<std::string> include_dirs(parser, "include", "Specify include directories",
+                                                  {'I'});
+    args::ValueFlagList<std::string> library_dirs(parser, "libdir", "Specify library directories",
+                                                  {'L'});
+    args::ValueFlagList<std::string> link_libraries(parser, "lib",
+                                                    "Specify libraries to link against", {'l'});
+    args::ValueFlagList<std::string> module_dirs(parser, "moddir",
+                                                 "Specify Helix modules directories", {'m'});
+    args::Positional<std::string> input_file(parser, "file", "Specify input file path");
+
+    parser.LongSeparator(" ");
 
     try {
         parser.ParseCLI(argc, argv);
+
+        if (help) {
+            std::cout << parser;
+            this->exit_   = true;
+            this->exit_co = 0;
+            return;
+        }
         if (version) {
-            std::cout << "current_version";
-        } else if (lisence) {
-            std::cout << "lisence";
+            std::cout << "Helix Compiler Version: " << _version << std::endl;
+            this->exit_   = true;
+            this->exit_co = 0;
+            return;
+        }
+        if (license) {
+            std::cout << R"(
+Helix Language Project - License Information
+
+This software is part of the Helix Language Project and is licensed under the Attribution 4.0 International license (CC BY 4.0).
+
+You are permitted to:
+  - Use, modify, and redistribute the software
+  - Create derivative works, even for commercial purposes
+
+Provided that you:
+  - Give appropriate credit
+  - Provide a link to the license
+  - Indicate if changes were made
+
+For more detailed information, please visit: https://creativecommons.org/licenses/by/4.0/
+
+SPDX-License-Identifier: CC-BY-4.0
+
+This software is provided by the creators of Helix. Visit our website at:
+https://helix-lang.com/ for more information.
+    )" << std::endl;
+            this->exit_   = true;
+            this->exit_co = 0;
+            return;
         }
 
-    } catch (args::Help) { std::cout << parser; } catch (args::Error &e) {
+        this->file        = args::get(input_file);
+        this->output_file = output_file ? std::make_optional(args::get(output_file)) : std::nullopt;
+
+        if (optimize1) {
+            optimize = OPTIMIZATION::O1;
+        }
+        if (optimize2) {
+            optimize = OPTIMIZATION::O2;
+        }
+        if (optimize3) {
+            optimize = OPTIMIZATION::O3;
+        }
+        if (optimize4) {
+            optimize = OPTIMIZATION::O4;
+        }
+        if (optimize5) {
+            optimize = OPTIMIZATION::O5;
+        }
+
+        this->help        = help;
+        this->verbose     = verbose;
+        this->quiet       = quiet;
+        this->emit_tokens = emit_tokens;
+        this->emit_llvm   = emit_llvm;
+        this->emit_asm    = emit_asm;
+        this->emit_ast    = emit_ast;
+        this->emit_cst    = emit_cst;
+        this->emit_ir     = emit_ir;
+        this->emit_doc    = emit_doc;
+
+        if (release) {
+            build_mode = MODE::RELEASE;
+        }
+        if (debug) {
+            build_mode = MODE::DEBUG_;
+        }
+
+        if (lib) {
+            if (python_abi) {
+                build_lib = ABI::PYTHON;
+            } else if (rust_abi) {
+                build_lib = ABI::RUST;
+            } else if (cxx_abi) {
+                build_lib = ABI::CXX;
+            } else {
+                build_lib = ABI::HELIX;
+            }
+        }
+
+        if (toolchain_target) {
+            toolchain.target = args::get(toolchain_target);
+        }
+        if (toolchain_arch) {
+            toolchain.arch = args::get(toolchain_arch);
+        }
+        if (toolchain_cpu) {
+            toolchain.cpu  = args::get(toolchain_cpu);
+        }
+        if (toolchain_sdk) {
+            toolchain.sdk  = args::get(toolchain_sdk);
+        }
+
+        if (config_file) {
+            this->config_file = args::get(config_file);
+        }
+
+        this->include_dirs    = args::get(include_dirs);
+        this->library_dirs    = args::get(library_dirs);
+        this->link_libraries  = args::get(link_libraries);
+        this->module_dirs     = args::get(module_dirs);
+
+    } catch (args::Help) { std::cout << parser; } catch (args::ParseError &e) {
         std::cerr << e.what() << std::endl << parser;
+        this->exit_   = true;
+        this->exit_co = 1;
+        return;
+    } catch (args::ValidationError &e) {
+        std::cerr << e.what() << std::endl << parser;
+        this->exit_   = true;
+        this->exit_co = 1;
         return;
     }
 }

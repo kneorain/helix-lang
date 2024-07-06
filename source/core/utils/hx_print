@@ -42,7 +42,7 @@ using endl = struct endl {
 }  // namespace sysIO
 
 template <typename... Args>
-inline void print(Args &&...args) {
+inline constexpr void print(Args &&...args) {
     if constexpr (sizeof...(args) == 0) {
         std::cout << sysIO::endl('\n');
         return;
