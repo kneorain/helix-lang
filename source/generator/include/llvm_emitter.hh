@@ -11,11 +11,11 @@
  * @note This code is provided by the creators of Helix. Visit our website at:
  * https://helix-lang.com/ for more information.
  */
-#ifndef __LLVM_EMITTER_H__
-#define __LLVM_EMITTER_H__
+#ifndef __LLVM_EMITTER_HH__
+#define __LLVM_EMITTER_HH__
 
 namespace codegen::llvm {
     
 }
 
-#endif // __LLVM_EMITTER_H__
+#endif // __LLVM_EMITTER_HH__

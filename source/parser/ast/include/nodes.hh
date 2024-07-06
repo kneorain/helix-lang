@@ -11,8 +11,8 @@
  * @note This code is provided by the creators of Helix. Visit our website at:
  * https://helix-lang.com/ for more information.
  */
-#ifndef __NODES_H__
-#define __NODES_H__
+#ifndef __AST_NODES_HH__
+#define __AST_NODES_HH__
 
 #include "parser/ast/include/ast.hh"
 
@@ -20,4 +20,4 @@ namespace parser::ast::node {
     struct Program : ASTBase<Program> {};
 }
 
-#endif // __NODES_H__
+#endif // __AST_NODES_HH__

@@ -29,14 +29,13 @@ namespace parser::ast {
 struct ParseError {};
 
 using TokenListRef = std::shared_ptr<token::TokenList>;
-using ParseResult = std::expected<u64, ParseError>; // len of tokens to skip | recoverable error
+using ParseResult  = std::expected<u64, ParseError>; // len of tokens to skip | recoverable error
 
 template <typename T>
 struct ASTBase;
 
 template <>
 struct ASTBase<void> {
-    //     virtual std::expected<std::span<Token>,AstError> parse(std::span<Token> tokens) = 0;
     ASTBase()                           = default;
     ASTBase(ASTBase &&)                 = default;
     ASTBase(const ASTBase &)            = default;
@@ -59,17 +58,22 @@ struct ASTBase : public ASTBase<void> {
    ~ASTBase()                           = default;
 };
 
+struct Declarations : public ASTBase<Declarations> {};
+struct Expressions  : public ASTBase<Expressions>  {};
+struct Annotations  : public ASTBase<Annotations>  {};
+struct Statements   : public ASTBase<Statements>   {};
+struct Types        : public ASTBase<Types>        {};
+
 template <typename T = void>
 concept ASTNode      = std::derived_from<T, ASTBase<T>>;
 
 template <typename T = void>
-using NodePtr     = std::shared_ptr<ASTBase<T>>;
+using NodePtr        = std::shared_ptr<ASTBase<T>>;
 
 template <typename T = void>
-using NodeList    = std::vector<NodePtr<T>>;
+using NodeList       = std::vector<NodePtr<T>>;
 
 template <typename T = void>
-using Slice       = const std::reference_wrapper<NodeList<T>>;
-
+using Slice          = const std::reference_wrapper<NodeList<T>>;
 }  // namespace parser::ast
 #endif  // __AST_HH__

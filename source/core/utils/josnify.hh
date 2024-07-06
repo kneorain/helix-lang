@@ -11,8 +11,8 @@
  * @note This code is provided by the creators of Helix. Visit our website at:
  * https://helix-lang.com/ for more information.
  */
-#ifndef __JOSNIFY_H__
-#define __JOSNIFY_H__
+#ifndef __JOSNIFY_HH__
+#define __JOSNIFY_HH__
 
 #include <string>
 #include <type_traits>
@@ -72,4 +72,4 @@ constexpr inline std::string to_json(T key, const u32 &depth, const std::string 
 }
 }  // end namespace jsonify
 
-#endif  // __JOSNIFY_H__
+#endif  // __JOSNIFY_HH__

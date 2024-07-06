@@ -11,8 +11,8 @@
  * @note This code is provided by the creators of Helix. Visit our website at:
  * https://helix-lang.com/ for more information.
  */
-#ifndef __CXX_EMITTER_H__
-#define __CXX_EMITTER_H__
+#ifndef __CXX_EMITTER_HH__
+#define __CXX_EMITTER_HH__
 
 #include <cstddef>
 #include <cstdlib>
@@ -208,4 +208,4 @@ struct CXXBuilder {
 };
 }
 
-#endif // __CXX_EMITTER_H__
+#endif // __CXX_EMITTER_HH__

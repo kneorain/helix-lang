@@ -33,6 +33,18 @@ Lexer::Lexer(std::string source, const std::string &filename)
     , offset(0)
     , end(this->source.size()) {}
 
+Lexer::Lexer(const token::Token& token)
+    : tokens(token.file_name())
+    , source(token.value())
+    , file_name(token.file_name())
+    , currentChar('\0')
+    , cachePos(0)
+    , currentPos(0)
+    , line(token.line_number())
+    , column(token.column_number())
+    , offset(token.offset())
+    , end(this->source.size()) {}
+
 TokenList Lexer::tokenize() {
     token::Token token;
 

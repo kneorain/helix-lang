@@ -25,6 +25,7 @@
 #include "parser/cst/include/cst.hh"
 #include "token/include/token.hh"
 #include "token/include/token_list.hh"
+#include "lexer/include/lexer.hh"
 
 #define CST_NODE_METHODS(name)               \
     ~name() = default;                       \
@@ -88,6 +89,239 @@ struct Quoted final : CSTBase<Quoted<quote, toke_type>> {
         // Check for format
         // TODO: make f"hi {name if !name.empty() else "john doe"}" -> string: "hi {}", fmt_args
         // (astExpr): name if !name.empty() else "john doe"
+        
+        /*Sure, here are the formatting types with examples for both Rust and C++:
+
+### Rust Formatting Types with Examples
+
+#### Alignment
+- `:<`  - Left aligns the result
+  ```rust
+  format!("{:<10}", "left") // "left      "
+  ```
+- `:>`  - Right aligns the result
+  ```rust
+  format!("{:>10}", "right") // "     right"
+  ```
+- `:^`  - Center aligns the result
+  ```rust
+  format!("{:^10}", "center") // "  center  "
+  ```
+
+#### Sign and Space
+- `:=`  - Places the sign to the left most position
+  ```rust
+  format!("{:=+10}", 42) // "+      42"
+  ```
+- `:+`  - Use a plus sign to indicate if the result is positive or negative
+  ```rust
+  format!("{:+}", 42) // "+42"
+  ```
+- `:-`  - Use a minus sign for negative values only
+  ```rust
+  format!("{:-}", -42) // "-42"
+  ```
+- `: `  - Use a space to insert an extra space before positive numbers (and a minus sign before negative numbers)
+  ```rust
+  format!("{: }", 42) // " 42"
+  ```
+
+#### Separator
+- `:,`  - Use a comma as a thousand separator
+  ```rust
+  format!("{:,}", 1000000) // "1,000,000"
+  ```
+- `:_`  - Use an underscore as a thousand separator
+  ```rust
+  format!("{:_}", 1000000) // "1_000_000"
+  ```
+
+#### Base
+- `:b`  - Binary format
+  ```rust
+  format!("{:b}", 42) // "101010"
+  ```
+- `:o`  - Octal format
+  ```rust
+  format!("{:o}", 42) // "52"
+  ```
+- `:x`  - Hex format, lower case
+  ```rust
+  format!("{:x}", 42) // "2a"
+  ```
+- `:X`  - Hex format, upper case
+  ```rust
+  format!("{:X}", 42) // "2A"
+  ```
+
+#### Number
+- `:d`  - Decimal format
+  ```rust
+  format!("{:d}", 42) // "42"
+  ```
+- `:e`  - Scientific format, with a lower case e
+  ```rust
+  format!("{:e}", 12345.6789) // "1.234568e4"
+  ```
+- `:E`  - Scientific format, with an upper case E
+  ```rust
+  format!("{:E}", 12345.6789) // "1.234568E4"
+  ```
+- `:f`  - Fix point number format
+  ```rust
+  format!("{:f}", 3.14159) // "3.141590"
+  ```
+- `:F`  - Fix point number format, in uppercase format (show inf and nan as INF and NAN)
+  ```rust
+  format!("{:F}", 3.14159) // "3.141590"
+  ```
+- `:g`  - General format
+  ```rust
+  format!("{:g}", 12345.6789) // "12345.7"
+  ```
+- `:G`  - General format (using an upper case E for scientific notations)
+  ```rust
+  format!("{:G}", 12345.6789) // "12345.7"
+  ```
+- `:n`  - Number format
+  ```rust
+  format!("{:n}", 1234567890) // "1234567890"
+  ```
+- `:%`  - Percentage format
+  ```rust
+  format!("{:.2%}", 0.1234) // "12.34%"
+  ```
+
+#### Other
+- `:c`  - Converts the value into the corresponding Unicode character
+  ```rust
+  format!("{:c}", 65) // "A"
+  ```
+
+### C++ Formatting Types with Examples (using `std::format` from C++20)
+
+#### Alignment
+- `<`  - Left aligns the result
+  ```cpp
+  std::format("{:<10}", "left") // "left      "
+  ```
+- `>`  - Right aligns the result
+  ```cpp
+  std::format("{:>10}", "right") // "     right"
+  ```
+- `^`  - Center aligns the result
+  ```cpp
+  std::format("{:^10}", "center") // "  center  "
+  ```
+
+#### Sign and Space
+- `=`  - Places the sign to the left most position
+  ```cpp
+  std::format("{:=+10}", 42) // "+      42"
+  ```
+- `+`  - Use a plus sign to indicate if the result is positive or negative
+  ```cpp
+  std::format("{:+}", 42) // "+42"
+  ```
+- `-`  - Use a minus sign for negative values only
+  ```cpp
+  std::format("{:-}", -42) // "-42"
+  ```
+- ` `  - Use a space to insert an extra space before positive numbers (and a minus sign before negative numbers)
+  ```cpp
+  std::format("{: }", 42) // " 42"
+  ```
+
+#### Separator
+- `,`  - Use a comma as a thousand separator
+  ```cpp
+  std::format("{:,}", 1000000) // "1,000,000"
+  ```
+- `_`  - Use an underscore as a thousand separator
+  ```cpp
+  std::format("{:_}", 1000000) // "1_000_000"
+  ```
+
+#### Base
+- `b`  - Binary format
+  ```cpp
+  std::format("{:b}", 42) // "101010"
+  ```
+- `o`  - Octal format
+  ```cpp
+  std::format("{:o}", 42) // "52"
+  ```
+- `x`  - Hex format, lower case
+  ```cpp
+  std::format("{:x}", 42) // "2a"
+  ```
+- `X`  - Hex format, upper case
+  ```cpp
+  std::format("{:X}", 42) // "2A"
+  ```
+
+#### Number
+- `d`  - Decimal format
+  ```cpp
+  std::format("{:d}", 42) // "42"
+  ```
+- `e`  - Scientific format, with a lower case e
+  ```cpp
+  std::format("{:e}", 12345.6789) // "1.234568e4"
+  ```
+- `E`  - Scientific format, with an upper case E
+  ```cpp
+  std::format("{:E}", 12345.6789) // "1.234568E4"
+  ```
+- `f`  - Fix point number format
+  ```cpp
+  std::format("{:f}", 3.14159) // "3.141590"
+  ```
+- `F`  - Fix point number format, in uppercase format (show inf and nan as INF and NAN)
+  ```cpp
+  std::format("{:F}", 3.14159) // "3.141590"
+  ```
+- `g`  - General format
+  ```cpp
+  std::format("{:g}", 12345.6789) // "12345.7"
+  ```
+- `G`  - General format (using an upper case E for scientific notations)
+  ```cpp
+  std::format("{:G}", 12345.6789) // "12345.7"
+  ```
+- `n`  - Number format
+  ```cpp
+  std::format("{:n}", 1234567890) // "1234567890"
+  ```
+- `%`  - Percentage format
+  ```cpp
+  std::format("{:.2%}", 0.1234) // "12.34%"
+  ```
+
+#### Other
+- `c`  - Converts the value into the corresponding Unicode character
+  ```cpp
+  std::format("{:c}", 65) // "A"
+  ```
+
+These examples illustrate how to use various formatting options in Rust and C++.
+        */
+
+
+        if (this->format == Format::Formatted) {
+            // {var=} // var = value
+            // {function_name(var)} // "___value"
+            auto tokenized_string = lexer::Lexer(toke).tokenize();
+            
+
+            
+
+
+
+
+
+        }
+        
 
         return std::make_shared<TokenList>(toks->slice(0));
     };
