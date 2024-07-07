@@ -1,0 +1,145 @@
+Abstract Syntax Trees (ASTs) are crucial components in the process of compiling or interpreting programming languages. They represent the hierarchical structure of source code, enabling compilers or interpreters to analyze and transform the code effectively. The AST nodes generally fall into several categories, each representing different aspects of the source code.
+
+### Key Categories in ASTs
+
+1. **Expressions**: These are constructs that produce values. They can be simple or complex and include various operations and literals.
+2. **Statements**: These are constructs that perform actions, usually controlling the flow of the program or defining variables.
+3. **Declarations**: These introduce new identifiers (variables, functions, classes, etc.) and specify their properties.
+4. **Types**: These describe the data types used in the language.
+5. **Modules and Imports**: These handle the inclusion of external code or libraries.
+6. **Attributes and Annotations**: These provide metadata about code elements.
+
+### Detailed Breakdown
+
+#### 1. Expressions
+Expressions are the fundamental units of computation that produce values. They include:
+- **Literals**: Integer, floating-point, string, character literals, etc.
+- **Binary Operations**: Addition, subtraction, multiplication, division, etc.
+- **Unary Operations**: Negation, logical NOT, etc.
+- **Function Calls**: Calling functions with arguments.
+- **Member Access**: Accessing fields or methods of objects.
+- **Array Access**: Accessing elements in arrays.
+- **Conditional Expressions**: Ternary operator (condition ? true_expr : false_expr).
+
+Examples:
+```cpp
+3 + 5      // Binary operation
+-7         // Unary operation
+foo(3, 5)  // Function call
+a.b        // Member access
+arr[0]     // Array access
+condition ? true_expr : false_expr // Conditional expression
+```
+
+#### 2. Statements
+Statements perform actions, control the flow, or define variables. They include:
+- **Expression Statements**: Statements that are expressions (e.g., function calls).
+- **Control Flow Statements**: If, else, for, while, switch, etc.
+- **Block Statements**: A group of statements enclosed in braces `{}`.
+- **Return Statements**: Return a value from a function.
+- **Variable Declarations**: Declare and possibly initialize variables.
+- **Assignment Statements**: Assign values to variables.
+
+Examples:
+```cpp
+int x = 5;            // Variable declaration
+x = x + 1;            // Assignment statement
+if (x > 0) { ... }    // If statement
+while (x > 0) { ... } // While statement
+return x;             // Return statement
+```
+
+#### 3. Declarations
+Declarations introduce new identifiers and specify their types and other properties. They include:
+- **Variable Declarations**: Define new variables.
+- **Function Declarations**: Define new functions.
+- **Class Declarations**: Define new classes.
+- **Struct/Union Declarations**: Define new structs or unions.
+- **Enum Declarations**: Define new enumerations.
+
+Examples:
+```cpp
+int x;                // Variable declaration
+void foo(int y);      // Function declaration
+class MyClass { ... } // Class declaration
+struct Point { ... }  // Struct declaration
+enum Color { RED, GREEN, BLUE }; // Enum declaration
+```
+
+#### 4. Types
+Types describe the data structures and include:
+- **Primitive Types**: int, float, char, etc.
+- **Composite Types**: Arrays, pointers, references.
+- **User-Defined Types**: Classes, structs, enums.
+- **Function Types**: Types of functions, including return type and parameter types.
+
+Examples:
+```cpp
+int            // Primitive type
+int[]          // Array type
+int*           // Pointer type
+MyClass        // User-defined type
+void(int)      // Function type
+```
+
+#### 5. Modules and Imports
+Modules and imports handle code modularity and reuse:
+- **Import Statements**: Include external libraries or modules.
+- **Module Declarations**: Define a module or namespace.
+
+Examples:
+```cpp
+import mymodule;       // Import statement
+namespace mynamespace {// Module declaration
+  ...
+}
+```
+
+#### 6. Attributes and Annotations
+Attributes and annotations provide metadata about code elements, often used for optimization, documentation, or code generation hints.
+
+Examples:
+```cpp
+[[nodiscard]] int func(); // C++ attribute
+@Deprecated                // Java annotation
+```
+
+### Examples in C++ AST Nodes
+
+#### Expressions
+
+- **LiteralExpr**: Represents literals like `42`, `"hello"`.
+- **BinaryExpr**: Represents binary operations like `a + b`.
+- **CallExpr**: Represents function calls like `foo(3, 5)`.
+
+#### Statements
+
+- **ExprStmt**: Represents expression statements like `a = b + c;`.
+- **IfStmt**: Represents if statements like `if (x > 0) { ... }`.
+- **WhileStmt**: Represents while loops like `while (x > 0) { ... }`.
+
+#### Declarations
+
+- **VarDecl**: Represents variable declarations like `int x;`.
+- **FuncDecl**: Represents function declarations like `void foo();`.
+- **ClassDecl**: Represents class declarations like `class MyClass { ... };`.
+
+#### Types
+
+- **BuiltinType**: Represents built-in types like `int`, `float`.
+- **PointerType**: Represents pointer types like `int*`.
+- **ArrayType**: Represents array types like `int[]`.
+
+#### Modules and Imports
+
+- **ImportDecl**: Represents import statements like `import mymodule;`.
+- **NamespaceDecl**: Represents namespace declarations like `namespace mynamespace { ... }`.
+
+#### Attributes and Annotations
+
+- **Attr**: Represents attributes like `[[nodiscard]]`.
+- **Annotation**: Represents annotations like `@Deprecated`.
+
+### Summary
+
+Abstract Syntax Trees (ASTs) categorize nodes into expressions, statements, declarations, types, modules/imports, and attributes/annotations. Each category represents different aspects of the source code, facilitating effective analysis and transformation during compilation or interpretation. This structure enables the compiler to perform various optimizations, transformations, and code generation tasks.
