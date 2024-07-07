@@ -16,7 +16,7 @@
 
 #include <map>
 
-#include "parser/ast/include/nodes.hh"
+#include "parser/ast/include/expr_nodes.hh"
 
 namespace parser::ast {
 class Context {};

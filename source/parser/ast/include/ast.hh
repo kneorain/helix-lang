@@ -58,11 +58,20 @@ struct ASTBase : public ASTBase<void> {
    ~ASTBase()                           = default;
 };
 
-struct Declarations : public ASTBase<Declarations> {};
-struct Expressions  : public ASTBase<Expressions>  {};
-struct Annotations  : public ASTBase<Annotations>  {};
-struct Statements   : public ASTBase<Statements>   {};
-struct Types        : public ASTBase<Types>        {};
+namespace parser::ast::node {
+    template <typename T>
+    struct Declaration : public ASTBase<Declaration<T>> {};
+    template <typename T>
+    struct Expression  : public ASTBase<Expression<T>>  {};
+    template <typename T>
+    struct Annotation  : public ASTBase<Annotation<T>>  {};
+    template <typename T>
+    struct Statement   : public ASTBase<Statement<T>>   {};
+    template <typename T>
+    struct Type        : public ASTBase<Type<T>>        {};
+
+    struct Program : ASTBase<Program> {};
+}
 
 template <typename T = void>
 concept ASTNode      = std::derived_from<T, ASTBase<T>>;
