@@ -22,6 +22,8 @@
 #include "lexer/include/lexer.hh"
 #include "parser/cst/include/cst.hh"
 #include "parser/cst/include/nodes.hh"
+#include "parser/ast/include/ast.hh"
+#include "parser/ast/include/expr_nodes.hh"
 #include "parser/preprocessor/include/preprocessor.hh"
 
 int main(int argc, char **argv) {
@@ -52,12 +54,19 @@ int main(int argc, char **argv) {
         print(tokens.to_json());
     }
 
-    auto cst = std::make_shared<cst::Parentheses<cst::StringLiteral>>(std::make_shared<TokenList>(tokens));
 
-    auto tmp = cst->parse();
 
     if (parsed_args.emit_cst) {
+        auto cst = std::make_shared<cst::Parentheses<cst::StringLiteral>>(std::make_shared<TokenList>(tokens));
+        auto tmp = cst->parse();
         print(cst->to_json());
+    }
+    
+
+    if (parsed_args.emit_ast) {
+        auto ast = std::make_shared<parser::ast::node::Literals>(std::make_shared<TokenList>(tokens));
+        ast->parse();
+        print(ast->to_json());
     }
 
     auto end = std::chrono::high_resolution_clock::now();

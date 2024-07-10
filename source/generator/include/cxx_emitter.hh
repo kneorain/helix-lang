@@ -28,6 +28,7 @@
 
 /* usage
 #include "generator/include/cxx_emitter.hh"
+#include "parser/ast/include/nodes.hh"
 
 using namespace codegen::cxx;
 
@@ -203,7 +204,7 @@ struct CXXBuilder {
     CXXBody     generate();
     
     private:
-      ast::node::Program& AST;
+      parser::ast::node::Program& AST;
       ast::Context&   context;
 };
 }

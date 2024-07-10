@@ -23,10 +23,18 @@
 #include <string>
 #include <vector>
 
+#include "core/error/error.hh"
+#include "parser/error_codes.def"
+#include "token/include/token.hh"
 #include "token/include/token_list.hh"
 
 namespace parser::ast {
-struct ParseError {};
+struct ParseError {
+    ParseError(token::Token tok, float error_code) {
+        const auto &error_state = ERROR_MAP.at(error_code);
+        error::Error(error::Line(tok, error_state.message, error_state.level, error_state.fix));
+    };
+};
 
 using TokenListRef = std::shared_ptr<token::TokenList>;
 using ParseResult  = std::expected<u64, ParseError>; // len of tokens to skip | recoverable error
@@ -58,7 +66,7 @@ struct ASTBase : public ASTBase<void> {
    ~ASTBase()                           = default;
 };
 
-namespace parser::ast::node {
+namespace node {
     template <typename T>
     struct Declaration : public ASTBase<Declaration<T>> {};
     template <typename T>
