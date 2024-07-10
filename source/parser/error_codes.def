@@ -1,0 +1,51 @@
+/**
+ * @author Dhruvan Kartik
+ * @copyright Copyright (c) 2024 (CC BY 4.0)
+ *
+ * @note This code is part of the Helix Language Project and is licensed under the Attribution 4.0
+ * International license (CC BY 4.0). You are allowed to use, modify, redistribute, and create
+ * derivative works, even for commercial purposes, provided that you give appropriate credit,
+ * provide a link to the license, and indicate if changes were made. For more information, please
+ * visit: https://creativecommons.org/licenses/by/4.0/ SPDX-License-Identifier: CC-BY-4.0
+ *
+ * @note This code is provided by the creators of Helix. Visit our website at:
+ * https://helix-lang.com/ for more information.
+ */
+#include <map>
+#include <string>
+#include <optional>
+#include "core/error/error.hh"
+#include "token/include/generate.hh"
+
+struct Errors {
+    std::string  message;
+    std::string  fix;
+    error::Level level = error::ERR;
+    std::optional<token::tokens> pin_point;
+};
+
+
+const std::map<float, Errors> ERROR_MAP = {
+    {0.001, {"invalid syntax"}},
+    {0.002, {"invalid use of a literal", "use the literal in a correct manner."}},
+
+    // ...
+
+    {1.010, {"syntax error got unaccepted", "use a literal here which is the only excepted here"}},
+    {1.020, {"char grater then size 1", "reduce the char to size 1, or convert to a string and implicitly get the numeric representation."}},
+};
+
+/* sections:
+0 = basic syntax
+1 = advanced syntax
+
+
+1.000
+^ ^^^<- same error but might be a different fix
+| |\--- diffrent error
+| \---- sub section change
+\------ major diffrence in tpye of error
+
+
+
+*/

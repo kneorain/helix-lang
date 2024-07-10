@@ -27,58 +27,106 @@
     std::string to_json(u32 depth = 0) const;       \
                                                     \
   private:                                          \
-    TokenListRef source_tokens;
+    TokenListRef source_tokens;                     \
+  public:
 
 #include "parser/ast/include/ast.hh"
 
 namespace parser::ast::node {
-struct Literals final : parser::ast::node::Expression<Literals> {
-  public:
+using namespace token;
+
+struct Literals final : Expression<Literals> {
     enum class LiteralType : u8 {
-        INTEGER,
-        SCIENTIFIC,
-        FLOAT,
-        STRING,
+        INVALID,
         BOOL,
         CHAR,
+        FLOAT,
+        STRING,
+        INTEGER,
+        SCIENTIFIC,
         NONE  // null
     };
-    AST_NODE_METHODS(Literals)
+
+    AST_NODE_METHODS(Literals);
+
+    LiteralType type = LiteralType::INVALID;
+    Token value;
 };
 
-struct BinaryOp final : parser::ast::node::Expression<BinaryOp> { // 1 + 1
-    AST_NODE_METHODS(BinaryOp)
+struct BinaryOp final : Expression<BinaryOp> { // 1 + 2
+    AST_NODE_METHODS(BinaryOp);
+    
+    Token op;
+    NodePtr<Expression<void>> left;  // 1
+    NodePtr<Expression<void>> right; // 2
 };
 
-struct UnaryOp final : parser::ast::node::Expression<UnaryOp> { // -1
-    AST_NODE_METHODS(UnaryOp)
+struct UnaryOp final : Expression<UnaryOp> { // -1
+    AST_NODE_METHODS(UnaryOp);
+    
+    Token op; // -
+    NodePtr<Expression<void>> right; // 1
 };
 
-struct SuffixOp final : parser::ast::node::Expression<SuffixOp> { // arr[...] | arr|...|
-    AST_NODE_METHODS(SuffixOp)
+struct SuffixOp final : Expression<SuffixOp> { // foo[...] | foo|...|
+    AST_NODE_METHODS(SuffixOp);
+
+    NodePtr<Expression<void>> index; // of type Identifier or ScopeAccess
+    NodePtr<Expression<void>> right;
+    std::pair<Token, Token> op;
 };
 
-struct FunctionCall final : parser::ast::node::Expression<FunctionCall> {
-    AST_NODE_METHODS(FunctionCall)
+struct Identifier final : Expression<Identifier> {
+    AST_NODE_METHODS(Identifier);
+
+    Token value;
 };
 
-struct MemberAccess final : parser::ast::node::Expression<MemberAccess> {
-    AST_NODE_METHODS(MemberAccess)
+struct ScopeAccess final : Expression<ScopeAccess> { // a->b | foo::bar
+    enum class ScopeType : u8 {
+        INVALID,     // invalid access
+        POINTER,  // ->
+        MEMBER,   // .
+        NAMESPACE // ::
+    };
+
+    AST_NODE_METHODS(ScopeAccess);
+
+    ScopeType type = ScopeType::INVALID;
+    Token     parent; // foo
+    Token     child;  // bar
 };
 
-struct PtrAccess final : parser::ast::node::Expression<PtrAccess> {
-    AST_NODE_METHODS(PtrAccess)
+struct FunctionCall final : Expression<FunctionCall> { // std::print("yoo", end=" ");
+    AST_NODE_METHODS(FunctionCall);
+
+    NodeList<ScopeAccess> function; // std::print
+    NodeList<> arguments;           // "yoo"
+    NodeList<> typed_arguments;     // end=" "
+
 };
 
-struct ScopeAccess final : parser::ast::node::Expression<ScopeAccess> {
-    AST_NODE_METHODS(ScopeAccess)
+struct InlineControlFlow final : Expression<InlineControlFlow> { // 10 if i == 1 else 5
+    AST_NODE_METHODS(InlineControlFlow);
+
+    NodePtr<Expression<void>> condition; // i == 1
+    NodePtr<Expression<void>> pass;      // 10
+    NodePtr<Expression<void>> fail;      // 5
 };
 
-struct InlineStatement final : parser::ast::node::Expression<InlineStatement> {
-    AST_NODE_METHODS(InlineStatement)
+struct InlineLambda final : Expression<InlineLambda> { // lambda[this] x, y { return x+y; };
+    AST_NODE_METHODS(InlineLambda);
+
+    // TODO
 };
 
-parser::ast::node::Expression<void> parse_expr(TokenListRef tokens);
+struct InlineListComprehension final : Expression<InlineListComprehension> {
+    AST_NODE_METHODS(InlineListComprehension);
+
+    // TODO
+};
+
+Expression<void> parse_expr(TokenListRef tokens);
 }  // namespace parser::ast::node
 
 #endif  // __AST_NODES_HH__

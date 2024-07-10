@@ -1,2 +1,11 @@
+<<<<<<< HEAD
 (r"hello \" world","hekk");
 
+=======
+
+
+
+
+"hello \" world"
+(r"hello \" world");
+>>>>>>> e1b7f90 (feat: Update project structure, configs, and licensing)
