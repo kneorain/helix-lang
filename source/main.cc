@@ -50,40 +50,9 @@ int main(int argc, char **argv) {
     // preprocessor::import_tree->print_tree(preprocessor::import_tree->get_root());
 
     // print the preprocessed tokens
-<<<<<<< HEAD
-    if (parsed_args.emit_tokens) { print(tokens.to_json()); }
 
-    if (parsed_args.emit_cst) {
-        auto cst = std::make_shared<
-            cst::SeparatedList<
-                cst::Parentheses<
-                    cst::SeparatedList<cst::StringLiteral, ',', tokens::PUNCTUATION_COMMA,
-                                       cst::SeparatedType::NoTrailing>
-                >,
-                ';', tokens::PUNCTUATION_SEMICOLON, cst::SeparatedType::Trailing>
-        >(
-            std::make_shared<TokenList>(tokens)
-            );
-
-=======
     if (parsed_args.emit_tokens) {
         print(tokens.to_json());
-    }
-
-
-
-    if (parsed_args.emit_cst) {
-        auto cst = std::make_shared<cst::Parentheses<cst::StringLiteral>>(std::make_shared<TokenList>(tokens));
->>>>>>> e1b7f90 (feat: Update project structure, configs, and licensing)
-        auto tmp = cst->parse();
-        print(cst->to_json());
-    }
-    
-
-    if (parsed_args.emit_ast) {
-        auto ast = std::make_shared<parser::ast::node::Literals>(std::make_shared<TokenList>(tokens));
-        ast->parse();
-        print(ast->to_json());
     }
 
     auto end = std::chrono::high_resolution_clock::now();
