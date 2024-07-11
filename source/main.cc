@@ -48,22 +48,26 @@ int main(int argc, char **argv) {
     // preprocessor::import_tree->print_tree(preprocessor::import_tree->get_root());
 
     // print the preprocessed tokens
-    if (parsed_args.emit_tokens) {
-        print(tokens.to_json());
-    }
-
-    auto cst = std::make_shared<cst::Parentheses<cst::StringLiteral>>(std::make_shared<TokenList>(tokens));
-
-    auto tmp = cst->parse();
+    if (parsed_args.emit_tokens) { print(tokens.to_json()); }
 
     if (parsed_args.emit_cst) {
+        auto cst = std::make_shared<
+            cst::SeparatedList<
+                cst::Parentheses<
+                    cst::SeparatedList<cst::StringLiteral, ',', tokens::PUNCTUATION_COMMA,
+                                       cst::SeparatedType::NoTrailing>
+                >,
+                ';', tokens::PUNCTUATION_SEMICOLON, cst::SeparatedType::Trailing>
+        >(
+            std::make_shared<TokenList>(tokens)
+            );
+
+        auto tmp = cst->parse();
         print(cst->to_json());
     }
 
     auto end = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double> diff = end - start;
-
-
 
     // Print the time taken in nanoseconds and milliseconds
     print("time taken: ", diff.count() * 1e+9, " ns");

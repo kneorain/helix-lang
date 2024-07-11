@@ -14,10 +14,14 @@
 #ifndef __TOKEN_LIST_HH__
 #define __TOKEN_LIST_HH__
 
+#include <windows.h>
+
 #include <optional>
 #include <string>
 #include <vector>
-
+#include <cstdint>
+#include <utility>
+#include <type_traits>
 #include "core/types/hx_ints"
 #include "core/utils/josnify.hh"
 #include "token/include/token.hh"
@@ -43,21 +47,22 @@ class TokenList : public std::vector<Token> {
 
         bool operator!=(const TokenListIter &other) const;
         bool operator==(const TokenListIter &other) const;
-        Token *operator->();  // TODO: change if a shared ptr is needed
+        Token *operator->();  // TODO: Change if a shared ptr is needed
         TokenListIter &operator*();
         std::reference_wrapper<TokenListIter> operator--();
         std::reference_wrapper<TokenListIter> operator++();
-        std::reference_wrapper<Token> advance(int n = 1);
-        std::reference_wrapper<Token> reverse(int n = 1);
-        std::optional<std::reference_wrapper<Token>> peek(int n = 1);
-        std::optional<std::reference_wrapper<Token>> peek_back(int n = 1);
-        std::reference_wrapper<Token> current();
+        std::reference_wrapper<Token> advance(const std::int32_t n = 1);
+        std::reference_wrapper<Token> reverse(const std::int32_t n = 1);
+        std::optional<std::reference_wrapper<Token>> peek(const std::int32_t n = 1) const;
+        std::optional<std::reference_wrapper<Token>> peek_back(const std::int32_t n = 1) const;
+        std::reference_wrapper<Token> current() const;
     };
 
   public:
-    using std::vector<Token>::vector;  // Inherit constructors
-    using const_iterator = std::vector<Token>::const_iterator;
-
+    using TokenVec = std::vector<Token>;
+    using TokenVec::vector;  // Inherit constructors
+    using const_iterator = TokenVec::const_iterator;
+    
     mutable const_iterator it;
 
     ~TokenList() = default;
@@ -67,27 +72,27 @@ class TokenList : public std::vector<Token> {
 
     // Copy constructor
     TokenList(const TokenList &other)
-        : std::vector<Token>(other)
+        : TokenVec(other)
         , filename(other.filename) {}
-
+    
     // Copy assignment operator
     TokenList &operator=(const TokenList &other) {
         if (this != &other) {
-            std::vector<Token>::operator=(other);
+            TokenVec::operator=(other);
             filename = other.filename;
         }
         return *this;
     }
-
+    
     // Move constructor
     TokenList(TokenList &&other) noexcept
-        : std::vector<Token>(std::move(other))
+        : TokenVec(std::move(other))
         , filename(std::move(other.filename)) {}
 
     // Move assignment operator
     TokenList &operator=(TokenList &&other) noexcept {
         if (this != &other) {
-            std::vector<Token>::operator=(std::move(other));
+            TokenVec::operator=(std::move(other));
             filename = std::move(other.filename);
         }
         return *this;
@@ -95,26 +100,33 @@ class TokenList : public std::vector<Token> {
 
     explicit TokenList(std::string filename);
 
-    [[nodiscard]] std::vector<Token>::const_iterator cbegin() const {
-        return std::vector<Token>::begin();
+    [[nodiscard]] TokenVec::const_iterator cbegin() const {
+        return TokenVec::begin();
     }
-    [[nodiscard]] std::vector<Token>::const_iterator cend() const {
-        return std::vector<Token>::end();
-    }
-
-    [[nodiscard]] std::vector<Token>::const_iterator begin() const {
-        return std::vector<Token>::begin();
-    }
-    [[nodiscard]] std::vector<Token>::const_iterator end() const {
-        return std::vector<Token>::end();
+    [[nodiscard]] TokenVec::const_iterator cend() const {
+        return TokenVec::end();
     }
 
-    TokenListIter begin() { return TokenListIter(*this); }
-    TokenListIter end() { return TokenListIter(*this, this->size() - 1); }
+    [[nodiscard]] TokenVec::const_iterator begin() const {
+        return TokenVec::begin();
+    }
+    [[nodiscard]] TokenVec::const_iterator end() const {
+        return TokenVec::end();
+    }
 
+    inline TokenListIter begin() { return TokenListIter(*this); }
+    inline TokenListIter end() { return TokenListIter(*this, this->size()); }
+
+    TokenVec &as_vec() { return *this; };
+
+    
     void remove_left();
     void reset();
-    TokenList slice(u64 start, i64 end = -1);
+    TokenList raw_slice(const std::uint64_t start, const std::int64_t end) const; 
+    TokenList slice(std::uint64_t start, std::int64_t end = -1);
+    std::pair<TokenList, TokenList> split_at(const std::uint64_t i) const;
+    TokenList pop( const std::uint64_t offset = 1);
+    const Token& pop_front();
     TO_JSON_SIGNATURE;
 
     [[nodiscard]] const std::string &file_name() const;

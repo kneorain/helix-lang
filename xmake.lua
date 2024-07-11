@@ -1,5 +1,6 @@
 set_project("helix-lang")
 add_rules("mode.debug", "mode.release")
+add_rules("plugin.vsxmake.autoupdate")
 
 target("helix")
     set_kind("binary")

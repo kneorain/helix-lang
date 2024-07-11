@@ -14,18 +14,20 @@
 #ifndef __CST_NODES_HH__
 #define __CST_NODES_HH__
 
-#include <cstddef>
 #include <memory>
 #include <optional>
-#include <utility>
-
+#include <vector>
+#include <string>
+#include  <stdexcept>
 #include "core/error/error.hh"
 #include "core/utils/hx_print"
 #include "core/utils/josnify.hh"
+#include "lexer/include/lexer.hh"
 #include "parser/cst/include/cst.hh"
 #include "token/include/token.hh"
 #include "token/include/token_list.hh"
-#include "lexer/include/lexer.hh"
+#include "core/types/hx_ints"
+#include "token/include/generate.hh"
 
 #define CST_NODE_METHODS(name)               \
     ~name() = default;                       \
@@ -37,14 +39,13 @@
     name &operator=(name &&) = default;      \
     name &operator=(const name &) = delete;  \
                                              \
-  private:                                   \
-    TokenListRef tokens;
+ 
 
 namespace parser::cst {
 using namespace token;
 
-template <const char quote, const tokens toke_type>
-struct Quoted final : CSTBase<Quoted<quote, toke_type>> {
+template <const char quote, const tokens TOKE_KIND>
+struct Quoted final : CSTBase<Quoted<quote, TOKE_KIND>> {
   public:
     enum class Format : char {
         Invalid,
@@ -58,12 +59,13 @@ struct Quoted final : CSTBase<Quoted<quote, toke_type>> {
     CST_NODE_METHODS(Quoted);
 
   public:
-    ParseResult parse() final {
+    ParseResult parse() final override {
         // Do we have suffixes?
         Token &toke = tokens->front();
-        auto toks = tokens;
+        this->tokens = tokens;
 
-        if (toke.token_kind() != toke_type) {
+        // print(delim_tokes->to_json());
+        if (toke.token_kind() != TOKE_KIND) {
             error::Error(error::Line(toke, "Expected a quote literal"));
         };
 
@@ -83,13 +85,11 @@ struct Quoted final : CSTBase<Quoted<quote, toke_type>> {
         // - 2 is removing the \0
         // - 3 removes the quote
 
-        auto new_tokens = std::make_shared<TokenList>(this->tokens->slice(0, 1));
-        this->tokens.swap(new_tokens);
-
+        
         // Check for format
         // TODO: make f"hi {name if !name.empty() else "john doe"}" -> string: "hi {}", fmt_args
         // (astExpr): name if !name.empty() else "john doe"
-        
+
         /*Sure, here are the formatting types with examples for both Rust and C++:
 
 ### Rust Formatting Types with Examples
@@ -121,12 +121,13 @@ struct Quoted final : CSTBase<Quoted<quote, toke_type>> {
   ```rust
   format!("{:-}", -42) // "-42"
   ```
-- `: `  - Use a space to insert an extra space before positive numbers (and a minus sign before negative numbers)
+- `: `  - Use a space to insert an extra space before positive numbers (and a minus sign before
+negative numbers)
   ```rust
   format!("{: }", 42) // " 42"
   ```
 
-#### Separator
+#### SEPARATOR
 - `:,`  - Use a comma as a thousand separator
   ```rust
   format!("{:,}", 1000000) // "1,000,000"
@@ -227,12 +228,13 @@ struct Quoted final : CSTBase<Quoted<quote, toke_type>> {
   ```cpp
   std::format("{:-}", -42) // "-42"
   ```
-- ` `  - Use a space to insert an extra space before positive numbers (and a minus sign before negative numbers)
+- ` `  - Use a space to insert an extra space before positive numbers (and a minus sign before
+negative numbers)
   ```cpp
   std::format("{: }", 42) // " 42"
   ```
 
-#### Separator
+#### SEPARATOR
 - `,`  - Use a comma as a thousand separator
   ```cpp
   std::format("{:,}", 1000000) // "1,000,000"
@@ -306,27 +308,21 @@ struct Quoted final : CSTBase<Quoted<quote, toke_type>> {
 
 These examples illustrate how to use various formatting options in Rust and C++.
         */
-
-
+       // print(delim_tokes->to_json());
         if (this->format == Format::Formatted) {
+
             // {var=} // var = value
             // {function_name(var)} // "___value"
             auto tokenized_string = lexer::Lexer(toke).tokenize();
-            
-
-            
-
-
-
-
-
         }
-        
-
-        return std::make_shared<TokenList>(toks->slice(0));
+        return std::make_shared<TokenList>(this->tokens->slice(1));
     };
 
-    std::string to_json(u32 depth = 0) const final {
+   virtual bool peek() const override final {
+        return this->tokens->front().token_kind() == TOKE_KIND;
+    };
+    
+    virtual std::string to_json(u32 depth = 0) const override final {
 
         std::string format;
 
@@ -346,7 +342,7 @@ These examples illustrate how to use various formatting options in Rust and C++.
             case Format::None:
                 break;
         }
-
+        
         /*
         "Quoted" : {
             "value" : ...
@@ -363,6 +359,7 @@ These examples illustrate how to use various formatting options in Rust and C++.
     };
 
   private:
+    TokenListRef tokens;
     Token value;
     Format format = Format::None;
 };
@@ -375,10 +372,10 @@ struct BoolLiteral final : CSTBase<BoolLiteral> {
     };
 
     CST_NODE_METHODS(BoolLiteral);
-    ParseResult parse() final;
+    ParseResult parse() final override;
     std::string to_json(u32 depth = 0) const final;
-
-  private:
+private:
+    TokenListRef tokens;
     Token value;
     // BoolValue value; // should this be a bool?
 };
@@ -386,55 +383,55 @@ struct BoolLiteral final : CSTBase<BoolLiteral> {
 using StringLiteral = Quoted<'"', tokens::LITERAL_STRING>;
 using CharLiteral = Quoted<'\'', tokens::LITERAL_CHAR>;
 
-template <const tokens StartToken, const char StartChar, typename Middle, const char EndChar,
-          const tokens EndTokens>
-struct Delimited final : CSTBase<Delimited<StartToken, StartChar, Middle, EndChar, EndTokens>> {
+template <const tokens StartTokenKind, const char StartChar, typename MiddleNode,
+          const char EndChar, const tokens EndTokensKind>
+struct Delimited final
+    : CSTBase<Delimited<StartTokenKind, StartChar, MiddleNode, EndChar, EndTokensKind>> {
   public:
     CST_NODE_METHODS(Delimited);
 
   public:
     // const char start = StartChar;
     // const char end = EndChar;
-
+    
     virtual ParseResult parse() final {
-
-        auto toks = tokens;
+   
+        TokenListRef delim_tokes = tokens;
 
         // Check if the first token is the start token
-        if (tokens->front().token_kind() != StartToken) {
+        if (tokens->front().token_kind() != StartTokenKind) {
             error::Error(error::Line(tokens->front(), "Expected a start token"));
         };
 
-        toks = std::make_shared<TokenList>(toks->slice(1));
+        delim_tokes = std::make_shared<TokenList>(delim_tokes->slice(1));
 
-        this->value.emplace(std::make_unique<Middle>(toks));
+        this->value.emplace(std::make_unique<MiddleNode>(delim_tokes));
 
-        ParseResult foo = this->value.value()->parse();
+        ParseResult res = this->value.value()->parse();
 
-        if (foo.has_value()) {
-        } else {
+        if (!res.has_value()) {
             // TODO: ERROR
+            error::Error("Error",error::Level::ERR); // TODO: Error
         }
-        toks = foo.value();
-
+        
+        delim_tokes = res.value();
+        
         // Check if the last token is the end token
-        if (toks->back().token_kind() != EndTokens) {
-            error::Error(error::Line(toks->front(), "Expected an end token"));
+        if (delim_tokes->back().token_kind() != EndTokensKind) {
+            error::Error(error::Line(delim_tokes->front(), "Expected an end token"));
         }
 
-        toks = std::make_shared<TokenList>(toks->slice(1));
+        delim_tokes = std::make_shared<TokenList>(delim_tokes->slice(1));
         auto new_tokens = std::make_shared<TokenList>(this->tokens->slice(0));
         this->tokens.swap(new_tokens);
-        return toks;
+        return delim_tokes;
     }
-
+    
+    bool peek() const final override {
+        throw std::logic_error("Method not implemented");
+    }
+    
     std::string to_json(u32 depth = 0) const final {
-        /*
-        "Delimited" : {
-            "value" : ...
-
-        },
-        */
 
         return jsonify::indent(depth) + "\"Delimited\" : {\n" +
                jsonify::to_json(jsonify::escape(std::string(1, StartChar)), depth + 1,
@@ -445,9 +442,11 @@ struct Delimited final : CSTBase<Delimited<StartToken, StartChar, Middle, EndCha
                                 "closeSymbol") +
                "\n" + jsonify::indent(depth) + "}\n";
     }
+    
 
-  private:
-    std::optional<std::unique_ptr<Middle>> value;
+   private:                                   
+    TokenListRef tokens;
+    std::optional<std::unique_ptr<MiddleNode>> value;
 };
 
 template <CSTNode T>
@@ -469,6 +468,88 @@ using AngleBrace =
 template <CSTNode T>
 using PipeDelimited =
     Delimited<tokens::OPERATOR_BITWISE_OR, '|', T, '|', tokens::OPERATOR_BITWISE_OR>;
+
+enum SeparatedType { Trailing, OptionalTrailing, NoTrailing };
+
+template <CSTNode ElementNode, const char SEPARATOR, const tokens SeparatorTokenKind,
+          const SeparatedType SepType = SeparatedType::NoTrailing>
+struct SeparatedList final
+    : CSTBase<SeparatedList<ElementNode, SEPARATOR, SeparatorTokenKind, SepType>> {
+  public:
+    CST_NODE_METHODS(SeparatedList)
+  public:
+    ParseResult parse() final override {
+        print("SepListPars ", SEPARATOR);
+        TokenListRef sep_tokes = this->tokens;
+        
+        // temp as a size check would be safer 
+        while (tokens->as_vec().back().token_kind() != EOF_TOKEN) {  // Make this a peek
+            ElementNode element{sep_tokes};
+            ParseResult res = element.parse();
+            if (!res.has_value()) {
+                // TODO Erro
+                // +r
+
+                throw std::runtime_error("No value");
+            }
+
+            sep_tokes = res.value();
+
+            // Push the element to the vector
+            this->elements.emplace_back(std::move(element));
+
+            // Parse the separator
+            if (sep_tokes->front().token_kind() != SeparatorTokenKind) {
+
+                // If the separator is not found break
+                break;
+            }
+            // Remove the separator
+            sep_tokes = std::make_shared<TokenList>(sep_tokes->slice(1));
+            
+        }
+          
+        //if constexpr (SepType == SeparatedType::Trailing) {
+        //    if (tokes->front().token_kind() !=
+        //        SeparatorTokenKind) {  // TODO: make this error better...
+        //        error::Error(error::Line(tokes->front(), "Expected a separator: " + SEPARATOR));
+        //    }
+        //    tokes = std::make_shared<TokenList>(tokes->slice(1));
+        //} else
+
+        //    if constexpr (SepType == SeparatedType::OptionalTrailing) {
+        //    // Parse the trailing element
+        //    if (tokes->front().token_kind() == SeparatorTokenKind) {
+        //        tokes = std::make_shared<TokenList>(tokes->slice(1));
+        //    }
+        //}
+ 
+        // Return the remaining tokens and store the new tokens
+
+        return sep_tokes;
+    }
+
+    std::string to_json(u32 depth = 0) const final {
+
+        const std::string sep = std::string(1, SEPARATOR);
+
+        std::string json = jsonify::indent(depth) + "\"SeparatedList\" : {\n" +
+                           jsonify::to_json(jsonify::escape(sep), depth + 1, "separator") + ",\n" +
+                           jsonify::indent(depth + 1) + "\"elements\" : [\n";
+
+        for (const auto &element : this->elements) {
+            json += element.to_json(depth + 2);
+        }
+
+        json += jsonify::indent(depth + 1) + "]\n" + jsonify::indent(depth) + "}\n";
+
+        return json;
+    }
+
+private:
+    TokenListRef tokens;
+    std::vector<struct { ElementNode one; Token sep; }> elements{};
+};
 
 }  // namespace parser::cst
 

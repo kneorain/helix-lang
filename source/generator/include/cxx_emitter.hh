@@ -51,11 +51,11 @@ std::string current_namespace;
 std::string header;
 
 for (auto &const fn : functions) {
-    if (current_namespace != fn->parent().to_code()) {
+    if (current_namespace != fn->TokenVec().to_code()) {
         if (!current_namespace.empty()) {
             header += "}  \\ end namespace " + current_namespace + "\n";
         }
-        header += "namespace " + fn->parent().to_code() + "{\n";
+        header += "namespace " + fn->TokenVec().to_code() + "{\n";
     }
 
     header += fn->signature().to_code() + ";\n"; // int some_func();
