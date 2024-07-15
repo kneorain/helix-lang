@@ -548,7 +548,8 @@ struct SeparatedList final
 
 private:
     TokenListRef tokens;
-    std::vector<struct { ElementNode one; Token sep; }> elements{};
+    using temp = struct { ElementNode one; Token sep; };
+    std::vector<temp> elements{};
 };
 
 }  // namespace parser::cst

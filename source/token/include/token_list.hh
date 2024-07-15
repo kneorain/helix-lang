@@ -14,8 +14,6 @@
 #ifndef __TOKEN_LIST_HH__
 #define __TOKEN_LIST_HH__
 
-#include <windows.h>
-
 #include <optional>
 #include <string>
 #include <vector>

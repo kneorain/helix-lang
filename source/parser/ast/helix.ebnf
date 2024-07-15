@@ -1,56 +1,160 @@
-(* Helix Programming Language EBNF *)
 
-(* Lexical tokens *)
-letter              = "a" | "b" | "c" | "d" | "e" | "f" | "g" | "h" | "i" | "j" | "k" | "l" | "m" | "n" | "o" | "p" | "q" | "r" | "s" | "t" | "u" | "v" | "w" | "x" | "y" | "z" |
-                      "A" | "B" | "C" | "D" | "E" | "F" | "G" | "H" | "I" | "J" | "K" | "L" | "M" | "N" | "O" | "P" | "Q" | "R" | "S" | "T" | "U" | "V" | "W" | "X" | "Y" | "Z" ;
-digit               = "0" | "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9" ;
-identifier          = letter, { letter | digit | "_" } ;
-number              = digit, { digit } ;
-string              = "\"", { any character except "\"" }, "\"" ;
+/* Main Program Structure */
 
-(* Program structure *)
-program             = { declaration | function } ;
+Program          ::= (ImportStatement | PreprocessorDirective | VariableDeclaration | FunctionDefinition | Statement)*
 
-(* Declarations *)
-declaration         = variableDeclaration | constantDeclaration | importDeclaration ;
+/* Module Importing */
 
-variableDeclaration = "let", identifier, ":", type, "=", expression, ";" ;
-constantDeclaration = "const", "let", identifier, ":", type, "=", expression, ";" ;
-importDeclaration   = "import", string, ";" ;
+ImportStatement ::= 'import' QualifiedNamespaceID ('::' '{' (QualifiedNamespaceID (',' QualifiedNamespaceID)*) '}')? ('as' QualifiedNamespaceID)? ';'
 
-(* Types *)
-type                = primitiveType | compositeType | customType ;
-primitiveType       = "int" | "float" | "bool" | "char" | "string" ;
-compositeType       = arrayType | tupleType ;
-arrayType           = "Array", "<", type, ">" ;
-tupleType           = "Tuple", "<", type, { ",", type }, ">" ;
-customType          = identifier ;
+FFIImportStatement ::= 'ffi' String ImportStatement
 
-(* Functions *)
-function            = "fn", identifier, "(", [ parameter, { ",", parameter } ], ")", ":", type, block ;
-parameter           = identifier, ":", type ;
+/* Preprocessor Directives */
 
-(* Statements *)
-statement           = variableDeclaration | constantDeclaration | assignment | ifStatement | whileStatement | forStatement | returnStatement | block ;
-assignment          = identifier, "=", expression, ";" ;
-ifStatement         = "if", "(", expression, ")", block, [ "else", block ] ;
-whileStatement      = "while", "(", expression, ")", block ;
-forStatement        = "for", "(", identifier, "in", expression, ")", block ;
-returnStatement     = "return", [ expression ], ";" ;
+PreprocessorDirective ::= DefineMacro | ProcMacro
 
-(* Blocks *)
-block               = "{", { statement }, "}" ;
+DefineMacro     ::= 'define' Identifier ('(' (UntypedParameter (',' UntypedParameter)*)? ')')? Suite ';'
 
-(* Expressions *)
-expression          = logicalOrExpression ;
-logicalOrExpression = logicalAndExpression, { "||", logicalAndExpression } ;
-logicalAndExpression= equalityExpression, { "&&", equalityExpression } ;
-equalityExpression  = relationalExpression, { ("==" | "!="), relationalExpression } ;
-relationalExpression= additiveExpression, { ("<" | ">" | "<=" | ">="), additiveExpression } ;
-additiveExpression  = multiplicativeExpression, { ("+" | "-"), multiplicativeExpression } ;
-multiplicativeExpression = unaryExpression, { ("*" | "/" | "%"), unaryExpression } ;
-unaryExpression     = primaryExpression | ("!" | "-"), primaryExpression ;
-primaryExpression   = identifier | number | string | "(", expression, ")" | functionCall ;
-functionCall        = identifier, "(", [ expression, { ",", expression } ], ")" ;
+ProcMacro       ::= 'macro' Identifier '(' (UntypedParameter (',' UntypedParameter)*)? ')' '->' Type '{' (Statement | Expression) '}' ';'
 
-(* End of Helix EBNF *)
+/* Control Flow */
+
+ForLoop ::= 'for' '(' (CStyleForLoop | PyStyleForLoop) ')' | (CStyleForLoop | PyStyleForLoop) Suite
+
+CStyleForLoop  ::= (VariableDeclaration | Expression?) ';' Expression? ';' Expression?
+
+PyStyleForLoop ::= AnySeparatedID 'in' Expression
+
+WhileLoop ::= 'while' Expression Suite
+
+IfStatement ::= 'if' Expression Suite
+
+UnlessStatement ::= 'unless' Expression Suite
+
+ElseIfStatement ::= 'else' 'if' Expression Suite
+
+ElseStatement ::= 'else' Suite
+
+ContinueStatement ::= 'continue'
+
+BreakStatement ::= 'break'
+
+SwitchStatement ::= 'switch' '{' ((('case' Expression) | 'default') Suite)* '}'
+
+MatchExpression ::= 'match' '{' ((Expression | '_') '->' (CodeBlock | (':' Expression)) (',' (Expression | '_') '->' (CodeBlock | (':' Expression)))*) '}'
+
+/* Functions and Methods */
+
+FunctionDefinition ::= AccessModifiers? (('fn' QualifiedNamespaceID '(' (TypedParameter (',' TypedParameter)*)? (DefaultArgument (',' DefaultArgument)*)? ')' ('->' Type)?
+                      | 'inline' ('static' | 'const')? 'fn' QualifiedNamespaceID '(' (TypedParameter (',' TypedParameter)*)? (DefaultArgument (',' DefaultArgument)*)? ')' ('->' Type)?
+                      | 'async' 'fn' QualifiedNamespaceID '(' (TypedParameter (',' TypedParameter)*)? (DefaultArgument (',' DefaultArgument)*)? ')' ('->' Type)?
+                      | 'static' 'fn' QualifiedNamespaceID '(' (TypedParameter (',' TypedParameter)*)? (DefaultArgument (',' DefaultArgument)*)? ')' ('->' Type)?
+                      | 'const' 'fn' QualifiedNamespaceID '(' (TypedParameter (',' TypedParameter)*)? (DefaultArgument (',' DefaultArgument)*)? ')' ('->' Type)?
+                      | 'ffi' String 'fn' QualifiedNamespaceID '(' (TypedParameter (',' TypedParameter)*)? (DefaultArgument (',' DefaultArgument)*)? ')' ('->' Type)?) GenericDeclaration? (Suite | ';'))
+
+OperatorDefinition ::= 'op' Operator 'as' QualifiedNamespaceID '(' (TypedParameter (',' TypedParameter)*)? (DefaultArgument (',' DefaultArgument)*)? ')' ('->' Type)? (Suite | ';')
+
+ReturnExpression ::= 'return' (Expression)? ';'
+
+YieldExpression ::= 'yield' (Expression)? ';'
+
+/* Variable Declarations */
+
+VariableDeclaration ::= AccessModifiers? (('let' | 'shared') ((UntypedParameter '=' Expression) | (TypedParameter ('=' Expression)? )) ';'
+                      | 'shared'? 'const' TypedParameter '=' Expression ';')
+
+/* Type Definitions */
+
+GenericAccess    ::= '<' (QualifiedNamespaceID (',' QualifiedNamespaceID)*)? '>'
+
+GenericDeclaration ::= 'requires' ((TypeBound (',' TypeBound)*) | ('const' TypedParameter ('=' Expression)?))
+
+TypeBound          ::= ('<' (UntypedParameter | (UntypedParameter (',' UntypedParameter)*)) '>')
+                       ('if' QualifiedNamespaceID GenericAccess? ('+' QualifiedNamespaceID GenericAccess?)*)?
+                       ('=' Type)?
+
+TupleType        ::= '(' (Type (',' Type)*) ')'
+
+Type             ::= ('int' | 'float' | 'decimal' | 'string' | 'char' | 'bool'
+                   | 'list' GenericAccess | 'map' GenericAccess | 'set' GenericAccess
+                   | 'tuple' GenericAccess | 'void'
+                   | 'i8' | 'i16' | 'i32' | 'i64' | 'i128'
+                   | 'u8' | 'u16' | 'u32' | 'u64' | 'u128'
+                   | 'f32' | 'f64' | QualifiedNamespaceID GenericAccess?) | TupleType (('*' | '&')? ('?'))?
+
+/* Operators */
+
+Operator         ::= '+'   | '-'   | '*'   | '/'   | '%'   | '@'   | '&'
+                   | '^'   | '~'   | '='   | '!'   | '**'  | '+-'  | '<<'
+                   | '~&'  | '>>'  | '~|'  | '=='  | '!='  | '>='  | '++'
+                   | '--'  | '<='  | '+='  | '-='  | '*='  | '&='  | '|='
+                   | '~|'  | '^='  | '~='  | '/='  | '%='  | '@='  | '&&'
+                   | '!&'  | '||'  | '!|'  | '^^'  | '..'  | '->'  | '~='
+                   | '|'   | '::'  | '===' | '**=' | '&&=' | '!&=' | '||='
+                   | '!|=' | '^^=' | '~&=' | '<<=' | '>>=' | '..=' | [^a-zA-Z0-9_]+
+
+/* Expressions */
+
+Expression       ::= Literal | AnySeparatedID | BinaryOperation | UnaryOperation | FunctionCall | ParenthesizedExpression | ArrayAccess | ObjectAccess | ConditionalExpression
+
+BinaryOperation  ::= Expression Operator Expression
+
+UnaryOperation   ::= Operator Expression
+
+FunctionCall     ::= AnySeparatedID GenericAccess? '(' (Expression (',' Expression)*)? ')'
+
+ParenthesizedExpression ::= '(' Expression ')'
+
+ArrayAccess     ::= AnySeparatedID '[' Expression ']'
+
+ObjectAccess    ::= AnySeparatedID '.' Identifier
+
+ConditionalExpression ::= Expression '?' Expression ':' Expression
+
+/* Statements */
+
+Assignment       ::= AnySeparatedID '=' Expression ';'
+
+Statement        ::= VariableDeclaration | Assignment | Expression ';' | ControlFlowStatement | ReturnExpression | YieldExpression | BlockStatement
+
+ControlFlowStatement ::= ForLoop | WhileLoop | IfStatement | UnlessStatement | ElseIfStatement | ElseStatement | ContinueStatement | BreakStatement | SwitchStatement | MatchExpression
+
+BlockStatement ::= Suite
+
+Statements       ::= Statement*
+
+/* Code Structure */
+
+CodeBlock ::= '{' (Statements | Expressions) '}'
+
+CodeLine ::= ':' (Statement | Expression) ';'
+
+Suite ::= CodeLine | CodeBlock
+
+TypedParameter   ::= Identifier ':' Type
+
+UntypedParameter ::= Identifier
+
+AccessModifiers ::= 'priv' | 'pub' | 'prot' | 'intl'
+
+QualifiedNamespaceID ::= Identifier ('::' Identifier)*
+
+DotSeparatedID   ::= Identifier ('.' Identifier)*
+
+AnySeparatedID   ::= (DotSeparatedID | QualifiedNamespaceID) (DotSeparatedID | QualifiedNamespaceID)*
+
+/* Base Elements */
+
+Literal          ::= Number | String | 'true' | 'false' | 'null' | 'nullptr'
+
+Number           ::= Digit+ ('.' Digit+)?
+
+String           ::= '"' [^"]* '"' | "'" [^']* "'"
+
+Identifier       ::= [A-Za-z_][A-Za-z0-9_]*
+
+Digit            ::= [0-9]
+
+/* Default Argument */
+
+DefaultArgument  ::= TypedParameter '=' Expression
