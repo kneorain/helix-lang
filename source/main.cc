@@ -25,6 +25,7 @@
 #include "parser/ast/include/ast.hh"
 #include "parser/ast/include/expr_nodes.hh"
 #include "parser/preprocessor/include/preprocessor.hh"
+#include "token/include/token_list.hh"
 
 int main(int argc, char **argv) {
     using namespace token;
@@ -52,7 +53,8 @@ int main(int argc, char **argv) {
     // print the preprocessed tokens
 
     if (parsed_args.emit_tokens) {
-        print(tokens.to_json());
+        // print(tokens.to_json());
+        print_tokens(tokens);
     }
 
     auto end = std::chrono::high_resolution_clock::now();

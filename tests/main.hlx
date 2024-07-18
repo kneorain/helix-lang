@@ -1,5 +1,4 @@
-"hello \" world"
-(r"hello \" world");
+import test_imports::test_imports;
 
 fn main() {
     let a = "bruh";
@@ -14,33 +13,30 @@ fn main() {
     );
 }
 
-/* =====------ generic instantiation ------=====*/
 
-/* =====------ 2 ------=====*/
-fn add(a: T, b: U) -> T
-    requires (T, U): Addable
-                + Subable
-                + Copyable {
-    return ((a as T) + (b as U)) as T;
+module bar {
+    module foo {
+        module foo {
+            module foo {
+                fn foo() {
+                    print("foo");
+                }
+            }
+        }
+    }
+
 }
 
-fn add(a: T) -> T
-    requires const ConstT: u64 = 0,
-             T: Addable
-                    + Subable
-                    + Copyable {
-    return (a + ConstT) as T;
-}
 
-add<10, float>(6);
+/*
+bar/
+    foo.hlx
+    foo/
+        foo/
+            foo.hlx <-
+        foo.hlx 
+        bar.hlx
 
+bar::foo::foo::foo;
 
-
-fn add(a: T, b: T) -> T
-    where T {
-        // ...
-}
-/* =====------ calling convention ------=====*/
-
-/* =====------ 1 ------=====*/
-let a = add<float, int*>(1, 2);
+*/

@@ -1,17 +1,13 @@
 /// std::io::out - this is the internal code for print
 
-using "c++" priv import <iostream> as cpp__io;
+ffi "c++" priv import <iostream> as cpp__io;
 
 interface Stringable {
     fn to_string() -> string;
 }
 
-fn print<T: Stringable, U>(
-    args...: T | U, // T if Stringable, U otherwise
-    end:  &string = "\n",
-    flush: bool   = false,
-    sep:  &string = " ") {
-
+fn print(...args: T | U, sep: T = " ", end: T = "\n", flush: bool = false)
+  requires <T, U> if T is Stringable {
     let out: string = "";
 
     for arg in args {
@@ -24,7 +20,7 @@ fn print<T: Stringable, U>(
 
     out = out.strip(*sep) + *end;
 
-    extern "C++" {
+    ffi "C++" {
         cpp__io::std::cout << out;
 
         if flush {
@@ -32,6 +28,71 @@ fn print<T: Stringable, U>(
         }
     }
 }
+
+import std::algorithm;
+import std::io;
+import std::file;
+import std::range;
+
+const cols: int = 14;
+
+fn parse_char(c: char) -> string {
+    return f"{c:02X}"
+}
+
+fn main() {
+    let path: string = std::file_sytem::get_bin_path();
+    let file = open(path, "rb");
+
+    for chunk in file.read(cols) {
+        chunk = chunk[0:20];
+
+        let hex_chunk: string;
+        for character in chunk {
+            if (character as char) < 0x20 || (character as char) > 0x7E {
+                hex_chunk += ".";
+            } else {
+                hex_chunk += character;
+            }
+        }
+
+        let hex_str: string = std::map(chunk, parse_char).join(" ");
+        let padding: string = " ".repeat(3 * (cols - chunk.len()));
+
+        file.write(f"{hex_str}{padding}  {hex_chunk}\n");
+    }
+
+    file.close();
+}
+
+| **Control Flow** | **Function and Method** | **Class and Struct** |
+|------------------|-------------------------|----------------------|
+| break            | async                   | class                |
+| case             | define                  | enum                 |
+| continue         | fn                      | struct               |
+| default          | inline                  | type                 |
+| else             | macro                   | union                |
+| for              | op                      |                      |
+| if               | return                  |                      |
+| match            | yield                   |                      |
+| switch           |                         |                      |
+| unless           |                         |                      |
+| while            |                         |                      |
+
+| **Inheritance and Polymorphism** | **Error Handling** | **Variable Declaration** |
+|----------------------------------|--------------------|--------------------------|
+| abstract                         | catch              | const                    |
+| derives                          | finally            | let                      |
+| interface                        | panic              | shared                   |
+| requires                         | try                |                          |
+|                                  | test               |                          |
+
+| **Access Specifiers** | **Module Importing** | **Concurrency** | **Other** |
+|-----------------------|----------------------|-----------------|-----------|
+| module                | as                   | atomic          | delete    |
+| priv                  | ffi                  | await           | is        |
+| pub                   | import               | spawn           | null      |
+| prot                  |                      | thread          | nullptr   |
 
 /* ---------------------------------- usage --------------------------------- */
 
@@ -44,7 +105,7 @@ fn print<T: Stringable, U>(
         `if foo is Stringable`. If `Foo` does not explicitly derive `Stringable`,
         it will fail this check.
     - Conversely, `Foo` will pass type-based checks such as:
-        `type StringableType<T: Stringable>;`
+        `type StringableType requires <T> if Stringable;`
         `let foo: StringableType<Foo> = Foo{};`
 
     In this case, `Foo` would be valid because it contains all the methods of
@@ -55,6 +116,9 @@ struct Foo : Stringable {
         return "Foo";
     }
 }
+
+type StringableType requires <T> if Stringable;
+type StringableType<T: Stringable>;
 
 class Bar {}
 

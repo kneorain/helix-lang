@@ -210,7 +210,7 @@ std::reference_wrapper<TokenList::TokenListIter> TokenList::TokenListIter::opera
 }
 
 std::reference_wrapper<TokenList::TokenListIter> TokenList::TokenListIter::operator++() {
-    if ((cursor_position + 1) <= end) {
+    if ((cursor_position) <= end + 1) {
         ++cursor_position;
         return *this;
     }
@@ -219,7 +219,7 @@ std::reference_wrapper<TokenList::TokenListIter> TokenList::TokenListIter::opera
 }
 
 std::reference_wrapper<Token> TokenList::TokenListIter::advance(const std::int32_t n) {
-    if ((cursor_position + n) <= end) {
+    if ((cursor_position + n) <= end + 1) {
         ++cursor_position;
     }
 
