@@ -24,9 +24,9 @@
 | **N** | **Access Specifiers** | **Module Importing** | **Concurrency** | **Other** |
 |-------|-----------------------|----------------------|-----------------|-----------|
 |   1   | module                | as                   | atomic          | delete    |
-|   2   | private               | ffi                  | await           | is        |
-|   3   | public                | import               | spawn           | null      |
-|   4   | protected             |                      | thread          | nullptr   |
+|   2   | priv                  | ffi                  | await           | is        |
+|   3   | pub                   | import               | spawn           | null      |
+|   4   | prot                  |                      | thread          | nullptr   |
 |   5   |                       |                      |                 | unsafe    |
 
 | **N** | **Complex Types** | **Signed Types** | **Unsigned Types** | **Data Types** | **Float Types** |

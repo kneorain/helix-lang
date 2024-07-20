@@ -1,11 +1,11 @@
 
 /* Main Program Structure */
 
-Program          ::= (ImportStatement | PreprocessorDirective | VariableDeclaration | FunctionDefinition | Statement)*
+Program            ::= (ImportStatement | PreprocessorDirective | VariableDeclaration | FunctionDefinition | Statement)*
 
 /* Module Importing */
 
-ImportStatement ::= 'import' QualifiedNamespaceID ('::' '{' (QualifiedNamespaceID (',' QualifiedNamespaceID)*) '}')? ('as' QualifiedNamespaceID)? ';'
+ImportStatement    ::= 'import' QualifiedNamespaceID ('::' '{' (QualifiedNamespaceID (',' QualifiedNamespaceID)*) '}')? ('as' QualifiedNamespaceID)? ';'
 
 FFIImportStatement ::= 'ffi' String ImportStatement
 
@@ -13,65 +13,74 @@ FFIImportStatement ::= 'ffi' String ImportStatement
 
 PreprocessorDirective ::= DefineMacro | ProcMacro
 
-DefineMacro     ::= 'define' Identifier ('(' (UntypedParameter (',' UntypedParameter)*)? ')')? Suite ';'
+DefineMacro           ::= 'define' Identifier ('(' (UntypedParameter (',' UntypedParameter)*)? ')')? Suite ';'
 
-ProcMacro       ::= 'macro' Identifier '(' (UntypedParameter (',' UntypedParameter)*)? ')' '->' Type '{' (Statement | Expression) '}' ';'
+ProcMacro             ::= 'macro' Identifier '(' (TypedParameter (',' TypedParameter)*)? ')' '->' Type '{' (Statement | Expression) '}' ';'
 
 /* Control Flow */
 
-ForLoop ::= 'for' '(' (CStyleForLoop | PyStyleForLoop) ')' | (CStyleForLoop | PyStyleForLoop) Suite
+ForLoop           ::= 'for' '(' (CStyleForLoop | PyStyleForLoop) ')' | (CStyleForLoop | PyStyleForLoop) Suite
 
-CStyleForLoop  ::= (VariableDeclaration | Expression?) ';' Expression? ';' Expression?
+CStyleForLoop     ::= (VariableDeclaration | Expression?) ';' Expression? ';' Expression?
 
-PyStyleForLoop ::= AnySeparatedID 'in' Expression
+PyStyleForLoop    ::= AnySeparatedID (':' Type)? 'in' Expression
 
-WhileLoop ::= 'while' Expression Suite
+WhileLoop         ::= 'while' Expression Suite
 
-IfStatement ::= 'if' Expression Suite
+IfStatement       ::= ('if' | 'unless') Expression Suite
 
-UnlessStatement ::= 'unless' Expression Suite
+ElseIfStatement   ::= 'else' ('if' | 'unless') Expression Suite
 
-ElseIfStatement ::= 'else' 'if' Expression Suite
-
-ElseStatement ::= 'else' Suite
+ElseStatement     ::= 'else' Suite
 
 ContinueStatement ::= 'continue'
 
 BreakStatement ::= 'break'
-
+ 
 SwitchStatement ::= 'switch' '{' ((('case' Expression) | 'default') Suite)* '}'
 
 MatchExpression ::= 'match' '{' ((Expression | '_') '->' (CodeBlock | (':' Expression)) (',' (Expression | '_') '->' (CodeBlock | (':' Expression)))*) '}'
 
 /* Functions and Methods */
+FunctionDecl ::= 'fn' QualifiedNamespaceID '(' (TypedParameter (',' TypedParameter)*)? (DefaultArgument (',' DefaultArgument)*)? ')' ('->' Type)?
 
-FunctionDefinition ::= AccessModifiers? (('fn' QualifiedNamespaceID '(' (TypedParameter (',' TypedParameter)*)? (DefaultArgument (',' DefaultArgument)*)? ')' ('->' Type)?
-                      | 'inline' ('static' | 'const')? 'fn' QualifiedNamespaceID '(' (TypedParameter (',' TypedParameter)*)? (DefaultArgument (',' DefaultArgument)*)? ')' ('->' Type)?
-                      | 'async' 'fn' QualifiedNamespaceID '(' (TypedParameter (',' TypedParameter)*)? (DefaultArgument (',' DefaultArgument)*)? ')' ('->' Type)?
-                      | 'static' 'fn' QualifiedNamespaceID '(' (TypedParameter (',' TypedParameter)*)? (DefaultArgument (',' DefaultArgument)*)? ')' ('->' Type)?
-                      | 'const' 'fn' QualifiedNamespaceID '(' (TypedParameter (',' TypedParameter)*)? (DefaultArgument (',' DefaultArgument)*)? ')' ('->' Type)?
-                      | 'ffi' String 'fn' QualifiedNamespaceID '(' (TypedParameter (',' TypedParameter)*)? (DefaultArgument (',' DefaultArgument)*)? ')' ('->' Type)?) GenericDeclaration? (Suite | ';'))
+FunctionDefinition ::= BaseObjectDecl FunctionDecl GenericDeclaration? (Suite | ';')
 
-OperatorDefinition ::= 'op' Operator 'as' QualifiedNamespaceID '(' (TypedParameter (',' TypedParameter)*)? (DefaultArgument (',' DefaultArgument)*)? ')' ('->' Type)? (Suite | ';')
+OperatorDefinition ::= 'op' Operator 'as' FunctionDecl (Suite | ';')
 
 ReturnExpression ::= 'return' (Expression)? ';'
 
 YieldExpression ::= 'yield' (Expression)? ';'
 
-/* Variable Declarations */
+/* Class and Struct */
 
-VariableDeclaration ::= AccessModifiers? (('let' | 'shared') ((UntypedParameter '=' Expression) | (TypedParameter ('=' Expression)? )) ';'
-                      | 'shared'? 'const' TypedParameter '=' Expression ';')
+BaseObjectDecl ::= AccessModifiers? (('inline' ('static' | 'const')?) | 'async' | 'static' | 'const' | 'final' | FFIAccess)
+
+ClassDefintion ::= BaseObjectDecl  'class'  QualifiedNamespaceID (('derives' | ':') (QualifiedNamespaceID (',' QualifiedNamespaceID)*))? GenericDeclaration? (Suite | ';')
+
+EnumDefintion  ::= BaseObjectDecl  'enum'   QualifiedNamespaceID (('{' ((TypedParameter | UntypedParameter) ('=' Expression)? (';' (TypedParameter | UntypedParameter) ('=' Expression)?)*) '}') | ';')
+
+StructDefintion ::= BaseObjectDecl 'struct' GenericDeclaration? (Suite | ';')
+
+UnionDefintion ::= BaseObjectDecl  'union' GenericDeclaration? (('{' ((TypedParameter | UntypedParameter) (';' (TypedParameter | UntypedParameter))*) '}') | ';')
+
+TypeDefintion ::= 
+
+/* Variable Declarations */
+VariableDeclaration ::= AccessModifiers? 'let' (
+    (('unsfae')? ('final' | 'atomic' | 'shared')? (TypedParameter | UntypedParameter) ('=' Expression)?)
+    | ('const' (TypedParameter) '=' Expression)
+) ';'
 
 /* Type Definitions */
 
-GenericAccess    ::= '<' (QualifiedNamespaceID (',' QualifiedNamespaceID)*)? '>'
+GenericAccess    ::= '<' ((QualifiedNamespaceID | Literal) (',' (QualifiedNamespaceID | Literal))*)? '>'
 
-GenericDeclaration ::= 'requires' ((TypeBound (',' TypeBound)*) | ('const' TypedParameter ('=' Expression)?))
+TypeBound ::= UntypedParameter is (QualifiedNamespaceID GenericAccess? ('&' QualifiedNamespaceID GenericAccess?)*)
 
-TypeBound          ::= ('<' (UntypedParameter | (UntypedParameter (',' UntypedParameter)*)) '>')
-                       ('if' QualifiedNamespaceID GenericAccess? ('+' QualifiedNamespaceID GenericAccess?)*)?
-                       ('=' Type)?
+GenericType ::= (('const' TypedParameter) | UntypedParameter) ('=' Expression)?
+
+GenericDeclaration ::= 'requires' '<' (GenericType (',' GenericType)*)? '>' ('if' TypeBound (',' TypeBound)*)?
 
 TupleType        ::= '(' (Type (',' Type)*) ')'
 
@@ -113,15 +122,15 @@ ConditionalExpression ::= Expression '?' Expression ':' Expression
 
 /* Statements */
 
-Assignment       ::= AnySeparatedID '=' Expression ';'
+Assignment           ::= AnySeparatedID '=' Expression ';'
 
-Statement        ::= VariableDeclaration | Assignment | Expression ';' | ControlFlowStatement | ReturnExpression | YieldExpression | BlockStatement
+Statement            ::= VariableDeclaration | Assignment | Expression ';' | ControlFlowStatement | ReturnExpression | YieldExpression | BlockStatement
 
 ControlFlowStatement ::= ForLoop | WhileLoop | IfStatement | UnlessStatement | ElseIfStatement | ElseStatement | ContinueStatement | BreakStatement | SwitchStatement | MatchExpression
 
-BlockStatement ::= Suite
+BlockStatement       ::= Suite
 
-Statements       ::= Statement*
+Statements           ::= Statement*
 
 /* Code Structure */
 
@@ -130,6 +139,8 @@ CodeBlock ::= '{' (Statements | Expressions) '}'
 CodeLine ::= ':' (Statement | Expression) ';'
 
 Suite ::= CodeLine | CodeBlock
+
+FFIAccess ::= 'ffi' String
 
 TypedParameter   ::= Identifier ':' Type
 

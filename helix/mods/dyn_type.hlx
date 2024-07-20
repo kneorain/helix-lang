@@ -1,15 +1,13 @@
-using "c++" {
-    priv import <any>;
-    priv import <memory>;
-    priv import <typeinfo>;
+ffi "c++" {
+    priv import <any>, <memory>, <typeinfo> in cpp;
 }
 
 define make_any_ptr(expr, T): std::make_any<std::unique_ptr<T>>(std::make_unique<T>(expr));
 define any_cast(expr, T):     std::any_cast<std::unique_ptr<T>>(expr);
 
-priv type Any = std::any;
+priv type Any = cpp::std::any;
 
-class Dyntype<T> {
+class Dyntype derives Object requires <T> {
     priv let value: Any;
 
     fn new(value: T) {
@@ -25,7 +23,8 @@ class Dyntype<T> {
         self.value = make_any_ptr!(value, T);
     }
 
-    fn get<U>(self) -> void* {
+    fn get(self) -> void*
+      requires <U> {
         return ptr.get();
     }
 
@@ -37,13 +36,13 @@ class Dyntype<T> {
 fn main() {
     let a: Dyntype = 42;
 
-    println("a = {}", a.get() as i32);
+    print("a = {}", a.get<i32>());
 
     a = 3.14;
 
-    println("a dyn = {}", a.get() as f64);
+    print("a dyn = {}", a.get<f64>());
 
     a = "Hello, World!";
 
-    println("a dyn = {}", a.get() as string);
+    print("a dyn = {}", a.get<string>());
 }

@@ -53,9 +53,7 @@ struct CSTBase<void> {
     virtual ~CSTBase()                  = default;
 
     [[nodiscard]] virtual ParseResult parse()                      = 0;
-    [[nodiscard]] virtual bool peek()                        const = 0;
     [[nodiscard]] virtual std::string to_json(u32 depth = 0) const = 0;
-    [[nodiscard]] inline virtual bool HAS_HIGH_PEEK_OVERHEAD() = 0;
 };
 
 template <typename T>

@@ -52,6 +52,12 @@ int main(int argc, char **argv) {
 
     // print the preprocessed tokens
 
+    if (parsed_args.emit_ast) {
+        auto ast = std::make_shared<parser::ast::node::Literals>(std::make_shared<TokenList>(tokens));
+        u64 num_parsed_tokens = ast->parse().value_or(0);
+        print(ast->to_json());
+    }
+
     if (parsed_args.emit_tokens) {
         // print(tokens.to_json());
         print_tokens(tokens);

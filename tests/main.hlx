@@ -1,6 +1,7 @@
 import test_imports::test_imports;
 
-fn main() {
+fn main()
+    requires <const T: string> {
     let a = "bruh";
     print(
         if a == "bruh":
@@ -12,6 +13,8 @@ fn main() {
             "bigger sad"
     );
 }
+
+class ASum
 
 
 module bar {
@@ -27,6 +30,43 @@ module bar {
 
 }
 
+
+// import std::range;
+// import std::file_sytem;
+
+// const cols: int = 14;
+
+// fn parse_char(c: char) -> string {
+//     return f"{c:02X}"
+// }
+
+// fn main() {
+//     let path: string = file_sytem::get_bin_path();
+    
+//     file_sytem::open(path, "rb") as file {
+//         // read 14 cols in chunks of 20 chars
+//         for chunk: string in range(file.read(cols), 20) {
+//             let hex_chunk: string;
+            
+//             for character: char in chunk {
+//                 // types for range based loops can be inferd but specifing
+//                 // it would cast the iter output to the specified type
+//                 // so `for character in chunk` would just work.
+
+//                 if character < 0x20 || character > 0x7E {
+//                     hex_chunk += ".";
+//                 } else {
+//                     hex_chunk += character as string;
+//                 }
+//             }
+
+//             let hex_str: string = chunk.map(parse_char).join(" ");
+//             let padding: string = " " * (3 * (cols - chunk.len()));
+
+//             file.write(f"{hex_str}{padding}  {hex_chunk}\n");
+//         }
+//     }
+// }
 
 /*
 bar/
