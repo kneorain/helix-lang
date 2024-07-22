@@ -30,6 +30,18 @@ module bar {
 
 }
 
+/// An interface for indexing into a collection.
+interface Indexable requires <Element, Index> {
+    /// Get a reference to the element at the given index and check bounds.
+    op [] as fn get(self, index: Index) -> Element&;
+    
+    /// Get a const reference to the element at the given index and check bounds.
+    op [] as const fn get(self, const index: Index) -> const Element&;
+}
+
+
+
+
 
 // import std::range;
 // import std::file_sytem;
