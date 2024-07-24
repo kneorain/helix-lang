@@ -28,6 +28,22 @@
 #include "token/include/token.hh"
 #include "token/include/token_list.hh"
 
+#define AST_NODE_METHODS(name)                      \
+    ~name() = default;                              \
+    explicit name(TokenListRef parse_tokens)        \
+        : source_tokens(std::move(parse_tokens)){}; \
+    name() = default;                               \
+    name(name &&) = default;                        \
+    name(const name &) = default;                   \
+    name &operator=(name &&) = default;             \
+    name &operator=(const name &) = delete;         \
+    ParseResult parse();                            \
+    std::string to_json(u32 depth = 0) const;       \
+                                                    \
+  private:                                          \
+    TokenListRef source_tokens;                     \
+  public:
+
 namespace parser::ast {
 struct ParseError {
     ParseError(token::Token tok, float error_code) {
@@ -68,15 +84,19 @@ struct ASTBase : public ASTBase<void> {
 
 namespace node {
     template <typename T>
-    struct Declaration : public ASTBase<Declaration<T>> {};
+    struct Statement   : public ASTBase<Statement<T>>   {};
+    
     template <typename T>
     struct Expression  : public ASTBase<Expression<T>>  {};
+    
     template <typename T>
-    struct Annotation  : public ASTBase<Annotation<T>>  {};
-    template <typename T>
-    struct Statement   : public ASTBase<Statement<T>>   {};
+    struct Declaration : public ASTBase<Declaration<T>> {};
+    
     template <typename T>
     struct Type        : public ASTBase<Type<T>>        {};
+    
+    template <typename T>
+    struct Annotation  : public ASTBase<Annotation<T>>  {};
 
     struct Program : ASTBase<Program> {};
 }
@@ -93,4 +113,5 @@ using NodeList       = std::vector<NodePtr<T>>;
 template <typename T = void>
 using Slice          = const std::reference_wrapper<NodeList<T>>;
 }  // namespace parser::ast
+
 #endif  // __AST_HH__
