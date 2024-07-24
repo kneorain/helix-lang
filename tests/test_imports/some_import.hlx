@@ -1,4 +1,7 @@
-
-fn add_sum(a: int, b: int) -> int {
+eval fn add_sum(const a: int, const b: int) -> int {
     return a + b;
+}
+
+fn main() {
+    print(add_sum(1, 2));
 }
