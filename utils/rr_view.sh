@@ -2,7 +2,7 @@
 
 #-f format | -l | -r | -s | -x] [-t timefmt]
 FILE="source/parser/ast/helix.ebnf"
-COMMAND="java -jar utils/railroad/rr.war -width:1500 -html $FILE"
+COMMAND="java -jar railroad/rr.war -width:1500 -html $FILE"
 VIEW_COMMAND="open ./index.html"
 LAST_MODIFIED=$(stat -f "%m" "$FILE")
 

@@ -1,30 +1,31 @@
-struct Point {
+class Point {
     let x: int;
     let y: int;
 
-    fn new(x: int, y: int) -> Point {
-        return Point{ x: x, y: y };
+    eval fn Point(self, x: int, y: int) {
+        self.x = x;
+        self.y = y;
     }
 
-    fn move(&self, dx: int, dy: int) {
+    fn move(self, dx: int, dy: int) {
         self.x += dx;
         self.y += dy;
     }
 
-    fn display(&self) {
-        print(f"Point at ({point.x}, {point.y})");
+    fn display(self) {
+        print(f"Point at ({self.x}, {self.y})");
     }
 }
 
 fn main() {
-    let p: Point = Point::new(0, 0);
+    let p = Point(0, 0);
 
-    for i in range(1, 4) {
+    for i in 1..4 {
         p.move(i, i);
         p.display();
     }
 
-    let value: int = p.x;
+    let value: u32 = p.x as u32;
 
     match value {
         0 -> print("The point is at the origin"),

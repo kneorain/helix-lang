@@ -1,7 +1,0 @@
-fn main() {
-    let x: int   = 42;
-    let y: float = 3.14;
-    auto message = "Hello, Helix!";
-
-    print(f"{message} x is {x} y is {y}");
-}
