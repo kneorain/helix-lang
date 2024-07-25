@@ -14,22 +14,6 @@
 #ifndef __AST_NODES_HH__
 #define __AST_NODES_HH__
 
-#define AST_NODE_METHODS(name)                      \
-    ~name() = default;                              \
-    explicit name(TokenListRef parse_tokens)        \
-        : source_tokens(std::move(parse_tokens)){}; \
-    name() = default;                               \
-    name(name &&) = default;                        \
-    name(const name &) = default;                   \
-    name &operator=(name &&) = default;             \
-    name &operator=(const name &) = delete;         \
-    ParseResult parse();                            \
-    std::string to_json(u32 depth = 0) const;       \
-                                                    \
-  private:                                          \
-    TokenListRef source_tokens;                     \
-  public:
-
 #include "parser/ast/include/ast.hh"
 
 namespace parser::ast::node {

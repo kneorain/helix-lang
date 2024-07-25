@@ -1,3 +1,0 @@
-// module declaration
-
-import out::{print}; // everthing imported here is a part of the module

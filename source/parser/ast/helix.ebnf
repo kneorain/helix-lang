@@ -61,7 +61,7 @@ YieldExpression ::= 'yield' (Expression)? ';'
 
 /* Class and Struct */
 
-BaseObjectDecl ::= AccessModifiers? (('inline' ('static' | 'const')?) | 'async' | 'static' | 'const' | 'final' | FFIAccess)
+BaseObjectDecl ::= AccessModifiers? (('inline' ('static' | 'eval')?) | 'async' | 'static' | 'eval' | 'const' | FFIAccess)
 
 ClassDefinition ::= BaseObjectDecl 'class' QualifiedNamespaceID DerivesDecl? RequiresDeclaration? (Suite | ';')
 
@@ -87,7 +87,7 @@ DerivesDecl ::= ('derives' | ':') (QualifiedNamespaceID (',' QualifiedNamespaceI
 
 TypeBound ::= UntypedParameter 'is' (QualifiedNamespaceID GenericAccess? ('&' QualifiedNamespaceID GenericAccess?)*)
 
-GenericType ::= (('const' TypedParameter) | UntypedParameter) ('=' Expression)?
+GenericType ::= (('eval' TypedParameter) | UntypedParameter) ('=' Expression)?
 
 RequiresDeclaration ::= 'requires' '<' (GenericTypeList)? '>' ('if' TypeBoundList)?
 
@@ -122,8 +122,8 @@ DeleteCall ::= 'delete' Expression ';'
 /* Variable Declarations */
 
 VariableDeclaration ::= AccessModifiers? 'let' (
-    (('unsafe')? ('final' | 'atomic' | 'shared')? (TypedParameter | UntypedParameter) ('=' Expression)?)
-    | ('const' TypedParameter '=' Expression)
+    (('unsafe')? ('const' | 'atomic' | 'shared')? (TypedParameter | UntypedParameter) ('=' Expression)?)
+    | ('eval' TypedParameter '=' Expression)
 ) ';'
 
 /* Declarations */

@@ -1,6 +1,0 @@
-// this is the lib module declaration file
-
-import io::{print};
-import vec::{push};
-
-// importing this module will cause the compiler 

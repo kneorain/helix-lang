@@ -18,24 +18,24 @@
 |   1   | abstract                         | catch              | const                    |
 |   2   | derives                          | finally            | let                      |
 |   3   | interface                        | panic              | shared                   |
-|   4   | requires                         | try                | final                    |
+|   4   | requires                         | try                | eval                     |
 |   5   |                                  | test               |                          |
 
 | **N** | **Access Specifiers** | **Module Importing** | **Concurrency** | **Other** |
 |-------|-----------------------|----------------------|-----------------|-----------|
-|   1   | module                | as                   | atomic          | delete    |
-|   2   | priv                  | ffi                  | await           | is        |
-|   3   | pub                   | import               | spawn           | null      |
-|   4   | prot                  |                      | thread          | nullptr   |
-|   5   |                       |                      |                 | unsafe    |
+|   1   | module                | as                   | atomic          | is        |
+|   2   | priv                  | ffi                  | await           | unsafe    |
+|   3   | pub                   | import               | spawn           | void      |
+|   4   | prot                  |                      | thread          |           |
+|   5   |                       |                      |                 |           |
 
 | **N** | **Complex Types** | **Signed Types** | **Unsigned Types** | **Data Types** | **Float Types** |
 |-------|-------------------|------------------|--------------------|----------------|-----------------|
 |   1   | string            | i128             | u128               | int            | f32             |
 |   2   | char              | i16              | u16                | float          | f64             |
 |   3   | bool              | i32              | u32                | decimal        |                 |
-|   4   | list              | i64              | u64                | void           |                 |
-|   5   | map               | i8               | u8                 |                |                 |
+|   4   | list              | i64              | u64                | null           |                 |
+|   5   | map               | i8               | u8                 | nullptr        |                 |
 |   6   | set               | isize            | usize              |                |                 |
 |   7   | tuple             |                  |                    |                |                 |
 
@@ -51,6 +51,19 @@
 |   8   | *             | @   | ~\|= | !\|=  | <=  |     |
 |   9   | *=            | @=  | \|   | <<    | ..  |     |
 |   10  | /             | ^   | \|=  | <<=   | ..= |     |
+
+| **N** | **Macros** |
+|-------|---------------|
+|   1   | delete
+|   2   | move
+|   3   | copy
+|   4   | 
+|   5   |
+|   6   |
+|   7   |
+|   8   |
+|   9   |
+|   10  |
 
 |           **Feature**           |                     **Class**                    |            **Enum**           |             **Struct**                          |     **Union**    | **Interface** | **Abstract** |
 |---------------------------------|--------------------------------------------------|-------------------------------|-------------------------------------------------|------------------|---------------|--------------|
