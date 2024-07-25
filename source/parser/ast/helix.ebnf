@@ -170,7 +170,8 @@ ArrayAccess ::= AnySeparatedID '[' Expression ']'
 
 ObjectAccess ::= AnySeparatedID '.' Identifier
 
-ConditionalExpression ::= Expression '?' Expression ':' Expression
+/* all of these break down to the same node structure */
+ConditionalExpression ::= ('if' Expression ':' Expression (('else if' Expression ':' Expression)*)? 'else' ':' Expression) | (Expression '?' Expression ':' Expression) | (Expression 'if' Expression 'else' Expression)
 
 Expressions ::= Expression (',' Expression)*
 

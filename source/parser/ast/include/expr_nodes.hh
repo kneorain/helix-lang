@@ -41,8 +41,8 @@ struct BinaryOp final : Expression<BinaryOp> { // 1 + 2
     AST_NODE_METHODS(BinaryOp);
     
     Token op;
-    NodePtr<Expression<void>> left;  // 1
-    NodePtr<Expression<void>> right; // 2
+    NodePtr<Expression<void>> left;
+    NodePtr<Expression<void>> right;
 };
 
 struct UnaryOp final : Expression<UnaryOp> { // -1

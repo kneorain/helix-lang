@@ -97,8 +97,6 @@ namespace node {
     
     template <typename T>
     struct Annotation  : public ASTBase<Annotation<T>>  {};
-
-    struct Program : ASTBase<Program> {};
 }
 
 template <typename T = void>
