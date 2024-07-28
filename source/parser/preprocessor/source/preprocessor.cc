@@ -1,18 +1,19 @@
-/**
- * @author Dhruvan Kartik
- * @copyright Copyright (c) 2024 (CC BY 4.0)
- *
- * @note This code is part of the Helix Language Project and is licensed under the Attribution 4.0
- * International license (CC BY 4.0). You are allowed to use, modify, redistribute, and create
- * derivative works, even for commercial purposes, provided that you give appropriate credit,
- * provide a link to the license, and indicate if changes were made. For more information, please
- * visit: https://creativecommons.org/licenses/by/4.0/ SPDX-License-Identifier: CC-BY-4.0
- *
- * @note This code is provided by the creators of Helix. Visit our website at:
- * https://helix-lang.com/ for more information.
- */
+// -*- C++ -*-
+//===------------------------------------------------------------------------------------------===//
+//
+// Part of the Helix Project, under the Attribution 4.0 International license (CC BY 4.0).
+// You are allowed to use, modify, redistribute, and create derivative works, even for commercial
+// purposes, provided that you give appropriate credit, and indicate if changes were made.
+// For more information, please visit: https://creativecommons.org/licenses/by/4.0/
+//
+// SPDX-License-Identifier: CC-BY-4.0
+// Copyright (c) 2024 (CC BY 4.0)
+//
+//===------------------------------------------------------------------------------------------===//
+
 #include "parser/preprocessor/include/preprocessor.hh"
 
+#include <filesystem>
 #include <iostream>
 #include <memory>
 #include <optional>
@@ -68,7 +69,10 @@ TokenList Preprocessor::parse(std::shared_ptr<preprocessor::ImportNode> parent_n
         defines - working on now
         macros
     */
+    std::optional<preprocessor::import_helix> _temp_import;
     preprocessor::import_helix _import;
+    std::optional<std::filesystem::path> _temp_path;
+    u64 depth = 0;
 
     while (not_end()) {
         switch (current().token_kind()) {
@@ -76,7 +80,32 @@ TokenList Preprocessor::parse(std::shared_ptr<preprocessor::ImportNode> parent_n
                 parse_using();
                 break;
             case tokens::KEYWORD_IMPORT:  // module import
-                _import = parse_import(preprocessor::import_tree, parent_node);
+                for (string const& path : pkg_paths) {
+                    _temp_import = parse_import(preprocessor::import_tree, parent_node);
+
+                    if (_temp_import.has_value()) {
+                        _import = std::move(_temp_import.value());
+                        break;
+                    }
+                    
+                    _temp_path = file_system::resolve_path(std::filesystem::path(path));
+                    
+                    if (!_temp_path.has_value()) {
+                        error::Error(error::Line(current(), "import path not found", error::FATAL,
+                                 "validate the import path provided. if you meant to do an "
+                                 "explicit import, use import ..::{...} syntax."));
+
+                        std::exit(1);
+                    }
+
+                    rel_path.emplace_back(_temp_path.value());
+                    depth++;
+                }
+
+                for (u64 i = 0; i < depth; i++) {
+                    rel_path.pop_back();
+                }
+
                 break;
             case tokens::OPERATOR_LOGICAL_NOT:  // define invocation
                 if (peek_back()->token_kind() == tokens::IDENTIFIER) {
@@ -133,7 +162,7 @@ bool is_circular_import(const std::shared_ptr<preprocessor::ImportNode> &node) {
     return false;
 }
 
-preprocessor::import_helix
+std::optional<preprocessor::import_helix>
 Preprocessor::parse_import(std::unique_ptr<preprocessor::ImportTree> &import_tree,
                            std::shared_ptr<preprocessor::ImportNode> parent_node) {
     std::vector<TokenList> explicit_imports;
@@ -149,7 +178,7 @@ Preprocessor::parse_import(std::unique_ptr<preprocessor::ImportTree> &import_tre
     bool captured_import = false;
     bool captured_specific = false;
 
-    if (peek().has_value() && peek()->token_kind() != tokens::IDENTIFIER) {
+    if (peek().has_value() && peek()->token_kind() != tokens::IDENTIFIER && peek().has_value() && peek()->token_kind() == tokens::LITERAL_STRING) {
         error::Error(error::Line(peek().value(), "expected an identifier but got a string",
                                  error::ERR, "change the string import to a direct import."));
     }
@@ -195,6 +224,9 @@ Preprocessor::parse_import(std::unique_ptr<preprocessor::ImportTree> &import_tre
     // TODO: handle module imports from PATH and manually included dirs.
 
     if (!temp_path.has_value()) {
+        reverse(import_path.size()); // FIXME
+        return std::nullopt;
+
         error::Error(error::Line(import_path, "import path not found", error::FATAL,
                                  "validate the import path provided. if you meant to do an "
                                  "explicit import, use import ..::{...} syntax."));
@@ -229,7 +261,7 @@ Preprocessor::parse_import(std::unique_ptr<preprocessor::ImportTree> &import_tre
     }
 
     parsed_source.insert(parsed_source.cbegin(),
-                         Token(tokens::KEYWORD_NAMESPACE, string_import_path));
+                         Token(tokens::KEYWORD_MODULE, string_import_path));
     parsed_source.insert(parsed_source.cend(),
                          Token(tokens::PUNCTUATION_CLOSE_BRACE, string_import_path));
 

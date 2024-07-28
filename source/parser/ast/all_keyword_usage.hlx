@@ -1,5 +1,3 @@
-#[no-main]
-
 /* control flow */
 
 /// 9
@@ -39,11 +37,11 @@ unless false {
 // LOOPS
 
 /// 6
-for i in 0..10 {
+for i in 0:10 {
     break;
 }
 
-const for i in 0..10 {
+const for i in 0:10 {
     /// 2
     continue;
 }
@@ -173,13 +171,6 @@ module extend_syntax {
         
         */
     }
-
-
-
-
-
-    import idk_simethnig_else;
-
 
     let inst = Foo();
 
