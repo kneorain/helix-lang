@@ -1,16 +1,16 @@
-/**
- * @author Dhruvan Kartik
- * @copyright Copyright (c) 2024 (CC BY 4.0)
- *
- * @note This code is part of the Helix Language Project and is licensed under the Attribution 4.0
- * International license (CC BY 4.0). You are allowed to use, modify, redistribute, and create
- * derivative works, even for commercial purposes, provided that you give appropriate credit,
- * provide a link to the license, and indicate if changes were made. For more information, please
- * visit: https://creativecommons.org/licenses/by/4.0/ SPDX-License-Identifier: CC-BY-4.0
- *
- * @note This code is provided by the creators of Helix. Visit our website at:
- * https://helix-lang.com/ for more information.
- */
+// -*- C++ -*-
+//===------------------------------------------------------------------------------------------===//
+//
+// Part of the Helix Project, under the Attribution 4.0 International license (CC BY 4.0).
+// You are allowed to use, modify, redistribute, and create derivative works, even for commercial
+// purposes, provided that you give appropriate credit, and indicate if changes were made.
+// For more information, please visit: https://creativecommons.org/licenses/by/4.0/
+//
+// SPDX-License-Identifier: CC-BY-4.0
+// Copyright (c) 2024 (CC BY 4.0)
+//
+//===------------------------------------------------------------------------------------------===//
+
 #ifndef __PRE_HH__
 #define __PRE_HH__
 
@@ -22,6 +22,7 @@
 #include <utility>
 #include <vector>
 
+#include "core/utils/hx_print"
 #include "token/include/token.hh"
 #include "token/include/token_list.hh"
 
@@ -221,10 +222,12 @@ class Preprocessor {
         rel_path;  // if importing a module that would be the current rel path
 
     TokenList &source_tokens;
-    u32 current_pos;
+
+    std::vector<string> pkg_paths;
+    u32 current_pos{};
     u32 end;
 
-    preprocessor::import_helix parse_import(std::unique_ptr<preprocessor::ImportTree> &import_tree, std::shared_ptr<preprocessor::ImportNode> parent_node = nullptr);
+    std::optional<preprocessor::import_helix> parse_import(std::unique_ptr<preprocessor::ImportTree> &import_tree, std::shared_ptr<preprocessor::ImportNode> parent_node = nullptr);
 
     void parse_import_alias(TokenList &alias, const std::vector<TokenList> &explicit_imports);
     void handle_import_tokens(u32 &brace_level, bool &captured_import, bool &captured_specific,
@@ -282,15 +285,16 @@ class Preprocessor {
         return std::nullopt;
     }
 
-    inline bool not_end(u32 n = 0) const { return (current_pos + n) <= end; }
+    [[nodiscard]] inline bool not_end(u32 n = 0) const { return (current_pos + n) <= end; }
 
-    inline bool not_start(u32 n = 0) const { return current_pos >= n; }
+    [[nodiscard]] inline bool not_start(u32 n = 0) const { return current_pos >= n; }
 
   public:
-    explicit Preprocessor(TokenList &tokens, const std::string& name = "")
+    explicit Preprocessor(TokenList &tokens, const std::string& name = "", const std::vector<string>& _pkg_paths = {})
         : source_tokens(tokens)
-        , current_pos(0)
+        , pkg_paths(_pkg_paths)
         , end(tokens.size() - 2) { // accounting the eof token
+        pkg_paths.push_back(std::filesystem::path(tokens[0].file_name()).parent_path().string());
         rel_path.push_back(std::filesystem::path(tokens[0].file_name()).parent_path());
         std::transform(abi::reserved_map.begin(), abi::reserved_map.end(), allowed_abi.begin(),
                        [](const auto &pair) { return std::string(pair.second); });

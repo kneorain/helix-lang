@@ -1,16 +1,16 @@
-/**
- * @author Dhruvan Kartik
- * @copyright Copyright (c) 2024 (CC BY 4.0)
- *
- * @note This code is part of the Helix Language Project and is licensed under the Attribution 4.0
- * International license (CC BY 4.0). You are allowed to use, modify, redistribute, and create
- * derivative works, even for commercial purposes, provided that you give appropriate credit,
- * provide a link to the license, and indicate if changes were made. For more information, please
- * visit: https://creativecommons.org/licenses/by/4.0/ SPDX-License-Identifier: CC-BY-4.0
- *
- * @note This code is provided by the creators of Helix. Visit our website at:
- * https://helix-lang.com/ for more information.
- */
+// -*- C++ -*-
+//===------------------------------------------------------------------------------------------===//
+//
+// Part of the Helix Project, under the Attribution 4.0 International license (CC BY 4.0).
+// You are allowed to use, modify, redistribute, and create derivative works, even for commercial
+// purposes, provided that you give appropriate credit, and indicate if changes were made.
+// For more information, please visit: https://creativecommons.org/licenses/by/4.0/
+//
+// SPDX-License-Identifier: CC-BY-4.0
+// Copyright (c) 2024 (CC BY 4.0)
+//
+//===------------------------------------------------------------------------------------------===//
+
 #ifndef __AST_HH__
 #define __AST_HH__
 
@@ -24,7 +24,7 @@
 #include <vector>
 
 #include "core/error/error.hh"
-#include "parser/error_codes.def"
+#include "core/error/error_codes.def"
 #include "token/include/token.hh"
 #include "token/include/token_list.hh"
 
@@ -42,14 +42,21 @@
                                                     \
   private:                                          \
     TokenListRef source_tokens;                     \
+                                                    \
   public:
 
+#define make_ast_node(node_type, tokens) std::make_shared<node_type>(std::make_shared<TokenList>(tokens))
+// make_ast_node(Literal, make_ast_node())
+
 namespace parser::ast {
+
 struct ParseError {
     ParseError(token::Token tok, float error_code) {
         const auto &error_state = ERROR_MAP.at(error_code);
         error::Error(error::Line(tok, error_state.message, error_state.level, error_state.fix));
     };
+
+    virtual ~ParseError()                  = default;
 };
 
 using TokenListRef = std::shared_ptr<token::TokenList>;
@@ -97,21 +104,27 @@ namespace node {
     
     template <typename T>
     struct Annotation  : public ASTBase<Annotation<T>>  {};
-
-    struct Program : ASTBase<Program> {};
 }
 
-template <typename T = void>
-concept ASTNode      = std::derived_from<T, ASTBase<T>>;
+template <class T>
+concept ASTNode =
+    std::derived_from<T, ASTBase<T>>          || std::derived_from<T, node::Statement<T>>   ||
+    std::derived_from<T, node::Expression<T>> || std::derived_from<T, node::Declaration<T>> ||
+    std::derived_from<T, node::Type<T>>       || std::derived_from<T, node::Annotation<T>>;
 
-template <typename T = void>
-using NodePtr        = std::shared_ptr<ASTBase<T>>;
+template <typename T = ASTBase<void>>
+using NodePtr        = std::shared_ptr<T>;
 
 template <typename T = void>
 using NodeList       = std::vector<NodePtr<T>>;
 
 template <typename T = void>
 using Slice          = const std::reference_wrapper<NodeList<T>>;
+
+template <ASTNode T>
+constexpr std::shared_ptr<T> make_node(const token::TokenList& tokens) {
+    return std::make_shared<T>(std::make_shared<token::TokenList>(tokens));
+}
 }  // namespace parser::ast
 
 #endif  // __AST_HH__
