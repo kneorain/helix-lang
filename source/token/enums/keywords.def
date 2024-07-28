@@ -58,13 +58,13 @@
     GENERATE(KEYWORD_CONST,     "const"    ) \
     GENERATE(KEYWORD_GLOBAL,    "global"   ) \
     GENERATE(KEYWORD_FROM,      "from"     ) \
-    GENERATE(KEYWORD_USING,     "using"    ) \
+    GENERATE(KEYWORD_FFI,       "ffi"      ) \
     GENERATE(KEYWORD_IMPORT,    "import"   ) \
     GENERATE(KEYWORD_EXTERN,    "extern"   ) \
     GENERATE(KEYWORD_YIELD,     "yield"    ) \
     GENERATE(KEYWORD_AS,        "as"       ) \
     GENERATE(KEYWORD_DERIVES,   "derives"  ) \
-    GENERATE(KEYWORD_MODULE, "module")
+    GENERATE(KEYWORD_MODULE,    "module"   )
 
 // NOTE: IF THIS GENERATION IS CHANGED DO NOT FORGET TO UPDATE COUNT
 

@@ -65,7 +65,7 @@
                                                                                                   \
     enum reserved { RESERVED(MAKE_TOKEN) };                                                       \
                                                                                                   \
-    constexpr token::Mapping<reserved, RESERVED_COUNT> reserved_map{{RESERVED(MAKE_TOKEN_PAIR)}}; \
+    constexpr token::Mapping<reserved, RESERVED_COUNT> reserved{{RESERVED(MAKE_TOKEN_PAIR)}}; \
                                                                                                   \
     namespace classes {                                                                           \
         RESERVED(MAKE_TOKEN_CLASS)                                                                \
