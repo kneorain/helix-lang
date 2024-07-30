@@ -12,20 +12,21 @@
 //===------------------------------------------------------------------------------------------===//
 
 #include "token/include/token_list.hh"
-#include "core/types/hx_ints"
+
 #include <cstdint>
 #include <iostream>
+#include <optional>
+#include <print>
 #include <stdexcept>
 #include <string>
-#include <vector>
-#include <type_traits>
-#include <print>
 #include <utility>
+#include <vector>
+
+#include "core/types/hx_ints"
 #include "core/utils/colors_ansi.hh"
 #include "core/utils/josnify.hh"
 #include "token/include/generate.hh"
 #include "token/include/token.hh"
-#include <optional>
 
 namespace token {
 TokenList::TokenList(std::string filename)
@@ -48,22 +49,20 @@ const std::string &TokenList::file_name() const { return filename; }
 
 TokenList TokenList::slice(const std::uint64_t start, std::int64_t end) {
     if (end < 0) {
-        end = static_cast<
-        std::int64_t
-        >(this->size());// - (-end);
+        end = static_cast<std::int64_t>(this->size());  // - (-end);
     }
     if (end > static_cast<std::int64_t>(this->size())) {
         end = static_cast<std::int64_t>(this->size());
     }
 
-    if (start > end ) {
+    if (start > end) {
         throw std::out_of_range("Start of slice is greater than range.");
     }
 
     difference_type start_index = start;
-    difference_type end_index =end;
+    difference_type end_index = end;
 
-    return {this->filename, this->cbegin() + start_index, this->cbegin() + end_index };
+    return {this->filename, this->cbegin() + start_index, this->cbegin() + end_index};
 }
 
 TokenList TokenList::raw_slice(const std::uint64_t start, const std::int64_t end) const {
@@ -74,40 +73,35 @@ TokenList TokenList::raw_slice(const std::uint64_t start, const std::int64_t end
     return {this->filename, this->cbegin() + start_index, this->cbegin() + end_index};
 }
 
-/// @brief 
+/// @brief
 /// @param i Inclusive split
 /// @return first is the left side of the split and the second is the right
-std::pair<TokenList,TokenList> TokenList::split_at(const std::uint64_t i) const {
+std::pair<TokenList, TokenList> TokenList::split_at(const std::uint64_t i) const {
     auto start_idx = static_cast<TokenVec::difference_type>(i);
-    TokenList first {this->filename, this ->cbegin(), cbegin() + start_idx};
-    TokenList second {
-        this->filename, this->cbegin() + start_idx,  this->cend()
-    }
-    ;
-    return {first,second};
-    }
+    TokenList first{this->filename, this->cbegin(), cbegin() + start_idx};
+    TokenList second{this->filename, this->cbegin() + start_idx, this->cend()};
+    return {first, second};
+}
 
-    TokenList TokenList::pop( const std::uint64_t offset) {
+TokenList TokenList::pop(const std::uint64_t offset) {
 
-        auto diff = static_cast<TokenVec::difference_type>(offset);
-        *this = {this->filename, this->cbegin() + diff + 1, this->cend()};
+    auto diff = static_cast<TokenVec::difference_type>(offset);
+    *this = {this->filename, this->cbegin() + diff + 1, this->cend()};
 
-        // TODO: Bounds Checks
-       return{this->filename, this->cbegin(),this->cbegin() + diff};
+    // TODO: Bounds Checks
+    return {this->filename, this->cbegin(), this->cbegin() + diff};
+}
 
-}       
-
-   const Token &TokenList::pop_front() {
+const Token &TokenList::pop_front() {
     if (this->empty()) {
         throw std::out_of_range("Token is not in range");
     }
-    const Token& tok = this->front();
+    const Token &tok = this->front();
 
-    *this = {this->filename,this->cbegin()+1,this->cend()};
-    
+    *this = {this->filename, this->cbegin() + 1, this->cend()};
+
     return tok;
 }
-
 
 /**
  * @brief Replaces tokens in the list from start to end with the provided tokens.
@@ -242,7 +236,8 @@ std::reference_wrapper<Token> TokenList::TokenListIter::reverse(const std::int32
     return tokens.get()[cursor_position];
 }
 
-std::optional<std::reference_wrapper<Token>> TokenList::TokenListIter::peek(const std::int32_t n) const {
+std::optional<std::reference_wrapper<Token>>
+TokenList::TokenListIter::peek(const std::int32_t n) const {
     if ((cursor_position + n) <= end) {
         return tokens.get()[cursor_position + n];
     }
@@ -250,7 +245,8 @@ std::optional<std::reference_wrapper<Token>> TokenList::TokenListIter::peek(cons
     return std::nullopt;
 }
 
-std::optional<std::reference_wrapper<Token>> TokenList::TokenListIter::peek_back(const std::int32_t n) const {
+std::optional<std::reference_wrapper<Token>>
+TokenList::TokenListIter::peek_back(const std::int32_t n) const {
     if ((cursor_position - n) >= 0) {
         return tokens.get()[cursor_position - n];
     }

@@ -53,7 +53,7 @@ namespace parser::ast {
 struct ParseError {
     ParseError(token::Token tok, float error_code) {
         const auto &error_state = ERROR_MAP.at(error_code);
-        error::Error(error::Line(tok, error_state.message, error_state.level, error_state.fix));
+        error::Error(error::Line(tok, error_state->err, error_state->level, error_state->fix));
     };
 
     virtual ~ParseError()                  = default;

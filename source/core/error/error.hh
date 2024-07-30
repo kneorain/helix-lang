@@ -33,10 +33,10 @@ namespace error {
  * @brief Enumeration representing the level of an error.
  */
 enum Level {
-    NOTE,   ///< Informational note.
-    WARN,   ///< Warning level.
-    ERR,    ///< Error level.
-    FATAL,  ///< Fatal error level.
+    NOTE,   ///< Just a Info.
+    WARN,   ///< Warn, the compiler can move on to code gen. and produce a binary
+    ERR,    ///< Error, but compiler can continue parsing
+    FATAL,  ///< Fatal error all other proceeding errors omitted
 };
 
 /**

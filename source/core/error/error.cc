@@ -177,8 +177,6 @@ void Error::print_lines(const std::array<std::optional<std::string>, LINES_TO_SH
 
         ++index;
     }
-
-    print();
 }
 
 void Error::print_line(const std::string &line, const u32 &line_number, const u32 &col,
@@ -199,7 +197,7 @@ void Error::print_line(const std::string &line, const u32 &line_number, const u3
  */
 void Error::print_fix(const std::string_view fix_message, const u32 &col, const u32 &offset) {
     print("  ", std::string(colors::fg8::green), "fix", std::string(colors::reset), ": ",
-          fix_message, sysIO::endl('\n'));
+          fix_message, sysIO::endl("\n\n"));
 }
 
 /**

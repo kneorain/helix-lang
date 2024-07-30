@@ -1,8 +1,7 @@
-import test_imports::test_imports;
+ffi "c++" import hi_there
 
-import std::range;
-import std::file_sytem;
 
+/*
 const cols: int = 14;
 
 fn parse_char(c: char) -> string {
@@ -36,3 +35,4 @@ fn main() {
         }
     }
 }
+*/
