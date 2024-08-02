@@ -14,6 +14,7 @@
 #include "lexer/include/lexer.hh"
 
 #include <string>
+#include <vector>
 
 #include "core/error/error.hh"
 #include "lexer/include/cases.def"
@@ -86,23 +87,24 @@ inline Token Lexer::process_single_line_comment() {
 }
 
 inline Token Lexer::process_multi_line_comment() {
-    auto start = currentPos;
+    auto start   = currentPos;
     u32 comment_depth = 0;
 
     u32 start_line = line;
-    u32 start_col = column;
+    u32 start_col  = column;
 
     while (!is_eof()) {
         switch (current()) {
             case '/':
+                if (peek_forward() == '*') {
+                    ++comment_depth;
+                    bare_advance(2);
+                }
+                break;
             case '*':
-                switch (peek_forward()) {
-                    case '*':
-                        ++comment_depth;
-                        break;
-                    case '/':
-                        --comment_depth;
-                        break;
+                if (peek_forward() == '/') {
+                    --comment_depth;
+                    bare_advance(2);
                 }
                 break;
             case '\n':
@@ -119,12 +121,12 @@ inline Token Lexer::process_multi_line_comment() {
     }
 
     if (comment_depth != 0) {
-        throw error::Error(
-            error::Line(file_name, start_line, start_col, 2, "unterminated block comment"));
+        auto bad_token = Token{start_line, start_col, 2, offset, "", file_name};
+        throw error::Error(error::CodeError(&bad_token, 2.1002, {}, std::vector<string>{"block comment"}));
     }
 
     return {line,
-            column - (currentPos - start),
+            start_col,
             currentPos - start,
             offset,
             source.substr(start, currentPos - start),
@@ -168,8 +170,9 @@ inline Token Lexer::next_token() {
             return parse_operator();
     }
 
-    throw error::Error(error::Line(file_name, line, column, 1,
-                                   "unknown token '" + std::string(1, current()) + "'"));
+    auto bad_token = Token{line, column, 1, offset, std::string(1, current()), file_name};
+    
+    throw error::Error(error::CodeError(&bad_token, 1.0011, std::vector<string>{std::string(1, current())}));
 }
 
 inline Token Lexer::parse_compiler_directive() {
@@ -288,8 +291,9 @@ inline Token Lexer::parse_numeric() {
     // if theres a . then it is a float
     if (is_float) {
         if (dot_count > 1) {
-            throw error::Error(error::Line(file_name, line, column - (currentPos - start),
-                                           currentPos - start, "invalid float"));
+            auto bad_token = Token{line, column - (currentPos - start), currentPos - start, offset, source.substr(start, currentPos - start), file_name, "<float>"};
+
+            throw error::Error(error::CodeError(&bad_token, 0.0003));
         }
         return {line,
                 column - (currentPos - start),
@@ -341,8 +345,8 @@ inline Token Lexer::parse_string() {
     }
 
     if (is_eof()) {
-        throw error::Error(
-            error::Line(file_name, start_line, start_column, 1, "unterminated string"));
+        auto bad_token = Token{start_line, start_column, 1, offset, "\"", file_name};
+        throw error::Error(error::CodeError(&bad_token, 2.1002, {}, std::vector<string>{"string"}));
     }
 
     switch (quote) {

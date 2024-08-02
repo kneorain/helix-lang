@@ -24,6 +24,15 @@ target("helix")
         set_runtimes("MD")         -- Use the release version of the runtime library
     end
 
+    if is_plat("macosx") then
+        add_syslinks("z", "c++", "System")
+
+        add_cxxflags("-stdlib=libc++", "-static-libgcc", "-static", {tools = "clang"})
+
+        add_linkdirs("/usr/lib/")
+        add_links("z", "c++", "System")
+    end
+
 target("tests")
     set_kind("binary")
     set_warnings("all")

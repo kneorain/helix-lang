@@ -66,7 +66,6 @@ parser::ast::ParseResult parser::ast::node::Literal::parse() {
                 break;
 
             default:
-                print(tok.current().get().to_json());
                 return std::unexpected(ParseError(tok.current().get(), 1.010));
         }
 

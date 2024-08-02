@@ -17,6 +17,7 @@
 
 #include "cli/include/cli.hh"
 #include "controllers/include/file_system.hh"
+#include "core/error/error.hh"
 #include "core/utils/hx_print"
 #include "lexer/include/lexer.hh"
 #include "parser/ast/include/ast.hh"
@@ -24,7 +25,7 @@
 #include "parser/preprocessor/include/preprocessor.hh"
 #include "token/include/token_list.hh"
 
-int main(int argc, char **argv) {
+int compile(int argc, char **argv) {
     using namespace token;
     using namespace parser;
     using namespace lexer;
@@ -55,13 +56,14 @@ int main(int argc, char **argv) {
     if (parsed_args.emit_ast) {
         // for testing only change to parse an entire program when done with ast
         NodePtr<node::Literal> ast = make_node<node::Literal>(tokens);
-        u64 num_parsed_tokens = ast->parse().value_or(0);
+        ast->parse().value_or(0);
+
         print(ast->to_json());
     }
 
     if (parsed_args.emit_tokens) {
         // print(tokens.to_json());
-        print_tokens(tokens);
+        print(tokens.to_json());
     }
 
     auto end = std::chrono::high_resolution_clock::now();
@@ -72,4 +74,16 @@ int main(int argc, char **argv) {
     print("            ", diff.count() * 1000, " ms");
 
     return 0;
+}
+
+int main(int argc, char **argv) {
+    try {
+        compile(argc, argv);
+    } catch (error::Error&) {
+        if (error::HAS_ERRORED) {
+        for (const auto& err : error::ERRORS) {
+                print(err.to_json());
+            }
+        }
+    }
 }

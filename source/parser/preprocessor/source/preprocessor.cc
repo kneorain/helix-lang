@@ -64,9 +64,8 @@ void handle_invalid_abi_option(Preprocessor *self) {
         abi_options = abi_options.substr(0, abi_options.size() - 2);
     }
 
-    error::Error(error::Line(self->peek().value(),
-                             "disallowed abi option, abi should only be a string.", error::ERR,
-                             "use one of allowed abi options [" + abi_options + "]"));
+    auto bad_token = self->peek().value();
+    error::Error(error::CodeError(&bad_token, 0.7004, std::vector<string>{abi_options}));
 }
 
 void parse_import(Preprocessor *self) {}
@@ -95,8 +94,7 @@ iter_body:
     switch (self->current().token_kind()) {  // at call time peek should be a string
         case tokens::KEYWORD_FFI:
             if (self->peek().value_or(Token()).token_kind() != tokens::LITERAL_STRING) {
-                error::Error(
-                    error::Line(self->current(), "missing required abi identifier", error::FATAL));
+                error::Error(error::CodeError(&self->current(), 0.7005));
             }
 
             self->advance(2);  // skip ffi and the string ident
@@ -114,8 +112,7 @@ iter_body:
             brace_count++;
 
             if (brace_count <= 0) {  // if theres more }'s then opening ones
-                error::Error(
-                    error::Line(self->current(), "unterminated closing brace", error::ERR));
+                throw error::Error(error::CodeError(&self->current(), 2.1002, {}, std::vector<string>{"closing brace"}));
             }
 
             self->advance();  // skip {
@@ -126,8 +123,7 @@ iter_body:
             brace_count--;
 
             if (brace_count < 0) {  // if theres an additional closing brace
-                error::Error(
-                    error::Line(self->current(), "unterminated opening brace", error::ERR));
+                throw error::Error(error::CodeError(&self->current(), 2.1002, {}, std::vector<string>{"opening brace"}));
             }
 
             if (brace_count == 0) {  // completed
@@ -142,32 +138,29 @@ iter_body:
         abi_import:
             // syntax: 'import' (string (',' string)*) ';'
             if (!self->peek().has_value()) {  // just 'import' no specifier
-                throw error::Error(           // fatal failed error
-                    error::Line(self->peek().value(), "invalid syntax, import what?", error::FATAL,
-                                "fix import statement `import \"...\";`"));
+                auto bad_token = self->peek().value();
+                throw error::Error(error::CodeError(&bad_token, 0.10001, {}, std::vector<string>{"opening brace"}));
             }
 
             if (self->peek().value().token_kind() != tokens::LITERAL_STRING) {
-                error::Error(error::Line(
-                    self->peek().value(), "invalid ffi import syntax", error::FATAL,
-                    "did you mean to do `import \"" + self->peek().value().value() + "\"`"));
+                // 0.10101
+                auto bad_token = self->peek().value();
+                throw error::Error(error::CodeError(&bad_token, 0.10101, std::vector<string>{"import \"" + self->peek().value().value() + "\""}));
             }
 
             self->advance(2);  // skip 'import' string | other
             // current should only be either ; or ,
 
             if (self->current().token_kind() == tokens::PUNCTUATION_COMMA) {  // (',' string)*
-                error::Error(error::Line(self->current(),
-                                         "invalid syntax, only 1 import allowed per import",
-                                         error::FATAL, "move to a different import statement"));
+                // 0.10102
+                error::Error(error::CodeError(&self->current(), 0.10102));
                 // TODO: add parsing if needed (might not look cohesive)
                 //       dont forget to advance after parsing out multiple
             }
 
             // ';' at this point it should only be a semicolon
             if (self->current().token_kind() != tokens::PUNCTUATION_SEMICOLON) {
-                throw error::Error(error::Line(self->peek_back().value(), "missing semicolon",
-                                               error::FATAL, "insert a semi-colon"));
+                error::Error(error::CodeError(&self->current(), 4.0001, {}, {}, std::vector<std::pair<token::Token, i64>>{std::make_pair(Token(tokens::PUNCTUATION_SEMICOLON), static_cast<i64>(-1))}));
             }
 
             self->advance();  // skip ; or ,
@@ -191,8 +184,7 @@ iter_body:
                 jump_back = true;
                 break;
             } else {
-                error::Error(error::Line(self->current(), "invalid syntax", error::FATAL,
-                                         "maybe you forgot a semi-colon?"));
+                error::Error(error::CodeError(&self->current(), 0.0001));
             }
     }
 

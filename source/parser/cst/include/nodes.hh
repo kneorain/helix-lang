@@ -66,15 +66,14 @@ struct Quoted final : CSTBase<Quoted<quote, TOKE_KIND>> {
 
         // print(delim_tokes->to_json());
         if (toke.token_kind() != TOKE_KIND) {
-            error::Error(error::Line(toke, "Expected a quote literal"));
+            error::Error(error::CodeError(&toke, 2.1004, {}, std::vector<string>{"quote literal"}));
         };
 
         // There in no need to check for the token kind as the value of this
         this->format = static_cast<Format>(toke.value().at(0));
 
         if (format == Format::Invalid) {
-            error::Error(error::Line(toke.file_name(), toke.line_number(), toke.column_number(), 1,
-                                     "Invalid format specifier"));
+            error::Error(error::CodeError(&toke, 5.1003));
         }
 
         this->value = toke;
@@ -400,7 +399,7 @@ struct Delimited final
 
         // Check if the first token is the start token
         if (tokens->front().token_kind() != StartTokenKind) {
-            error::Error(error::Line(tokens->front(), "Expected a start token"));
+            error::Error(error::CodeError(&tokens->front(), 2.1004, {}, std::vector<string>{"start token"}));
         };
 
         delim_tokes = std::make_shared<TokenList>(delim_tokes->slice(1));
@@ -411,14 +410,14 @@ struct Delimited final
 
         if (!res.has_value()) {
             // TODO: ERROR
-            error::Error("Error",error::Level::ERR); // TODO: Error
+            throw;
         }
         
         delim_tokes = res.value();
         
         // Check if the last token is the end token
         if (delim_tokes->back().token_kind() != EndTokensKind) {
-            error::Error(error::Line(delim_tokes->front(), "Expected an end token"));
+            error::Error(error::CodeError(&delim_tokes->front(), 2.1004, {}, std::vector<string>{"end token"}));
         }
 
         delim_tokes = std::make_shared<TokenList>(delim_tokes->slice(1));

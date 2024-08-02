@@ -17,193 +17,363 @@
 #include "core/error/error.hh"
 
 #include <array>
+#include <format>
 #include <iomanip>
 #include <optional>
+#include <tuple>
+#include <vector>
 
 #include "controllers/include/file_system.hh"
 #include "core/utils/colors_ansi.hh"
 #include "core/utils/hx_print"
+#include "parser/ast/include/ast.hh"
+#include "token/include/token.hh"
 
 /**
  @namespace error
  * @brief Contains classes and functions related to error handling and reporting.
  */
 namespace error {
-/**
- * @brief Constructs an Error object with the given error information.
- * @param error The error information.
- */
-Error::Error(const Line &error) {
-    HAS_ERRORED = true;
-    if (error.file_name.starts_with("<") && error.file_name.ends_with(">")) {
-        print_start(error.message, error.level);
-        print_info(error.message, error.file_name, error.line_number, error.column, error.offset);
-        return;
-    }
+using line_type = std::pair<bool, std::tuple<string, string, bool>>;
+using lines_vec = std::vector<line_type>;
 
-    std::array<std::optional<std::string>, LINES_TO_SHOW> lines;
-    file_system::get_line(error.file_name, error.line_number);
+template <typename T>
+class Reverse {
+  public:
+    explicit Reverse(T &container)
+        : container_(container) {}
 
-    u32 half_lines_to_show = u32(LINES_TO_SHOW / 2);
-    u32 start_index =
-        (error.line_number < half_lines_to_show) ? 1 : (error.line_number - half_lines_to_show);
+    auto begin() const { return container_.rbegin(); }
+    auto end() const { return container_.rend(); }
 
-    u8 index = 0;
-    for (u32 i = start_index; (i - start_index) < LINES_TO_SHOW; i++) {
-        lines[index] = file_system::get_line(error.file_name, i);
-        ++index;
-    }
+  private:
+    T &container_;
+};
 
-    if (lines[LINES_TO_SHOW].has_value() && lines[LINES_TO_SHOW].value().empty()) {
-        lines[LINES_TO_SHOW] = std::nullopt;
-    }
-
-    // print("file_name: ", error.file_name, "\n"
-    //          , "line_number: ", error.line_number, "\n"
-    //          , "column: ", error.column, "\n"
-    //          , "offset: ", error.offset, "\n"
-    //          , "message: ", error.message, "\n"
-    //          , "level: ", error.level, "\n"
-    //          , "fix: ", error.fix, sysIO::endl('\n'));
-
-    print_start(error.message, error.level);
-    print_info(error.message, error.file_name, error.line_number, error.column, error.offset);
-    print_lines(lines, start_index, error.line_number, error.column, error.offset);
-
-    if (!error.fix.empty()) {
-        print_fix(error.fix, error.column, error.offset);
-    } else {
-        print_no_fix();
-    }
+static inline void lstrip(std::string &str) {
+    str.erase(str.begin(), std::find_if(str.begin(), str.end(),
+                                        [](unsigned char chr) { return std::isspace(chr) == 0; }));
 }
 
-/**
- * @brief Constructs an Error object with the given message and level.
- * @param message The error message.
- * @param level The level of the error.
- */
-Error::Error(const std::string &message, const Level &level) {
-    HAS_ERRORED = true;
-    print_start(message, level);
+// Trim from the end (in place)
+static inline void rstrip(std::string &str) {
+    str.erase(std::find_if(str.rbegin(), str.rend(),
+                           [](unsigned char chr) { return std::isspace(chr) == 0; })
+                  .base(),
+              str.end());
 }
 
-/**
- * @brief Constructs an Error object with the given compiler information.
- * @param compiler The compiler information.
- */
-Error::Error(const Compiler &compiler) {
-    HAS_ERRORED = true;
-    print_start(compiler.message, compiler.level, compiler.file_name);
-    if (!compiler.fix.empty()) {
-        print_fix(compiler.fix, 0, 0);
-    } else {
-        print_no_fix();
-    }
+// Trim from both ends (in place)
+static inline void strip(std::string &str) {
+    lstrip(str);
+    rstrip(str);
 }
 
-/**
- * @brief Prints the start of the error message, including the level and file name if provided.
- * @param message The error message.
- * @param level The level of the error.
- * @param file_name The name of the file where the error occurred.
- */
-void Error::print_start(const std::string_view message, const Level &level,
-                        const std::string_view file_name) {
-    switch (level) {
-        case NOTE:
-            print(std::string(colors::fg8::cyan), std::string(colors::effects::bold), "note",
-                  sysIO::endl(""));
-            break;
-        case WARN:
-            print(std::string(colors::fg8::yellow), std::string(colors::effects::bold), "warning",
-                  sysIO::endl(""));
-            break;
-        case ERR:
-            print(std::string(colors::fg8::red), std::string(colors::effects::bold), "error",
-                  sysIO::endl(""));
-            break;
-        case FATAL:
-            print(std::string(colors::fg8::red), std::string(colors::effects::blink),
-                  std::string(colors::bold), "fatal", sysIO::endl(""));
-            break;
-    }
-
-    if (!file_name.empty()) {
-        print(std::string(colors::reset), " at ", std::string(colors::fg8::green), file_name,
-              std::string(colors::reset), sysIO::endl(""));
-    }
-    print(std::string(colors::reset), ": ", message, sysIO::endl('\n'));
+// Check if a string is empty or contains only whitespace
+bool is_empty_or_whitespace(const std::string &str) {
+    std::string trimmed = str;
+    strip(trimmed);
+    return trimmed.empty();
 }
 
-/**
- * @brief Prints additional information about the error, such as file name, line number, and column.
- * @param message The error message.
- * @param file_name The name of the file where the error occurred.
- * @param line The line number where the error occurred.
- * @param col The column number where the error occurred.
- * @param offset The offset where the error occurred.
- */
-void Error::print_info(const std::string_view message, const std::string_view file_name,
-                       const u32 &line, const u32 &col, const u32 &offset) {
-    print("     ", "├─> ", std::string(colors::reset), " at ", std::string(colors::fg8::green),
-          file_name, std::string(colors::reset), ":", std::string(colors::fg8::yellow), line,
-          std::string(colors::reset), ":", std::string(colors::fg8::yellow), col + 1,
-          std::string(colors::reset), sysIO::endl('\n'));
-}
+string bold_red(const string &str) {
+    return string(colors::effects::bold) + string(colors::fg16::red) + str + string(colors::reset);
+};
 
-/**
- * @brief Prints the lines of code surrounding the error location.
- * @param lines The lines of code.
- * @param line The line number where the error occurred.
- * @param col The column number where the error occurred.
- * @param offset The offset where the error occurred.
- */
-void Error::print_lines(const std::array<std::optional<std::string>, LINES_TO_SHOW> &lines,
-                        const u32 &start_index, const u32 &error_line, const u32 &col,
-                        const u32 &offset) {
-    u32 index = start_index;
+string bold_green(const string &str) {
+    return string(colors::effects::bold) + string(colors::fg16::green) + str +
+           string(colors::reset);
+};
 
-    for (auto line : lines) {
-        if (index != error_line) {
-            if (line.has_value()) {
-                print(std::setw(4), index, " ", "│ ", std::string(colors::reset), line.value(),
-                      sysIO::endl('\n'));
-            }
+string bold_yellow(const string &str) {
+    return string(colors::effects::bold) + string(colors::fg16::yellow) + str +
+           string(colors::reset);
+};
+
+string red(const string &str) { return string(colors::fg16::red) + str + string(colors::reset); };
+
+string green(const string &str) {
+    return string(colors::fg16::green) + str + string(colors::reset);
+};
+
+string yellow(const string &str) {
+    return string(colors::fg16::yellow) + str + string(colors::reset);
+};
+
+string format_loc_info(const string &file_name, u64 line, u64 col) {
+    return green(file_name) + ":" + yellow(std::to_string(line)) + ":" +
+           yellow(std::to_string(col));
+};
+
+lines_vec get_surrounding_lines(const string &file_name, u64 line) {
+    // if odd number, get even amount of lines behind and after
+    // if even number, get -1 lines before and same amount of lines after
+
+    // calculate lines to get before
+
+    u64 lines_before = (LINES_TO_SHOW % 2 == 0) ? (LINES_TO_SHOW / 2) - 1 : (LINES_TO_SHOW / 2);
+    lines_vec lines;  // {bool : (string, string, bool)}
+
+    u64 start_line = (line <= lines_before) ? 1 : (line - lines_before);
+
+    for (u64 i = start_line; i < start_line + LINES_TO_SHOW; ++i) {
+        auto line_content = file_system::get_line(file_name, i);
+        if (line_content.has_value()) {
+            lines.emplace_back(
+                false, std::make_tuple(std::to_string(i), line_content.value(), i == line));
         } else {
-            if (line.has_value()) {
-                print_line(line.value(), error_line, col, offset);
-            }
+            break;
+        }
+    }
+
+    // remove blank lines from either side
+
+    for (auto &line : lines) {
+        if (std::get<2>(line.second)) {
+            break;  // we have marked discard for the part before the error line
         }
 
-        ++index;
+        if (is_empty_or_whitespace(std::get<1>(line.second))) {
+            line.first = true;  // set discard to true
+        } else {
+            break;
+        }
+    }
+
+    for (auto &line : Reverse(lines)) {
+        if (std::get<2>(line.second)) {
+            break;  // we have marked discard for the part after the error line
+        }
+
+        if (is_empty_or_whitespace(std::get<1>(line.second))) {
+            line.first = true;  // set discard to true
+        } else {
+            break;
+        }
+    }
+
+    // remove all the elements marked for discard from 'lines' of type
+    // std::vector<std::pair<bool, std::tuple<string, string, bool>>>
+    // aka {discard : (line_no, line, is_err_line)}
+
+    lines.erase(std::remove_if(lines.begin(), lines.end(),
+                                [](const auto &line) {
+                                    return line.first;  // discard is true
+                                }),
+                lines.end());
+
+    return lines;
+};
+
+// pop the first elemnt from teh vec and insert it into the string and add the len of the fix to the rest of the cols
+void insert_and_reorder(string& line, std::vector<std::pair<string, u32>>& quick_fix) {
+    std::pair<string, u32> fix;
+
+    if (!quick_fix.empty()) {
+        fix = quick_fix[0];
+        quick_fix.erase(quick_fix.begin());
+    }
+
+    for (auto &fixes : quick_fix) {
+        fixes.second += fix.first.size();
+    }
+
+    for (int i = 0; i < fix.first.size(); i++) {
+        line.insert((line.begin() + fix.second + i), fix.first[i]);
     }
 }
 
-void Error::print_line(const std::string &line, const u32 &line_number, const u32 &col,
-                       const u32 &offset) {
-    print(std::setw(4), line_number, " ", "│ ", std::string(colors::reset), line.substr(0, col),
-          std::string(colors::fg8::red), line.substr(col, offset), std::string(colors::reset),
-          line.substr(offset + col), sysIO::endl('\n'));
-    print("     ", ": ", std::string(colors::reset), std::string(col, ' '),
-          std::string(colors::fg8::red), std::string(offset, '^'), std::string(colors::reset),
-          sysIO::endl('\n'));
+// colors and adds quick fixes to line itself and returns the marking lines
+string color_and_mark(line_type& line_typ, u64 col, u64 len, std::vector<std::pair<string, u32>> quick_fix = {}) {
+    string line_no = std::get<0>(line_typ.second);
+    string line    = std::get<1>(line_typ.second);
+    bool   is_pof  = std::get<2>(line_typ.second);
+    
+    string marking;
+    marking.reserve(line.size());
+
+    std::sort(quick_fix.begin(), quick_fix.end(), [](const auto& first, const auto& second) {
+        return first.second < second.second;
+    }); // sort the quick_fix based on the loc
+
+    rstrip(line); // remove any trailing whitespace on the left side only
+
+    if (quick_fix.empty()) {
+        goto mark_line;
+    }
+
+    // else if there are quick_fixes
+
+    for (auto &fixes : quick_fix) {
+        fixes.first = green(fixes.first);
+    }
+
+    // line = ffi "c++" import "hi_there"
+    // quick_fix = [(";", -1)]
+    
+
+mark_line:
+
+    
+    return "";
 }
 
-/**
- * @brief Prints the fix message for the error, if available.
- * @param fix_message The fix message.
- * @param col The column number where the error occurred.
- * @param offset The offset where the error occurred.
- */
-void Error::print_fix(const std::string_view fix_message, const u32 &col, const u32 &offset) {
-    print("  ", std::string(colors::fg8::green), "fix", std::string(colors::reset), ": ",
-          fix_message, sysIO::endl("\n\n"));
+Error::Error(const CodeError &err) {
+    HAS_ERRORED = true;
+
+    final_err.color_mode = "16bit";
+    final_err.error_type = "code";
+
+    switch (ERROR_MAP.at(err.err_code)->level) {
+        case NOTE:
+            final_err.level = "note";
+            break;
+        case WARN:
+            final_err.level = "warn";
+            break;
+        case ERR:
+            final_err.level = "error";
+            break;
+        case FATAL:
+            final_err.level = "fatal";
+            break;
+    }
+
+    final_err.file = err.pof->file_name();
+
+    final_err.msg = ERROR_MAP.at(err.err_code)->err;
+    if (err.err_fmt_args.has_value() && !err.err_fmt_args->empty()) {
+        final_err.msg = fmt_string(ERROR_MAP.at(err.err_code)->err, err.err_fmt_args.value());
+    }
+
+    final_err.fix = ERROR_MAP.at(err.err_code)->fix;
+    if (err.fix_fmt_args.has_value() && !err.fix_fmt_args->empty()) {
+        final_err.fix = fmt_string(ERROR_MAP.at(err.err_code)->fix, err.fix_fmt_args.value());
+    }
+
+    final_err.line = err.pof->line_number();
+    final_err.col = err.pof->column_number();
+    final_err.offset = err.pof->length();
+
+    if (err.opt_fixes.has_value()) {
+        for (const auto &fix_pos_pair : err.opt_fixes.value()) {
+            final_err.quick_fix.emplace_back((fix_pos_pair.first.value() == fix_pos_pair.first.token_kind_repr() ? fix_pos_pair.first.token_kind_repr() : fix_pos_pair.first.value()),
+                                             calculate_addition_pos(fix_pos_pair.second));
+        }
+    }
+
+    ERRORS.push_back(final_err);
+
+    if (SHOW_ERROR) {
+        show_error();
+    }
 }
 
-/**
- * @brief Prints a message indicating that no fix is available for the error.
- */
-void Error::print_no_fix() { print(sysIO::endl('\n')); }
+Error::Error(const CompilerError &err) {
+    HAS_ERRORED = true;
+
+    final_err.color_mode = "16bit";
+    final_err.error_type = "compiler";
+
+    switch (ERROR_MAP.at(err.err_code)->level) {
+        case NOTE:
+            final_err.level = "note";
+            break;
+        case WARN:
+            final_err.level = "warn";
+            break;
+        case ERR:
+            final_err.level = "error";
+            break;
+        case FATAL:
+            final_err.level = "fatal";
+            break;
+    }
+
+    final_err.msg = ERROR_MAP.at(err.err_code)->err;
+    if (err.err_fmt_args.has_value() && !err.err_fmt_args->empty()) {
+        final_err.msg = fmt_string(ERROR_MAP.at(err.err_code)->err, err.err_fmt_args.value());
+    }
+
+    final_err.fix = ERROR_MAP.at(err.err_code)->fix;
+    if (err.fix_fmt_args.has_value() && !err.fix_fmt_args->empty()) {
+        final_err.fix = fmt_string(ERROR_MAP.at(err.err_code)->fix, err.fix_fmt_args.value());
+    }
+
+    final_err.line = 0;
+    final_err.col = 0;
+    final_err.offset = 0;
+
+    ERRORS.push_back(final_err);
+}
+
+void Error::process_full_line() {
+    auto full_line = file_system::get_line(final_err.file, final_err.line);
+
+    if (!full_line.has_value()) {
+        // TODO: throw error
+        std::exit(288);
+    }
+
+    while (true) {
+        if (full_line->empty()) {
+            break;
+        }
+
+        if (full_line->ends_with(' ')) {
+            full_line->erase(full_line->end());
+        } else {
+            break;
+        }
+    }
+
+    final_err.full_line = full_line.value();
+}
+
+u32 Error::calculate_addition_pos(i64 pos) const {
+    if (pos < 0) {
+        pos = static_cast<i64>(final_err.full_line.size() - 1 /* remove term */) + pos;
+    }
+
+    return static_cast<u32>(pos);
+}
+
+void Error::show_error() {
+    /*
+    fatal: missing semicolon
+         ├─>  at tests/main.hlx:1:18
+       1 │ ffi "c++" import "hi_there";
+         :                  ^^^^^^^^^^+
+       2 │
+       3 │
+       4 │
+       5 │ const cols: int = 14;
+      fix: insert a semi-colon
+
+    fatal: missing semicolon
+         ├─>  at tests/main.hlx:1:18
+       1 │ ffi "c++" import "hi_there"
+         :                  ++++++++++
+       2 │
+       3 │
+       4 │
+       5 │ const cols: int = 14;
+      fix: insert a semi-colon
+    */
+    
+    lines_vec lines = get_surrounding_lines(final_err.file, final_err.line);
+    string markings;
+
+    for (auto line : lines) {
+        if (std::get<2>(line.second)) {
+            markings = color_and_mark(line, final_err.col, final_err.offset, final_err.quick_fix);
+        }
+    }
+
+    print(final_err.to_json());
+
+
+}
 }  // namespace error
 
 #undef LINES_TO_SHOW

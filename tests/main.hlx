@@ -1,4 +1,5 @@
-ffi "c++" import hi_there
+
+ffi "c++" import "hi_there"
 
 
 /*
