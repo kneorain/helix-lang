@@ -53,6 +53,8 @@ int compile(int argc, char **argv) {
 
     // print the preprocessed tokens
 
+    auto end = std::chrono::high_resolution_clock::now();
+
     if (parsed_args.emit_ast) {
         // for testing only change to parse an entire program when done with ast
         NodePtr<node::Literal> ast = make_node<node::Literal>(tokens);
@@ -66,7 +68,7 @@ int compile(int argc, char **argv) {
         print(tokens.to_json());
     }
 
-    auto end = std::chrono::high_resolution_clock::now();
+    
     std::chrono::duration<double> diff = end - start;
 
     // Print the time taken in nanoseconds and milliseconds

@@ -104,7 +104,9 @@ inline Token Lexer::process_multi_line_comment() {
             case '*':
                 if (peek_forward() == '/') {
                     --comment_depth;
-                    bare_advance(2);
+                    if (comment_depth != 0) {
+                        bare_advance(2);
+                    }
                 }
                 break;
             case '\n':

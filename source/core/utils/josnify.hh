@@ -61,13 +61,13 @@ constexpr inline std::string to_json(T key, const u32 &depth, const std::string 
                key.to_json(depth + 1);
     } else if constexpr (std::is_same_v<T, char>) {
         return indent(depth) + (alias.empty() ? stringify(key) : '"' + alias + '"') + ": \"" +
-               std::string(1, key) + "\"";
+               escape(std::string(1, key)) + "\"";
     } else if constexpr (std::is_arithmetic_v<T>) {
         return indent(depth) + (alias.empty() ? stringify(key) : '"' + alias + '"') + ": " +
                std::to_string(key);
     } else {
         return indent(depth) + (alias.empty() ? stringify(key) : '"' + alias + '"') + ": \"" +
-               std::string(key) + "\"";
+               escape(std::string(key)) + "\"";
     }
 }
 }  // end namespace jsonify
