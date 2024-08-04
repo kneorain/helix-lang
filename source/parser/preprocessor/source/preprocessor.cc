@@ -14,18 +14,13 @@
 #include "parser/preprocessor/include/preprocessor.hh"
 
 #include <filesystem>
-#include <iostream>
 #include <memory>
 #include <optional>
 #include <string>
-#include <unordered_set>
 #include <utility>
 #include <vector>
 
-#include "controllers/include/file_system.hh"
 #include "core/error/error.hh"
-#include "core/utils/colors_ansi.hh"
-#include "lexer/include/lexer.hh"
 #include "token/include/generate.hh"
 #include "token/include/token.hh"
 
