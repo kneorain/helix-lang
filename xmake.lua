@@ -2,15 +2,55 @@ set_project("helix-lang")
 add_rules("mode.debug", "mode.release")
 add_rules("plugin.vsxmake.autoupdate")
 
+-- Define the LLVM and Clang package
+package("llvm-clang")
+    add_deps("cmake")
+    set_sourcedir(path.join(os.scriptdir(), "libs", "llvm-18.1.9-src", "llvm"))
+    on_install(function (package)
+        local configs = {}
+        
+        table.insert(configs, "-DLLVM_ENABLE_PROJECTS=clang")
+        table.insert(configs, "-DCMAKE_BUILD_TYPE=Release")  -- always build in release mode
+        table.insert(configs, "-DLLVM_ENABLE_ZSTD=FORCE_ON")  -- enable ZSTD support
+        -- table.insert(configs, "-LLVM_ENABLE_RUNTIMES=all") -- FIXME: once tested
+        table.insert(configs, "-DLLVM_ENABLE_ZLIB=FORCE_ON")  -- enable ZSTD support
+        table.insert(configs, "-DLLVM_ENABLE_RTTI=ON")  -- enable RTTI for dynamic_cast and typeid
+        table.insert(configs, "-DLLVM_ENABLE_BENCHMARKS=OFF")  -- turn off benchmarks
+        table.insert(configs, "-DLLVM_INCLUDE_BENCHMARKS=OFF") -- exclude benchmarks
+        table.insert(configs, "-DLLVM_INCLUDE_TESTS=OFF")  -- exclude tests
+        table.insert(configs, "-DLLVM_INCLUDE_DOCS=ON")  -- include documentation
+        table.insert(configs, "-DLLVM_INCLUDE_EXAMPLES=ON")  -- exclude examples
+        table.insert(configs, "-DLLVM_PARALLEL_LINK_JOBS=3")  -- parrallize
+        import("package.tools.cmake").install(package, configs)
+    end)
+package_end()
+
+-- specify the use of the LLVM-Clang package
+add_requires("llvm-clang")
+
+-- platform-specific configuration for homebrew installed libs and includes
+if os.host() == "macosx" then
+    if os.exists("/opt/homebrew/include") and os.exists("/opt/homebrew/lib") then
+        add_includedirs("/opt/homebrew/include")
+        add_linkdirs("/opt/homebrew/lib")
+    end
+elseif os.host() == "linux" then
+    if os.exists("/home/linuxbrew/.linuxbrew/include") and os.exists("/home/linuxbrew/.linuxbrew/lib") then
+        add_includedirs("/home/linuxbrew/.linuxbrew/include")
+        add_linkdirs("/home/linuxbrew/.linuxbrew/lib")
+    end
+end
+
 target("helix")
     set_kind("binary")
     set_warnings("all")
     
     add_files("source/**.cc")    -- add all files in the source directory
-    
     add_headerfiles("source/**.hh")    -- add all headers in the source directory
     add_includedirs("source")
     set_languages("c++23")      -- set the standard C++ version to C++23
+    add_packages("llvm-clang")  -- link against the LLVM-Clang package
+    add_links("zstd")
 
     if is_mode("debug") then
         set_symbols("debug")       -- Generate debug symbols
@@ -22,15 +62,6 @@ target("helix")
         set_optimize("fastest")    -- Enable maximum optimization
         add_defines("NDEBUG")      -- Define NDEBUG macro
         set_runtimes("MD")         -- Use the release version of the runtime library
-    end
-
-    if is_plat("macosx") then
-        add_syslinks("z", "c++", "System")
-
-        add_cxxflags("-stdlib=libc++", "-static-libgcc", "-static", {tools = "clang"})
-
-        add_linkdirs("/usr/lib/")
-        add_links("z", "c++", "System")
     end
 
 target("tests")
@@ -47,6 +78,8 @@ target("tests")
     add_includedirs("source")
     add_includedirs("tests/lib")
     set_languages("c++23")      -- set the standard C++ version to C++23
+    add_packages("llvm-clang")  -- link against the LLVM-Clang package
+    add_links("zstd")
 
     set_symbols("debug")       -- Generate debug symbols
     set_optimize("none")       -- Disable optimization
