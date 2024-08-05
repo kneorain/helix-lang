@@ -24,6 +24,7 @@
 #include "parser/ast/include/nodes/expr_nodes.hh"
 #include "parser/preprocessor/include/preprocessor.hh"
 #include "token/include/token_list.hh"
+#include "parser/cpp/fn_signatures.hh"
 
 int compile(int argc, char **argv) {
     using namespace token;
@@ -36,8 +37,12 @@ int compile(int argc, char **argv) {
     // "D:\projects\helix-lang\tests\main.hlx"
     // std::string file_name = "/Volumes/Container/Projects/Helix/helix-lang/tests/main.hlx"; //
     // relative to current working dir in POSIX shell (cmd/bash)
-    command_line::CLIArgs parsed_args(argc, argv, "0.0.1");
+    command_line::CLIArgs parsed_args(argc, argv, "0.0.1-alpha-0112");
     check_exit(parsed_args);
+
+    // try getting function signatures from c++ file:
+    // const string& filename = file_system::resolve_path(parsed_args.file)->string();
+    // parse_signatures(filename);
 
     // read the file and tokenize its contents : stage 0
     TokenList tokens = Lexer(file_system::read_file(parsed_args.file), parsed_args.file).tokenize();
