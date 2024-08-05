@@ -57,7 +57,9 @@ Helix draws inspiration from the best parts of Rust, Python, Zig, and other mode
 - **OOP Support**: Unlike Rust, Zig, and Mojo, Helix supports OOP, which is crucial for certain domains like AI development and game development. This allows for more intuitive code organization and reuse through classes and inheritance.
 - **Preprocessor**: Helix includes a preprocessor, providing additional flexibility and control over code compilation.
 
-Helix aims to offer the right balance between safety, simplicity, and flexibility, making it an ideal choice for modern software development.
+Helix aims to offer the right balance between safety, simplicity, and flexibility, while also trying to be a better cross paltfrom C++, unlike Zig and Rust which both try to be a better C.
+
+Helix aims to extract the cleanest and best parts of C++ without the bloat and unreadablity of it, as said by Bjarne Stroustrup, "Within C++, there is a much smaller and cleaner language struggling to get out". Helix aims to be the smaller and cleaner langauge thats getting out.
 
 ## Helix Syntax Examples
 
