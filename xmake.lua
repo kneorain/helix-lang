@@ -71,22 +71,22 @@ target("helix-api")
         local target_dir = path.directory(target:targetfile())
 
         -- Create directories for library and headers
-        os.mkdir(path.join(target_dir, "shared/helix-api/lib"))
-        os.mkdir(path.join(target_dir, "shared/helix-api/include"))
+        os.mkdir(path.join(target_dir, "api/lib"))
+        os.mkdir(path.join(target_dir, "api/include"))
 
         -- Move the compiled library to the 'lib' folder
-        os.cp(target:targetfile(), path.join(target_dir, "shared/helix-api/lib/"))
+        os.cp(target:targetfile(), path.join(target_dir, "api/lib/"))
         os.rm(target:targetfile())
 
         -- Copy header files to the 'include' folder
-        local headers = os.files("../../source/**.hh")
+        local headers = os.files("source/**.hh")
         for _, header in ipairs(headers) do
             local rel_path = path.relative(header, "source")
-            os.mkdir(path.join(target_dir, "shared/helix-api/include", path.directory(rel_path)))
-            os.cp(header, path.join(target_dir, "shared/helix-api/include", rel_path))
+            os.mkdir(path.join(target_dir, "api/include", path.directory(rel_path)))
+            os.cp(header, path.join(target_dir, "api/include", rel_path))
         end
 
-        local file = io.open(path.join(target_dir, "shared/helix-api", "xmake.lua"), "w")
+        local file = io.open(path.join(target_dir, "api", "xmake.lua"), "w")
         file:write([[
 target("helix-api")
     set_kind("static")
