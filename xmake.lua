@@ -43,6 +43,9 @@ add_rules("plugin.vsxmake.autoupdate")
     set_targetdir("$(buildir)/$(mode)/$(arch)-unknown-$(plat)/bin")
     set_objectdir("$(buildir)/.resolver")
     set_dependir("$(buildir)/.shared")
+    set_policy("build.across_targets_in_parallel", true) -- optimization
+    
+
 -- end config
 
 target("tests")
