@@ -10,25 +10,41 @@ package("llvm-clang")
     set_sourcedir(path.join(os.scriptdir(), "libs", "llvm-18.1.9-src", "llvm"))
     on_install(function (package)
         local configs = {}
-        
+
         table.insert(configs, "-DLLVM_ENABLE_PROJECTS=clang")
+
         table.insert(configs, "-DCMAKE_BUILD_TYPE=Release")  -- always build in release mode
-        table.insert(configs, "-DLLVM_ENABLE_ZSTD=FORCE_ON")  -- enable ZSTD support
-        -- table.insert(configs, "-LLVM_ENABLE_RUNTIMES=all") -- FIXME: once tested
-        table.insert(configs, "-DLLVM_ENABLE_ZLIB=FORCE_ON")  -- enable ZSTD support
-        table.insert(configs, "-DLLVM_ENABLE_RTTI=ON")  -- enable RTTI for dynamic_cast and typeid
-        table.insert(configs, "-DLLVM_ENABLE_BENCHMARKS=OFF")  -- turn off benchmarks
-        table.insert(configs, "-DLLVM_INCLUDE_BENCHMARKS=OFF") -- exclude benchmarks
-        table.insert(configs, "-DLLVM_INCLUDE_TESTS=OFF")  -- exclude tests
-        table.insert(configs, "-DLLVM_INCLUDE_DOCS=ON")  -- include documentation
-        table.insert(configs, "-DLLVM_INCLUDE_EXAMPLES=ON")  -- exclude examples
-        table.insert(configs, "-DLLVM_PARALLEL_LINK_JOBS=3")  -- parrallize link
+        
+        if is_tool("cc", "cl") or is_tool("cxx", "cl") then
+            -- FIXME: add thing to do check thing windowws thing if msvc
+            table.insert(configs, "-DLLVM_ENABLE_ZSTD=OFF")      -- disable ZSTD support
+            table.insert(configs, "-DLLVM_ENABLE_ZLIB=OFF")      -- disable ZLIB support
+            table.insert(configs, "-DLLVM_ENABLE_LIBXML2=OFF")   -- disable libxml2 support
+        else
+            table.insert(configs, "-DLLVM_ENABLE_ZSTD=FORCE_ON") -- enable ZSTD support
+            table.insert(configs, "-DLLVM_ENABLE_ZLIB=FORCE_ON") -- enable ZLIB support
+        end
+
+        table.insert(configs, "-DLLVM_ENABLE_RTTI=ON")             -- enable RTTI for dynamic_cast and typeid
+        table.insert(configs, "-DLLVM_ENABLE_BENCHMARKS=OFF")      -- turn off benchmarks
+        table.insert(configs, "-DLLVM_INCLUDE_BENCHMARKS=OFF")     -- exclude benchmarks
+        table.insert(configs, "-DLLVM_INCLUDE_TESTS=OFF")          -- exclude tests
+        table.insert(configs, "-DLLVM_INCLUDE_DOCS=ON")            -- include documentation
+        table.insert(configs, "-DLLVM_INCLUDE_EXAMPLES=ON")        -- exclude examples
+        table.insert(configs, "-DLLVM_PARALLEL_LINK_JOBS=5")       -- parallelize
+        
         import("package.tools.cmake").install(package, configs, {cmake_generator = "Ninja"})
     end)
 package_end()
 
 -- specify the use of the LLVM-Clang package
 add_requires("llvm-clang")
+
+-- TODO windows only oc
+if os.host() == "windows" then 
+    add_requires("zlib")
+    add_requires("zstd")
+end
 
 -- platform-specific configuration for homebrew installed libs and includes
 if os.host() == "macosx" then
@@ -41,6 +57,11 @@ elseif os.host() == "linux" then
         add_includedirs("/home/linuxbrew/.linuxbrew/include")
         add_linkdirs("/home/linuxbrew/.linuxbrew/lib")
     end
+elseif os.host() == "windows" then 
+    add_includedirs(".\\libs\\llvm-18.1.9-src\\llvm\\include")
+    add_linkdirs(".\\libs\\llvm-18.1.9-src\\llvm\\lib")
+    add_includedirs(".\\libs\\llvm-18.1.9-src\\clang\\include")
+    add_linkdirs(".\\libs\\llvm-18.1.9-src\\clang\\lib")
 end
 
 -- set up config
@@ -58,11 +79,8 @@ end
     end
 
     local use_runtime = configure_runtime()
-    
+
     if is_mode("debug") then
-        if is_plat("windows") then
-            set_runtimes("$(use_runtime)d")
-        end
         set_symbols("debug")       -- Generate debug symbols
         set_optimize("none")       -- Disable optimization
         add_defines("DEBUG")       -- Define DEBUG macro
@@ -84,6 +102,11 @@ end
     set_dependir("$(buildir)/.shared")
     set_policy("build.across_targets_in_parallel", true) -- optimization
     add_packages("llvm-clang")  -- link against the LLVM-Clang package
+    if os.host() == "windows" then
+        add_packages("zlib")
+        add_packages("zstd")
+        add_syslinks("ntdll", "version")
+    end
     add_links("zstd")
     set_description("The Helix Compiler. Python's Simplicity, Rust inspired Syntax, and C++'s Power")
 -- end config
@@ -94,7 +117,6 @@ target("tests")
 
     add_headerfiles("tests/**.hh")    -- add all headers in the tests directory
     add_includedirs("tests/lib")
-
     set_symbols("debug")       -- Generate debug symbols
     set_optimize("none")       -- Disable optimization
     add_defines("DEBUG")       -- Define DEBUG macro
