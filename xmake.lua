@@ -22,8 +22,8 @@ package("llvm-clang")
         table.insert(configs, "-DLLVM_INCLUDE_TESTS=OFF")  -- exclude tests
         table.insert(configs, "-DLLVM_INCLUDE_DOCS=ON")  -- include documentation
         table.insert(configs, "-DLLVM_INCLUDE_EXAMPLES=ON")  -- exclude examples
-        table.insert(configs, "-DLLVM_PARALLEL_LINK_JOBS=3")  -- parrallize
-        import("package.tools.cmake").install(package, configs)
+        table.insert(configs, "-DLLVM_PARALLEL_LINK_JOBS=3")  -- parrallize link
+        import("package.tools.cmake").install(package, configs, {cmake_generator = "Ninja"})
     end)
 package_end()
 
@@ -83,8 +83,9 @@ end
     set_objectdir("$(buildir)/.resolver")
     set_dependir("$(buildir)/.shared")
     set_policy("build.across_targets_in_parallel", true) -- optimization
-    
-
+    add_packages("llvm-clang")  -- link against the LLVM-Clang package
+    add_links("zstd")
+    set_description("The Helix Compiler. Python's Simplicity, Rust inspired Syntax, and C++'s Power")
 -- end config
 
 target("tests")
@@ -93,9 +94,6 @@ target("tests")
 
     add_headerfiles("tests/**.hh")    -- add all headers in the tests directory
     add_includedirs("tests/lib")
-    set_languages("c++23")      -- set the standard C++ version to C++23
-    add_packages("llvm-clang")  -- link against the LLVM-Clang package
-    add_links("zstd")
 
     set_symbols("debug")       -- Generate debug symbols
     set_optimize("none")       -- Disable optimization
