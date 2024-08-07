@@ -1,0 +1,157 @@
+
+
+class string {}
+class int {}
+
+// call a function based on a slice; like fnName::call(slice)
+class u8 {}
+class u16 {}
+class u32 {}
+class u64 {}
+class u128 {}
+
+
+class i8 {}
+class i16 {}
+class i32 {}
+class i64 {}
+class i128 {}
+
+
+class f32 {}
+class f64 {}
+
+class char {
+
+    eval SIZE = ... 
+}
+
+
+abstract Iterator {
+   ...
+}
+
+class Slice requires <T> {}
+
+
+abstract Chary {
+    abstract fn to_char() -> char;
+}
+
+
+
+
+abstract Debug {
+    abstract fn debug() -> string;
+}
+
+abstract Error {}
+
+abstract Copyable {
+    fn copy() -> Self;
+}
+
+abstract Lengthy requires <Num> Num is Number {
+    fn len() -> Num;
+}
+
+/// An interface for indexing into a collection with bounds checking.
+abstract Indexable requires <Index,Output> {
+
+    /// Get a reference to the element at the given index and check bounds.
+    op [Index] as fn at(self&, idx: Index) -> Optional<Output&>; 
+    
+    /// Get a const reference to the element at the given index and check bounds.
+    const op [Index] as fn at(self&, idx: Index) -> Optional<const Output&>; 
+    
+    /// Get a clone of the element at the given index and check bounds.
+    const op [Index] as fn at(self&, idx: Index) -> Optional<Output> if Output is Copyable:
+        return self.at(idx).copy();                                                  
+}
+
+/// An interface for indexing into a collection without bounds checking.
+abstract UncheckedIndexable requires <Output,Index> {
+    
+    /// Get a reference to the element at the given index without checking bounds.
+    unsafe op [Index] as fn at(self&, idx: Index) -> Output&;
+
+    /// Get a const reference to the element at the given index without checking bounds.
+    unsafe const op [Index] as fn at(self&, idx: Index) -> const Output&;
+
+    /// Get a clone of the element at the given index without checking bounds.
+    unsafe const op [Index] as fn at(self&, idx: Index) -> Output
+        if Element is Copyable:
+            unsafe self.at(index).copy()
+}
+
+
+
+abstract ListLike:Indexable<Element> requires <Element,Err> where Err is Error {
+
+    /// Removes the last element from a list and returns it, or null if it is empty.
+    fn pop(self&) -> Element?;
+
+    /// Appends an element to the end of a list.
+    fn push(self&, element: Element) -> ...; // should this be a Result?
+
+
+    fn insert(self&, idx: derives Idx, element: Element) -> ...;
+
+    fn is_empty(const self&) -> bool;
+
+    fn len(const self&) -> int;
+    
+}
+
+
+
+// not sure if index should be in the header or on each function
+
+
+
+
+
+
+
+
+
+abstract Stringable {
+    abstract string to_string();
+}
+
+abstract Mapable {
+
+    abstract fn insert(key: string, value: string) ->  
+
+}
+
+
+abstract Stringy { 
+
+    // derives Length:
+    // abstract fn len() -> int;
+
+    
+
+    
+
+
+
+
+
+
+}
+
+
+
+abstract Number {
+
+}
+
+
+abstract Length requires <Num> Num is Number 
+{
+    abstract fn len() ->;
+}
+
+
