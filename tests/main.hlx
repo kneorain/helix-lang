@@ -1,8 +1,8 @@
-import test_imports::test_imports;
 
-import std::range;
-import std::file_sytem;
+ffi "c++" import "hi_there"
 
+
+/*
 const cols: int = 14;
 
 fn parse_char(c: char) -> string {
@@ -36,3 +36,15 @@ fn main() {
         }
     }
 }
+*/
+
+/* helix::panic takes the following args:
+
+PanicFrame(
+    the error: T requres T is Stringable
+    the sournding lines based on the proj config: list<tuple<string, bool>>
+    the file name: string
+    the line number: u64
+)
+*/
+// helix::panic(PanicFrame(RuntimeError("faild"), [("const cols: int = 14;", false), ("fn parse_char(c: char) -> char {", false), ("    panic RuntimeError(\"faild\");", true), ("}", false)], "tests/main.hlx", 4));

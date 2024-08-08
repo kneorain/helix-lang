@@ -24,6 +24,10 @@
 #include "token/include/generate.hh"
 
 namespace token {
+/*
+Token(u64 line, u64 column, u64 length, u64 offset, std::string_view value,
+          const std::string &filename, std::string_view token_kind = "");
+*/
 struct Token {
   private:
     u32 line{};                     ///< Line number where the token is located
@@ -38,6 +42,7 @@ struct Token {
   public:
     Token(u64 line, u64 column, u64 length, u64 offset, std::string_view value,
           const std::string &filename, std::string_view token_kind = "");
+    explicit Token(tokens token_type, std::string value = "");
     Token(const Token &other);
     Token &operator=(const Token &other);
     Token(Token &&other) noexcept;

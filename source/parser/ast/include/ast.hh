@@ -21,6 +21,7 @@
 #include <functional>
 #include <memory>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "core/error/error.hh"
@@ -51,9 +52,8 @@
 namespace parser::ast {
 
 struct ParseError {
-    ParseError(token::Token tok, float error_code) {
-        const auto &error_state = ERROR_MAP.at(error_code);
-        error::Error(error::Line(tok, error_state.message, error_state.level, error_state.fix));
+    ParseError(token::Token& tok, float error_code, std::optional<std::vector<string>> fix_fmt_args = std::nullopt, std::optional<std::vector<string>> err_fmt_args = std::nullopt, std::optional<std::vector<std::pair<token::Token, i64>>> opt_fixes = std::nullopt) {
+        error::Error(error::CodeError(&tok, error_code, std::move(fix_fmt_args), std::move(err_fmt_args),  std::move(opt_fixes)));
     };
 
     virtual ~ParseError()                  = default;

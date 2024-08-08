@@ -11,8 +11,8 @@
 //
 //===------------------------------------------------------------------------------------------===//
 
-#ifndef __AST_EXPR_NODES_HH__
-#define __AST_EXPR_NODES_HH__
+#ifndef __AST_STATE_NODES_HH__
+#define __AST_STATE_NODES_HH__
 
 #include "parser/ast/include/ast.hh"
 #include "parser/ast/include/nodes/nodes.hh"
@@ -87,4 +87,4 @@ struct BlockStatement final : Statement<BlockStatement> {
 };
 }  // namespace parser::ast::node
 
-#endif  // __AST_EXPR_NODES_HH__
+#endif  // __AST_STATE_NODES_HH__

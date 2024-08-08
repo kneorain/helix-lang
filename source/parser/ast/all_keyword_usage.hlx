@@ -152,24 +152,13 @@ module extend_syntax {
         let a: u8;
         let b: u8;
     }
+}
 
-    module idk_simethnig_else {
-        extend Foo {
-            fn add(self, b: u8) -> u8 {
-                return self + b;
-            }
+module idk_simethnig_else {
+    derives Foo {
+        fn add(self, b: u8) -> u8 {
+            return self + b;
         }
-        /*
-        class Foo {
-            uint_8 a;
-            uint_8 b;
-
-            uint_8 add(u8 b) {
-                return this + b;
-            }
-        };
-        
-        */
     }
 
     let inst = Foo();

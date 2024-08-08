@@ -11,41 +11,288 @@
 //
 //===------------------------------------------------------------------------------------------===//
 
-#include <map>
-#include <string>
-#include <optional>
+#include <regex>
+#include <vector>
 #include "core/error/error.hh"
-#include "token/include/generate.hh"
+#include "core/types/advanced_comptime_map.hh"
 
 struct Errors {
-    std::string  message;
-    std::string  fix;
+    string err;
+    string fix;
     error::Level level = error::ERR;
-    std::optional<token::tokens> pin_point;
+    
 };
 
+namespace std {
+    template<>
+    struct hash<Errors> {
+        std::size_t operator()(const Errors& e) const noexcept {
+            return std::hash<std::string_view>{}(e.err) ^ std::hash<std::string_view>{}(e.fix);
+        }
+    };
+}
 
-const std::map<float, Errors> ERROR_MAP = {
-    {0.001, {"invalid syntax"}},
-    {0.002, {"invalid use of a literal", "use the literal in a correct manner."}},
+inline string fmt_string(const string& format, const std::vector<string>& fmt_args) {
+    string result;
+    std::size_t N = fmt_args.size();
+    result.reserve(format.size());
 
-    // ...
+    std::size_t argIndex = 0;
+    std::size_t len = format.size();
 
-    {1.010, {"syntax error got unaccepted", "use a literal here which is the only excepted here"}},
-    {1.020, {"char grater then size 1", "reduce the char to size 1, or convert to a string and implicitly get the numeric representation."}},
-};
+    for (std::size_t i = 0; i < len; ++i) {
+        if (format[i] == '{' && i + 1 < len && format[i + 1] == '}') {
+            if (argIndex >= N) {
+                throw std::invalid_argument("Insufficient arguments provided for format string");
+            }
+            result += fmt_args[argIndex++];
+            ++i; // Skip over the closing '}'
+        } else {
+            result += format[i];
+        }
+    }
+
+    if (argIndex != N) {
+        throw std::invalid_argument("Too many arguments provided for format string: \"" + format + "\"");
+    }
+
+    return result;
+}
+
+const helix::CompTimeMap<float, Errors, 100> ERROR_MAP({
+    // Syntax Errors
+    MP(0.0001, Errors{"invalid syntax", "", error::ERR}),
+    MP(0.0002, Errors{"invalid use of a literal", "use the literal in a correct manner.", error::ERR}),
+    MP(0.0003, Errors{"bad float", "", error::ERR}),
+    MP(1.0010, Errors{"syntax error, unexpected token '{}'", "use a correct literal here.", error::ERR}),
+    MP(1.0011, Errors{"syntax error, unknown token '{}'", "remove this token", error::ERR}),
+    MP(1.0020, Errors{"char '{}' greater than size 1", "reduce the char to size 1, or convert to a string.", error::ERR}),
+
+    // Compile-time Errors
+    MP(2.0001, Errors{"undefined variable '{}'", "declare the variable '{}' before using it.", error::ERR}),
+    MP(2.1001, Errors{"file not found, '{}'", "", error::FATAL}),
+    MP(2.1002, Errors{"unterminated {}"}),
+    MP(2.1003, Errors{"failed to read file, '{}'", "maybe a unicode decoding error?", error::FATAL}),
+    MP(2.1004, Errors{"Expected a {}"}),
+    MP(2.0002, Errors{"unused variable '{}'", "remove the variable '{}' or use it in your code.", error::WARN}),
+    MP(3.0001, Errors{"type mismatch: expected '{}', found '{}'", "ensure the types match: expected '{}', but found '{}'.", error::ERR}),
+    MP(4.0001, Errors{"missing semicolon", "add a semicolon at the end of the statement.", error::ERR}),
+    MP(5.0001, Errors{"expected '{}', found '{}'", "use the correct syntax: expected '{}' but found '{}'.", error::ERR}),
+
+    // Control Flow Errors
+    MP(0.1001, Errors{"missing semicolon in if statement", "add a semicolon at the end of the if statement.", error::ERR}),
+    MP(0.1002, Errors{"incorrect syntax in else statement", "correct the syntax in the else statement.", error::ERR}),
+    MP(0.1003, Errors{"invalid syntax in while loop", "ensure the syntax of the while loop is correct.", error::ERR}),
+
+    // Variable Declaration errors
+    MP(0.2001, Errors{"missing type annotation in variable declaration", "add a type annotation to the variable declaration.", error::ERR}),
+    MP(0.2002, Errors{"invalid use of let, const, auto, priv, ptr, and nullable declarations (?)", "ensure correct usage of variable declaration keywords.", error::ERR}),
+    MP(0.2003, Errors{"incorrect variable declaration", "correct the syntax of the variable declaration.", error::ERR}),
+
+    // Function Definition Errors
+    MP(0.3001, Errors{"missing return type in function definition", "add a return type to the function definition.", error::ERR}),
+    MP(0.3002, Errors{"incorrect function signature", "ensure the function signature matches the expected format.", error::ERR}),
+    MP(0.3003, Errors{"invalid use of lambda or inline functions", "ensure correct usage of lambda or inline functions.", error::ERR}),
+
+    // Async, Await, Spawn, Thread errors
+    MP(0.4001, Errors{"incorrect usage of async", "ensure correct usage of the async keyword.", error::ERR}),
+    MP(0.4002, Errors{"invalid usage of await", "ensure correct usage of the await keyword.", error::ERR}),
+    MP(0.4003, Errors{"improper usage of spawn or thread", "ensure correct usage of spawn or thread for concurrency.", error::ERR}),
+
+    // Pattern Matching Errors
+    MP(0.5001, Errors{"incorrect syntax in switch statement", "ensure the switch statement syntax is correct.", error::ERR}),
+    MP(0.5002, Errors{"invalid syntax in match statement", "correct the syntax of the match statement.", error::ERR}),
+
+    // Error Handling Syntax Errors
+    MP(0.6001, Errors{"incorrect usage of try", "ensure correct usage of the try keyword.", error::ERR}),
+    MP(0.6002, Errors{"invalid use of catch", "ensure correct usage of the catch keyword.", error::ERR}),
+    MP(0.6003, Errors{"improper use of finally", "ensure correct usage of the finally keyword.", error::ERR}),
+    MP(0.6004, Errors{"incorrect use of panic", "ensure correct usage of the panic keyword.", error::ERR}),
+
+    // Pre-processor Directive Errors
+    MP(0.7001, Errors{"improper define usage", "ensure correct syntax and usage of the define directive.", error::ERR}),
+    MP(0.7002, Errors{"invalid global define", "ensure correct syntax and usage of the global define directive.", error::ERR}),
+    MP(0.7003, Errors{"incorrect macro usage", "ensure the macro is defined and used correctly.", error::ERR}),
+    MP(0.7004, Errors{"disallowed abi option, abi should only be a string.", "use one of allowed abi options [{}]", error::ERR}),
+    MP(0.7005, Errors{"missing required abi identifier"}),
+
+    // Type Handling Errors
+    MP(0.8001, Errors{"incorrect use of type_of!", "ensure correct usage of the type_of! macro.", error::ERR}),
+    MP(0.8002, Errors{"invalid use of sizeof!", "ensure correct usage of the sizeof! macro.", error::ERR}),
+    MP(0.8003, Errors{"improper use of is keyword", "ensure correct usage of the is keyword.", error::ERR}),
+    MP(0.8004, Errors{"incorrect use of as keyword", "ensure correct usage of the as keyword.", error::ERR}),
+
+    // Data Structure Declaration errors
+    MP(0.9001, Errors{"incorrect class definition", "ensure the class is defined correctly.", error::ERR}),
+    MP(0.9002, Errors{"invalid struct definition", "ensure the struct is defined correctly.", error::ERR}),
+    MP(0.9003, Errors{"improper enum declaration", "ensure the enum is declared correctly.", error::ERR}),
+    MP(0.9004, Errors{"incorrect union definition", "ensure the union is defined correctly.", error::ERR}),
+    MP(0.9005, Errors{"invalid interface definition", "ensure the interface is defined correctly.", error::ERR}),
+    MP(0.9006, Errors{"incorrect abstract class definition", "ensure the abstract class is defined correctly.", error::ERR}),
+    MP(0.9007, Errors{"improper type alias usage", "ensure the type alias is used correctly.", error::ERR}),
+
+    // Import Errors
+    MP(0.10001, Errors{"invalid import syntax", "ensure the import statement is correct.", error::ERR}),
+    MP(0.10004, Errors{"invalid as keyword usage in import", "ensure the as keyword is used correctly in the import statement.", error::ERR}),
+    MP(0.10101, Errors{"invalid ffi import", "did you mean to do `{}`?", error::ERR}),
+    MP(0.10102, Errors{"invalid ffi import, only 1 import allowed per statement", "move to a different import statement", error::ERR}),
+
+    // Macro Errors
+    MP(0.11001, Errors{"errors in defining macros", "ensure the macro definition is correct.", error::ERR}),
+    MP(0.11002, Errors{"errors in using macros", "ensure the macro is used correctly.", error::ERR}),
+
+    // Operator Errors
+    MP(0.12001, Errors{"incorrect use of custom operators", "ensure custom operators are used correctly.", error::ERR}),
+    MP(0.12002, Errors{"invalid operator overloading", "ensure operators are overloaded correctly.", error::ERR}),
+
+    // Statement Termination Errors
+    MP(0.13001, Errors{"missing or incorrect placement of semicolons", "ensure semicolons are placed correctly.", error::ERR}),
+
+    // Memory Errors
+    MP(2.1001, Errors{"dangling pointer detected", "ensure the pointer '{}' is not used after the memory is freed.", error::FATAL}),
+    MP(2.1002, Errors{"memory leak detected", "ensure all allocated memory is freed appropriately.", error::FATAL}),
+    MP(2.1003, Errors{"invalid memory access at address '{}'", "ensure memory is accessed within valid bounds.", error::FATAL}),
+
+    // Type Errors
+    MP(3.1001, Errors{"type mismatch in assignment: expected '{}', found '{}'", "ensure the types of the assigned variables match: expected '{}', but found '{}'.", error::ERR}),
+    MP(3.1002, Errors{"invalid type conversion from '{}' to '{}'", "ensure type conversions from '{}' to '{}' are valid and safe.", error::ERR}),
+
+    // Logical Errors
+    MP(4.1001, Errors{"logical flaw detected", "review the logic to ensure it meets the intended behavior.", error::NOTE}),
+
+    // Semantic Errors
+    MP(5.1001, Errors{"semantic error: invalid operation '{}'", "ensure operations are semantically correct for the data types: '{}'.", error::ERR}),
+    MP(5.1002, Errors{"semantic error: incorrect feature usage '{}'", "ensure language features are used correctly even if the syntax is correct: '{}'.", error::ERR}),
+    MP(5.1003, Errors{"invalid format specifier", "only the following specifiers can be used 'r, u, b, f'", error::ERR}),
+
+    // Deprecated Code Usage
+    MP(6.1001, Errors{"using deprecated function '{}'", "replace '{}' with the recommended alternative function.", error::WARN}),
+
+    // Other Errors
+    MP(7.1001, Errors{"unreachable code detected after '{}'", "remove or refactor unreachable code after '{}'.", error::WARN}),
+    MP(7.1002, Errors{"unused variable '{}' detected", "remove or utilize the declared variable '{}'.", error::WARN}),
+    MP(7.1003, Errors{"code style warning: '{}'", "follow the recommended code style and formatting guidelines: '{}'.", error::NOTE}),
+});
+
+
+// Error Keys
+/* 0 : Syntax Errors
+  1  : Variable Declaration Errors
+        - Missing type annotations
+        - Invalid use of let, const, auto, priv, ptr, and nullable declarations (?)
+  2  : Function Definition Errors
+        - Missing return type
+        - Incorrect function signature
+        - Incorrect use of lambda or inline functions
+  3  : Control Flow Errors
+        - Missing semicolons in if, else, unless, else if, else unless, and ternary operations
+        - Improper syntax in if, else, unless, else if, else unless
+  4  : Async, Await, Spawn, Thread Errors
+        - Incorrect usage of async, await, spawn, and thread
+  5  : Pattern Matching Errors
+        - Incorrect syntax in switch, match, case, and default statements
+  6  : Error Handling Syntax Errors
+        - Incorrect usage of try, catch, finally, and panic
+  7  : Pre-processor Directive Errors
+        - Improper define, global define, and macro usage
+  8  : Type Handling Errors
+        - Incorrect use of type_of!, sizeof!, is, and as
+  9  : Data Structure Declaration Errors
+        - Incorrect definition of class, struct, enum, union, interface, abstract, and type
+  10 : Import Errors
+        - Incorrect usage of import, using, from, and as for importing modules
+  11 : Macro Errors
+        - Errors in defining and using macros
+  12 : Operator Errors
+        - Incorrect use of custom operators and operator overloading
+  13 : Statement Termination Errors
+        - Missing or incorrect placement of semicolons
+*/
+
+/* 1 : Compile-time Errors
+  1  : Type Mismatch Errors
+        - Assigning incompatible types
+        - Incorrect type conversions
+  2  : Name Resolution Errors
+        - Undefined variables, functions, or modules
+  3  : Scope Errors
+        - Variable or function used outside of its scope
+  4  : Interface Implementation Errors
+        - Missing required method implementations
+        - Incorrect implementation of interface methods
+  5  : Abstract Method Implementation Errors
+        - Missing implementation of abstract methods
+  6  : Inheritance Errors
+        - Incorrect use of inheritance keywords (derives, implements)
+  7  : Template and Generic Errors
+        - Incorrect use of templates and generics
+        - Type constraints violations
+  8  : Const Correctness Errors
+        - Modifying variables or references marked as const
+  9  : Immutable Reference Errors
+        - Attempting to modify immutable references or values
+  10 : Function Signature Errors
+        - Incorrect number of arguments in function calls
+        - Mismatched argument types in function calls
+  11 : Module Import Errors
+        - Circular dependencies
+        - Missing or invalid module paths
+  12 : Attribute and Annotation Errors
+        - Incorrect use of attributes and annotations
+  13 : Inline Assembly Errors
+        - Syntax errors in inline assembly code
+  14 : Linkage Errors
+        - Incorrect usage of extern and linkage specifications
+  15 : Configuration Errors
+        - Incorrect configuration options in build scripts or package manager files
+*/
+
+/* 2 : Memory Errors
+  1  : Dangling Pointers
+        - Pointers to memory that has been freed
+  2  : Memory Leaks
+        - Allocated memory that is not freed
+  3  : Invalid Memory Access
+        - Accessing memory outside the allocated bounds
+*/
+
+/* 3 : Type Errors
+  1  : Type Mismatches
+        - Operations on incompatible types
+  2  : Invalid Type Conversions
+        - Incorrect or unsafe type casting
+*/
+
+/* 4 : Logical Errors
+  1  : Flawed Logic
+        - Logic that doesn't cause compilation to fail but results in unintended behavior
+*/
+
+/* 5 : Semantic Errors
+  1  : Invalid Operations
+        - Operations that don't make sense semantically
+  2  : Incorrect Use of Language Features
+        - Using features of the language incorrectly even if the syntax is correct
+*/
+
+/* 6 : Deprecated Code Usage
+  1  : Using Deprecated Functions
+        - Usage of functions or features marked as deprecated
+*/
+
+/* 7 : Other Errors
+  1  : Unreachable Code Warnings
+        - Code that will never be executed
+  2  : Unused Variable Warnings
+        - Variables that are declared but never used
+  3  : Code Style and Formatting Warnings
+        - Warnings related to code formatting and style conventions
+*/
 
 /* sections:
-0 = basic syntax
-1 = advanced syntax
-
-
-1.000
-^ ^^^<- same error but might be a different fix
-| |\--- diffrent error
-| \---- sub section change
-\------ major diffrence in tpye of error
-
-
-
+1.00 00
+^ ^^ ^^<- diffrent message or fix but in the same sub category
+| |
+| sub section change
+major diffrence in tpye of error
 */

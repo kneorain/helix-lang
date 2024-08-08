@@ -1,0 +1,3 @@
+[submodule "libs/llvm-18.1.9-src"]
+	path = libs/llvm-18.1.9-src
+	url = https://github.com/kneorain/llvm-project

@@ -49,6 +49,12 @@ Token::Token()
     : kind(tokens::WHITESPACE)
     , val("<<WHITE_SPACE>>") {}
 
+Token::Token(tokens token_type, std::string value)
+    : len(value.length()), kind(token_type) {
+    value = value.empty() ? std::string(tokens_map.at(token_type).value()) : std::move(value);
+}
+    
+
 // custom intrinsics constructor
 Token::Token(tokens token_type, const std::string &filename, std::string value)
     : kind(token_type)
