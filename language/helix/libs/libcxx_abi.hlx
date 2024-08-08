@@ -18,9 +18,9 @@ ffi "c" import "stdint";
 
 import cxxabi_config;
 
-ffi define _LIBCPPABI_VERSION: 15000;
-ffi define _LIBCXXABI_NORETURN: __attribute__((noreturn));
-ffi define _LIBCXXABI_ALWAYS_COLD: __attribute__((cold));
+ffi "c" define _LIBCPPABI_VERSION: 15000;
+ffi "c" define _LIBCXXABI_NORETURN: __attribute__((noreturn));
+ffi "c" define _LIBCXXABI_ALWAYS_COLD: __attribute__((cold));
 
 eval if defined!(__cplusplus) {
     module std {
