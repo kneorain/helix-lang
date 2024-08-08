@@ -41,7 +41,7 @@ eval if defined!(__cplusplus) {
 
         ffi "C" {
             // 2.4.2 Allocating the Exception Object
-            fn __cxa_allocate_exception(thrown_size: size_t) -> *void throw;
+            fn __cxa_allocate_exception(thrown_size: usize) -> *void throw;
             fn __cxa_free_exception(thrown_exception: *void) throw;
 
             // This function is an LLVM extension, which mirrors the same extension in libsupc++ and libcxxrt
@@ -93,25 +93,25 @@ eval if defined!(__cplusplus) {
             }
 
             // 3.3.3 Array Construction and Destruction API
-            fn __cxa_vec_new(element_count: size_t, element_size: size_t, padding_size: size_t, constructor: fn(*void), destructor: fn(*void)) -> *void;
+            fn __cxa_vec_new(element_count: usize, element_size: usize, padding_size: usize, constructor: fn(*void), destructor: fn(*void)) -> *void;
 
-            fn __cxa_vec_new2(element_count: size_t, element_size: size_t, padding_size: size_t, constructor: fn(*void), destructor: fn(*void), alloc: fn(size_t) -> *void, dealloc: fn(*void)) -> *void;
+            fn __cxa_vec_new2(element_count: usize, element_size: usize, padding_size: usize, constructor: fn(*void), destructor: fn(*void), alloc: fn(usize) -> *void, dealloc: fn(*void)) -> *void;
 
-            fn __cxa_vec_new3(element_count: size_t, element_size: size_t, padding_size: size_t, constructor: fn(*void), destructor: fn(*void), alloc: fn(size_t) -> *void, dealloc: fn(*void, size_t)) -> *void;
+            fn __cxa_vec_new3(element_count: usize, element_size: usize, padding_size: usize, constructor: fn(*void), destructor: fn(*void), alloc: fn(usize) -> *void, dealloc: fn(*void, usize)) -> *void;
 
-            fn __cxa_vec_ctor(array_address: *void, element_count: size_t, element_size: size_t, constructor: fn(*void), destructor: fn(*void)) void;
+            fn __cxa_vec_ctor(array_address: *void, element_count: usize, element_size: usize, constructor: fn(*void), destructor: fn(*void)) void;
 
-            fn __cxa_vec_dtor(array_address: *void, element_count: size_t, element_size: size_t, destructor: fn(*void)) void;
+            fn __cxa_vec_dtor(array_address: *void, element_count: usize, element_size: usize, destructor: fn(*void)) void;
 
-            fn __cxa_vec_cleanup(array_address: *void, element_count: size_t, element_size: size_t, destructor: fn(*void)) void;
+            fn __cxa_vec_cleanup(array_address: *void, element_count: usize, element_size: usize, destructor: fn(*void)) void;
 
-            fn __cxa_vec_delete(array_address: *void, element_size: size_t, padding_size: size_t, destructor: fn(*void)) void;
+            fn __cxa_vec_delete(array_address: *void, element_size: usize, padding_size: usize, destructor: fn(*void)) void;
 
-            fn __cxa_vec_delete2(array_address: *void, element_size: size_t, padding_size: size_t, destructor: fn(*void), dealloc: fn(*void)) void;
+            fn __cxa_vec_delete2(array_address: *void, element_size: usize, padding_size: usize, destructor: fn(*void), dealloc: fn(*void)) void;
 
-            fn __cxa_vec_delete3(array_address: *void, element_size: size_t, padding_size: size_t, destructor: fn(*void), dealloc: fn(*void, size_t)) void;
+            fn __cxa_vec_delete3(array_address: *void, element_size: usize, padding_size: usize, destructor: fn(*void), dealloc: fn(*void, usize)) void;
 
-            fn __cxa_vec_cctor(dest_array: *void, src_array: *void, element_count: size_t, element_size: size_t, constructor: fn(*void, *void), destructor: fn(*void)) void;
+            fn __cxa_vec_cctor(dest_array: *void, src_array: *void, element_count: usize, element_size: usize, constructor: fn(*void, *void), destructor: fn(*void)) void;
 
             // 3.3.5.3 Runtime API
             // These functions are part of the C++ ABI, but they are not defined in libc++abi:
@@ -119,7 +119,7 @@ eval if defined!(__cplusplus) {
             //    void __cxa_finalize(*void);
 
             // 3.4 Demangler API
-            fn __cxa_demangle(mangled_name: *char, output_buffer: *char, length: *size_t, status: *int) -> *char;
+            fn __cxa_demangle(mangled_name: *char, output_buffer: *char, length: *usize, status: *int) -> *char;
 
             // Apple additions to support C++ 0x exception_ptr class
             // These are primitives to wrap a smart pointer around an exception object
