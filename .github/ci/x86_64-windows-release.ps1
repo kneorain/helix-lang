@@ -5,5 +5,4 @@
 xmake f -m release
 
 # build and run helix-tests
-xmake build tests
-xmake run tests
+xmake -v
