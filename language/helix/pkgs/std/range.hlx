@@ -1,1 +1,7 @@
+#[link-time]
+// importing this would copy yhe code but break it down with ast parsing to only
+// forward decls and compile this seprately linking it at compile, this would speed up the build process after first time
+// since once a lib is generated it gets injected with last modified times, and only if this file changes does it get recompiled
+// this alone makes these kind of imports better then rust
+
 print("hello this is the range module")

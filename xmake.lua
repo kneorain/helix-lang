@@ -135,7 +135,7 @@ end
 
 target("tests")
     add_files("tests/**.cc")        -- add all files in the tests directory
-    remove_files("source/main.cc")  -- exclude main.cc from the source directory
+    remove_files("source/helix.cc")  -- exclude main.cc from the source directory
 
     add_headerfiles("tests/**.hh")  -- add all headers in the tests directory
     add_includedirs("tests/lib")    -- add all libs in the tests dir

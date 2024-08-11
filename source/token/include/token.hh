@@ -42,7 +42,6 @@ struct Token {
   public:
     Token(u64 line, u64 column, u64 length, u64 offset, std::string_view value,
           const std::string &filename, std::string_view token_kind = "");
-    explicit Token(tokens token_type, std::string value = "");
     Token(const Token &other);
     Token &operator=(const Token &other);
     Token(Token &&other) noexcept;
@@ -67,12 +66,31 @@ struct Token {
 
     bool operator==(const Token &rhs) const;
     std::ostream &operator<<(std::ostream &os) const;
+    auto operator+(const string& str) {
+        this->val += str;
+        return *this;
+    }
 
     /* ====-------------------------- setters ---------------------------==== */
 
     void set_file_name(const std::string &file_name);
     void set_value(const std::string &other);
 };
+
+inline auto bare_token(tokens token_type, std::string value = "") {
+    return Token(token_type, "", value.empty() ? std::string(tokens_map.at(token_type).value()) : std::move(value));
+}
+
 }  // namespace token
+
+inline token::Token operator+(const std::string& lhs, token::Token rhs) {
+    rhs.set_value(lhs + rhs.value());
+    return rhs;
+}
+
+inline token::Token operator+(token::Token& lhs, const std::string& rhs) {
+    lhs.set_value(lhs.value() + rhs);
+    return lhs;
+}
 
 #endif  // __TOKEN_HH__

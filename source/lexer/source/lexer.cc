@@ -124,7 +124,7 @@ inline Token Lexer::process_multi_line_comment() {
 
     if (comment_depth != 0) {
         auto bad_token = Token{start_line, start_col, 2, offset, "", file_name};
-        throw error::Error(error::CodeError(&bad_token, 2.1002, {}, std::vector<string>{"block comment"}));
+        throw error::Error(error::create_old_CodeError(&bad_token, 2.1002, {}, std::vector<string>{"block comment"}));
     }
 
     return {line,
@@ -174,7 +174,7 @@ inline Token Lexer::next_token() {
 
     auto bad_token = Token{line, column, 1, offset, std::string(1, current()), file_name};
     
-    throw error::Error(error::CodeError(&bad_token, 1.0011, std::vector<string>{std::string(1, current())}));
+    throw error::Error(error::create_old_CodeError(&bad_token, 1.0011, std::vector<string>{std::string(1, current())}));
 }
 
 inline Token Lexer::parse_compiler_directive() {
@@ -295,7 +295,7 @@ inline Token Lexer::parse_numeric() {
         if (dot_count > 1) {
             auto bad_token = Token{line, column - (currentPos - start), currentPos - start, offset, source.substr(start, currentPos - start), file_name, "<float>"};
 
-            throw error::Error(error::CodeError(&bad_token, 0.0003));
+            throw error::Error(error::create_old_CodeError(&bad_token, 0.0003));
         }
         return {line,
                 column - (currentPos - start),
@@ -348,7 +348,7 @@ inline Token Lexer::parse_string() {
 
     if (is_eof()) {
         auto bad_token = Token{start_line, start_column, 1, offset, "\"", file_name};
-        throw error::Error(error::CodeError(&bad_token, 2.1002, {}, std::vector<string>{"string"}));
+        throw error::Error(error::create_old_CodeError(&bad_token, 2.1002, {}, std::vector<string>{"string"}));
     }
 
     switch (quote) {

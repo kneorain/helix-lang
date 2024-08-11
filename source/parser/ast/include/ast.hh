@@ -52,8 +52,8 @@
 namespace parser::ast {
 
 struct ParseError {
-    ParseError(token::Token& tok, float error_code, std::optional<std::vector<string>> fix_fmt_args = std::nullopt, std::optional<std::vector<string>> err_fmt_args = std::nullopt, std::optional<std::vector<std::pair<token::Token, i64>>> opt_fixes = std::nullopt) {
-        error::Error(error::CodeError(&tok, error_code, std::move(fix_fmt_args), std::move(err_fmt_args),  std::move(opt_fixes)));
+    ParseError(token::Token& tok, float error_code, std::vector<string> fix_fmt_args = {}, std::vector<string> err_fmt_args = {}, std::vector<std::pair<token::Token, i64>> opt_fixes = {}) {
+        error::Error(error::create_old_CodeError(&tok, error_code, std::move(fix_fmt_args), std::move(err_fmt_args),  std::move(opt_fixes)));
     };
 
     virtual ~ParseError()                  = default;

@@ -25,7 +25,8 @@
 #include "token/include/token.hh"
 
 namespace parser {
-Preprocessor::Preprocessor(TokenList &tokens, const std::string &name,
+Preprocessor::Preprocessor(TokenList                 &tokens,
+                           const std::string         &name,
                            const std::vector<string> &custom_include_dirs)
     : source_tokens(tokens)
     , end((tokens.size() > 0) ? (tokens.size() - 1) : 0) {
@@ -40,7 +41,9 @@ Preprocessor::Preprocessor(TokenList &tokens, const std::string &name,
         include_dirs.emplace_back(path_str);
     }
 
-    transform(abi::reserved.begin(), abi::reserved.end(), allowed_abi.begin(),
+    transform(abi::reserved.begin(),
+              abi::reserved.end(),
+              allowed_abi.begin(),
               [](const auto &pair) { return string(pair.second); });
 
     if (!name.empty() || name == "main") {
@@ -60,7 +63,8 @@ void handle_invalid_abi_option(Preprocessor *self) {
     }
 
     auto bad_token = self->peek().value();
-    error::Error(error::CodeError(&bad_token, 0.7004, std::vector<string>{abi_options}));
+    error::Error(
+        error::CodeError{.pof = &bad_token, .err_code = 0.7004, .fix_fmt_args = {abi_options}});
 }
 
 void parse_import(Preprocessor *self) {}
@@ -78,55 +82,72 @@ ffi "py" {
 
     }
 }
-
 */
 void parse_ffi(Preprocessor *self) {  // at the time of call current() is 'ffi'
-    i32 brace_count = 0;
-    bool jump_back = false;
+    i32    brace_count = 0;
+    bool   jump_back   = false;
     string goto_caller;
 
+    auto advance_and_continue = [&]() {
+        self->advance();
+        jump_back = true;
+    };
+
 iter_body:
-    switch (self->current().token_kind()) {  // at call time peek should be a string
+    switch (self->current().token_kind()) {  // at call time peek should be ffi
         case tokens::KEYWORD_FFI:
             if (self->peek().value_or(Token()).token_kind() != tokens::LITERAL_STRING) {
-                error::Error(error::CodeError(&self->current(), 0.7005));
+                error::Error(error::CodeError{
+                    .pof = &self->current(),
+                    .err_code = 0.7005,
+                    .mark_pof = false,
+                    .opt_fixes = {{bare_token(tokens::LITERAL_STRING, "\"...\""), self->current().column_number() + self->current().length() + 1}}
+                });
             }
 
             self->advance(2);  // skip ffi and the string ident
 
-            if (self->current().token_kind() == tokens::KEYWORD_IMPORT) {  // ffi "c" import <- this
+            if (self->current().token_kind() == tokens::KEYWORD_IMPORT) {  // ffi "c" import
                 goto_caller = "ffi";
                 goto abi_import;  // no loop back
+            } else { // if the import token is missing
+                auto bad_token = self->peek_back().value();
+                throw error::Error(error::CodeError{
+                    .pof = &bad_token,
+                    .err_code = 0.10001,
+                    //.opt_fixes = {{bare_token(tokens::KEYWORD_IMPORT) + " ", -1}}
+                });
             }
 
             jump_back = true;
-
             break;
 
         case tokens::PUNCTUATION_OPEN_BRACE:  // ffi "py" { <-- this opening brace
             brace_count++;
 
-            if (brace_count <= 0) {  // if theres more }'s then opening ones
-                throw error::Error(error::CodeError(&self->current(), 2.1002, {}, std::vector<string>{"closing brace"}));
+            if (brace_count <= 0) {  // if there's more }'s than opening ones
+                throw error::Error(error::CodeError{.pof          = &self->current(),
+                                                    .err_code     = 2.1002,
+                                                    .err_fmt_args = {"closing brace"}});
             }
 
-            self->advance();  // skip {
-            jump_back = true;
+            advance_and_continue();  // skip {
             break;
 
         case tokens::PUNCTUATION_CLOSE_BRACE:  // } <-- this closing brace
             brace_count--;
 
-            if (brace_count < 0) {  // if theres an additional closing brace
-                throw error::Error(error::CodeError(&self->current(), 2.1002, {}, std::vector<string>{"opening brace"}));
+            if (brace_count < 0) {  // if there's an additional closing brace
+                throw error::Error(error::CodeError{.pof          = &self->current(),
+                                                    .err_code     = 2.1002,
+                                                    .err_fmt_args = {"opening brace"}});
             }
 
             if (brace_count == 0) {  // completed
                 return;
             }
 
-            self->advance();  // skip }
-            jump_back = true;
+            advance_and_continue();  // skip }
             break;
 
         case tokens::KEYWORD_IMPORT:  // import <-- this "sympy";
@@ -134,32 +155,39 @@ iter_body:
             // syntax: 'import' (string (',' string)*) ';'
             if (!self->peek().has_value()) {  // just 'import' no specifier
                 auto bad_token = self->peek().value();
-                throw error::Error(error::CodeError(&bad_token, 0.10001, {}, std::vector<string>{"opening brace"}));
+                throw error::Error(error::CodeError{
+                    .pof = &bad_token, .err_code = 0.10001, .err_fmt_args = {"opening brace"}});
             }
 
             if (self->peek().value().token_kind() != tokens::LITERAL_STRING) {
                 // 0.10101
                 auto bad_token = self->peek().value();
-                throw error::Error(error::CodeError(&bad_token, 0.10101, std::vector<string>{"import \"" + self->peek().value().value() + "\""}));
+                throw error::Error(error::CodeError{
+                    .pof          = &bad_token,
+                    .err_code     = 0.10101,
+                    .fix_fmt_args = {"import \"" + self->peek().value().value() + "\""}});
             }
 
             self->advance(2);  // skip 'import' string | other
-            // current should only be either ; or ,
 
             if (self->current().token_kind() == tokens::PUNCTUATION_COMMA) {  // (',' string)*
                 // 0.10102
-                error::Error(error::CodeError(&self->current(), 0.10102));
+                error::Error(error::CodeError{.pof = &self->current(), .err_code = 0.10102});
                 // TODO: add parsing if needed (might not look cohesive)
-                //       dont forget to advance after parsing out multiple
+                //       don't forget to advance after parsing out multiple
             }
 
             // ';' at this point it should only be a semicolon
             if (self->current().token_kind() != tokens::PUNCTUATION_SEMICOLON) {
-                error::Error(error::CodeError(&self->current(), 4.0001, {}, {}, std::vector<std::pair<token::Token, i64>>{std::make_pair(Token(tokens::PUNCTUATION_SEMICOLON), static_cast<i64>(-1))}));
+                auto bad_token = self->peek_back().value();
+                error::Error(
+                    error::CodeError{.pof       = &bad_token,
+                                     .err_code  = 4.0001,
+                                     .mark_pof  = false,
+                                     .opt_fixes = {{bare_token(tokens::PUNCTUATION_SEMICOLON), -1}}});
             }
 
-            self->advance();  // skip ; or ,
-            jump_back = true;
+            advance_and_continue();  // skip ; or ,
 
             if (goto_caller == "ffi") {
                 return;  // import completed
@@ -168,18 +196,15 @@ iter_body:
             break;
 
         case tokens::PUNCTUATION_SEMICOLON:
-            self->advance();  // skip ;'s
-            jump_back = true;
+            advance_and_continue();  // skip ;'s
             break;
 
         default:
             if (brace_count > 0) {
-                break;
-                self->advance();  // skip ;
-                jump_back = true;
+                advance_and_continue();  // skip ;
                 break;
             } else {
-                error::Error(error::CodeError(&self->current(), 0.0001));
+                error::Error(error::CodeError{.pof = &self->current(), .err_code = 0.0001});
             }
     }
 
@@ -188,6 +213,7 @@ iter_body:
         goto iter_body;
     }
 }
+
 
 void parse_define(Preprocessor *self) {}
 

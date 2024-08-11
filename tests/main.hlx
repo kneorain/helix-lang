@@ -1,18 +1,19 @@
 
 ffi "c++" import "hi_there"
+ffi  import "hi_there"
 
 
-/*
-const cols: int = 14;
+
+eval cols: int = 14; // stack alloc int
 
 fn parse_char(c: char) -> string {
-    return f"{c:02X}"
+    return f"{c:02X}";
 }
 
 fn main() {
     let path: string = file_sytem::get_bin_path();
     
-    file_sytem::open(path, "rb") as file {
+    let file_sytem::open(path, "rb") as file {
         // read 14 cols in chunks of 20 chars
         for chunk: string in range(file.read(cols), 20) {
             let hex_chunk: string;
@@ -36,7 +37,7 @@ fn main() {
         }
     }
 }
-*/
+
 
 /* helix::panic takes the following args:
 

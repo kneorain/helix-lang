@@ -1,19 +1,14 @@
-/**
- * @author Dhruvan Kartik
- * @date 2024
- * @copyright Copyright (c) 2024 (CC BY 4.0)
- *
- * @brief Defines error handling structures and classes for the Helix Language Project.
- *
- * @note This code is part of the Helix Language Project and is licensed under the Attribution 4.0
- * International license (CC BY 4.0). You are allowed to use, modify, redistribute, and create
- * derivative works, even for commercial purposes, provided that you give appropriate credit,
- * provide a link to the license, and indicate if changes were made. For more information, please
- * visit: https://creativecommons.org/licenses/by/4.0/ SPDX-License-Identifier: CC-BY-4.0
- *
- * @note This code is provided by the creators of Helix. Visit our website at:
- * https://helix-lang.com/ for more information.
- */
+//===------------------------------------------------------------------------------------------===//
+//
+// Part of the Helix Project, under the Attribution 4.0 International license (CC BY 4.0).
+// You are allowed to use, modify, redistribute, and create derivative works, even for commercial
+// purposes, provided that you give appropriate credit, and indicate if changes were made.
+// For more information, please visit: https://creativecommons.org/licenses/by/4.0/
+//
+// SPDX-License-Identifier: CC-BY-4.0
+// Copyright (c) 2024 (CC BY 4.0)
+//
+//===------------------------------------------------------------------------------------------===//
 #ifndef __ERROR_HH__
 #define __ERROR_HH__
 
@@ -45,73 +40,33 @@ err_fmt_args;
 opt_fixes;
 opt_fixes_pos;
 */
-struct CodeError {
-    using string_vec   = std::vector<string>;
-    using fix_pair     = std::pair<token::Token, i64>;
-    using fix_pair_vec = std::vector<fix_pair>;
+using string_vec   = std::vector<string>;
+using fix_pair     = std::pair<token::Token, i64>;
+using fix_pair_vec = std::vector<fix_pair>;
 
+struct CodeError {
     token::Token *pof;  //< point of failure
     float err_code;
-    std::optional<string_vec> fix_fmt_args = std::nullopt;
-    std::optional<string_vec> err_fmt_args = std::nullopt;
 
-    std::optional<fix_pair_vec> opt_fixes = std::nullopt;  //< fixes that show in the code to fix
-
-    CodeError() = default;
-
-    CodeError(token::Token *pof, float err_code,
-              std::optional<string_vec> fix_fmt_args = std::nullopt,
-              std::optional<string_vec> err_fmt_args = std::nullopt,
-              std::optional<fix_pair_vec> opt_fixes = std::nullopt)
-        : pof(pof)
-        , err_code(err_code)
-        , fix_fmt_args(std::move(fix_fmt_args))
-        , err_fmt_args(std::move(err_fmt_args))
-        , opt_fixes(std::move(opt_fixes)) {}
+    bool mark_pof = true;
+    string_vec fix_fmt_args;
+    string_vec err_fmt_args;
+    fix_pair_vec opt_fixes;  //< fixes that show in the code to fix
 
     ~CodeError() = default;
+};
 
-    CodeError(const CodeError &other)
-        : pof(other.pof)
-        , err_code(other.err_code)
-        , fix_fmt_args(other.fix_fmt_args)
-        , err_fmt_args(other.err_fmt_args)
-        , opt_fixes(other.opt_fixes) {}
-
-    CodeError &operator=(const CodeError &other) {
-        if (this != &other) {
-            pof = other.pof;
-            err_code = other.err_code;
-            fix_fmt_args = other.fix_fmt_args;
-            err_fmt_args = other.err_fmt_args;
-            opt_fixes = other.opt_fixes;
-        }
-        return *this;
-    }
-
-    CodeError(CodeError &&other) noexcept
-        : pof(other.pof)
-        , err_code(other.err_code)
-        , fix_fmt_args(std::move(other.fix_fmt_args))
-        , err_fmt_args(std::move(other.err_fmt_args))
-        , opt_fixes(std::move(other.opt_fixes)) {
-        other.pof = nullptr;
-        other.err_code = 0.0;
-    }
-
-    CodeError &operator=(CodeError &&other) noexcept {
-        if (this != &other) {
-            pof = other.pof;
-            err_code = other.err_code;
-            fix_fmt_args = std::move(other.fix_fmt_args);
-            err_fmt_args = std::move(other.err_fmt_args);
-            opt_fixes = std::move(other.opt_fixes);
-
-            other.pof = nullptr;
-            other.err_code = 0.0;
-        }
-        return *this;
-    }
+static inline CodeError create_old_CodeError(token::Token *pof, float err_code,
+    string_vec fix_fmt_args = {},
+    string_vec err_fmt_args = {},
+    fix_pair_vec opt_fixes  = {}) {
+    return CodeError{
+        .pof = pof,
+        .err_code = err_code,
+        .fix_fmt_args = std::move(fix_fmt_args),
+        .err_fmt_args = std::move(err_fmt_args),
+        .opt_fixes = std::move(opt_fixes)
+    };
 };
 
 /*
@@ -121,8 +76,8 @@ err_fmt_args;
 */
 struct CompilerError {
     float err_code;
-    std::optional<std::vector<string>> fix_fmt_args;
-    std::optional<std::vector<string>> err_fmt_args;
+    std::vector<string> fix_fmt_args;
+    std::vector<string> err_fmt_args;
 };
 
 /*
@@ -200,6 +155,9 @@ class Error {
     void show_error();
 
     u32 calculate_addition_pos(i64) const;
+
+    size_t level_len;
+    bool mark_pof;
 };
 }  // namespace error
 

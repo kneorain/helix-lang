@@ -49,12 +49,6 @@ Token::Token()
     : kind(tokens::WHITESPACE)
     , val("<<WHITE_SPACE>>") {}
 
-Token::Token(tokens token_type, std::string value)
-    : len(value.length()), kind(token_type) {
-    value = value.empty() ? std::string(tokens_map.at(token_type).value()) : std::move(value);
-}
-    
-
 // custom intrinsics constructor
 Token::Token(tokens token_type, const std::string &filename, std::string value)
     : kind(token_type)
@@ -144,7 +138,7 @@ std::string Token::file_name() const { return filename; }
 
 void Token::set_file_name(const std::string &file_name) { this->filename = std::string(file_name); }
 
-void Token::set_value(const std::string &other) { this->val = std::string(other); }
+void Token::set_value(const std::string &other) { this->val = std::string(other); this->len = this->val.length(); }
 
 std::string Token::to_string() const {
     return std::string("Token(") + std::string("line: ") + std::to_string(line) +
@@ -155,15 +149,14 @@ std::string Token::to_string() const {
 }
 
 TO_JSON_SIGNATURE_EXTEND(Token) {
-    return  (indent_start ? jsonify::indent(depth) : "") + "{\n"
-               + jsonify::to_json(jsonify::escape(filename), depth+1, "filename") + ",\n"
-               + jsonify::to_json(line, depth+1, "line_number") + ",\n"
-               + jsonify::to_json(column, depth+1, "column_number") + ",\n"
-               + jsonify::to_json(len, depth+1, "length") + ",\n"
-               + jsonify::to_json(_offset, depth+1, "offset") + ",\n"
-               + jsonify::to_json(jsonify::escape(std::string(token_kind_repr())), depth+1, "kind") + ",\n"
-               + jsonify::to_json(val, depth+1, "value") + "\n"
-            + jsonify::indent(depth) + "}";
+    return (indent_start ? jsonify::indent(depth) : "") + "{\n" +
+           jsonify::to_json(jsonify::escape(filename), depth + 1, "filename") + ",\n" +
+           jsonify::to_json(line, depth + 1, "line_number") + ",\n" +
+           jsonify::to_json(column, depth + 1, "column_number") + ",\n" +
+           jsonify::to_json(len, depth + 1, "length") + ",\n" +
+           jsonify::to_json(_offset, depth + 1, "offset") + ",\n" +
+           jsonify::to_json(jsonify::escape(std::string(token_kind_repr())), depth + 1, "kind") +
+           ",\n" + jsonify::to_json(val, depth + 1, "value") + "\n" + jsonify::indent(depth) + "}";
 }
 
 bool Token::operator==(const Token &rhs) const {
