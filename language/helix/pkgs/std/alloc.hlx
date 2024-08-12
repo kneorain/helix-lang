@@ -9,11 +9,45 @@
 // Copyright (c) 2024 (CC BY 4.0)                                                                 //
 //                                                                                                //
 //===------------------------------------------------------------------------------------------===//
+import types::{Allocator, AllocatorStats};
 
-#[link-time]
-// importing this would copy the code but break it down with ast parsing to only
-// forward decls and compile this separately linking it at compile, this would speed up the build process after first time
-// since once a lib is generated it gets injected with last modified times, and only if this file changes does it get recompiled
-// this alone makes these kind of imports better then rust
+ffi "c++" import "";
 
-print("hello this is the range module")
+class DefaultAllocator derives Allocator {
+    fn DefaultAllocator(self) derives default; // call the default constructor for all members.
+
+    fn alloc(self, size: usize, alignment: usize) -> *void {
+
+    }
+
+    fn dealloc(self, ptr: *void, size: usize, alignment: usize) {
+
+    }
+
+    fn realloc(self, ptr: *void, old_size: usize, new_size: usize, alignment: usize) -> *void {
+
+    }
+
+    #[override]
+    fn alloc_d(self, size: usize) -> *void {
+        return self.alloc(size, 16);
+    }
+
+    #[override]
+    fn realloc_d(self, ptr: *void, old_size: usize, new_size: usize) -> *void {
+        return self.realloc(ptr, old_size, new_size, 16);
+    }
+
+    #[override]
+    fn get_stats(self) -> AllocatorStats {
+        return AllocatorStats::new();
+    }
+
+    #[override]
+    fn can_alloc(self, size: usize, alignment: usize) -> bool {
+        return true;
+    }
+
+    //===---- vars ----===//
+    priv eval let stats = AllocatorStats::new();
+}

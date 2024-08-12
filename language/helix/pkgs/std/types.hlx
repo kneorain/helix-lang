@@ -57,7 +57,7 @@ abstract Allocator {
 
     // checks if the allocator can satisfy an allocation of a given size and alignment.
     // useful for checking if the allocator is capable before attempting an allocation.
-    fn can_allocate(self, size: usize, alignment: usize) -> bool {
+    fn can_alloc(self, size: usize, alignment: usize) -> bool {
         return true;  // by default, assume the allocator can handle it
     }
 }

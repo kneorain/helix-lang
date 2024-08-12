@@ -42,6 +42,12 @@
 import exceptions::RuntimeError;
 import std::types::Allocator;
 
+define check_safety_mode! {
+    eval define DISABLE_SAFETY {
+        return;
+    }
+};
+
 #[lib(hide-from-abi)] // Hide from libhlx to prevent the use of FFI with any STD components
 class string {
     fn string(self) {
@@ -86,16 +92,54 @@ class string {
     }
 
     op + fn add(self, other: string) -> string {
-        let mut result = self.clone();  // Assuming clone() creates a copy of the string
-        result.append(other);  // Assuming append() appends the `other` string to `result`
-        return result;
+        self.append(other);
+        return self;
     }
 
+    fn length(self) -> usize {
+        return len;
+    }
+
+    fn into(self) -> const list<const char> {
+        return (self.data as const list<const char>); // the cast is to make it immutable
+    }
+
+    fn check_access(self) -> void | noreturn! {
+        check_safety_mode!;
+
+        // if the DISABLE_SAFETY macro is not defined (enable safety)
+        if (self.data.length() != self.len)
+        || (self.data.length() >  self.len)
+        || (self.data.length() >  self.cap) {
+            immediate!(panic SegmentationFault("string: bad access, string data corrupted, indicative of buffer overflow"));
+        }
+    }
+
+    //==--- priv ---==//
+    priv fn allocate(n: usize) { // takes a size to allocate into the string
+        self.check_access();
+
+        try {
+            self.allocator.alloc(n, (n % 2) as i8);
+        } catch (BadAlloc as e) {
+            panic BadAlloc("string::allocate: allocator failed.") derives e;
+        }
+
+        self.cap += n + ((n % 2) as i8);
+    }
+
+    priv fn append(self, other: string) {
+        self.check_access();
+        self.allocate(other.length());
+
+        let term: const char = self.data.pop();
+        self.data.extend(other.into())
+    }
     
     //==--- vars ---==//
-    let data: list<const char> = ['\0'];
-    let len:       int               = 0;
-    let cap:       int               = 1;
-    let allocator: Allocator         = std::;
+    priv let data: list<const char> = ['\0'];
+    priv let len:       usize       = 0;
+    priv let cap:       usize       = 1;
+    priv let allocator: Allocator   = std::DefaultAllocator;
 
 }
