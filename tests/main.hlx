@@ -1,8 +1,6 @@
 
-ffi "c++" import "hi_there"
-ffi  import "hi_there"
-
-
+ffi "c++" import "hi_there";
+// ffi  import "hi_there"
 
 eval cols: int = 14; // stack alloc int
 
@@ -10,10 +8,11 @@ fn parse_char(c: char) -> string {
     return f"{c:02X}";
 }
 
-fn main() {
+
+fn main() where <T> if T has Add {
     let path: string = file_sytem::get_bin_path();
     
-    let file_sytem::open(path, "rb") as file {
+    try file_sytem::open(path, "rb") as file {
         // read 14 cols in chunks of 20 chars
         for chunk: string in range(file.read(cols), 20) {
             let hex_chunk: string;

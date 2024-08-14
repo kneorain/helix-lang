@@ -111,7 +111,7 @@ class string {
         if (self.data.length() != self.len)
         || (self.data.length() >  self.len)
         || (self.data.length() >  self.cap) {
-            immediate!(panic SegmentationFault("string: bad access, string data corrupted, indicative of buffer overflow"));
+            unsafe panic SegmentationFault("string: bad access, string data corrupted, indicative of buffer overflow");
         }
     }
 

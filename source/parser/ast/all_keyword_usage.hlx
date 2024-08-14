@@ -111,10 +111,10 @@ let mat: matrix<int,3,3> {
 }
 
 // dangling dildo pointer
-let a: int* = &10;
+let a: int* = &10; // invalid since you cant refrence a temp lvalue
 
 // dyn and final cant be used together
-let unsafe dyn a = 10;
+let unsafe a = dyn!(10);
 
  a = "string";
 
@@ -154,7 +154,7 @@ module extend_syntax {
     }
 }
 
-module idk_simethnig_else {
+module idk_something_else {
     derives Foo {
         fn add(self, b: u8) -> u8 {
             return self + b;

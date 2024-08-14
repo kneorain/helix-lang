@@ -1,0 +1,39 @@
+fn compile(argc: int, argv: **char) -> int {
+    let start = std::chrono::high_resolution_clock::now();
+
+    let parsed_args = command_line::CLIArgs(argc, argv, "0.0.1-alpha-0112");
+    command_line::check_exit(parsed_args);
+
+    let tokens    = lexer::Lexer(file_system::read_file(parsed_args.file), parsed_args.file).tokenize();
+    let pkg_paths = ["/Volumes/Container/Projects/Helix/helix-lang/helix/pkgs"];
+
+    parser::Preprocessor(tokens, "main", pkg_paths).parse();
+
+    let end = std::chrono::high_resolution_clock::now();
+
+    if parsed_args.emit_ast {
+        let ast = parser::ast::make_node<node::Literal>(tokens);
+        ast->parse().value_or(0);
+
+        print(ast->to_json());
+    }
+
+    if parsed_args.emit_tokens:
+        print(tokens.to_json());
+
+    
+    let diff = end - start;
+
+    print(f"time taken: {diff.count() * 1e+9} ns");
+    print(f"            {diff.count() * 1000} ms");
+
+    return 0;
+}
+
+fn main(argc: int, argv: **char) -> int {
+    try {
+        compile(argc, argv);
+    } catch (error::Error&) {
+        
+    }
+}

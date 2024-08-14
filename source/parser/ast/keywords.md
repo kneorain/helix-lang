@@ -17,7 +17,7 @@
 |-------|----------------------------------|--------------------|--------------------------|
 |   1   | abstract                         | catch              | const                    |
 |   2   | derives                          | finally            | let                      |
-|   3   | interface                        | panic              | shared                   |
+|   3   | interface                        | panic              | static                   |
 |   4   | requires                         | try                | eval                     |
 |   5   |                                  | test               |                          |
 
@@ -52,19 +52,6 @@
 |   9   | *=            | @=  | \|   | <<    | ..  |     |
 |   10  | /             | ^   | \|=  | <<=   | ..= |     |
 
-| **N** | **Macros** |
-|-------|---------------|
-|   1   | delete
-|   2   | move
-|   3   | copy
-|   4   | 
-|   5   |
-|   6   |
-|   7   |
-|   8   |
-|   9   |
-|   10  |
-
 |           **Feature**           |                     **Class**                    |            **Enum**           |             **Struct**                          |     **Union**    | **Interface** | **Abstract** |
 |---------------------------------|--------------------------------------------------|-------------------------------|-------------------------------------------------|------------------|---------------|--------------|
 | Default Visibility              | (pub \| priv) by default                         | pub by default                | Inverse of class default visibility             | pub by default   | Only pub visibility | (pub \| priv) by default |
@@ -75,3 +62,4 @@
 | Discriminants Allowed           | Not applicable                                   | Custom discriminants allowed  | Not applicable                                  | Tags allowed     | Not applicable | Not applicable |
 | Inheritance                     | Not mentioned                                    | Not mentioned                 | No inheritance                                  | Not mentioned    | Any inherited object must implement all methods | Only methods without an implementation must be implemented; default implementations raise warnings if not implemented |
 | Compile-Time Removal            | Not applicable                                   | Not applicable                | Not applicable                                  | Not applicable   | Removed after compile | Removed after compile |
+

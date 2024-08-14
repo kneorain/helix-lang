@@ -32,11 +32,11 @@ int compile(int argc, char **argv) {
     using namespace lexer;
     using namespace parser::ast;
 
-    auto start = std::chrono::high_resolution_clock::now();
-
     // relative to current working dir in POSIX shell (cmd/bash)
     command_line::CLIArgs parsed_args(argc, argv, "0.0.1-alpha-0112");
     check_exit(parsed_args);
+
+    auto start = std::chrono::high_resolution_clock::now();
 
     // read the file and tokenize its contents : stage 0
     TokenList tokens = Lexer(file_system::read_file(parsed_args.file), parsed_args.file).tokenize();
@@ -56,6 +56,8 @@ int compile(int argc, char **argv) {
         NodePtr<node::Literal> ast = make_node<node::Literal>(tokens);
         ast->parse().value_or(0);
 
+        end = std::chrono::high_resolution_clock::now();
+
         print(ast->to_json());
     }
 
@@ -64,7 +66,6 @@ int compile(int argc, char **argv) {
         print(tokens.to_json());
     }
 
-    
     std::chrono::duration<double> diff = end - start;
 
     // Print the time taken in nanoseconds and milliseconds

@@ -17,7 +17,7 @@
 import build_tools as bt;
 
 class Array {
-    fn map(self, func: fn (Element_Ty) -> Element_Ty) requires <Element_Ty> {
+    fn map(self, func: fn (Element_Ty) -> Element_Ty) requires <Element_Ty::yessir> {
 
     }
 }
@@ -57,6 +57,23 @@ class BuildConfig {
         return &self;
     }
 }
+} // end module build_tools
+
+print<string::sad, ste::ss>()
+
+macro higher(a: int, b: int) -> int {
+    "a": case "b": case "c"
+};
+
+define higher(a, b) {
+    "a": case "b": case "c"
+};
+
+higher!
+
+switch a {
+    case higher!:
+
 }
 
 import git;

@@ -15,7 +15,7 @@ FFIImportStatement ::= 'ffi' String ImportStatement
 
 PreprocessorDirective ::= DefineMacro | ProcMacro
 
-DefineMacro ::= 'define' Identifier ('(' (UntypedParameterList)? ')')? Suite ';'
+DefineMacro ::= 'define' Identifier '!' ('(' (UntypedParameterList)? ')')? Suite ';'
 
 ProcMacro ::= 'macro' Identifier '(' (TypedParameterList)? ')' '->' Type '{' (Statement | Expression) '}' ';'
 
@@ -85,7 +85,7 @@ InterfaceDefinition ::= BaseObjectDecl 'interface' QualifiedNamespaceID DerivesD
 
 DerivesDecl ::= ('derives' | ':') (QualifiedNamespaceID (',' QualifiedNamespaceID)*)
 
-TypeBound ::= UntypedParameter 'is' (QualifiedNamespaceID GenericAccess? ('&' QualifiedNamespaceID GenericAccess?)*)
+TypeBound ::= UntypedParameter 'has' (QualifiedNamespaceID GenericAccess? ('&' QualifiedNamespaceID GenericAccess?)*)
 
 GenericType ::= (('eval' TypedParameter) | UntypedParameter) ('=' Expression)?
 

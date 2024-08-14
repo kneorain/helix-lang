@@ -215,11 +215,56 @@ iter_body:
 }
 
 
-void parse_define(Preprocessor *self) {}
+void parse_define(Preprocessor *self) {
+    // start a table of modules
+    // module foo::bar {
+    // }
+    // remember that we are now in `foo` `::` `bar`
+
+    // if a define is found here
+
+    // store it in map<vec<tokens>, vec<tokens>> - or some similar structure
+    // when a invocation is made, look back keep going back in the order of ident <- :: until the order breaks
+    // look in the map for it or bring it down to most similar (like 90% matches)
+    // for example if we are in module foo::bar::zoo::foo {
+    //      // and have a define
+    //      define PI!: 3.12819;
+    // }
+    // our table would have foo::bar::zoo::foo::PI!
+    // in a invocation, if we are in foo: we except to see foo::bar::zoo::foo::PI! or bar::zoo::foo::PI!
+    // if theres something like zoo::foo::PI!, its not valid and we can suggest to add bar:: to the line
+    // once we store the define in a structure we remove it from the tokenList entirely, allowing for
+    // invocations to be parsed correctly.
+
+    // work to do in parse_define:
+    // keep track of current module scope
+    // find a define, make sure it ends with };
+    //      if not error out saying unclosed define
+    // store the content of the define into the structure along with its location
+    // also parse out number of params and any defaults
+    // expose the structure into the compiler data set (allowing for complex introspection)
+}
 
 void parse_macro(Preprocessor *self) {}
 
-void parse_invocation(Preprocessor *self) {}
+void parse_invocation(Preprocessor *self) {
+    // work to do in parse_invocation:
+    // keep track of current module scope
+    // find a invocation, count number of params and the exact path by walking back
+    //      if it cant be found with a associated define error out
+    // call the generate location data on the invocation once data is gathered
+    // return the iter loc to the start of the invocation (to parse out invocations inside the define)
+}
+
+struct DefineStatement {
+    std::map<Token, std::vector<Token>> params; // (foo, bar = 1) - params and default args
+    std::vector<Token> body; // : ... or { ... };
+    std::vector<Token> loc;  // foo::bar::zoo
+    Token name; // foo!
+
+
+    bool is_valid(std::vector<Token> loc, Token invocation);
+};
 
 TokenList Preprocessor::parse(std::shared_ptr<preprocessor::ImportNode> parent_node) {
     /* order of parsing (first to last)
