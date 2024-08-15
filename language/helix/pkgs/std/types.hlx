@@ -42,6 +42,8 @@ abstract Allocator {
 
     // optional: allocates a block of memory with default alignment (e.g., 8 or 16 bytes).
     fn alloc_d(self, size: usize) -> *void {
+        if !self.can_alloc(size, 16):
+            panic SegmentationFault(f"alloc: cant allocate the specified {size}.")
         return self.alloc(size, 16);  // default to 16-byte alignment
     }
 
@@ -60,6 +62,13 @@ abstract Allocator {
     fn can_alloc(self, size: usize, alignment: usize) -> bool {
         return true;  // by default, assume the allocator can handle it
     }
+}
+
+class Vec requires <T> {
+    fn Vec(self);
+    fn Vec(self, s: string);
+    fn Vec(self, i: int);
+    fn Vec(self, a: list<T>);
 }
 
 // structure to hold memory statistics (optional feature)

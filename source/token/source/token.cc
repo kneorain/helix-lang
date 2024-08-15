@@ -77,10 +77,6 @@ Token &Token::operator=(const Token &other) {
     if (this == &other) {
         return *this;
     }
-    std::unique_lock<std::shared_mutex> lock1(mtx, std::defer_lock);
-    std::shared_lock<std::shared_mutex> lock2(other.mtx, std::defer_lock);
-    std::lock(lock1, lock2);
-
     line = other.line;
     column = other.column;
     len = other.len;
@@ -120,13 +116,13 @@ Token &Token::operator=(Token &&other) noexcept {
 // Destructor
 Token::~Token() = default;
 
-u64 Token::line_number() const { return line; }
+u32 Token::line_number() const { return line; }
 
-u64 Token::column_number() const { return column; }
+u32 Token::column_number() const { return column; }
 
-u64 Token::length() const { return len; }
+u32 Token::length() const { return len; }
 
-u64 Token::offset() const { return _offset; }
+u32 Token::offset() const { return _offset; }
 
 tokens Token::token_kind() const { return kind; }
 

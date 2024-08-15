@@ -42,7 +42,6 @@ class Preprocessor {
     std::array<string, abi::reserved.size()> allowed_abi;
     TokenList::TokenListIter *source_iter = nullptr;
 
-    u32 current_pos{};
     u32 end{};
 
     friend void handle_invalid_abi_option(Preprocessor*);

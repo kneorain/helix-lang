@@ -183,8 +183,12 @@ inline Token Lexer::parse_compiler_directive() {
     u32 brace_level = 0;
 
     if (peek_forward() != '[') {
-        bare_advance();
-        return {line, column, 1, offset, source.substr(start, 1), file_name};
+        Token bad_token = {line, column, 1, offset, source.substr(start, 1), file_name};
+
+        throw error::Error(error::CodeError{
+            .pof = &bad_token,
+            .err_code = 0.7006
+        });
     }
 
     while (!end_loop && !is_eof()) {
@@ -204,13 +208,18 @@ inline Token Lexer::parse_compiler_directive() {
         bare_advance();
     }
 
-    return {line,
+    Token tok{line,
             column - (currentPos - start),
             currentPos - start,
             offset,
             source.substr(start + 2, (currentPos - start) - 3),
             file_name,
             "<complier_directive>"};
+
+    throw error::Error(error::CodeError{
+        .pof = &tok,
+        .err_code = 0.7007
+    });
 }
 
 inline Token Lexer::process_whitespace() {

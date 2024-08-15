@@ -1,5 +1,5 @@
-#include <iostream>
-#include <fstream>
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunused-private-field"
 #include <sstream>
 #include <string>
 #include <vector>
@@ -50,6 +50,7 @@ public:
 
 private:
     ASTContext *Context;
+
 };
 
 class DeclarationConsumer : public ASTConsumer {
@@ -102,3 +103,5 @@ std::string parse_signatures(const std::string &filename) {
 
     return Result.str();
 }
+
+#pragma clang diagnostic pop

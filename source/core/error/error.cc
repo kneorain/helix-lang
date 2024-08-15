@@ -305,9 +305,9 @@ size_t set_level(string &level, const float &err_level) {
             break;
         case FATAL:
             level =
-                string(colors::bold) + ret_color + string(colors::bg8::red) + "fatal" + ret_color;
+                string(colors::bold) + ret_color + string(colors::fg8::red) + "fatal" + string(colors::reset) + ret_color;
             level_len = level.size() - string(string(colors::bold) + ret_color +
-                                              string(colors::bg8::red) + ret_color)
+                                              string(colors::fg8::red) + ret_color)
                                            .size();
             break;
     }
@@ -415,36 +415,6 @@ u32 Error::calculate_addition_pos(i64 pos) const {
 }
 
 void Error::show_error() {
-    /*
-    fatal: missing semicolon
-         ╭─>  at tests/main.hlx:1:18
-       1 │ ffi "c++" import "hi_there";
-         ┊                  ^^^^^^^^^^+
-       2 │
-       3 │
-       4 │
-       5 │ const cols: int = 14;
-      fix: insert a semi-colon
-
-    fatal: missing semicolon
-         ╭─> at tests/main.hlx:1:18
-       1 │ ffi "c++" import "hi_there"
-         ┊                  ++++++++++
-       2 │
-       3 │
-       4 │
-       5 │ const cols: int = 14;
-      fix: insert a semi-colon
-
-error: missing semicolon
-     ╭─>  at tests/main.hlx:2:17
-   2 │ ffi "c++" import "hi_there";
-     ː                  ^^^^^^^^^^+
-    ···
-   5 │ /*
-  fix: add a semicolon at the end of the statement.
-    */
-
     lines_vec lines = get_surrounding_lines(final_err.file, final_err.line);
     string    markings;
     string    formatted_error;
@@ -531,6 +501,7 @@ error: missing semicolon
     }
 
     if (!final_err.fix.empty()) {
+        formatted_error += A_W + whitespace + "│ " + "\n";
         formatted_error += string((A_W.size() + whitespace.size() - 3), ' ') +
                            string(colors::bold) + string(colors::fg8::green) + "fix" +
                            string(colors::reset) + ": " + final_err.fix + "\n";

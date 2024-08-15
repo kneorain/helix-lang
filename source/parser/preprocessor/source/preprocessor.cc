@@ -257,13 +257,13 @@ void parse_invocation(Preprocessor *self) {
 }
 
 struct DefineStatement {
-    std::map<Token, std::vector<Token>> params; // (foo, bar = 1) - params and default args
-    std::vector<Token> body; // : ... or { ... };
-    std::vector<Token> loc;  // foo::bar::zoo
+    std::map<Token, TokenList> params; // (foo, bar = 1) - params and default args
+    TokenList body; // : ... or { ... };
+    TokenList loc;  // foo::bar::zoo
     Token name; // foo!
 
 
-    bool is_valid(std::vector<Token> loc, Token invocation);
+    bool is_valid(TokenList loc, Token invocation);
 };
 
 TokenList Preprocessor::parse(std::shared_ptr<preprocessor::ImportNode> parent_node) {

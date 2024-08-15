@@ -37,7 +37,6 @@ struct Token {
     tokens kind{};                  ///< Kind of the token
     std::string val;                ///< String value of the token
     std::string filename;           ///< Name of the file
-    mutable std::shared_mutex mtx;  ///< Mutex for thread safety
 
   public:
     Token(u64 line, u64 column, u64 length, u64 offset, std::string_view value,
@@ -53,10 +52,10 @@ struct Token {
     ~Token();
 
     /* ====-------------------------- getters ---------------------------==== */
-    u64 line_number() const;
-    u64 column_number() const;
-    u64 length() const;
-    u64 offset() const;
+    u32 line_number() const;
+    u32 column_number() const;
+    u32 length() const;
+    u32 offset() const;
     tokens token_kind() const;
     std::string value() const;
     std::string_view token_kind_repr() const;
