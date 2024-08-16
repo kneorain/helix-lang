@@ -37,8 +37,9 @@ struct Mapping {
 
     [[nodiscard]] constexpr std::optional<Enum> at(std::string_view str) const noexcept {
         auto iterator =
-            std::lower_bound(data.begin(), data.end(), str,
-                             [](const auto &pair, const auto &val) { return pair.second < val; });
+            std::lower_bound(data.begin(), data.end(), str, [](const auto &pair, const auto &val) {
+                return pair.second < val;
+            });
         if (iterator != data.end() && iterator->second == str) {
             return iterator->first;
         }
@@ -46,19 +47,17 @@ struct Mapping {
     }
 
     [[nodiscard]] constexpr std::optional<std::string_view> at(Enum token_type) const noexcept {
-        auto iterator = std::find_if(data.begin(), data.end(),
-                                     [&](const auto &pair) { return pair.first == token_type; });
+        auto iterator = std::find_if(
+            data.begin(), data.end(), [&](const auto &pair) { return pair.first == token_type; });
         if (iterator != data.end()) {
             return iterator->second;
         }
         return std::nullopt;
     }
 
-    [[nodiscard]] constexpr auto size() const noexcept { return data.size(); }
-
+    [[nodiscard]] constexpr auto size()  const noexcept { return data.size();  }
     [[nodiscard]] constexpr auto begin() const noexcept { return data.begin(); }
-
-    [[nodiscard]] constexpr auto end() const noexcept { return data.end(); }
+    [[nodiscard]] constexpr auto end()   const noexcept { return data.end();   }
 };
 }  // namespace token
 

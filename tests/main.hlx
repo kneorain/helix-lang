@@ -1,2 +1,7 @@
-ffi "c++" import "hi_there";
+module hello_world::std {
+    define hi_macro! {
+        print("hehhehe");
+    };
+}
 
+hi_macro!

@@ -117,6 +117,7 @@ const helix::CompTimeMap<float, Errors, 100> ERROR_MAP({
     MP(0.7005, Errors{"missing required abi identifier"}),
     MP(0.7006, Errors{"invalid symbol `#`", "if you meant to invoke a macro or compiler directive. use `#[...]` no spaces in between.", error::FATAL}),
     MP(0.7007, Errors{"attributes are not supported in this version of helix", "remove usage", error::FATAL}),
+    MP(0.7008, Errors{"shorthand scope declaration is not allowed for 'module'", "", error::ERR}),
 
     // Type Handling Errors
     MP(0.8001, Errors{"incorrect use of type_of!", "ensure correct usage of the type_of! macro.", error::ERR}),

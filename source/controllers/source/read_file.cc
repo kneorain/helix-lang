@@ -78,7 +78,7 @@ std::string _internal_read_file(const std::string &filename) {
     std::ifstream file(filename, std::ios::binary | std::ios::ate);
 
     if (!file) {
-        error::Error(error::CompilerError{2.1001, {}, std::vector<string>{filename}});
+        error::Panic(error::CompilerError{2.1001, {}, std::vector<string>{filename}});
         return "";
     }
 
@@ -87,7 +87,7 @@ std::string _internal_read_file(const std::string &filename) {
 
     std::string source(size, '\0');
     if (!file.read(source.data(), size)) {
-        error::Error(error::CompilerError{2.1003, {}, std::vector<string>{filename}});
+        error::Panic(error::CompilerError{2.1003, {}, std::vector<string>{filename}});
         return "";
     }
 
@@ -99,7 +99,7 @@ std::string _internal_read_file(const std::string &filename) {
 std::string read_file(std::string &filename) {
     std::optional<std::filesystem::path> path = file_system::resolve_path(filename);
     if (!path.has_value()) {
-        error::Error(error::CompilerError{2.1001, {}, std::vector<string>{filename}});
+        error::Panic(error::CompilerError{2.1001, {}, std::vector<string>{filename}});
         std::exit(1);
     }
 
@@ -114,7 +114,7 @@ std::string read_file(std::string &filename) {
 std::string read_file(const std::string &filename) {
     std::optional<std::filesystem::path> path = file_system::resolve_path(filename);
     if (!path.has_value()) {
-        error::Error(error::CompilerError{2.1001, {}, std::vector<string>{filename}});
+        error::Panic(error::CompilerError{2.1001, {}, std::vector<string>{filename}});
         std::exit(1);
     }
 

@@ -69,7 +69,9 @@
     case 'y':            \
     case 'z'
 
-#define a_z STRING_BYPASS : case a_z_EXCLUDE_rbuf
+#define a_z        \
+    STRING_BYPASS: \
+    case a_z_EXCLUDE_rbuf
 
 #define _0_9        \
     '0' : case '1': \
@@ -83,7 +85,8 @@
     case '9'
 
 #define _non_float_numeric \
-    _0_9 : case 'F':       \
+    _0_9:                  \
+    case 'F':              \
     case 'f':              \
     case 'U':              \
     case 'u':              \

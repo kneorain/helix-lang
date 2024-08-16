@@ -28,9 +28,9 @@
 
 int compile(int argc, char **argv) {
     using namespace token;
-    using namespace parser;
-    using namespace lexer;
+    using namespace parser::lexer;
     using namespace parser::ast;
+    using namespace parser::preprocessor;
 
     // relative to current working dir in POSIX shell (cmd/bash)
     command_line::CLIArgs parsed_args(argc, argv, "0.0.1-alpha-0112");
@@ -64,6 +64,7 @@ int compile(int argc, char **argv) {
     if (parsed_args.emit_tokens) {
         // print(tokens.to_json());
         print(tokens.to_json());
+        print_tokens(tokens);
     }
 
     std::chrono::duration<double> diff = end - start;
@@ -78,7 +79,7 @@ int compile(int argc, char **argv) {
 int main(int argc, char **argv) {
     try {
         compile(argc, argv);
-    } catch (error::Error&) {
+    } catch (error::Panic&) {
         // if (error::HAS_ERRORED) {
         // for (const auto& err : error::ERRORS) {
         //         print(err.to_json());

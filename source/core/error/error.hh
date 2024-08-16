@@ -141,12 +141,12 @@ inline bool HAS_ERRORED = false;
 inline bool SHOW_ERROR  = true;
 inline std::vector<_internal_error> ERRORS;
 
-class Error {
+class Panic {
   public:
     _internal_error final_err;
 
-    explicit Error(const CodeError &);
-    explicit Error(const CompilerError &);
+    explicit Panic(const CodeError &);
+    explicit Panic(const CompilerError &);
 
   private:
     void process_compiler_error(CompilerError);

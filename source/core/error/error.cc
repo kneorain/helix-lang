@@ -315,7 +315,7 @@ size_t set_level(string &level, const float &err_level) {
     return level_len;
 }
 
-Error::Error(const CodeError &err)
+Panic::Panic(const CodeError &err)
     : level_len(set_level(final_err.level, err.err_code))
     , mark_pof(err.mark_pof) {
     HAS_ERRORED = true;
@@ -355,7 +355,7 @@ Error::Error(const CodeError &err)
     }
 }
 
-Error::Error(const CompilerError &err)
+Panic::Panic(const CompilerError &err)
     : level_len(set_level(final_err.level, err.err_code)) {
     HAS_ERRORED = true;
 
@@ -379,7 +379,7 @@ Error::Error(const CompilerError &err)
     ERRORS.push_back(final_err);
 }
 
-void Error::process_full_line() {
+void Panic::process_full_line() {
     auto full_line = file_system::get_line(final_err.file, final_err.line);
 
     if (!full_line.has_value()) {
@@ -402,7 +402,7 @@ void Error::process_full_line() {
     final_err.full_line = full_line.value();
 }
 
-u32 Error::calculate_addition_pos(i64 pos) const {
+u32 Panic::calculate_addition_pos(i64 pos) const {
     if (pos < 0) {
         pos = static_cast<i64>(final_err.full_line.size() /* remove term */) + (pos + 1);
     }
@@ -414,7 +414,7 @@ u32 Error::calculate_addition_pos(i64 pos) const {
     return static_cast<u32>(pos);
 }
 
-void Error::show_error() {
+void Panic::show_error() {
     lines_vec lines = get_surrounding_lines(final_err.file, final_err.line);
     string    markings;
     string    formatted_error;

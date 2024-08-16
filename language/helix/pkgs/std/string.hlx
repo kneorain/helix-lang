@@ -48,6 +48,12 @@ define check_safety_mode! {
     }
 };
 
+ffi "c++" import "stdio.h";
+
+ffi "py" fn c_print(str: string) {
+    printf(str);
+}
+
 #[lib(hide-from-abi)] // Hide from libhlx to prevent the use of FFI with any STD components
 class string {
     fn string(self) {

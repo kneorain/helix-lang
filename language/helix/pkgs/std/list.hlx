@@ -40,7 +40,7 @@ module v1 { // already in the std module hence only v1 needed
         fn list(self, ...values: T);
 
         //==--- priv ---==//
-        priv struct ListNode requires <T> {
+        priv struct ListNode requires <T> if T derives string {
             let next: *ListNode? = &null;
             let data: T?         = null;
             eval define DISABLE_SAFETY: ... else {

@@ -1,4 +1,4 @@
-fn compile(argc: int, argv: **char) -> int {
+fn compile(argv: list<string>) -> int {
     let start = std::chrono::high_resolution_clock::now();
 
     let parsed_args = command_line::CLIArgs(argc, argv, "0.0.1-alpha-0112");
@@ -13,9 +13,9 @@ fn compile(argc: int, argv: **char) -> int {
 
     if parsed_args.emit_ast {
         let ast = parser::ast::make_node<node::Literal>(tokens);
-        ast->parse().value_or(0);
+        *ast.parse().value_or(0);
 
-        print(ast->to_json());
+        print(*ast.to_json());
     }
 
     if parsed_args.emit_tokens:
