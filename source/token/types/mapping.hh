@@ -55,9 +55,9 @@ struct Mapping {
         return std::nullopt;
     }
 
-    [[nodiscard]] constexpr auto size()  const noexcept { return data.size();  }
+    [[nodiscard]] constexpr auto size() const noexcept { return data.size(); }
     [[nodiscard]] constexpr auto begin() const noexcept { return data.begin(); }
-    [[nodiscard]] constexpr auto end()   const noexcept { return data.end();   }
+    [[nodiscard]] constexpr auto end() const noexcept { return data.end(); }
 };
 }  // namespace token
 

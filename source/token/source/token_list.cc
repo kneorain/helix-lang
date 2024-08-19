@@ -33,7 +33,8 @@ TokenList::TokenList(std::string filename)
     : filename(std::move(filename))
     , it(this->cbegin()) {}
 
-TokenList::TokenList(const std::string &filename, TokenVec::const_iterator start,
+TokenList::TokenList(const std::string       &filename,
+                     TokenVec::const_iterator start,
                      TokenVec::const_iterator end)
     : TokenVec(start, end)
     , filename(filename) {}
@@ -60,7 +61,7 @@ TokenList TokenList::slice(const std::uint64_t start, std::int64_t end) {
     }
 
     difference_type start_index = start;
-    difference_type end_index = end;
+    difference_type end_index   = end;
 
     return {this->filename, this->cbegin() + start_index, this->cbegin() + end_index};
 }
@@ -68,7 +69,7 @@ TokenList TokenList::slice(const std::uint64_t start, std::int64_t end) {
 TokenList TokenList::raw_slice(const std::uint64_t start, const std::int64_t end) const {
 
     auto start_index = static_cast<TokenVec::difference_type>(start);
-    auto end_index = static_cast<TokenVec::difference_type>(end);
+    auto end_index   = static_cast<TokenVec::difference_type>(end);
 
     return {this->filename, this->cbegin() + start_index, this->cbegin() + end_index};
 }
@@ -77,7 +78,7 @@ TokenList TokenList::raw_slice(const std::uint64_t start, const std::int64_t end
 /// @param i Inclusive split
 /// @return first is the left side of the split and the second is the right
 std::pair<TokenList, TokenList> TokenList::split_at(const std::uint64_t i) const {
-    auto start_idx = static_cast<TokenVec::difference_type>(i);
+    auto      start_idx = static_cast<TokenVec::difference_type>(i);
     TokenList first{this->filename, this->cbegin(), cbegin() + start_idx};
     TokenList second{this->filename, this->cbegin() + start_idx, this->cend()};
     return {first, second};
@@ -86,7 +87,7 @@ std::pair<TokenList, TokenList> TokenList::split_at(const std::uint64_t i) const
 TokenList TokenList::pop(const std::uint64_t offset) {
 
     auto diff = static_cast<TokenVec::difference_type>(offset);
-    *this = {this->filename, this->cbegin() + diff + 1, this->cend()};
+    *this     = {this->filename, this->cbegin() + diff + 1, this->cend()};
 
     // TODO: Bounds Checks
     return {this->filename, this->cbegin(), this->cbegin() + diff};
@@ -119,7 +120,7 @@ void TokenList::insert_remove(TokenList &tokens, u64 start, u64 end) {
     }
 
     auto start_it = this->cbegin() + static_cast<TokenVec::difference_type>(start);
-    auto end_it = this->cbegin() + static_cast<TokenVec::difference_type>(end);
+    auto end_it   = this->cbegin() + static_cast<TokenVec::difference_type>(end);
 
     this->erase(start_it, end_it);
     this->insert(start_it, tokens.cbegin(), tokens.cend());
@@ -257,6 +258,19 @@ TokenList::TokenListIter::peek_back(const std::int32_t n) const {
 std::reference_wrapper<Token> TokenList::TokenListIter::current() const {
     return tokens.get()[cursor_position];
 }
+
+TokenList TokenList::TokenListIter::remaining() {
+    // Get the reference to the original TokenList
+    auto &original_tokens = tokens.get();
+
+    // Create a new TokenList starting from the current position to the end
+    auto filename = original_tokens.file_name();
+    auto start = original_tokens.cbegin() + cursor_position;
+    auto end = original_tokens.cend();
+
+    return {filename, start, end};
+}
+
 
 TO_JSON_SIGNATURE_EXTEND(TokenList) {
     std::string result = "{\n" + jsonify::indent(depth + 1) + "\"tokens\" : [\n";

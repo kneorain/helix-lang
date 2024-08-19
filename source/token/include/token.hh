@@ -15,7 +15,6 @@
 #define __TOKEN_HH__
 
 #include <iostream>
-#include <shared_mutex>
 #include <string>
 #include <string_view>
 
@@ -30,17 +29,22 @@ Token(u64 line, u64 column, u64 length, u64 offset, std::string_view value,
 */
 struct Token {
   private:
-    u32 line{};                     ///< Line number where the token is located
-    u32 column{};                   ///< Column number where the token starts
-    u32 len{};                      ///< Length of the token
-    u32 _offset{};                  ///< Offset from the beginning of the file
-    tokens kind{};                  ///< Kind of the token
-    std::string val;                ///< String value of the token
-    std::string filename;           ///< Name of the file
+    u32         line{};     ///< Line number where the token is located
+    u32         column{};   ///< Column number where the token starts
+    u32         len{};      ///< Length of the token
+    u32         _offset{};  ///< Offset from the beginning of the file
+    tokens      kind{};     ///< Kind of the token
+    std::string val;        ///< String value of the token
+    std::string filename;   ///< Name of the file
 
   public:
-    Token(u64 line, u64 column, u64 length, u64 offset, std::string_view value,
-          const std::string &filename, std::string_view token_kind = "");
+    Token(u64                line,
+          u64                column,
+          u64                length,
+          u64                offset,
+          std::string_view   value,
+          const std::string &filename,
+          std::string_view   token_kind = "");
     Token(const Token &other);
     Token &operator=(const Token &other);
     Token(Token &&other) noexcept;
@@ -52,20 +56,20 @@ struct Token {
     ~Token();
 
     /* ====-------------------------- getters ---------------------------==== */
-    u32 line_number() const;
-    u32 column_number() const;
-    u32 length() const;
-    u32 offset() const;
-    tokens token_kind() const;
-    std::string value() const;
+    u32              line_number() const;
+    u32              column_number() const;
+    u32              length() const;
+    u32              offset() const;
+    tokens           token_kind() const;
+    std::string      value() const;
     std::string_view token_kind_repr() const;
-    std::string file_name() const;
-    std::string to_string() const;
+    std::string      file_name() const;
+    std::string      to_string() const;
     TO_JSON_SIGNATURE;
 
-    bool operator==(const Token &rhs) const;
+    bool          operator==(const Token &rhs) const;
     std::ostream &operator<<(std::ostream &os) const;
-    auto operator+(const string& str) {
+    auto          operator+(const string &str) {
         this->val += str;
         return *this;
     }
@@ -77,17 +81,19 @@ struct Token {
 };
 
 inline auto bare_token(tokens token_type, std::string value = "") {
-    return Token(token_type, "", value.empty() ? std::string(tokens_map.at(token_type).value()) : std::move(value));
+    return Token(token_type,
+                 "",
+                 value.empty() ? std::string(tokens_map.at(token_type).value()) : std::move(value));
 }
 
 }  // namespace token
 
-inline token::Token operator+(const std::string& lhs, token::Token rhs) {
+inline token::Token operator+(const std::string &lhs, token::Token rhs) {
     rhs.set_value(lhs + rhs.value());
     return rhs;
 }
 
-inline token::Token operator+(token::Token& lhs, const std::string& rhs) {
+inline token::Token operator+(token::Token &lhs, const std::string &rhs) {
     lhs.set_value(lhs.value() + rhs);
     return lhs;
 }

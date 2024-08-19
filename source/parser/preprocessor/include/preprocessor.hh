@@ -57,20 +57,23 @@ class Preprocessor {
 
   private:
     using TokenIterator = TokenList::TokenListIter;
+    using BraceStack    = std::vector<i64>;
 
     TokenList      source_tokens;          // tokens from the source file
     QualifiedName  current_namespace;      // current namespace, taking nesting into account
+    BraceStack     namespace_brace_level;  // pop when this is reached
     TokenIterator *source_iter = nullptr;  // iterator over source tokens
 
     //===-------------------------------------- friends ---------------------------------------===//
 
-    friend void handle_invalid_abi_option(Preprocessor *);
-    friend void parse_import(Preprocessor *);
     friend void parse_ffi(Preprocessor *);
-    friend void parse_define(Preprocessor *);
+    friend void parse_brace(Preprocessor *);
     friend void parse_macro(Preprocessor *);
-    friend void parse_invocation(Preprocessor *);
+    friend void parse_import(Preprocessor *);
+    friend void parse_define(Preprocessor *);
     friend void parse_namespace(Preprocessor *);
+    friend void parse_invocation(Preprocessor *);
+    friend void handle_invalid_abi_option(Preprocessor *);
 
     //===------------------------------------ iter helpers ------------------------------------===//
 

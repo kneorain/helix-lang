@@ -259,81 +259,88 @@ void parse_define(Preprocessor *self) {
 
 void parse_macro(Preprocessor *self) {}
 
-void parse_namespace(Preprocessor *self) {  // at the time of call, current() is 'module'
+// void __parse_namespace(Preprocessor *self) {  // at the time of call, current() is 'module'
+//     // module foo::bar {
+//     QualifiedName namespace_name;
+
+//     auto check_next_token = [&]() {
+//         if (!self->peek().has_value()) [[unlikely]] {
+//             throw error::Panic(error::CodeError{
+//                 .pof          = &self->current(),
+//                 .err_code     = 2.1004,
+//                 .mark_pof     = false,
+//                 .err_fmt_args = {"opening brace"},
+
+//                 // TODO: add space between insert if its not there
+//                 //       and also make sure it clips to avoid inserting inside a color
+
+//                 .opt_fixes = {{bare_token(tokens::PUNCTUATION_OPEN_BRACE), -1}}});
+//         }
+//     };
+
+//     check_next_token();
+//     if (self->peek().value().token_kind() != tokens::IDENTIFIER) {
+//         // this is a anonyms namespace (ignored for defines)
+//         self->advance();  // module (:|{)<
+//     } else {
+//         // if this is a valid namespace
+
+//         check_next_token();
+//         if (self->current().token_kind() != tokens::IDENTIFIER) {
+//             // if theres a diffrent token
+//             throw error::Panic(error::CodeError{
+//                 .pof          = &self->current(),
+//                 .err_code     = 2.1004,
+//                 .err_fmt_args = {"opening brace. instead encountered an unexecuted token"},
+
+//                 // TODO: add space between insert if its not there
+//                 //       and also make sure it clips to avoid inserting inside a color
+
+//                 .opt_fixes = {{bare_token(tokens::PUNCTUATION_OPEN_BRACE), -1}}});
+//         }
+    
+//     error::Panic(
+//                 error::CodeError{.pof      = &self->current(),
+//                                 .err_code = 0.7008,
+
+//                                 // TODO: add space between insert if its not there
+//                                 //       and also make sure it clips to avoid inserting inside a color
+
+//                                 .opt_fixes = {{bare_token(tokens::PUNCTUATION_OPEN_BRACE),
+//                                                 self->current().column_number() + self->current().length() + 3}}});
+
+
+//     if (self->current().token_kind() == tokens::PUNCTUATION_COLON);
+//     auto bad_token = self->current();
+
+//     error::Panic(
+//         error::CodeError{.pof      = &bad_token,
+//                             .err_code = 0.7008,
+
+//                             // TODO: add space between insert if its not there
+//                             //       and also make sure it clips to avoid inserting inside a color
+
+//                             .opt_fixes = {{bare_token(tokens::PUNCTUATION_OPEN_BRACE),
+//                                         bad_token.column_number() + bad_token.length() + 3}}});
+
+// }
+
+void parse_namespace(Preprocessor *self) {
+    // at the time of call, current() is 'module'
     // module foo::bar {
-    bool checks_failed = false;
+    // brain process
+    // start at module, peek and see if theres a id or : or {
+    // if id read the namespace name
+    // else if { return (leaving { as current and set self->started_module to true)
+    // else if : error saying to add a {
+    // else say excepted a {
+
     QualifiedName namespace_name;
 
-    auto check_next_token = [&]() {
-        if (!self->peek().has_value()) [[unlikely]] {
-            throw error::Panic(error::CodeError{
-                .pof          = &self->current(),
-                .err_code     = 2.1004,
-                .mark_pof     = false,
-                .err_fmt_args = {"opening brace"},
+}
 
-                // TODO: add space between insert if its not there
-                //       and also make sure it clips to avoid inserting inside a color
+void parse_brace(Preprocessor *self) {
 
-                .opt_fixes = {{bare_token(tokens::PUNCTUATION_OPEN_BRACE), -1}}});
-        }
-    };
-
-    check_next_token();
-    if (self->peek().value().token_kind() != tokens::IDENTIFIER) {
-        // this is a anonyms namespace (ignored for defines)
-        self->advance();  // module (:|{)<
-    } else {
-        // if this is a valid namespace
-
-        check_next_token();
-        if (self->peek().value().token_kind() != tokens::IDENTIFIER) {
-            // if theres a diffrent token
-            throw error::Panic(error::CodeError{
-                .pof          = &self->current(),
-                .err_code     = 2.1004,
-                .err_fmt_args = {"opening brace. instead encountered an unexecuted token"},
-
-                // TODO: add space between insert if its not there
-                //       and also make sure it clips to avoid inserting inside a color
-
-                .opt_fixes = {{bare_token(tokens::PUNCTUATION_OPEN_BRACE), -1}}});
-        }
-    parse_qualified_namespace_id:
-        self->advance();  // module (id)<
-
-        switch (self->current().token_kind()) {
-            case tokens::IDENTIFIER:
-            case tokens::OPERATOR_SCOPE:
-                namespace_name.push_back(self->current());
-                
-            default:
-                break; // different symbol
-        }
-    }
-
-    if (self->current().token_kind() == tokens::PUNCTUATION_COLON) {
-        // in the case the source is using the scope shorthand (not allowed for a
-        //                                                      module aka namespace)
-        auto bad_token = self->current();
-
-        error::Panic(
-            error::CodeError{.pof      = &bad_token,
-                             .err_code = 0.7008,
-
-                             // TODO: add space between insert if its not there
-                             //       and also make sure it clips to avoid inserting inside a color
-
-                             .opt_fixes = {{bare_token(tokens::PUNCTUATION_OPEN_BRACE),
-                                            bad_token.column_number() + bad_token.length() + 3}}});
-
-        self->advance();
-        checks_failed = true;
-    }
-
-    if (checks_failed) {
-        return;
-    }
 }
 
 void parse_invocation(Preprocessor *self) {
@@ -377,6 +384,10 @@ TokenList Preprocessor::parse(std::shared_ptr<preprocessor::ImportNode> parent_n
                 break;
             case tokens::KEYWORD_MODULE:
                 parse_namespace(this);
+                break;
+            case tokens::PUNCTUATION_OPEN_BRACE:
+            case tokens::PUNCTUATION_CLOSE_BRACE:
+                parse_brace(this);
                 break;
             default:
                 break;

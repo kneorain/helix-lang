@@ -23,7 +23,7 @@
 #include "core/utils/hx_print"
 
 namespace parser::preprocessor {
-using ImportNodePtr = std::shared_ptr<struct ImportNode>;
+using ImportNodePtr  = std::shared_ptr<struct ImportNode>;
 using ImportNodeUPtr = std::unique_ptr<class ImportTree>;
 
 struct ImportNode {

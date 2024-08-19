@@ -13,52 +13,20 @@
 
 #include <regex>
 #include <vector>
+
 #include "core/error/error.hh"
 #include "core/types/advanced_comptime_map.hh"
 
-struct Errors {
-    string err;
-    string fix;
-    error::Level level = error::ERR;
-    
-};
-
 namespace std {
-    template<>
-    struct hash<Errors> {
-        std::size_t operator()(const Errors& e) const noexcept {
-            return std::hash<std::string_view>{}(e.err) ^ std::hash<std::string_view>{}(e.fix);
-        }
-    };
-}
-
-inline string fmt_string(const string& format, const std::vector<string>& fmt_args) {
-    string result;
-    std::size_t N = fmt_args.size();
-    result.reserve(format.size());
-
-    std::size_t argIndex = 0;
-    std::size_t len = format.size();
-
-    for (std::size_t i = 0; i < len; ++i) {
-        if (format[i] == '{' && i + 1 < len && format[i + 1] == '}') {
-            if (argIndex >= N) {
-                throw std::invalid_argument("Insufficient arguments provided for format string");
-            }
-            result += fmt_args[argIndex++];
-            ++i; // Skip over the closing '}'
-        } else {
-            result += format[i];
-        }
+template <>
+struct hash<error::Errors> {
+    std::size_t operator()(const error::Errors &e) const noexcept {
+        return std::hash<std::string_view>{}(e.err) ^ std::hash<std::string_view>{}(e.fix);
     }
+};
+}  // namespace std
 
-    if (argIndex != N) {
-        throw std::invalid_argument("Too many arguments provided for format string: \"" + format + "\"");
-    }
-
-    return result;
-}
-
+namespace error {
 const helix::CompTimeMap<float, Errors, 100> ERROR_MAP({
     // Syntax Errors
     MP(0.0001, Errors{"invalid syntax", "", error::ERR}),
@@ -176,7 +144,7 @@ const helix::CompTimeMap<float, Errors, 100> ERROR_MAP({
     MP(7.1002, Errors{"unused variable '{}' detected", "remove or utilize the declared variable '{}'.", error::WARN}),
     MP(7.1003, Errors{"code style warning: '{}'", "follow the recommended code style and formatting guidelines: '{}'.", error::NOTE}),
 });
-
+};  // end of namespace error
 
 // Error Keys
 /* 0 : Syntax Errors

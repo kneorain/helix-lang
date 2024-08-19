@@ -21,8 +21,13 @@
 
 namespace token {
 
-Token::Token(u64 line, u64 column, u64 length, u64 offset, std::string_view value,
-             const std::string &filename, std::string_view token_kind)
+Token::Token(u64                line,
+             u64                column,
+             u64                length,
+             u64                offset,
+             std::string_view   value,
+             const std::string &filename,
+             std::string_view   token_kind)
     : line(line)
     , column(column)
     , len(length)
@@ -77,12 +82,12 @@ Token &Token::operator=(const Token &other) {
     if (this == &other) {
         return *this;
     }
-    line = other.line;
-    column = other.column;
-    len = other.len;
-    _offset = other._offset;
-    kind = other.kind;
-    val = other.val;
+    line     = other.line;
+    column   = other.column;
+    len      = other.len;
+    _offset  = other._offset;
+    kind     = other.kind;
+    val      = other.val;
     filename = other.filename;
 
     return *this;
@@ -103,12 +108,12 @@ Token &Token::operator=(Token &&other) noexcept {
     if (this == &other) {
         return *this;
     }
-    line = other.line;
-    column = other.column;
-    len = other.len;
-    _offset = other._offset;
-    kind = other.kind;
-    val = std::move(other.val);
+    line     = other.line;
+    column   = other.column;
+    len      = other.len;
+    _offset  = other._offset;
+    kind     = other.kind;
+    val      = std::move(other.val);
     filename = other.filename;
     return *this;
 }
@@ -134,7 +139,10 @@ std::string Token::file_name() const { return filename; }
 
 void Token::set_file_name(const std::string &file_name) { this->filename = std::string(file_name); }
 
-void Token::set_value(const std::string &other) { this->val = std::string(other); this->len = this->val.length(); }
+void Token::set_value(const std::string &other) {
+    this->val = std::string(other);
+    this->len = this->val.length();
+}
 
 std::string Token::to_string() const {
     return std::string("Token(") + std::string("line: ") + std::to_string(line) +
