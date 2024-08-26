@@ -40,7 +40,7 @@ struct CompTimeMap {
 
         // Fill the hash maps
         for (std::size_t i = 0; i < N; ++i) {
-            key_hash_map[i] = {std::hash<Kt>{}(data[i].first), i};
+            key_hash_map[i]   = {std::hash<Kt>{}(data[i].first), i};
             value_hash_map[i] = {std::hash<Vt>{}(data[i].second), i};
         }
 
@@ -52,7 +52,9 @@ struct CompTimeMap {
     [[nodiscard]] constexpr std::optional<Kt> at(Vt val) const noexcept {
         auto val_hash = std::hash<Vt>{}(val);
         auto iterator = std::lower_bound(
-            value_hash_map.begin(), value_hash_map.end(), std::make_pair(val_hash, 0UL),
+            value_hash_map.begin(),
+            value_hash_map.end(),
+            std::make_pair(val_hash, 0UL),
             [](const auto &first, const auto &second) { return first.first < second.first; });
 
         if (iterator != value_hash_map.end() && iterator->first == val_hash) {
@@ -64,7 +66,9 @@ struct CompTimeMap {
     [[nodiscard]] constexpr std::optional<Vt> at(Kt key) const noexcept {
         auto key_hash = std::hash<Kt>{}(key);
         auto iterator = std::lower_bound(
-            key_hash_map.begin(), key_hash_map.end(), std::make_pair(key_hash, 0UL),
+            key_hash_map.begin(),
+            key_hash_map.end(),
+            std::make_pair(key_hash, 0UL),
             [](const auto &first, const auto &second) { return first.first < second.first; });
 
         if (iterator != key_hash_map.end() && iterator->first == key_hash) {

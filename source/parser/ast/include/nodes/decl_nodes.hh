@@ -21,96 +21,100 @@ namespace parser::ast::node {
 using namespace token;
 
 // Functions and Methods
-struct FunctionDecl final : Declaration<FunctionDecl> {
+class FunctionDecl final : public Declaration {
     AST_NODE_METHODS(FunctionDecl);
     NodePtr<QualifiedNamespaceID> name;
-    NodeList<TypedParameter> parameters;
-    NodeList<DefaultArgument> defaultArguments;
-    NodePtr<Type<void>> returnType;
+    NodeList<TypedParameter>      params;
+    NodeList<DefaultArgument>     kw_params;
+    NodePtr<Type>           return_ty;
+    NodePtr<RequiresDeclaration>  generics;
+    NodePtr<Suite>                body;
 };
 
-struct FunctionDefinition final : Declaration<FunctionDefinition> {
+// untouched beyond this point.
+
+class FunctionDefinition final : public Declaration {
     AST_NODE_METHODS(FunctionDefinition);
-    bool isUnsafe = false;
+    bool                    isUnsafe = false;
     NodePtr<BaseObjectDecl> baseObject;
-    NodePtr<FunctionDecl> functionDecl;
-    NodePtr<RequiresDeclaration> _requires;
+    NodePtr<FunctionDecl>   functionDecl;
+
     NodePtr<Suite> suite;
 };
 
-struct OperatorDefinition final : Declaration<OperatorDefinition> {
+class OperatorDefinition final : public Declaration {
     AST_NODE_METHODS(OperatorDefinition);
-    Token op;
+    Token                 op;
     NodePtr<FunctionDecl> functionDecl;
-    NodePtr<Suite> suite;
+    NodePtr<Suite>        suite;
 };
 
-// Class and Struct
-struct ClassDefinition final : Declaration<ClassDefinition> {
+// Class and class
+class ClassDefinition final : public Declaration {
     AST_NODE_METHODS(ClassDefinition);
-    NodePtr<BaseObjectDecl> baseObject;
+    NodePtr<BaseObjectDecl>       baseObject;
     NodePtr<QualifiedNamespaceID> name;
-    NodePtr<DerivesDecl> derives;
-    NodePtr<RequiresDeclaration> _requires;
-    NodePtr<Suite> suite;
+    NodePtr<DerivesDecl>          derives;
+    NodePtr<RequiresDeclaration>  _requires;
+    NodePtr<Suite>                suite;
 };
 
-struct EnumDefinition final : Declaration<EnumDefinition> {
+class EnumDefinition final : public Declaration {
     AST_NODE_METHODS(EnumDefinition);
-    NodePtr<BaseObjectDecl> baseObject;
+    NodePtr<BaseObjectDecl>       baseObject;
     NodePtr<QualifiedNamespaceID> name;
-    NodePtr<EnumBody> body;
+    NodePtr<EnumBody>             body;
 };
 
-struct StructDefinition final : Declaration<StructDefinition> {
-    AST_NODE_METHODS(StructDefinition);
-    NodePtr<BaseObjectDecl> baseObject;
+class classDefinition final : public Declaration {
+    AST_NODE_METHODS(classDefinition);
+    NodePtr<BaseObjectDecl>      baseObject;
     NodePtr<RequiresDeclaration> _requires;
-    NodePtr<Suite> suite;
+    NodePtr<Suite>               suite;
 };
 
-struct UnionDefinition final : Declaration<UnionDefinition> {
+class UnionDefinition final : public Declaration {
     AST_NODE_METHODS(UnionDefinition);
-    NodePtr<BaseObjectDecl> baseObject;
+    NodePtr<BaseObjectDecl>      baseObject;
     NodePtr<RequiresDeclaration> _requires;
-    NodePtr<UnionBody> body;
+    NodePtr<UnionBody>           body;
 };
 
-struct TypeDefinition final : Declaration<TypeDefinition> {
+class TypeDefinition final : public Declaration {
     AST_NODE_METHODS(TypeDefinition);
-    NodePtr<BaseObjectDecl> baseObject;
+    NodePtr<BaseObjectDecl>       baseObject;
     NodePtr<QualifiedNamespaceID> name;
-    NodePtr<RequiresDeclaration> _requires;
-    NodePtr<Type<void>> type;
+    NodePtr<RequiresDeclaration>  _requires;
+    NodePtr<Type>           type;
 };
 
 // Inheritance and Polymorphism
-struct AbstractDefinition final : Declaration<AbstractDefinition> {
+class AbstractDefinition final : public Declaration {
     AST_NODE_METHODS(AbstractDefinition);
-    NodePtr<BaseObjectDecl> baseObject;
+    NodePtr<BaseObjectDecl>       baseObject;
     NodePtr<QualifiedNamespaceID> name;
-    NodePtr<DerivesDecl> derives;
-    NodePtr<RequiresDeclaration> _requires;
-    NodePtr<Suite> suite;
+    NodePtr<DerivesDecl>          derives;
+    NodePtr<RequiresDeclaration>  _requires;
+    NodePtr<Suite>                suite;
 };
 
-struct InterfaceDefinition final : Declaration<InterfaceDefinition> {
+class InterfaceDefinition final : public Declaration {
     AST_NODE_METHODS(InterfaceDefinition);
-    NodePtr<BaseObjectDecl> baseObject;
+    NodePtr<BaseObjectDecl>       baseObject;
     NodePtr<QualifiedNamespaceID> name;
-    NodePtr<DerivesDecl> derives;
-    NodePtr<RequiresDeclaration> _requires;
-    NodePtr<Suite> suite;
+    NodePtr<DerivesDecl>          derives;
+    NodePtr<RequiresDeclaration>  _requires;
+    NodePtr<Suite>                suite;
 };
 
 // Variable Declarations
-struct VariableDeclaration final : Declaration<VariableDeclaration> {
+class VariableDeclaration final : public Declaration {
     AST_NODE_METHODS(VariableDeclaration);
-    NodePtr<AccessModifiers> accessModifiers;
-    bool isUnsafe = false;
-    Token qualifier;      // const, atomic, shared, eval
-    NodePtr<> parameter;  // TypedParameter or UntypedParameter
-    NodePtr<Expression<void>> initializer;
+    NodePtr<AccessModifiers>  accessModifiers;
+    bool                      isUnsafe = false;
+    Token                     qualifier;  // const, atomic, shared, eval
+    NodePtr<>                 parameter;  // TypedParameter or UntypedParameter
+    NodePtr<Expression> initializer;
 };
 
 }  // namespace parser::ast::node

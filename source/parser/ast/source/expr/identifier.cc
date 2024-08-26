@@ -11,17 +11,33 @@
 //
 //===------------------------------------------------------------------------------------------===//
 
+#include <__expected/unexpected.h>
+#include <cstddef>
 #include <expected>
 #include <string>
+
 #include "core/utils/hx_print"
 #include "core/utils/josnify.hh"
 #include "parser/ast/include/ast.hh"
 #include "parser/ast/include/nodes/expr_nodes.hh"
 #include "token/include/generate.hh"
 
-#include <map>
-#include <vector>
-
 namespace parser::ast::node {
+parser::ast::ParseResult parser::ast::node::Identifier::parse() {
+    if (source_tokens.empty()) {
+        // TODO: handle error
+        return 0;
+    }
 
-} // namespace parser::ast::node
+    for (auto &tok : source_tokens) {
+        if (tok.current().get() == tokens::IDENTIFIER) {
+            this->value = tok.current().get();
+            return 1;
+        }
+
+        // else handle error
+    }
+
+    return 0;
+}
+}  // end namespace parser::ast::node

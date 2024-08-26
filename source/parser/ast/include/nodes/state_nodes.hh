@@ -21,67 +21,67 @@ namespace parser::ast::node {
 using namespace token;
 
 // Control Flow
-struct ForLoop final : Statement<ForLoop> {
+class ForLoop final : public Statement {
     AST_NODE_METHODS(ForLoop);
     NodePtr<> loopType;  // Either CStyleForLoop or PyStyleForLoop
     NodePtr<Suite> suite;
 };
 
-struct WhileLoop final : Statement<WhileLoop> {
+class WhileLoop final : public Statement {
     AST_NODE_METHODS(WhileLoop);
-    NodePtr<Expression<void>> condition;
+    NodePtr<Expression> condition;
     NodePtr<Suite> suite;
 };
 
-struct IfStatement final : Statement<IfStatement> {
+class IfStatement final : public Statement {
     AST_NODE_METHODS(IfStatement);
-    NodePtr<Expression<void>> condition;
+    NodePtr<Expression> condition;
     NodePtr<Suite> suite;
 };
 
-struct ElseIfStatement final : Statement<ElseIfStatement> {
+class ElseIfStatement final : public Statement {
     AST_NODE_METHODS(ElseIfStatement);
-    NodePtr<Expression<void>> condition;
+    NodePtr<Expression> condition;
     NodePtr<Suite> suite;
 };
 
-struct ElseStatement final : Statement<ElseStatement> {
+class ElseStatement final : public Statement {
     AST_NODE_METHODS(ElseStatement);
     NodePtr<Suite> suite;
 };
 
-struct ContinueStatement final : Statement<ContinueStatement> {
+class ContinueStatement final : public Statement {
     AST_NODE_METHODS(ContinueStatement);
 };
 
-struct BreakStatement final : Statement<BreakStatement> {
+class BreakStatement final : public Statement {
     AST_NODE_METHODS(BreakStatement);
 };
 
-struct SwitchStatement final : Statement<SwitchStatement> {
+class SwitchStatement final : public Statement {
     AST_NODE_METHODS(SwitchStatement);
     NodeList<NodePtr<>> cases;  // CaseStatement or DefaultCaseStatement
 };
 
-struct CaseStatement final : Statement<CaseStatement> {
+class CaseStatement final : public Statement {
     AST_NODE_METHODS(CaseStatement);
-    NodePtr<Expression<void>> condition;
+    NodePtr<Expression> condition;
     NodePtr<Suite> suite;
 };
 
-struct DefaultCaseStatement final : Statement<DefaultCaseStatement> {
+class DefaultCaseStatement final : public Statement {
     AST_NODE_METHODS(DefaultCaseStatement);
     NodePtr<Suite> suite;
 };
 
 // Statements
-struct Assignment final : Statement<Assignment> {
+class Assignment final : public Statement {
     AST_NODE_METHODS(Assignment);
     NodePtr<AnySeparatedID> variable;
-    NodePtr<Expression<void>> expression;
+    NodePtr<Expression> expression;
 };
 
-struct BlockStatement final : Statement<BlockStatement> {
+class BlockStatement final : public Statement {
     AST_NODE_METHODS(BlockStatement);
     NodePtr<Suite> suite;
 };

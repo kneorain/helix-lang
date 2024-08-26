@@ -19,278 +19,243 @@
 namespace parser::ast::node {
 using namespace token;
 
-struct UntypedParameter;
-struct TypedParameter;
-struct AnySeparatedID;
-struct QualifiedNamespaceID;
-struct Suite;
-struct Identifier;
-struct DefaultArgument;
-struct BaseObjectDecl;
-struct RequiresDeclaration;
-struct AccessModifiers;
-struct DerivesDecl;
-struct EnumBody;
-struct UnionBody;
+class UntypedParameter;
+class TypedParameter;
+class AnySeparatedID;
+class QualifiedNamespaceID;
+class Suite;
+class Identifier;
+class DefaultArgument;
+class BaseObjectDecl;
+class RequiresDeclaration;
+class AccessModifiers;
+class DerivesDecl;
+class EnumBody;
+class UnionBody;
 
 // Main Program Structure
-struct Program final : ASTBase<Program> {
+class Program final : public ASTBase {
     AST_NODE_METHODS(Program);
     NodeList<NodePtr<>> statements;
 };
 
 // Modules and Imports
-struct Module final : ASTBase<Module> {
+class Module final : public ASTBase {
     AST_NODE_METHODS(Module);
     NodePtr<QualifiedNamespaceID> namespaceID;
     NodePtr<Suite> suite;
 };
 
-struct ImportStatement final : ASTBase<ImportStatement> {
+class ImportStatement final : public ASTBase {
     AST_NODE_METHODS(ImportStatement);
     NodePtr<QualifiedNamespaceID> namespaceID;
     NodeList<QualifiedNamespaceID> importList;
     NodePtr<QualifiedNamespaceID> alias;
 };
 
-struct FFIImportStatement final : ASTBase<FFIImportStatement> {
+class FFIImportStatement final : public ASTBase {
     AST_NODE_METHODS(FFIImportStatement);
     Token ffiString;
     NodePtr<ImportStatement> importStatement;
 };
 
 // Class and Struct
-struct BaseObjectDecl : ASTBase<BaseObjectDecl> {
+class BaseObjectDecl : public ASTBase {
     AST_NODE_METHODS(BaseObjectDecl);
     NodePtr<AccessModifiers> accessModifiers;
     Token qualifier;  // inline, async, static, eval, const, ffi
 };
 
-struct EnumBody final : ASTBase<EnumBody> {
+class EnumBody final : public ASTBase {
     AST_NODE_METHODS(EnumBody);
     NodeList<NodePtr<>> parameters;  // TypedParameter or UntypedParameter with optional Expression
 };
 
-struct UnionBody final : ASTBase<UnionBody> {
+class UnionBody final : public ASTBase {
     AST_NODE_METHODS(UnionBody);
     NodeList<NodePtr<>> parameters;  // TypedParameter or UntypedParameter
 };
 
 // Inheritance and Polymorphism
-struct DerivesDecl final : ASTBase<DerivesDecl> {
+class DerivesDecl final : public ASTBase {
     AST_NODE_METHODS(DerivesDecl);
     NodeList<QualifiedNamespaceID> baseClasses;
 };
 
-struct TypeBound final : ASTBase<TypeBound> {
+class TypeBound final : public ASTBase {
     AST_NODE_METHODS(TypeBound);
     NodePtr<UntypedParameter> parameter;
     NodeList<QualifiedNamespaceID> bounds;
 };
 
-struct GenericType final : ASTBase<GenericType> {
+class GenericType final : public ASTBase {
     AST_NODE_METHODS(GenericType);
     bool isEval = false;
     NodePtr<> parameter;  // TypedParameter or UntypedParameter
-    NodePtr<Expression<void>> expression;
+    NodePtr<Expression> expression;
 };
 
-struct RequiresDeclaration final : ASTBase<RequiresDeclaration> {
+class RequiresDeclaration final : public ASTBase {
     AST_NODE_METHODS(RequiresDeclaration);
     NodeList<GenericType> genericTypes;
     NodeList<TypeBound> typeBounds;
 };
 
 // Error Handling
-struct CatchDefinition final : ASTBase<CatchDefinition> {
+class CatchDefinition final : public ASTBase {
     AST_NODE_METHODS(CatchDefinition);
     NodePtr<AnySeparatedID> identifier;
     NodePtr<QualifiedNamespaceID> alias;
     NodePtr<Suite> suite;
 };
 
-struct FinallyDefinition final : ASTBase<FinallyDefinition> {
+class FinallyDefinition final : public ASTBase {
     AST_NODE_METHODS(FinallyDefinition);
     NodePtr<Suite> suite;
 };
 
-struct PanicDefinition final : ASTBase<PanicDefinition> {
+class PanicDefinition final : public ASTBase {
     AST_NODE_METHODS(PanicDefinition);
-    NodePtr<Expression<void>> expression;
+    NodePtr<Expression> expression;
 };
 
-struct TryDefinition final : ASTBase<TryDefinition> {
+class TryDefinition final : public ASTBase {
     AST_NODE_METHODS(TryDefinition);
     NodePtr<Suite> suite;
     NodePtr<CatchDefinition> catchBlock;
     NodePtr<FinallyDefinition> finallyBlock;
 };
 
-struct TestDefinition final : ASTBase<TestDefinition> {
+class TestDefinition final : public ASTBase {
     AST_NODE_METHODS(TestDefinition);
     Token testName;
     NodePtr<Suite> suite;
 };
 
 // Access Specifiers
-struct AccessModifiers final : ASTBase<AccessModifiers> {
+class AccessModifiers final : public ASTBase {
     AST_NODE_METHODS(AccessModifiers);
     Token modifier;  // priv, pub, prot, intl
 };
 
 // Concurrency
-struct AwaitCall final : ASTBase<AwaitCall> {
+class AwaitCall final : public ASTBase {
     AST_NODE_METHODS(AwaitCall);
-    NodePtr<Expression<void>> expression;
+    NodePtr<Expression> expression;
 };
 
-struct SpawnCall final : ASTBase<SpawnCall> {
+class SpawnCall final : public ASTBase {
     AST_NODE_METHODS(SpawnCall);
-    NodePtr<Expression<void>> expression;
+    NodePtr<Expression> expression;
 };
 
-struct ThreadCall final : ASTBase<ThreadCall> {
+class ThreadCall final : public ASTBase {
     AST_NODE_METHODS(ThreadCall);
-    NodePtr<Expression<void>> expression;
+    NodePtr<Expression> expression;
 };
 
 // Other
-struct DeleteCall final : ASTBase<DeleteCall> {
+class DeleteCall final : public ASTBase {
     AST_NODE_METHODS(DeleteCall);
-    NodePtr<Expression<void>> expression;
+    NodePtr<Expression> expression;
 };
 
 // Type Definitions
-struct GenericAccess final : ASTBase<GenericAccess> {
+class GenericAccess final : public ASTBase {
     AST_NODE_METHODS(GenericAccess);
     NodeList<NodePtr<>> identifiers;  // QualifiedNamespaceIDOrLiteral
 };
 
 // Operators
-struct Operator final : ASTBase<Operator> {
+class Operator final : public ASTBase {
     AST_NODE_METHODS(Operator);
     Token op;
 };
 
-struct Expressions final : ASTBase<Expressions> {
+class Expressions final : public ASTBase {
     AST_NODE_METHODS(Expressions);
-    NodeList<Expression<void>> expressions;
+    NodeList<Expression> expressions;
 };
 
-struct Statements final : ASTBase<Statements> {
+class Statements final : public ASTBase {
     AST_NODE_METHODS(Statements);
-    NodeList<Statement<void>> statements;
+    NodeList<Statement> statements;
 };
 
 // Code Structure
-struct CodeBlock final : ASTBase<CodeBlock> {
+class CodeBlock final : public ASTBase {
     AST_NODE_METHODS(CodeBlock);
     NodeList<NodePtr<>> statementsOrExpressions;
 };
 
-struct CodeLine final : ASTBase<CodeLine> {
+class CodeLine final : public ASTBase {
     AST_NODE_METHODS(CodeLine);
     NodePtr<> statementOrExpression;
 };
 
-// Base Elements
-struct Number final : ASTBase<Number> {
-    AST_NODE_METHODS(Number);
-    Token value;
-};
-
-struct String final : ASTBase<String> {
-    AST_NODE_METHODS(String);
-    Token value;
-};
-
-struct Identifier final : ASTBase<Identifier> {
-    AST_NODE_METHODS(Identifier);
-    Token value;
-};
-
-struct Digit final : ASTBase<Digit> {
-    AST_NODE_METHODS(Digit);
-    Token value;
-};
-
-struct UntypedParameter final : ASTBase<UntypedParameter> {
+class UntypedParameter final : public ASTBase {
     AST_NODE_METHODS(UntypedParameter);
     NodePtr<Identifier> identifier;
 };
 
-struct TypedParameter final : ASTBase<TypedParameter> {
+class TypedParameter final : public ASTBase {
     AST_NODE_METHODS(TypedParameter);
     NodePtr<Identifier> identifier;
-    NodePtr<Type<void>> type;
+    NodePtr<Type> type;
 };
 
-struct AnySeparatedID final : ASTBase<AnySeparatedID> {
-    AST_NODE_METHODS(AnySeparatedID);
-    NodeList<NodePtr<>> identifiers;  // Can be a mix of DotSeparatedID or QualifiedNamespaceID
-};
-
-struct QualifiedNamespaceID final : ASTBase<QualifiedNamespaceID> {
-    AST_NODE_METHODS(QualifiedNamespaceID);
-    NodeList<Identifier> identifiers;
-};
-
-struct Suite final : ASTBase<Suite> {
+class Suite final : public ASTBase {
     AST_NODE_METHODS(Suite);
     NodePtr<> content;  // Either CodeLine or CodeBlock
 };
 
 // Default Argument
-struct DefaultArgument final : ASTBase<DefaultArgument> {
+class DefaultArgument final : public ASTBase {
     AST_NODE_METHODS(DefaultArgument);
     NodePtr<TypedParameter> parameter;
-    NodePtr<Expression<void>> expression;
+    NodePtr<Expression> expression;
 };
 
 // Helper Functions
-struct UntypedParameterList final : ASTBase<UntypedParameterList> {
+class UntypedParameterList final : public ASTBase {
     AST_NODE_METHODS(UntypedParameterList);
     NodeList<UntypedParameter> parameters;
 };
 
-struct TypedParameterList final : ASTBase<TypedParameterList> {
+class TypedParameterList final : public ASTBase {
     AST_NODE_METHODS(TypedParameterList);
     NodeList<TypedParameter> parameters;
 };
 
-struct DefaultArgumentList final : ASTBase<DefaultArgumentList> {
+class DefaultArgumentList final : public ASTBase {
     AST_NODE_METHODS(DefaultArgumentList);
     NodeList<DefaultArgument> arguments;
 };
 
-struct GenericTypeList final : ASTBase<GenericTypeList> {
+class GenericTypeList final : public ASTBase {
     AST_NODE_METHODS(GenericTypeList);
     NodeList<GenericType> types;
 };
 
-struct TypeBoundList final : ASTBase<TypeBoundList> {
+class TypeBoundList final : public ASTBase {
     AST_NODE_METHODS(TypeBoundList);
     NodeList<TypeBound> bounds;
 };
 
-struct QualifiedNamespaceIDOrLiteralList final : ASTBase<QualifiedNamespaceIDOrLiteralList> {
+class QualifiedNamespaceIDOrLiteralList final : public ASTBase {
     AST_NODE_METHODS(QualifiedNamespaceIDOrLiteralList);
     NodeList<NodePtr<>> identifiersOrLiterals;  // QualifiedNamespaceID or Literal
 };
 
-struct TypeList final : ASTBase<TypeList> {
+class TypeList final : public ASTBase {
     AST_NODE_METHODS(TypeList);
-    NodeList<Type<void>> types;
+    NodeList<Type> types;
 };
 
-struct ExpressionList final : ASTBase<ExpressionList> {
+class ExpressionList final : public ASTBase {
     AST_NODE_METHODS(ExpressionList);
-    NodeList<Expression<void>> expressions;
+    NodeList<Expression> expressions;
 };
-
-Statement<void> parse_state(TokenListRef tokens);
-Expression<void> parse_expr(TokenListRef tokens);
-Declaration<void> parse_decl(TokenListRef tokens);
 
 }  // namespace parser::ast::node
 

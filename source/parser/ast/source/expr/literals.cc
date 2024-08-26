@@ -23,7 +23,7 @@
 namespace parser::ast::node {
 parser::ast::ParseResult parser::ast::node::Literal::parse() {
     // linearly parse out any literal
-    for (auto &tok : *source_tokens) {
+    for (auto &tok : source_tokens) {
         switch (tok->token_kind()) {
             case tokens::LITERAL_FALSE:
             case tokens::LITERAL_TRUE:
@@ -66,7 +66,7 @@ parser::ast::ParseResult parser::ast::node::Literal::parse() {
                 break;
 
             default:
-                return std::unexpected(ParseError(tok.current().get(), 1.010));
+                return std::unexpected(ParseError(tok.current().get(), 0.0001));
         }
 
         if (type != LiteralType::INVALID) {
@@ -76,42 +76,5 @@ parser::ast::ParseResult parser::ast::node::Literal::parse() {
     }
 
     return 1;  // since the size would never be greater then 1.
-}
-
-std::string parser::ast::node::Literal::to_json(u32 depth) const {
-    // value
-    // type
-    std::string result =
-        jsonify::indent(depth) + "\"Literal\" : {\n" + jsonify::indent(depth + 1) + "\"type\" : ";
-
-    switch (this->type) {
-        case LiteralType::INVALID:
-            result += "\"invalid\",\n";
-            break;
-        case LiteralType::INTEGER:
-            result += "\"integer\",\n";
-            break;
-        case LiteralType::SCIENTIFIC:
-            result += "\"scientific\",\n";
-            break;
-        case LiteralType::FLOAT:
-            result += "\"float\",\n";
-            break;
-        case LiteralType::STRING:
-            result += "\"string\",\n";
-            break;
-        case LiteralType::BOOL:
-            result += "\"bool\",\n";
-            break;
-        case LiteralType::CHAR:
-            result += "\"char\",\n";
-            break;
-        case LiteralType::NONE:
-            result += "\"none\",\n";
-            break;
-    }
-
-    return result + jsonify::indent(depth + 1) + "\"value\" : " + this->value.to_json(depth + 1) +
-           "\n" + jsonify::indent(depth) + "}";
 }
 }  // end namespace parser::ast::node

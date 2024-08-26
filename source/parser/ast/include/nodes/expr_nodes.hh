@@ -14,82 +14,185 @@
 #ifndef __AST_EXPR_NODES_HH__
 #define __AST_EXPR_NODES_HH__
 
+#include <vector>
 #include "parser/ast/include/ast.hh"
 #include "parser/ast/include/nodes/nodes.hh"
+#include "token/include/token_list.hh"
 
 namespace parser::ast::node {
 using namespace token;
 // Control Flow
-struct MatchExpression final : Expression<MatchExpression> {
+class MatchExpression final : public Expression {
     AST_NODE_METHODS(MatchExpression);
-    NodeList<std::pair<NodePtr<Expression<void>>, NodePtr<>>>
+    NodeList<std::pair<NodePtr<Expression>, NodePtr<>>>
         cases;  // (Expression | '_') -> (CodeBlock | (':' Expression))
 };
 
 // Functions and Methods
-struct ReturnExpression final : Expression<ReturnExpression> {
+class ReturnExpression final : public Expression {
     AST_NODE_METHODS(ReturnExpression);
-    NodePtr<Expression<void>> expression;
+    NodePtr<Expression> expression;
 };
 
-struct YieldExpression final : Expression<YieldExpression> {
+class YieldExpression final : public Expression {
     AST_NODE_METHODS(YieldExpression);
-    NodePtr<Expression<void>> expression;
+    NodePtr<Expression> expression;
 };
 
 // Operators
-struct BinaryOperation final : Expression<BinaryOperation> {
+class BinaryOperation final : public Expression {
     AST_NODE_METHODS(BinaryOperation);
-    NodePtr<Expression<void>> left;
+    NodePtr<Expression> left;
     NodePtr<Operator> op;
-    NodePtr<Expression<void>> right;
+    NodePtr<Expression> right;
 };
 
-struct UnaryOperation final : Expression<UnaryOperation> {
+class UnaryOperation final : public Expression {
     AST_NODE_METHODS(UnaryOperation);
     NodePtr<Operator> op;
-    NodePtr<Expression<void>> expression;
+    NodePtr<Expression> expression;
 };
 
 // Expressions
-struct FunctionCall final : Expression<FunctionCall> {
+class FunctionCall final : public Expression {
     AST_NODE_METHODS(FunctionCall);
     NodePtr<AnySeparatedID> function;
     NodePtr<GenericAccess> genericAccess;
-    NodeList<Expression<void>> arguments;
+    NodeList<Expression> arguments;
 };
 
-struct ParenthesizedExpression final : Expression<ParenthesizedExpression> {
+class ParenthesizedExpression final : public Expression {
     AST_NODE_METHODS(ParenthesizedExpression);
-    NodePtr<Expression<void>> expression;
+    NodePtr<Expression> expression;
 };
 
-struct ArrayAccess final : Expression<ArrayAccess> {
+class ArrayAccess final : public Expression {
     AST_NODE_METHODS(ArrayAccess);
     NodePtr<AnySeparatedID> array;
-    NodePtr<Expression<void>> index;
+    NodePtr<Expression> index;
 };
 
-struct ObjectAccess final : Expression<ObjectAccess> {
+class ObjectAccess final : public Expression {
     AST_NODE_METHODS(ObjectAccess);
     NodePtr<AnySeparatedID> object;
     NodePtr<Identifier> member;
 };
 
-struct ConditionalExpression final : Expression<ConditionalExpression> {
+class ConditionalExpression final : public Expression {
     AST_NODE_METHODS(ConditionalExpression);
-    NodePtr<Expression<void>> condition;
-    NodePtr<Expression<void>> trueExpression;
-    NodePtr<Expression<void>> falseExpression;
+    NodePtr<Expression> condition;
+    NodePtr<Expression> trueExpression;
+    NodePtr<Expression> falseExpression;
 };
 
 // Base Elements
-struct Literal final : Expression<Literal> {
+class Literal final : public Expression {
+    public:
     enum class LiteralType : u8 { INVALID, BOOL, CHAR, FLOAT, STRING, INTEGER, SCIENTIFIC, NONE };
 
     AST_NODE_METHODS(Literal);
     LiteralType type = LiteralType::INVALID;
     Token value;
+
+    TO_JSON_SIGNATURE {
+        jsonify::Jsonify node_json(node_repr(), depth);
+
+        switch (type) {
+            case LiteralType::INVALID:
+                node_json.add("type", std::string("INVALID"));
+                break;
+            case LiteralType::BOOL:
+                node_json.add("type", std::string("BOOL"));
+                break;
+            case LiteralType::CHAR:
+                node_json.add("type", std::string("CHAR"));
+                break;
+            case LiteralType::FLOAT:
+                node_json.add("type", std::string("FLOAT"));
+                break;
+            case LiteralType::STRING:
+                node_json.add("type", std::string("STRING"));
+                break;
+            case LiteralType::INTEGER:
+                node_json.add("type", std::string("INTEGER"));
+                break;
+            case LiteralType::SCIENTIFIC:
+                node_json.add("type", std::string("SCIENTIFIC"));
+                break;
+            case LiteralType::NONE:
+                node_json.add("type", std::string("NONE"));
+                break;
+        }
+
+        node_json.add("value", value);
+
+        TO_JSON_RETURN(node_json);
+    }
+};
+
+class Identifier final : public Expression {
+    AST_NODE_METHODS(Identifier);
+    Token value;
+
+    TO_JSON_SIGNATURE {
+        jsonify::Jsonify node_json(node_repr(), depth);
+
+        node_json.add("value", value);
+        
+        TO_JSON_RETURN(node_json);
+    }
+};
+
+class AnySeparatedID final : public Expression {
+    AST_NODE_METHODS(AnySeparatedID);
+    NodeList<Expression> identifiers;  // Can be a mix of DotSeparatedID or QualifiedNamespaceID
+
+    TO_JSON_SIGNATURE {
+        jsonify::Jsonify node_json(node_repr(), depth);
+
+        
+        node_json.add("path", "none");
+        
+        TO_JSON_RETURN(node_json);
+    }
+};
+
+class QualifiedNamespaceID final : public Expression { // PATH so id::id::id...
+    AST_NODE_METHODS(QualifiedNamespaceID);
+    NodeList<Identifier> identifiers; // id::id::id...
+
+    TO_JSON_SIGNATURE {
+        jsonify::Jsonify node_json(node_repr(), depth);
+
+        std::vector<Identifier> temp_de_ref;
+
+        for (auto &_ : identifiers) {
+            temp_de_ref.push_back(*_);
+        }
+        
+        node_json.add("path", temp_de_ref);
+        
+        TO_JSON_RETURN(node_json);
+    }
+};
+
+class DotSeparatedID final : public Expression { // PATH so id::id::id...
+    AST_NODE_METHODS(DotSeparatedID);
+    NodeList<Identifier> identifiers; // id.id.id...
+
+    TO_JSON_SIGNATURE {
+        jsonify::Jsonify node_json(node_repr(), depth);
+
+        std::vector<Identifier> temp_de_ref;
+
+        for (auto &_ : identifiers) {
+            temp_de_ref.push_back(*_);
+        }
+        
+        node_json.add("path", temp_de_ref);
+        
+        TO_JSON_RETURN(node_json);
+    }
 };
 }  // namespace parser::ast::node
 
