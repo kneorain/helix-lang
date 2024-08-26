@@ -12,6 +12,8 @@
 #ifndef __ERROR_HH__
 #define __ERROR_HH__
 
+#include <cstdio>
+#include <exception>
 #include <map>
 #include <optional>
 #include <string>
@@ -25,87 +27,23 @@
 #define LINES_TO_SHOW 5
 
 namespace error {
-enum Level {
-    NOTE,   ///< Just a Info.
-    WARN,   ///< Warn, the compiler can move on to code gen. and produce a binary
-    ERR,    ///< Error, but compiler can continue parsing
-    FATAL,  ///< Fatal error all other proceeding errors omitted
-};
-
-/*
-pof;
-err_code;
-fix_fmt_args;
-err_fmt_args;
-opt_fixes;
-opt_fixes_pos;
-*/
-using string_vec   = std::vector<string>;
-using fix_pair     = std::pair<token::Token, i64>;
-using fix_pair_vec = std::vector<fix_pair>;
-
-struct CodeError {
-    token::Token *pof;  //< point of failure
-    float err_code;
-
-    bool mark_pof = true;
-    string_vec fix_fmt_args;
-    string_vec err_fmt_args;
-    fix_pair_vec opt_fixes;  //< fixes that show in the code to fix
-
-    ~CodeError() = default;
-};
-
-static inline CodeError create_old_CodeError(token::Token *pof, float err_code,
-    string_vec fix_fmt_args = {},
-    string_vec err_fmt_args = {},
-    fix_pair_vec opt_fixes  = {}) {
-    return CodeError{
-        .pof = pof,
-        .err_code = err_code,
-        .fix_fmt_args = std::move(fix_fmt_args),
-        .err_fmt_args = std::move(err_fmt_args),
-        .opt_fixes = std::move(opt_fixes)
-    };
-};
-
-/*
-err_code;
-fix_fmt_args;
-err_fmt_args;
-*/
-struct CompilerError {
-    float err_code;
-    std::vector<string> fix_fmt_args;
-    std::vector<string> err_fmt_args;
-};
-
-/*
-color_mode;
-error_type;
-level;
-file;
-msg;
-fix;
-display;
-line;
-col;
-offset;
-quick_fix;
-*/
 struct _internal_error {
-    string color_mode;
-    string error_type;
-    string level;
-    string file;
-    string msg;
-    string fix;
-    string display;
-    string full_line;
-    u64 line{};
-    u64 col{};
-    u64 offset{};
-    std::vector<std::pair<string, u32>> quick_fix;
+  private:
+    using fix_pair_vec = std::vector<std::pair<string, u32>>;
+
+  public:
+    string       color_mode;
+    string       error_type;
+    string       level;
+    string       file;
+    string       msg;
+    string       fix;
+    string       display;
+    string       full_line;
+    u64          line{};
+    u64          col{};
+    u64          offset{};
+    fix_pair_vec quick_fix;
 
     _internal_error() = default;
 
@@ -120,26 +58,69 @@ struct _internal_error {
         json += R"("msg": ")" + msg + "\", ";
         json += R"("fix": ")" + fix + "\", ";
         json += R"("display": ")" + display + "\", ";
-        json += "\"line\": " + std::to_string(line) + ", ";
-        json += "\"col\": " + std::to_string(col) + ", ";
-        json += "\"offset\": " + std::to_string(offset) + ", ";
+        json += R"("line": )" + std::to_string(line) + ", ";
+        json += R"("col": )" + std::to_string(col) + ", ";
+        json += R"("offset": )" + std::to_string(offset) + ", ";
+        json += R"("quick_fix": [)";
 
-        json += "\"quick_fix\": [";
         for (size_t i = 0; i < quick_fix.size(); ++i) {
             json += R"({"fix": ")" + quick_fix[i].first + R"(", "loc": )" +
-                std::to_string(quick_fix[i].second) + "}";
+                    std::to_string(quick_fix[i].second) + "}";
             if (i < quick_fix.size() - 1) {
                 json += ", ";
             }
         }
+        
         json += "]";
         return json += "}";
     }
 };
 
-inline bool HAS_ERRORED = false;
-inline bool SHOW_ERROR  = true;
-inline std::vector<_internal_error> ERRORS;
+
+using string_vec   = std::vector<string>;
+using fix_pair     = std::pair<token::Token, i64>;
+using fix_pair_vec = std::vector<fix_pair>;
+using errors_rep   = std::vector<_internal_error>;
+
+
+inline bool       HAS_ERRORED = false;
+inline bool       SHOW_ERROR  = true;
+inline errors_rep ERRORS;
+
+
+enum Level {
+    NOTE,   ///< Just a Info.
+    WARN,   ///< Warn, the compiler can move on to code gen. and produce a binary
+    ERR,    ///< Error, but compiler can continue parsing
+    FATAL,  ///< Fatal error all other proceeding errors omitted
+};
+
+
+struct Errors {
+    string err;
+    string fix;
+    Level  level = ERR;
+};
+
+
+struct CodeError {
+    token::Token *pof;  //< point of failure
+    float         err_code;
+    bool          mark_pof = true;
+    string_vec    fix_fmt_args;
+    string_vec    err_fmt_args;
+    fix_pair_vec  opt_fixes;  //< fixes that show in the code to fix
+
+    ~CodeError() = default;
+};
+
+
+struct CompilerError {
+    float      err_code;
+    string_vec fix_fmt_args;
+    string_vec err_fmt_args;
+};
+
 
 class Panic {
   public:
@@ -157,8 +138,50 @@ class Panic {
     u32 calculate_addition_pos(i64) const;
 
     size_t level_len;
-    bool mark_pof;
+    bool   mark_pof;
 };
+
+
+static inline CodeError create_old_CodeError(token::Token *pof,
+                                             float         err_code,
+                                             string_vec    fix_fmt_args = {},
+                                             string_vec    err_fmt_args = {},
+                                             fix_pair_vec  opt_fixes    = {}) {
+    return CodeError{.pof          = pof,
+                     .err_code     = err_code,
+                     .fix_fmt_args = std::move(fix_fmt_args),
+                     .err_fmt_args = std::move(err_fmt_args),
+                     .opt_fixes    = std::move(opt_fixes)};
+};
+
+
+static inline string fmt_string(const string &format, const string_vec &fmt_args) {
+    string      result;
+    std::size_t N = fmt_args.size();
+    result.reserve(format.size());
+
+    std::size_t argIndex = 0;
+    std::size_t len      = format.size();
+
+    for (std::size_t i = 0; i < len; ++i) {
+        if (format[i] == '{' && i + 1 < len && format[i + 1] == '}') {
+            if (argIndex >= N) {
+                throw std::invalid_argument("Insufficient arguments provided for format string");
+            }
+            result += fmt_args[argIndex++];
+            ++i;  // Skip over the closing '}'
+        } else {
+            result += format[i];
+        }
+    }
+
+    if (argIndex != N) {
+        throw std::invalid_argument("Too many arguments provided for format string: \"" + format +
+                                    "\"");
+    }
+
+    return result;
+}
 }  // namespace error
 
 #endif  // __ERROR_HH__

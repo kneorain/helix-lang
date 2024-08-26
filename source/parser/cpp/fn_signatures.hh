@@ -18,4 +18,4 @@
 
 std::string parse_signatures(const std::string &filename);
 
-#endif // FUNCTION_SIGNATURES_H
+#endif  // FUNCTION_SIGNATURES_H

@@ -28,9 +28,6 @@ namespace token {
 class TokenList : public std::vector<Token> {
   private:
     std::string filename;
-    TokenList(const std::string                 &filename,
-              std::vector<Token>::const_iterator start,
-              std::vector<Token>::const_iterator end);
 
   public:
     using TokenVec = std::vector<Token>;
@@ -72,7 +69,7 @@ class TokenList : public std::vector<Token> {
         std::optional<std::reference_wrapper<Token>> peek(const std::int32_t n = 1) const;
         std::optional<std::reference_wrapper<Token>> peek_back(const std::int32_t n = 1) const;
         std::reference_wrapper<Token>                current() const;
-        TokenList remaining();
+        TokenList                                    remaining();
     };
 
     mutable const_iterator it;
@@ -111,6 +108,9 @@ class TokenList : public std::vector<Token> {
     }
 
     explicit TokenList(std::string filename);
+    TokenList(const std::string                 &filename,
+              std::vector<Token>::const_iterator start,
+              std::vector<Token>::const_iterator end);
 
     [[nodiscard]] TokenVec::const_iterator cbegin() const { return TokenVec::begin(); }
     [[nodiscard]] TokenVec::const_iterator cend() const { return TokenVec::end(); }
@@ -130,7 +130,13 @@ class TokenList : public std::vector<Token> {
     std::pair<TokenList, TokenList> split_at(const std::uint64_t i) const;
     TokenList                       pop(const std::uint64_t offset = 1);
     const Token                    &pop_front();
-    TO_JSON_SIGNATURE;
+    TO_JSON_SIGNATURE {
+        jsonify::Jsonify token_list_json("TokenList", depth);
+
+        token_list_json.add("tokens", std::vector<Token>(*this));
+
+        TO_JSON_RETURN(token_list_json);
+    }
 
     [[nodiscard]] const std::string &file_name() const;
     void                             insert_remove(TokenList &tokens, u64 start, u64 end);

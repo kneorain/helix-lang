@@ -18,6 +18,7 @@
 #include <optional>
 #include <ostream>
 #include <sstream>
+#include <stdexcept>
 #include <tuple>
 #include <vector>
 
@@ -207,12 +208,13 @@ string color_and_mark(line_type                          &line_typ,
         std::string_insert(line, fix, position);
 
         string mark_color = inside_marked ? err_color : "";
-        std::string_insert(marking,
-                           fix_color(string(fix.length() - (err_color.length() + ret_color.length() +
-                                                          (inside_marked ? 1 : 0)),
-                                            '+')) +
-                               mark_color,
-                           position);
+        std::string_insert(
+            marking,
+            fix_color(string(
+                fix.length() - (err_color.length() + ret_color.length() + (inside_marked ? 1 : 0)),
+                '+')) +
+                mark_color,
+            position);
 
         marking += " ";
     };
@@ -304,8 +306,8 @@ size_t set_level(string &level, const float &err_level) {
                                            .size();
             break;
         case FATAL:
-            level =
-                string(colors::bold) + ret_color + string(colors::fg8::red) + "fatal" + string(colors::reset) + ret_color;
+            level = string(colors::bold) + ret_color + string(colors::fg8::red) + "fatal" +
+                    string(colors::reset) + ret_color;
             level_len = level.size() - string(string(colors::bold) + ret_color +
                                               string(colors::fg8::red) + ret_color)
                                            .size();
@@ -318,6 +320,10 @@ size_t set_level(string &level, const float &err_level) {
 Panic::Panic(const CodeError &err)
     : level_len(set_level(final_err.level, err.err_code))
     , mark_pof(err.mark_pof) {
+    if (ERROR_MAP.at(err.err_code) == std::nullopt) {
+        throw std::runtime_error("err code \'" + std::to_string(err.err_code) + "\' not found");
+    }
+
     HAS_ERRORED = true;
 
     final_err.color_mode = "16bit";
@@ -372,6 +378,8 @@ Panic::Panic(const CompilerError &err)
         final_err.fix = fmt_string(ERROR_MAP.at(err.err_code)->fix, err.fix_fmt_args);
     }
 
+    this->mark_pof   = false;
+    
     final_err.line   = 0;
     final_err.col    = 0;
     final_err.offset = 0;

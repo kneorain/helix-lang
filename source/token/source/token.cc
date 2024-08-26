@@ -15,6 +15,7 @@
 
 #include <mutex>
 #include <shared_mutex>
+#include <vector>
 
 #include "core/utils/josnify.hh"
 #include "token/include/generate.hh"
@@ -133,7 +134,7 @@ tokens Token::token_kind() const { return kind; }
 
 std::string Token::value() const { return val; }
 
-std::string_view Token::token_kind_repr() const { return tokens_map.at(kind).value(); }
+std::string Token::token_kind_repr() const { return std::string(tokens_map.at(kind).value()); }
 
 std::string Token::file_name() const { return filename; }
 
@@ -152,20 +153,13 @@ std::string Token::to_string() const {
            std::string(val) + "\")";
 }
 
-TO_JSON_SIGNATURE_EXTEND(Token) {
-    return (indent_start ? jsonify::indent(depth) : "") + "{\n" +
-           jsonify::to_json(jsonify::escape(filename), depth + 1, "filename") + ",\n" +
-           jsonify::to_json(line, depth + 1, "line_number") + ",\n" +
-           jsonify::to_json(column, depth + 1, "column_number") + ",\n" +
-           jsonify::to_json(len, depth + 1, "length") + ",\n" +
-           jsonify::to_json(_offset, depth + 1, "offset") + ",\n" +
-           jsonify::to_json(jsonify::escape(std::string(token_kind_repr())), depth + 1, "kind") +
-           ",\n" + jsonify::to_json(val, depth + 1, "value") + "\n" + jsonify::indent(depth) + "}";
-}
-
 bool Token::operator==(const Token &rhs) const {
     return (line == rhs.line && column == rhs.column && len == rhs.len && _offset == rhs._offset &&
             kind == rhs.kind && val == rhs.val && filename == rhs.filename);
+}
+
+bool Token::operator==(const tokens &rhs) const {
+    return (kind == rhs);
 }
 
 std::ostream &Token::operator<<(std::ostream &os) const { return os << to_string(); }

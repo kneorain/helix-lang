@@ -56,18 +56,33 @@ struct Token {
     ~Token();
 
     /* ====-------------------------- getters ---------------------------==== */
-    u32              line_number() const;
-    u32              column_number() const;
-    u32              length() const;
-    u32              offset() const;
-    tokens           token_kind() const;
-    std::string      value() const;
-    std::string_view token_kind_repr() const;
-    std::string      file_name() const;
-    std::string      to_string() const;
-    TO_JSON_SIGNATURE;
+    u32         line_number() const;
+    u32         column_number() const;
+    u32         length() const;
+    u32         offset() const;
+    tokens      token_kind() const;
+    std::string value() const;
+    std::string token_kind_repr() const;
+    std::string file_name() const;
+    std::string to_string() const;
+    TO_JSON_SIGNATURE {
+        jsonify::Jsonify token_json("Token", depth);
+
+        token_json.add("length", len)
+                .add("kind", token_kind_repr())
+                .add("value", val);
+            
+        token_json.create_sub("loc")
+                .add("filename", filename)
+                .add("line_number", line)
+                .add("column_number", column)
+                .add("offset", _offset);
+
+        TO_JSON_RETURN(token_json);
+    }
 
     bool          operator==(const Token &rhs) const;
+    bool          operator==(const tokens &rhs) const;
     std::ostream &operator<<(std::ostream &os) const;
     auto          operator+(const string &str) {
         this->val += str;

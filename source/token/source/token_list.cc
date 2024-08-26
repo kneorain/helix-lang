@@ -270,22 +270,4 @@ TokenList TokenList::TokenListIter::remaining() {
 
     return {filename, start, end};
 }
-
-
-TO_JSON_SIGNATURE_EXTEND(TokenList) {
-    std::string result = "{\n" + jsonify::indent(depth + 1) + "\"tokens\" : [\n";
-
-    for (auto &tok : *this) {
-        result += tok.to_json(depth + 2, true) + ",\n";
-    }
-
-    if (!this->empty()) {
-        result.erase(result.size() - 2, 2);
-    }
-
-    result += "\n";
-
-    return result + jsonify::indent(depth + 1) + "]\n" + jsonify::indent(depth) + "}\n";
-}
-
 }  // namespace token
