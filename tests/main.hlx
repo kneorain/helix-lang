@@ -1,7 +1,1 @@
-module hello_world::std {
-    define hi_macro! {
-        print("hehhehe");
-    };
-}
-
-hi_macro!
+ namesapslk.ahjaj.shaha.shha

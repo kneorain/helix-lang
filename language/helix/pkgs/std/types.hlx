@@ -64,11 +64,19 @@ abstract Allocator {
     }
 }
 
-class Vec requires <T> {
-    fn Vec(self);
-    fn Vec(self, s: string);
-    fn Vec(self, i: int);
-    fn Vec(self, a: list<T>);
+interface Interop {
+    // everything here works with tokens
+    eval fn import_to_helix(node: *ast::FFIImportNode) -> code_gen::CGObj {
+        let import_path = *node.value;
+        if *node._ffi != "py":
+            panic CompileError("invalid ffi standard");
+
+        // always use std::memory::delete which does internal checks
+        delete node; // DO NOT DO THIS. this deletes the underlying memory to the node
+        
+        std::memory::delete(node); // double free but works since we r using std::memory::delete
+        // FusionX
+    }
 }
 
 // structure to hold memory statistics (optional feature)

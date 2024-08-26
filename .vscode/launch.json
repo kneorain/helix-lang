@@ -6,7 +6,7 @@
             "request": "launch",
             "name": "Launch",
             "target": "helix",
-            "args": ["/Volumes/Devolpment/Projects/Helix/helix-lang/tests/main.hlx", "--emit-tokens"],
+            "args": ["/Volumes/Devolpment/Projects/Helix/helix-lang/tests/main.hlx", "--emit-ast"],
             "cwd": "/Volumes/Devolpment/Projects/Helix/helix-lang/",
             "stopAtEntry": true
         },

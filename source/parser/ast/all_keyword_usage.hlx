@@ -147,6 +147,12 @@ std::uint_32 add (std::uint_32 a, std::uint_32 b) {
     return a + b;
 }
 
+fn Map(iter: T, fn (T) -> T)
+requires <T> if T has Iterable {
+
+}
+
+
 module extend_syntax {
     class Foo {
         let a: u8;

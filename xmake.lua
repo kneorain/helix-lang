@@ -128,7 +128,7 @@ end
     
     set_kind("binary")
     set_warnings("all")
-    set_languages("c++23")
+    set_languages("c++23", "c++2b")
     set_runtimes(use_runtime)
     set_policy("build.across_targets_in_parallel", true) -- optimization
 -- end config
