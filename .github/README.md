@@ -1,4 +1,4 @@
-<div align="center">
+F<div align="center">
   <img src="../assets/helix-logo.svg" alt="Helix Programming Language Logo" width="100%">
 </div>
 
@@ -25,7 +25,7 @@ Helix is an experimental language designed for seamless interoperability with Py
 
 - **Concurrent Programming**: Easy-to-use async/await syntax for concurrent tasks.
 - **Pattern Matching**: Powerful pattern matching for more readable and maintainable code.
-- **Macros and Pre-Processors**: Extensible macros and pre-processors for code generation and optimization.
+- **Macros and -Processors**: Extensible macros and -processors for code generation and optimization.
 - **Rich Standard Library**: Extensive libraries to handle various programming tasks out of the box.
 - **Object-Oriented Programming**: Support for classes and objects, enabling encapsulation, inheritance, and polymorphism for modular and reusable code.
 
@@ -35,7 +35,7 @@ At Helix, we believe there's a gap in the programming language space that neithe
 
 ### Limitations of Both Rust and Zig
 
-- **Lack of OOP Support**: Both Rust and Zig lack comprehensive object-oriented programming (OOP) support. This can make certain types of applications, like AI development and game development, more cumbersome to implement.
+- **Lack of OOP Support**: Both Rust and Zig lack comhensive object-oriented programming (OOP) support. This can make certain types of applications, like AI development and game development, more cumbersome to implement.
 - **Complex Syntax**: Both languages have syntaxes that can be verbose and complex, increasing the learning curve and potentially slowing down development.
 
 ### Specific Limitations of Rust
@@ -45,7 +45,7 @@ At Helix, we believe there's a gap in the programming language space that neithe
 
 ### Specific Limitations of Zig
 
-- **Limited Features**: While Zig is simple and performant, it lacks features like a preprocessor, which can limit its flexibility and control over the code compilation process.
+- **Limited Features**: While Zig is simple and performant, it lacks features like a processor, which can limit its flexibility and control over the code compilation process.
 - **Less Focus on Safety**: Zig does not emphasize safety to the same extent as Rust, which can lead to potential issues in memory management and concurrency.
 
 ### Advantages of Helix
@@ -55,7 +55,7 @@ Helix draws inspiration from the best parts of Rust, Python, Zig, and other mode
 - **Balanced Safety**: Helix includes a borrow checker for pointers and references, but it's less strict. Code that fails the borrow checker emits a severe warning instead of an error, allowing developers to proceed while being aware of potential issues.
 - **Simpler Syntax**: Helix offers a syntax that is both modern and easy to use, inspired by Python’s simplicity. Variable/Paramater types are strict but flexiable, resembling Python’s syntax, making it more accessible to a broader range of developers.
 - **OOP Support**: Unlike Rust, Zig, and Mojo, Helix supports OOP, which is crucial for certain domains like AI development and game development. This allows for more intuitive code organization and reuse through classes and inheritance.
-- **Preprocessor**: Helix includes a preprocessor, providing additional flexibility and control over code compilation.
+- **processor**: Helix includes a processor, providing additional flexibility and control over code compilation.
 
 Helix aims to offer the right balance between safety, simplicity, and flexibility, while also trying to be a better cross paltfrom C++, unlike Zig and Rust which both try to be a better C.
 
@@ -129,6 +129,8 @@ Handle asynchronous tasks easily with `async` and `await`:
   ```
 
 ##### MacOS, Unix or Linux
+> Note: Perl is required for Linux compilation 
+
 
 1. if you don't have python or xmake installed, install using [Homebrew](https://brew.sh/)
 
