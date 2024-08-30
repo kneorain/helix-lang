@@ -53,14 +53,8 @@ package("llvm-clang")
         table.insert(configs, "-DLLVM_ENABLE_PROJECTS=clang")
         table.insert(configs, "-DCMAKE_BUILD_TYPE=Release")  -- always build in release mode
 
-        if abi_format == "msvc" then
-            table.insert(configs, "-DLLVM_ENABLE_ZSTD=OFF")      -- disable ZSTD support
-            table.insert(configs, "-DLLVM_ENABLE_ZLIB=OFF")      -- disable ZLIB support
-            table.insert(configs, "-DLLVM_ENABLE_LIBXML2=OFF")   -- disable libxml2 support
-        else
-            table.insert(configs, "-DLLVM_ENABLE_ZSTD=FORCE_ON") -- enable ZSTD support
-            table.insert(configs, "-DLLVM_ENABLE_ZLIB=FORCE_ON") -- enable ZLIB support
-        end
+        table.insert(configs, "-DLLVM_ENABLE_ZSTD=OFF")      -- disable ZSTD support
+        table.insert(configs, "-DLLVM_ENABLE_ZLIB=OFF")      -- disable ZLIB support
 
         table.insert(configs, "-DLLVM_ENABLE_RTTI=ON")             -- enable RTTI for dynamic_cast and typeid
         table.insert(configs, "-DLLVM_ENABLE_BENCHMARKS=OFF")      -- turn off benchmarks
