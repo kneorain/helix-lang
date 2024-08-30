@@ -1,4 +1,4 @@
-F<div align="center">
+<div align="center">
   <img src="../assets/helix-logo.svg" alt="Helix Programming Language Logo" width="100%">
 </div>
 
