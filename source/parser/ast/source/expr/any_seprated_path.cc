@@ -21,5 +21,7 @@
 #include "token/include/generate.hh"
 
 namespace parser::ast::node {
-parser::ast::ParseResult parser::ast::node::AnySeparatedID::parse() {}
+parser::ast::ParseResult parser::ast::node::AnySeparatedID::parse() {
+    return 0;
+}
 }  // end namespace parser::ast::node

@@ -14,7 +14,6 @@
 #ifndef __HELPERS_DEF__
 #define __HELPERS_DEF__
 
-#include <stdnoreturn.h>
 
 #include "token/include/token.hh"
 #include "token/include/token_list.hh"
@@ -89,7 +88,7 @@
 namespace parser::ast::node {
 using namespace token;
 
-noreturn inline void is_tokens_empty() {
+[[noreturn]] inline void is_tokens_empty() {
     throw std::runtime_error("get_expr: failed, consumer was empty.");
 }
 
