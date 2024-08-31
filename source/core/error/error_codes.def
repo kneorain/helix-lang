@@ -119,11 +119,6 @@ const helix::CompTimeMap<float, Errors, 100> ERROR_MAP({
     // Statement Termination Errors
     MP(0.13001, Errors{"missing or incorrect placement of semicolons", "ensure semicolons are placed correctly.", error::ERR}),
 
-    // Memory Errors
-    MP(2.1001, Errors{"dangling pointer detected", "ensure the pointer '{}' is not used after the memory is freed.", error::FATAL}),
-    MP(2.1002, Errors{"memory leak detected", "ensure all allocated memory is freed appropriately.", error::FATAL}),
-    MP(2.1003, Errors{"invalid memory access at address '{}'", "ensure memory is accessed within valid bounds.", error::FATAL}),
-
     // Type Errors
     MP(3.1001, Errors{"type mismatch in assignment: expected '{}', found '{}'", "ensure the types of the assigned variables match: expected '{}', but found '{}'.", error::ERR}),
     MP(3.1002, Errors{"invalid type conversion from '{}' to '{}'", "ensure type conversions from '{}' to '{}' are valid and safe.", error::ERR}),
@@ -143,6 +138,12 @@ const helix::CompTimeMap<float, Errors, 100> ERROR_MAP({
     MP(7.1001, Errors{"unreachable code detected after '{}'", "remove or refactor unreachable code after '{}'.", error::WARN}),
     MP(7.1002, Errors{"unused variable '{}' detected", "remove or utilize the declared variable '{}'.", error::WARN}),
     MP(7.1003, Errors{"code style warning: '{}'", "follow the recommended code style and formatting guidelines: '{}'.", error::NOTE}),
+
+    // Memory Errors
+    MP(8.1001, Errors{"dangling pointer detected", "ensure the pointer '{}' is not used after the memory is freed.", error::FATAL}),
+    MP(8.1002, Errors{"memory leak detected", "ensure all allocated memory is freed appropriately.", error::FATAL}),
+    MP(8.1003, Errors{"invalid memory access at address '{}'", "ensure memory is accessed within valid bounds.", error::FATAL}),
+
 });
 };  // end of namespace error
 
