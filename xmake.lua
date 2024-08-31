@@ -1,7 +1,9 @@
 -- FIXME: rename main.cc to helix.cc
 set_project("helix-lang")
 add_rules("mode.debug", "mode.release")
+
 add_rules("plugin.vsxmake.autoupdate")
+add_rules("plugin.compile_commands.autoupdate", {outputdir = "."})
 
 set_version("0.0.1", {soname = true})
 set_description("The Helix Compiler. Python's Simplicity, Rust inspired Syntax, and C++'s Power")
@@ -53,14 +55,8 @@ package("llvm-clang")
         table.insert(configs, "-DLLVM_ENABLE_PROJECTS=clang")
         table.insert(configs, "-DCMAKE_BUILD_TYPE=Release")  -- always build in release mode
 
-        if abi_format == "msvc" then
-            table.insert(configs, "-DLLVM_ENABLE_ZSTD=OFF")      -- disable ZSTD support
-            table.insert(configs, "-DLLVM_ENABLE_ZLIB=OFF")      -- disable ZLIB support
-            table.insert(configs, "-DLLVM_ENABLE_LIBXML2=OFF")   -- disable libxml2 support
-        else
-            table.insert(configs, "-DLLVM_ENABLE_ZSTD=FORCE_ON") -- enable ZSTD support
-            table.insert(configs, "-DLLVM_ENABLE_ZLIB=FORCE_ON") -- enable ZLIB support
-        end
+        table.insert(configs, "-DLLVM_ENABLE_ZSTD=OFF")      -- disable ZSTD support
+        table.insert(configs, "-DLLVM_ENABLE_ZLIB=OFF")      -- disable ZLIB support
 
         table.insert(configs, "-DLLVM_ENABLE_RTTI=ON")             -- enable RTTI for dynamic_cast and typeid
         table.insert(configs, "-DLLVM_ENABLE_BENCHMARKS=OFF")      -- turn off benchmarks
@@ -75,15 +71,16 @@ package("llvm-clang")
 package_end()
 
 -- specify the use of the LLVM-Clang package
+add_requires("zlib")
+add_requires("zstd")
+
+add_packages("zlib")
+add_packages("zstd")
+
 add_requires("llvm-clang")
 
 -- TODO windows only oc
 if os.host() == "windows" then
-    add_requires("zlib")
-    add_requires("zstd")
-    
-    add_packages("zlib")
-    add_packages("zstd")
     add_syslinks("ntdll", "version")
 
     add_includedirs(".\\libs\\llvm-18.1.9-src\\llvm\\include")
@@ -122,7 +119,10 @@ end
 
     add_includedirs("source")
     add_files("source/**.cc")       -- add all files in the source directory
+    
     add_headerfiles("source/**.hh") -- add all headers in the source directory
+    add_headerfiles("source/**.def")
+    add_headerfiles("source/**.inc")
     add_packages("llvm-clang")      -- link against the LLVM-Clang package
     add_links("zstd")
     
@@ -137,7 +137,6 @@ target("tests")
     add_files("tests/**.cc")        -- add all files in the tests directory
     remove_files("source/helix.cc")  -- exclude main.cc from the source directory
 
-    add_headerfiles("tests/**.hh")  -- add all headers in the tests directory
     add_includedirs("tests/lib")    -- add all libs in the tests dir
     
     set_symbols("debug")            -- Generate debug symbols
