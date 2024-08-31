@@ -1,6 +1,6 @@
 CompileFlags:
   CompileCommandsDir: .
   Add:
-    - "-std=c++latest"
+    - "-std=c++23"
     - "/std:c++latest"
     - "-Zc:__cplusplus"
