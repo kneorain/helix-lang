@@ -1,3 +1,6 @@
 CompileFlags:
-    #C++20
-    Add: [std=c++latest]
+  CompileCommandsDir: .
+  Add:
+    - "-std=c++23"
+    - "/std:c++latest"
+    - "-Zc:__cplusplus"
