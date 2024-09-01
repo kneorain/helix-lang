@@ -23,10 +23,12 @@
 #include <vector>
 
 #include "controllers/include/file_system.hh"
+#include "core/error/error_codes.def"
 #include "core/utils/colors_ansi.hh"
 #include "core/utils/hx_print"
 #include "parser/ast/include/ast.hh"
 #include "token/include/token.hh"
+
 
 namespace std {
 static inline void lstrip(std::string &str) {
@@ -378,8 +380,8 @@ Panic::Panic(const CompilerError &err)
         final_err.fix = fmt_string(ERROR_MAP.at(err.err_code)->fix, err.fix_fmt_args);
     }
 
-    this->mark_pof   = false;
-    
+    this->mark_pof = false;
+
     final_err.line   = 0;
     final_err.col    = 0;
     final_err.offset = 0;

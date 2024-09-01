@@ -11,6 +11,10 @@
 //
 //===------------------------------------------------------------------------------------------===//
 
+#ifndef __ERROR_CODES_H__
+#define __ERROR_CODES_H__
+
+
 #include <regex>
 #include <vector>
 
@@ -268,3 +272,4 @@ const helix::CompTimeMap<float, Errors, 100> ERROR_MAP({
 | sub section change
 major diffrence in tpye of error
 */
+#endif // __ERROR_CODES_H__

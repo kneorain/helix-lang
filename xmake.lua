@@ -3,7 +3,7 @@ set_project("helix-lang")
 add_rules("mode.debug", "mode.release")
 
 add_rules("plugin.vsxmake.autoupdate")
-add_rules("plugin.compile_commands.autoupdate", {outputdir = "."})
+add_rules("plugin.compile_commands.autoupdate")
 
 set_version("0.0.1", {soname = true})
 set_description("The Helix Compiler. Python's Simplicity, Rust inspired Syntax, and C++'s Power")
