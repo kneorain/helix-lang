@@ -14,6 +14,7 @@
 #ifndef __COMPILER_HH__
 #define __COMPILER_HH__
 
+#include <string>
 #include <vector>
 
 namespace clang {
