@@ -7,7 +7,7 @@
             "name": "Launch",
             "target": "helix",
             "args": ["/Volumes/Devolpment/Projects/Helix/helix-lang/tests/main.hlx", "--emit-ast"],
-            "cwd": "/Volumes/Devolpment/Projects/Helix/helix-lang/",
+            "cwd": "${cwd}/helix-lang/",
             "stopAtEntry": true
         },
     ]

@@ -20,17 +20,14 @@
 #include "core/error/error.hh"
 #include "core/utils/hx_print"
 #include "lexer/include/lexer.hh"
-#include "parser/ast/include/ast.hh"
-#include "parser/ast/include/nodes/expr_nodes.hh"
-#include "parser/ast/include/nodes/nodes.hh"
 #include "parser/preprocessor/include/preprocessor.hh"
 #include "token/include/token_list.hh"
+#include "parser/ast/include/AST.hh"
 #include "parser/cpp/fn_signatures.hh"
 
 int compile(int argc, char **argv) {
     using namespace token;
     using namespace parser::lexer;
-    using namespace parser::ast;
     using namespace parser::preprocessor;
 
     // relative to current working dir in POSIX shell (cmd/bash)
@@ -54,12 +51,9 @@ int compile(int argc, char **argv) {
 
     if (parsed_args.emit_ast) {
         // for testing only change to parse an entire program when done with ast
-        auto expr = node::get_expr(tokens); // get expr is parsed
-        auto ast = expr.first;
-
+    
         end = std::chrono::high_resolution_clock::now();
 
-        print(ast->to_json());
     }
 
     if (parsed_args.emit_tokens) {

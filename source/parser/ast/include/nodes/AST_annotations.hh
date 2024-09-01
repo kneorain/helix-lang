@@ -10,21 +10,14 @@
 //                                                                                                //
 //====----------------------------------------------------------------------------------------====//
 //                                                                                                //
-//  this file exports all the AST related files                                                   //
 //                                                                                                //
-//====----------------------------------------------------------------------------------------====//
-//  fyi: i aim to make the AST have the PERFECT readable and maintainable code i can ever write.  //
 //===-----------------------------------------------------------------------------------------====//
 
-#ifndef __AST_HH__
-#define __AST_HH__
+#ifndef __AST_ANNOTATIONS_H__
+#define __AST_ANNOTATIONS_H__
 
-#include "parser/ast/include/AST_classifier.hh"
-#include "parser/ast/include/AST_context.hh"
-#include "parser/ast/include/AST_interface.hh"
-#include "parser/ast/include/AST_matcher.hh"
-#include "parser/ast/include/AST_nodes.hh"
-#include "parser/ast/include/AST_types.hh"
-#include "parser/ast/include/AST_visitor.hh"
+namespace parser::ast::nodes {
 
-#endif  // __AST_HH__
+}
+
+#endif // __AST_ANNOTATIONS_H__
