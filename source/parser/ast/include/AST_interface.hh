@@ -17,41 +17,38 @@
 #ifndef __AST_INTERFACE_H__
 #define __AST_INTERFACE_H__
 
-#include "core/utils/josnify.hh"
 #include "parser/ast/include/AST_types.hh"
 #include "token/include/token_list.hh"
 
+#define DEFINE_SUB_NODE(name)                                            \
+    class name : public Node {                                           \
+      public:                                                            \
+        name();                                                          \
+        explicit name(token::TokenList &tokens);                         \
+                                                                         \
+        name(const name &)            = default;                         \
+        name &operator=(const name &) = default;                         \
+        name(name &&)                 = default;                         \
+        name &operator=(name &&)      = default;                         \
+        ~name() override              = default;                         \
+                                                                         \
+        virtual ParseResult parse() override                        = 0; \
+        virtual ParseResult test() override                         = 0; \
+        virtual void        accept(Visitor &visitor) const override = 0; \
+                                                                         \
+      protected:                                                         \
+        token::TokenList *tokens = nullptr;                              \
+    }
+
 namespace parser::ast {
-enum class NodeTypes {
-    // Expressions
-    BinaryExpr,
-    UnaryExpr,
-    LiteralExpr,
-    IdentifierExpr,
-    CallExpr,
-    GroupingExpr,
-    // Statements
-    BlockStmt,
-    ExpressionStmt,
-    PrintStmt,
-    VarStmt,
-    // Declarations
-    FunctionDecl,
-    VarDecl,
-    // Types
-    BoolType,
-    IntType,
-    FloatType,
-    StringType,
-    VoidType,
-};
+class Visitor;
 
 class Node {
   public:
-    virtual ~Node()                                          = default;
-    virtual ParseResult<Node> parse()                        = 0;
-    virtual ParseResult<Node> test()                         = 0;
-    virtual void              accept(Visitor &visitor) const = 0;
+    virtual ~Node()                                    = default;
+    virtual ParseResult parse()                        = 0;
+    virtual ParseResult test()                         = 0;
+    virtual void        accept(Visitor &visitor) const = 0;
 
     Node(const Node &)            = default;
     Node &operator=(const Node &) = default;
@@ -59,26 +56,13 @@ class Node {
     Node &operator=(Node &&)      = default;
 };
 
-class Expr : public Node {
-public:
-    Expr();
-    explicit Expr(token::TokenList &tokens);
-};
-class Stmt : public Node {};
-class Decl : public Node {};
-class Type : public Node {};
-
-class Literal : public Expr {
-  protected:
-    token::TokenList *tokens;
-  public:
-    explicit Literal(token::TokenList &tokens) : tokens(&tokens) {}
-    virtual ~Literal() = default;
-    virtual ParseResult<Node> parse() override = 0;
-    virtual ParseResult<Node> test() override  = 0;
-    virtual void              accept(Visitor &visitor) const override = 0;
-};
-
+DEFINE_SUB_NODE(Type);
+DEFINE_SUB_NODE(Expresion);
+DEFINE_SUB_NODE(Statement);
+DEFINE_SUB_NODE(Annotation);
+DEFINE_SUB_NODE(Declaration);
 }  // namespace parser::ast
+
+#undef DEFINE_SUB_NODE
 
 #endif  // __AST_INTERFACE_H__

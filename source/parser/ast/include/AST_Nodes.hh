@@ -14,13 +14,71 @@
 //                                                                                                //
 //===-----------------------------------------------------------------------------------------====//
 
-#ifndef __AST_NODES_H__
-#define __AST_NODES_H__
+#ifndef __AST_NODES_HH__
+#define __AST_NODES_HH__
 
+#include "parser/ast/include/AST_interface.hh"
 #include "parser/ast/include/nodes/AST_annotations.hh"
 #include "parser/ast/include/nodes/AST_declarations.hh"
 #include "parser/ast/include/nodes/AST_expressions.hh"
 #include "parser/ast/include/nodes/AST_generics.hh"
 #include "parser/ast/include/nodes/AST_statements.hh"
 
-#endif  // __AST_NODES_H__
+#define EXPR_VA_CLASS parser::ast::Expresion
+#define STMT_VA_CLASS parser::ast::Statement
+#define DECL_VA_CLASS parser::ast::Declaration
+#define ANNO_VA_CLASS parser::ast::Annotation
+#define TYPE_VA_CLASS parser::ast::Type
+
+#define MAKE_NODE_ENUM(T, D, B) T,
+#define MAKE_TOKEN_CLASS(T, D, B)                                                                  \
+    class T : public D {                                                                           \
+      protected:                                                                                   \
+        token::TokenList *tokens;                                                                  \
+                                                                                                   \
+      public:                                                                                      \
+        explicit T(token::TokenList &tokens)                                                       \
+            : tokens(&tokens) {}                                                                   \
+        virtual ~T()                                      = default;                               \
+        virtual parser::ast::ParseResult parse() override = 0;                                     \
+        virtual parser::ast::ParseResult test() override  = 0;                                     \
+        virtual void                     accept(parser::ast::Visitor &visitor) const override = 0; \
+    };
+
+#define GENERATE_NODES_ENUM_AND_CLASSES()                                                       \
+                                                                                                \
+    enum class nodes {                                                                          \
+        EXPRESSION(MAKE_NODE_ENUM, EXPR_VA_CLASS) ANNOTATIONS(MAKE_NODE_ENUM, ANNO_VA_CLASS)    \
+            DECLARATIONS(MAKE_NODE_ENUM, DECL_VA_CLASS) GENERICS(MAKE_NODE_ENUM, TYPE_VA_CLASS) \
+                STATEMENTS(MAKE_NODE_ENUM, STMT_VA_CLASS)                                       \
+    };                                                                                          \
+                                                                                                \
+    namespace node {                                                                            \
+        EXPRESSION(MAKE_TOKEN_CLASS, EXPR_VA_CLASS)                                             \
+        ANNOTATIONS(MAKE_TOKEN_CLASS, ANNO_VA_CLASS)                                            \
+        DECLARATIONS(MAKE_TOKEN_CLASS, DECL_VA_CLASS)                                           \
+        GENERICS(MAKE_TOKEN_CLASS, TYPE_VA_CLASS)                                               \
+        STATEMENTS(MAKE_TOKEN_CLASS, STMT_VA_CLASS)                                             \
+    }
+
+namespace parser::ast {
+    GENERATE_NODES_ENUM_AND_CLASSES();
+}
+
+#undef EXPR_VA_CLASS
+#undef STMT_VA_CLASS
+#undef DECL_VA_CLASS
+#undef ANNO_VA_CLASS
+#undef TYPE_VA_CLASS
+
+#undef MAKE_NODE_ENUM
+#undef MAKE_TOKEN_CLASS
+#undef GENERATE_NODES_ENUM_AND_CLASSES
+
+#undef GENERICS
+#undef STATEMENTS
+#undef EXPRESSION
+#undef ANNOTATIONS
+#undef DECLARATIONS
+
+#endif  // __AST_NODES_HH__

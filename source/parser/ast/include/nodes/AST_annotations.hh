@@ -16,8 +16,6 @@
 #ifndef __AST_ANNOTATIONS_H__
 #define __AST_ANNOTATIONS_H__
 
-namespace parser::ast::nodes {
-
-}
+#define ANNOTATIONS(GENERATE, DERIVE)
 
 #endif // __AST_ANNOTATIONS_H__

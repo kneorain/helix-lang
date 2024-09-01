@@ -18,6 +18,8 @@
 
 namespace parser::ast {
 
+class ASTProgeram;
+
 }
 
 #endif  // __AST_VISITOR_H__

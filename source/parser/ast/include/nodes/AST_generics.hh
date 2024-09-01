@@ -16,8 +16,6 @@
 #ifndef __AST_GENERIC_H__
 #define __AST_GENERIC_H__
 
-namespace parser::ast::nodes {
-
-}
+#define GENERICS(GENERATE, DERIVE)
 
 #endif // __AST_GENERIC_H__

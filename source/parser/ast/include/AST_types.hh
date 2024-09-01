@@ -35,17 +35,8 @@
 #include "core/types/hx_ints"
 
 namespace parser::ast {
-class Visitor;
-class Node;
-class Expr;
-class Stmt;
-class Decl;
-class Type;
-
-/// ParseResult is a pair of an integer and a T
-/// where T is a AST node and the integer is the number of tokens consumed
-template <typename T>
-using ParseResult = std::pair<i32, T>;
+/// ParseResult is just an integer of the tokens consumed
+using ParseResult = i32;
 
 /// NodeT is a unique pointer to a T (where T is a AST node)
 template <typename T>

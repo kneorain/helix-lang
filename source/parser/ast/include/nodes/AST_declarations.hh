@@ -16,8 +16,6 @@
 #ifndef __AST_DECLARATIONS_H__
 #define __AST_DECLARATIONS_H__
 
-namespace parser::ast::nodes {
-
-}
+#define DECLARATIONS(GENERATE, DERIVE)
 
 #endif // __AST_DECLARATIONS_H__

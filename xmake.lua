@@ -3,7 +3,7 @@ set_project("helix-lang")
 add_rules("mode.debug", "mode.release")
 
 add_rules("plugin.vsxmake.autoupdate")
-add_rules("plugin.compile_commands.autoupdate")
+-- add_rules("plugin.compile_commands.autoupdate")
 
 set_version("0.0.1", {soname = true})
 set_description("The Helix Compiler. Python's Simplicity, Rust inspired Syntax, and C++'s Power")
@@ -128,7 +128,7 @@ end
     
     set_kind("binary")
     set_warnings("all")
-    set_languages("c++latest")
+    set_languages("c++23")
     set_runtimes(use_runtime)
     set_policy("build.across_targets_in_parallel", true) -- optimization
 -- end config
