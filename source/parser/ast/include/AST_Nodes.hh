@@ -31,7 +31,7 @@
 #define TYPE_VA_CLASS parser::ast::Type
 
 #define MAKE_NODE_ENUM(T, D, B) T,
-#define MAKE_TOKEN_CLASS(T, D, B)                                                                  \
+#define MAKE_NODE_CLASS(T, D, B)                                                                   \
     class T : public D {                                                                           \
       protected:                                                                                   \
         token::TokenList *tokens;                                                                  \
@@ -54,11 +54,11 @@
     };                                                                                          \
                                                                                                 \
     namespace node {                                                                            \
-        EXPRESSION(MAKE_TOKEN_CLASS, EXPR_VA_CLASS)                                             \
-        ANNOTATIONS(MAKE_TOKEN_CLASS, ANNO_VA_CLASS)                                            \
-        DECLARATIONS(MAKE_TOKEN_CLASS, DECL_VA_CLASS)                                           \
-        GENERICS(MAKE_TOKEN_CLASS, TYPE_VA_CLASS)                                               \
-        STATEMENTS(MAKE_TOKEN_CLASS, STMT_VA_CLASS)                                             \
+        EXPRESSION(MAKE_NODE_CLASS, EXPR_VA_CLASS)                                             \
+        ANNOTATIONS(MAKE_NODE_CLASS, ANNO_VA_CLASS)                                            \
+        DECLARATIONS(MAKE_NODE_CLASS, DECL_VA_CLASS)                                           \
+        GENERICS(MAKE_NODE_CLASS, TYPE_VA_CLASS)                                               \
+        STATEMENTS(MAKE_NODE_CLASS, STMT_VA_CLASS)                                             \
     }
 
 namespace parser::ast {
@@ -72,7 +72,7 @@ namespace parser::ast {
 #undef TYPE_VA_CLASS
 
 #undef MAKE_NODE_ENUM
-#undef MAKE_TOKEN_CLASS
+#undef MAKE_NODE_CLASS
 #undef GENERATE_NODES_ENUM_AND_CLASSES
 
 #undef GENERICS

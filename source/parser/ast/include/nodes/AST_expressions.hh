@@ -16,16 +16,18 @@
 #ifndef __AST_EXPRESSIONS_H__
 #define __AST_EXPRESSIONS_H__
 
+#include "parser/ast/include/AST_types.hh"
+
 #define EXPRESSION(GENERATE, DERIVE)  \
     GENERATE(BinaryExpr, DERIVE,      \
-        char op;                      \
-        int *left;                    \
-        int *right;                   \
+        Token op;                     \
+        NodeT<Expression> *left;      \
+        NodeT<Expression> *right;     \
     )                                 \
                                       \
     GENERATE(UnaryExpr, DERIVE,       \
-        char op;                      \
-        int *right;                   \
+        Token op;                     \
+        NodeT<Expression> *right;     \
     )
 
 #endif // __AST_EXPRESSIONS_H__
