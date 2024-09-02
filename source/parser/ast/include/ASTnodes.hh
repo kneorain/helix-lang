@@ -24,25 +24,32 @@
 #include "parser/ast/include/nodes/AST_generics.hh"
 #include "parser/ast/include/nodes/AST_statements.hh"
 
-#define EXPR_VA_CLASS parser::ast::Expresion
+#define EXPR_VA_CLASS parser::ast::Expression
 #define STMT_VA_CLASS parser::ast::Statement
 #define DECL_VA_CLASS parser::ast::Declaration
 #define ANNO_VA_CLASS parser::ast::Annotation
 #define TYPE_VA_CLASS parser::ast::Type
 
 #define MAKE_NODE_ENUM(T, D, B) T,
-#define MAKE_NODE_CLASS(T, D, B)                                                                   \
-    class T : public D {                                                                           \
-      protected:                                                                                   \
-        token::TokenList *tokens;                                                                  \
-                                                                                                   \
-      public:                                                                                      \
-        explicit T(token::TokenList &tokens)                                                       \
-            : tokens(&tokens) {}                                                                   \
-        virtual ~T()                                      = default;                               \
-        virtual parser::ast::ParseResult parse() override = 0;                                     \
-        virtual parser::ast::ParseResult test() override  = 0;                                     \
-        virtual void                     accept(parser::ast::Visitor &visitor) const override = 0; \
+#define MAKE_NODE_CLASS(T, D, B)                                                       \
+    class T : public D {                                                               \
+      protected:                                                                       \
+        token::TokenList *tokens;                                                      \
+                                                                                       \
+      public:                                                                          \
+        explicit T(token::TokenList &tokens)                                           \
+            : tokens(&tokens) {}                                                       \
+        ~T()                    = default;                                             \
+        T(const T &)            = delete;                                              \
+        T &operator=(const T &) = delete;                                              \
+        T(T &&)                 = default;                                             \
+        T &operator=(T &&)      = delete;                                              \
+                                                                                       \
+        parser::ast::ParseResult parse() override;                                     \
+        parser::ast::ParseResult test() override;                                      \
+        void                     accept(parser::ast::Visitor &visitor) const override; \
+                                                                                       \
+        B                                                                              \
     };
 
 #define GENERATE_NODES_ENUM_AND_CLASSES()                                                       \
@@ -54,11 +61,11 @@
     };                                                                                          \
                                                                                                 \
     namespace node {                                                                            \
-        EXPRESSION(MAKE_NODE_CLASS, EXPR_VA_CLASS)                                             \
-        ANNOTATIONS(MAKE_NODE_CLASS, ANNO_VA_CLASS)                                            \
-        DECLARATIONS(MAKE_NODE_CLASS, DECL_VA_CLASS)                                           \
-        GENERICS(MAKE_NODE_CLASS, TYPE_VA_CLASS)                                               \
-        STATEMENTS(MAKE_NODE_CLASS, STMT_VA_CLASS)                                             \
+        EXPRESSION(MAKE_NODE_CLASS, EXPR_VA_CLASS)                                              \
+        ANNOTATIONS(MAKE_NODE_CLASS, ANNO_VA_CLASS)                                             \
+        DECLARATIONS(MAKE_NODE_CLASS, DECL_VA_CLASS)                                            \
+        GENERICS(MAKE_NODE_CLASS, TYPE_VA_CLASS)                                                \
+        STATEMENTS(MAKE_NODE_CLASS, STMT_VA_CLASS)                                              \
     }
 
 namespace parser::ast {

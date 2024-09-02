@@ -57,7 +57,7 @@ class Node {
 };
 
 DEFINE_SUB_NODE(Type);
-DEFINE_SUB_NODE(Expresion);
+DEFINE_SUB_NODE(Expression);
 DEFINE_SUB_NODE(Statement);
 DEFINE_SUB_NODE(Annotation);
 DEFINE_SUB_NODE(Declaration);

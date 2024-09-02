@@ -5,7 +5,7 @@ Program ::= (ImportStatement | PreprocessorDirective | Declaration | FunctionDef
 
 /* Modules and Imports */
 
-Module ::= 'module' QualifiedNamespaceID Suite
+Module ::= 'module' QualifiedNamespaceID Suite // module ... { :: ... }..
 
 ImportStatement ::= 'import' QualifiedNamespaceID ('::' '{' (QualifiedNamespaceID (',' QualifiedNamespaceID)*) '}')? ('as' QualifiedNamespaceID)? ';'
 

@@ -18,16 +18,60 @@
 
 #include "parser/ast/include/AST_types.hh"
 
+// Expression ::= Literal | AnySeparatedID | BinaryOperation | UnaryOperation | FunctionCall | ParenthesizedExpression | ArrayAccess | ObjectAccess | ConditionalExpression
+
 #define EXPRESSION(GENERATE, DERIVE)  \
-    GENERATE(BinaryExpr, DERIVE,      \
-        Token op;                     \
-        NodeT<Expression> *left;      \
-        NodeT<Expression> *right;     \
+    GENERATE(BinaryOp, DERIVE,        \
+        NodeT<Expression> left;       \
+        token::Token op;              \
+        NodeT<Expression> right;      \
     )                                 \
                                       \
-    GENERATE(UnaryExpr, DERIVE,       \
-        Token op;                     \
-        NodeT<Expression> *right;     \
+    GENERATE(UnaryOp, DERIVE,         \
+        token::Token op;              \
+        NodeT<Expression> right;      \
+    )                                 \
+                                      \
+    GENERATE(Literal, DERIVE,         \
+        token::Token value;           \
+    )                                 \
+                                      \
+    GENERATE(Identifier, DERIVE,      \
+        token::Token name;            \
+    )                                 \
+                                      \
+    GENERATE(DotAccess, DERIVE,       \
+        NodeV<Expression> paths;      \
+    )                                 \
+                                      \
+    GENERATE(ScopeAccess, DERIVE,     \
+        NodeV<Expression> paths;      \
+    )                                 \
+                                      \
+    GENERATE(Assignment, DERIVE,      \
+        NodeT<Identifier> name;       \
+        NodeT<Expression> value;      \
+    )                                 \
+                                      \
+    GENERATE(FunctionCall, DERIVE,    \
+        NodeT<Expression> callee;     \
+        NodeV<Expression> args;       \
+        NodeV<Assignment> defaults;   \
+    )                                 \
+                                      \
+    GENERATE(ArrayAccess, DERIVE,     \
+        NodeT<Expression> array;      \
+        NodeT<Expression> index;      \
+    )                                 \
+                                      \
+    GENERATE(Parenthesized, DERIVE,   \
+        NodeT<Expression> expr;       \
+    )                                 \
+                                      \
+    GENERATE(Conditional, DERIVE,     \
+        NodeT<Expression> condition;  \
+        NodeT<Expression> if_true;    \
+        NodeT<Expression> if_false;   \
     )
 
 #endif // __AST_EXPRESSIONS_H__
