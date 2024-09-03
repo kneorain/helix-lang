@@ -13,11 +13,21 @@
 //                                                                                                //
 //===-----------------------------------------------------------------------------------------====//
 
-#ifndef __AST_MATCHER_H__
-#define __AST_MATCHER_H__
+#include "parser/ast/include/AST.hh"
+
+#include "parser/ast/include/case_types.def"
+#include "token/include/token_list.hh"
 
 namespace parser::ast {
 
+NodeT<Annotation> get_Annotation(token::TokenList &tokens) {
+    for (auto &token : tokens) {}
+
+    return nullptr;
 }
 
-#endif // __AST_MATCHER_H__
+Annotation::Annotation() = default;
+Annotation::Annotation(token::TokenList &tokens)
+    : Node(tokens)
+    , tokens(&tokens) {}
+}  // namespace parser::ast

@@ -26,7 +26,7 @@ let some_var: type_of!(other_var) = 5; // other_var is an int
 ### sizeof!
 ```rs
 print(sizeof!(int)); // 16
-let a: int = 2**32;
+let a: int = 1 << 32; // as int is a var int
 print(a.size()); // 4 bytes
 ```
 

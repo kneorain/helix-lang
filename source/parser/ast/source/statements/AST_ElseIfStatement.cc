@@ -9,15 +9,25 @@
 //  Copyright (c) 2024 (CC BY 4.0)                                                                //
 //                                                                                                //
 //====----------------------------------------------------------------------------------------====//
-//                                                                                                //
-//                                                                                                //
-//===-----------------------------------------------------------------------------------------====//
 
-#ifndef __AST_MATCHER_H__
-#define __AST_MATCHER_H__
+#include "parser/ast/include/AST.hh"
 
-namespace parser::ast {
+namespace parser::ast::node {
+ParseResult ElseIfStatement::parse() {
+    if (tokens->empty()) [[unlikely]] {
+        return 0;
+    }
 
+    return 0;
 }
 
-#endif // __AST_MATCHER_H__
+bool ElseIfStatement::test() {
+    if (tokens->empty()) [[unlikely]] {
+        return false;
+    }
+    return false;
+}
+
+void ElseIfStatement::accept(Visitor &visitor) const { visitor.visit(*this); }
+
+}  // namespace parser::ast::node

@@ -13,8 +13,8 @@
 //                                                                                                //
 //===-----------------------------------------------------------------------------------------====//
 
-#ifndef __AST_EXPRESSIONS_H__
-#define __AST_EXPRESSIONS_H__
+#ifndef __AST_EXPRESSIONS_DEF__
+#define __AST_EXPRESSIONS_DEF__
 
 #include "parser/ast/include/AST_types.hh"
 
@@ -37,7 +37,7 @@
     )                                 \
                                       \
     GENERATE(Identifier, DERIVE,      \
-        token::Token name;            \
+        token::Token value;           \
     )                                 \
                                       \
     GENERATE(DotAccess, DERIVE,       \
@@ -48,9 +48,8 @@
         NodeV<Expression> paths;      \
     )                                 \
                                       \
-    GENERATE(Assignment, DERIVE,      \
-        NodeT<Identifier> name;       \
-        NodeT<Expression> value;      \
+    GENERATE(PathAccess, DERIVE,      \
+        NodeV<Expression> paths;      \
     )                                 \
                                       \
     GENERATE(FunctionCall, DERIVE,    \
@@ -72,6 +71,11 @@
         NodeT<Expression> condition;  \
         NodeT<Expression> if_true;    \
         NodeT<Expression> if_false;   \
+    )                                 \
+                                      \
+    GENERATE(Cast, DERIVE,            \
+        NodeT<Expression> type;       \
+        NodeT<Expression> expr;       \
     )
 
-#endif // __AST_EXPRESSIONS_H__
+#endif // __AST_EXPRESSIONS_DEF__

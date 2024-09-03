@@ -1,0 +1,186 @@
+//===------------------------------------------ C++ ------------------------------------------====//
+//                                                                                                //
+//  Part of the Helix Project, under the Attribution 4.0 International license (CC BY 4.0).       //
+//  You are allowed to use, modify, redistribute, and create derivative works, even for           //
+//  commercial purposes, provided that you give appropriate credit, and indicate if changes       //
+//   were made. For more information, please visit: https://creativecommons.org/licenses/by/4.0/  //
+//                                                                                                //
+//  SPDX-License-Identifier: CC-BY-4.0                                                            //
+//  Copyright (c) 2024 (CC BY 4.0)                                                                //
+//                                                                                                //
+//====----------------------------------------------------------------------------------------====//
+//                                                                                                //
+//  this file is used as  a helper to define the cases for token types used by the parser         //
+//                                                                                                //
+//===-----------------------------------------------------------------------------------------====//
+
+#ifndef __CASE_TYPES_H__
+#define __CASE_TYPES_H__
+
+#define IS_LITERAL                                    \
+    token::LITERAL_STRING : case token::LITERAL_TRUE: \
+    case token::LITERAL_FALSE:                        \
+    case token::LITERAL_INTEGER:                      \
+    case token::LITERAL_COMPLIER_DIRECTIVE:           \
+    case token::LITERAL_FLOATING_POINT:               \
+    case token::LITERAL_CHAR:                         \
+    case token::LITERAL_NULL
+
+#define IS_IDENTIFIER token::IDENTIFIER
+
+#define IS_KEYWORD                                \
+    token::KEYWORD_IF : case token::KEYWORD_ELSE: \
+    case token::KEYWORD_UNLESS:                   \
+    case token::KEYWORD_SPAWN:                    \
+    case token::KEYWORD_AWAIT:                    \
+    case token::KEYWORD_THREAD:                   \
+    case token::KEYWORD_MACRO:                    \
+    case token::KEYWORD_DEFINE:                   \
+    case token::KEYWORD_FUNCTION:                 \
+    case token::KEYWORD_OPERATOR:                 \
+    case token::KEYWORD_INLINE:                   \
+    case token::KEYWORD_RETURN:                   \
+    case token::KEYWORD_ENCLOSING:                \
+    case token::KEYWORD_ASYNC:                    \
+    case token::KEYWORD_FOR:                      \
+    case token::KEYWORD_WHILE:                    \
+    case token::KEYWORD_BREAK:                    \
+    case token::KEYWORD_CONTINUE:                 \
+    case token::KEYWORD_CASE:                     \
+    case token::KEYWORD_MATCH:                    \
+    case token::KEYWORD_SWITCH:                   \
+    case token::KEYWORD_DEFAULT:                  \
+    case token::KEYWORD_ENUM:                     \
+    case token::KEYWORD_TYPE:                     \
+    case token::KEYWORD_CLASS:                    \
+    case token::KEYWORD_UNION:                    \
+    case token::KEYWORD_STRUCT:                   \
+    case token::KEYWORD_ABSTRACT:                 \
+    case token::KEYWORD_INTERFACE:                \
+    case token::KEYWORD_IS:                       \
+    case token::KEYWORD_TRY:                      \
+    case token::KEYWORD_PANIC:                    \
+    case token::KEYWORD_CATCH:                    \
+    case token::KEYWORD_FINALLY:                  \
+    case token::KEYWORD_LET:                      \
+    case token::KEYWORD_PRIVATE:                  \
+    case token::KEYWORD_AUTO:                     \
+    case token::KEYWORD_CONST:                    \
+    case token::KEYWORD_GLOBAL:                   \
+    case token::KEYWORD_FROM:                     \
+    case token::KEYWORD_FFI:                      \
+    case token::KEYWORD_IMPORT:                   \
+    case token::KEYWORD_EXTERN:                   \
+    case token::KEYWORD_YIELD:                    \
+    case token::KEYWORD_AS:                       \
+    case token::KEYWORD_DERIVES:                  \
+    case token::KEYWORD_MODULE
+
+#define IS_DELIMITER                                      \
+    token::DELIMITER_TAB : case token::DELIMITER_NEWLINE: \
+    case token::EOF_TOKEN:                                \
+    case token::DELIMITER_SPACE:                          \
+    case token::WHITESPACE
+
+#define IS_OPERATOR                                 \
+    token::OPERATOR_ADD : case token::OPERATOR_SUB: \
+    case token::OPERATOR_MUL:                       \
+    case token::OPERATOR_DIV:                       \
+    case token::OPERATOR_MOD:                       \
+    case token::OPERATOR_MAT:                       \
+    case token::OPERATOR_BITWISE_AND:               \
+    case token::OPERATOR_BITWISE_OR:                \
+    case token::OPERATOR_BITWISE_XOR:               \
+    case token::OPERATOR_BITWISE_NOT:               \
+    case token::OPERATOR_ASSIGN:                    \
+    case token::OPERATOR_LOGICAL_NOT:               \
+    case token::OPERATOR_POW:                       \
+    case token::OPERATOR_ABS:                       \
+    case token::OPERATOR_BITWISE_L_SHIFT:           \
+    case token::OPERATOR_BITWISE_NAND:              \
+    case token::OPERATOR_BITWISE_R_SHIFT:           \
+    case token::OPERATOR_BITWISE_NOR:               \
+    case token::OPERATOR_EQUAL:                     \
+    case token::OPERATOR_NOT_EQUAL:                 \
+    case token::OPERATOR_GREATER_THAN_EQUALS:       \
+    case token::OPERATOR_INC:                       \
+    case token::OPERATOR_DEC:                       \
+    case token::OPERATOR_LESS_THAN_EQUALS:          \
+    case token::OPERATOR_ADD_ASSIGN:                \
+    case token::OPERATOR_SUB_ASSIGN:                \
+    case token::OPERATOR_MUL_ASSIGN:                \
+    case token::OPERATOR_BITWISE_AND_ASSIGN:        \
+    case token::OPERATOR_BITWISE_OR_ASSIGN:         \
+    case token::OPERATOR_BITWISE_NOR_ASSIGN:        \
+    case token::OPERATOR_BITWISE_XOR_ASSIGN:        \
+    case token::OPERATOR_BITWISE_NOT_ASSIGN:        \
+    case token::OPERATOR_DIV_ASSIGN:                \
+    case token::OPERATOR_MOD_ASSIGN:                \
+    case token::OPERATOR_MAT_ASSIGN:                \
+    case token::OPERATOR_LOGICAL_AND:               \
+    case token::OPERATOR_LOGICAL_NAND:              \
+    case token::OPERATOR_LOGICAL_OR:                \
+    case token::OPERATOR_LOGICAL_NOR:               \
+    case token::OPERATOR_LOGICAL_XOR:               \
+    case token::OPERATOR_RANGE:                     \
+    case token::OPERATOR_ARROW:                     \
+    case token::OPERATOR_NOT_ASSIGN:                \
+    case token::OPERATOR_SCOPE:                     \
+    case token::OPERATOR_REF_EQUAL:                 \
+    case token::OPERATOR_POWER_ASSIGN:              \
+    case token::OPERATOR_AND_ASSIGN:                \
+    case token::OPERATOR_NAND_ASSIGN:               \
+    case token::OPERATOR_OR_ASSIGN:                 \
+    case token::OPERATOR_NOR_ASSIGN:                \
+    case token::OPERATOR_XOR_ASSIGN:                \
+    case token::OPERATOR_BITWISE_NAND_ASSIGN:       \
+    case token::OPERATOR_BITWISE_L_SHIFT_ASSIGN:    \
+    case token::OPERATOR_BITWISE_R_SHIFT_ASSIGN:    \
+    case token::OTHERS:                             \
+    case token::OPERATOR_RANGE_INCLUSIVE
+
+#define IS_PUNCTUATION                                                   \
+    token::PUNCTUATION_OPEN_PAREN : case token::PUNCTUATION_CLOSE_PAREN: \
+    case token::PUNCTUATION_OPEN_BRACE:                                  \
+    case token::PUNCTUATION_CLOSE_BRACE:                                 \
+    case token::PUNCTUATION_OPEN_BRACKET:                                \
+    case token::PUNCTUATION_CLOSE_BRACKET:                               \
+    case token::PUNCTUATION_OPEN_ANGLE:                                  \
+    case token::PUNCTUATION_CLOSE_ANGLE:                                 \
+    case token::PUNCTUATION_COMMA:                                       \
+    case token::PUNCTUATION_SEMICOLON:                                   \
+    case token::PUNCTUATION_COLON:                                       \
+    case token::PUNCTUATION_QUESTION_MARK:                               \
+    case token::PUNCTUATION_DOT:                                         \
+    case token::PUNCTUATION_SINGLE_LINE_COMMENT:                         \
+    case token::PUNCTUATION_MULTI_LINE_COMMENT:                          \
+    case token::PUNCTUATION_ELLIPSIS
+
+#define IS_PRIMITIVE                                    \
+    token::PRIMITIVE_VOID : case token::PRIMITIVE_BOOL: \
+    case token::PRIMITIVE_BYTE:                         \
+    case token::PRIMITIVE_CHAR:                         \
+    case token::PRIMITIVE_POINTER:                      \
+    case token::PRIMITIVE_I8:                           \
+    case token::PRIMITIVE_U8:                           \
+    case token::PRIMITIVE_I16:                          \
+    case token::PRIMITIVE_U16:                          \
+    case token::PRIMITIVE_I32:                          \
+    case token::PRIMITIVE_U32:                          \
+    case token::PRIMITIVE_F32:                          \
+    case token::PRIMITIVE_I64:                          \
+    case token::PRIMITIVE_U64:                          \
+    case token::PRIMITIVE_F64:                          \
+    case token::PRIMITIVE_FLOAT:                        \
+    case token::PRIMITIVE_I128:                         \
+    case token::PRIMITIVE_U128:                         \
+    case token::PRIMITIVE_INT:                          \
+    case token::PRIMITIVE_DECIMAL:                      \
+    case token::PRIMITIVE_STRING:                       \
+    case token::PRIMITIVE_LIST:                         \
+    case token::PRIMITIVE_TUPLE:                        \
+    case token::PRIMITIVE_SET:                          \
+    case token::PRIMITIVE_MAP:                          \
+    case token::PRIMITIVE_ANY
+
+#endif  // __CASE_TYPES_H__

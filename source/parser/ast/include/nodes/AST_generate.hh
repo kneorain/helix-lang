@@ -10,14 +10,23 @@
 //                                                                                                //
 //====----------------------------------------------------------------------------------------====//
 //                                                                                                //
+//  Generates the AST nodes for the Helix Parser.                                                 //
+//  This file is used to generate the AST nodes for the Helix Parser.                             //
 //                                                                                                //
 //===-----------------------------------------------------------------------------------------====//
 
-#ifndef __AST_MATCHER_H__
-#define __AST_MATCHER_H__
+#ifndef __AST_GENERATE_H__
+#define __AST_GENERATE_H__
+
+#include "parser/ast/include/AST_nodes.def"
 
 namespace parser::ast {
+GENERATE_NODES_ENUM;
 
-}
+namespace node {
+    GENERATE_NODES_FORWARD_DECLS;
+    GENERATE_NODES_CLASSES;  // NOLINT(cppcoreguidelines-pro-type-member-init)
+}  // namespace node
+}  // namespace parser::ast
 
-#endif // __AST_MATCHER_H__
+#endif  // __AST_GENERATE_H__

@@ -13,11 +13,12 @@
 //                                                                                                //
 //===-----------------------------------------------------------------------------------------====//
 
-#ifndef __AST_MATCHER_H__
-#define __AST_MATCHER_H__
+#ifndef __AST_GENERIC_DEF__
+#define __AST_GENERIC_DEF__
 
-namespace parser::ast {
+#define GENERICS(GENERATE, DERIVE) \
+    GENERATE(Suite, DERIVE,        \
+        NodeV<> body;              \
+    )                              \
 
-}
-
-#endif // __AST_MATCHER_H__
+#endif // __AST_GENERIC_DEF__

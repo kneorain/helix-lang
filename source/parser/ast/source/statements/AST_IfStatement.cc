@@ -9,13 +9,25 @@
 //  Copyright (c) 2024 (CC BY 4.0)                                                                //
 //                                                                                                //
 //====----------------------------------------------------------------------------------------====//
-//                                                                                                //
-//                                                                                                //
-//===-----------------------------------------------------------------------------------------====//
 
-#ifndef __AST_ANNOTATIONS_H__
-#define __AST_ANNOTATIONS_H__
+#include "parser/ast/include/AST.hh"
 
-#define ANNOTATIONS(GENERATE, DERIVE)
+namespace parser::ast::node {
+ParseResult IfStatement::parse() {
+    if (tokens->empty()) [[unlikely]] {
+        return 0;
+    }
 
-#endif // __AST_ANNOTATIONS_H__
+    return 0;
+}
+
+bool IfStatement::test() {
+    if (tokens->empty()) [[unlikely]] {
+        return false;
+    }
+    return false;
+}
+
+void IfStatement::accept(Visitor &visitor) const { visitor.visit(*this); }
+
+}  // namespace parser::ast::node

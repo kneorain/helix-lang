@@ -13,11 +13,17 @@
 //                                                                                                //
 //===-----------------------------------------------------------------------------------------====//
 
-#ifndef __AST_MATCHER_H__
-#define __AST_MATCHER_H__
+#ifndef __AST_ANNOTATIONS_DEF__
+#define __AST_ANNOTATIONS_DEF__
 
-namespace parser::ast {
+#define ANNOTATIONS(GENERATE, DERIVE)   \
+    GENERATE(Comment, DERIVE,           \
+        token::Token comment;           \
+    )                                   \
+                                        \
+    GENERATE(CompilerDirective, DERIVE, \
+        token::Token directive;         \
+        NodeT<> arguments;              \
+    )
 
-}
-
-#endif // __AST_MATCHER_H__
+#endif // __AST_ANNOTATIONS_DEF__

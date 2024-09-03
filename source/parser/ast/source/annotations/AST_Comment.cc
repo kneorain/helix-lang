@@ -9,13 +9,25 @@
 //  Copyright (c) 2024 (CC BY 4.0)                                                                //
 //                                                                                                //
 //====----------------------------------------------------------------------------------------====//
-//                                                                                                //
-//                                                                                                //
-//===-----------------------------------------------------------------------------------------====//
 
-#ifndef __AST_GENERIC_H__
-#define __AST_GENERIC_H__
+#include "parser/ast/include/AST.hh"
 
-#define GENERICS(GENERATE, DERIVE)
+namespace parser::ast::node {
+ParseResult Comment::parse() {
+    if (tokens->empty()) [[unlikely]] {
+        return 0;
+    }
 
-#endif // __AST_GENERIC_H__
+    return 0;
+}
+
+bool Comment::test() {
+    if (tokens->empty()) [[unlikely]] {
+        return false;
+    }
+    return false;
+}
+
+void Comment::accept(Visitor &visitor) const { visitor.visit(*this); }
+
+}  // namespace parser::ast::node

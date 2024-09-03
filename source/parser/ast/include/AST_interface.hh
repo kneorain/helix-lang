@@ -20,35 +20,42 @@
 #include "parser/ast/include/AST_types.hh"
 #include "token/include/token_list.hh"
 
-#define DEFINE_SUB_NODE(name)                                            \
-    class name : public Node {                                           \
-      public:                                                            \
-        name();                                                          \
-        explicit name(token::TokenList &tokens);                         \
-                                                                         \
-        name(const name &)            = default;                         \
-        name &operator=(const name &) = default;                         \
-        name(name &&)                 = default;                         \
-        name &operator=(name &&)      = default;                         \
-        ~name() override              = default;                         \
-                                                                         \
-        virtual ParseResult parse() override                        = 0; \
-        virtual ParseResult test() override                         = 0; \
-        virtual void        accept(Visitor &visitor) const override = 0; \
-                                                                         \
-      protected:                                                         \
-        token::TokenList *tokens = nullptr;                              \
-    }
+#define DEFINE_SUB_NODE(name)                                                    \
+    class name : public Node {                                                   \
+      public:                                                                    \
+        name();                                                                  \
+        explicit name(token::TokenList &tokens);                                 \
+                                                                                 \
+        name(const name &)            = default;                                 \
+        name &operator=(const name &) = default;                                 \
+        name(name &&)                 = default;                                 \
+        name &operator=(name &&)      = default;                                 \
+        ~name() override              = default;                                 \
+                                                                                 \
+        virtual ParseResult         parse() override                        = 0; \
+        virtual bool                test() override                         = 0; \
+        virtual void                accept(Visitor &visitor) const override = 0; \
+        [[nodiscard]] virtual nodes getNodeType() const override            = 0; \
+                                                                                 \
+      protected:                                                                 \
+        token::TokenList *tokens = nullptr;                                      \
+    };                                                                           \
+                                                                                 \
+    NodeT<name> get_##name(token::TokenList &tokens);
 
 namespace parser::ast {
 class Visitor;
+enum class nodes;
 
 class Node {
   public:
-    virtual ~Node()                                    = default;
-    virtual ParseResult parse()                        = 0;
-    virtual ParseResult test()                         = 0;
-    virtual void        accept(Visitor &visitor) const = 0;
+    Node() = default;
+    explicit Node(token::TokenList &tokens) {}
+    virtual ~Node()                                            = default;
+    virtual ParseResult         parse()                        = 0;
+    virtual bool                test()                         = 0;
+    virtual void                accept(Visitor &visitor) const = 0;
+    [[nodiscard]] virtual nodes getNodeType() const            = 0;
 
     Node(const Node &)            = default;
     Node &operator=(const Node &) = default;

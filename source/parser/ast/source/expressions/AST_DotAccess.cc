@@ -9,13 +9,33 @@
 //  Copyright (c) 2024 (CC BY 4.0)                                                                //
 //                                                                                                //
 //====----------------------------------------------------------------------------------------====//
-//                                                                                                //
-//                                                                                                //
-//===-----------------------------------------------------------------------------------------====//
 
-#ifndef __AST_DECLARATIONS_H__
-#define __AST_DECLARATIONS_H__
+#include "parser/ast/include/AST.hh"
 
-#define DECLARATIONS(GENERATE, DERIVE)
+#define __HIDE_FROM_LIBHELIX__
 
-#endif // __AST_DECLARATIONS_H__
+namespace parser::ast::node {
+ParseResult DotAccess::parse() {
+    if (tokens->empty()) [[unlikely]] {
+        return 0;
+    }
+
+    // DotAccess ::= paths ('.' paths)*
+
+    i32 len = 0;
+    
+    paths.push_back(get_Expression(*tokens));
+
+    return 0;
+}
+
+bool DotAccess::test() {
+    if (tokens->empty()) [[unlikely]] {
+        return false;
+    }
+    return false;
+}
+
+void DotAccess::accept(Visitor &visitor) const { visitor.visit(*this); }
+
+}  // namespace parser::ast::node

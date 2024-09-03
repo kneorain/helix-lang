@@ -105,7 +105,7 @@ TestDefinition ::= 'test' String Suite
 
 /* Access Specifiers */
 
-AccessModifiers ::= 'priv' | 'pub' | 'prot' | 'intl'
+AccessModifiers ::= 'priv' | 'pub' | 'prot' | 'intrnl'
 
 /* Concurrency */
 
@@ -209,7 +209,7 @@ AnySeparatedID ::= (DotSeparatedID | QualifiedNamespaceID) (DotSeparatedID | Qua
 
 /* Base Elements */
 
-Literal ::= Number | String | 'true' | 'false' | 'null' | 'nullptr'
+Literal ::= Number | String | 'true' | 'false' | 'null' // nullptr == *null
 
 Number ::= Digit+ ('.' Digit+)?
 

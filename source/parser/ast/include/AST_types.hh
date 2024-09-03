@@ -14,7 +14,7 @@
 //                                                                                                //
 //  The AST types are defined as follows:                                                         //
 //      - ParseResult is a pair of an integer and a T                                             //
-//      - NodeT is a unique pointer to a T (where T is a AST node)                                //
+//      - NodeT is a raw pointer to a T (where T is a AST node)                                //
 //      - NodeV is a vector of NodeT                                                              //
 //      - NodeVP is a unique pointer to a NodeV                                                   //
 //      - NodeR is a reference to a T                                                             //
@@ -38,12 +38,14 @@ namespace parser::ast {
 /// ParseResult is just an integer of the tokens consumed
 using ParseResult = i32;
 
+class Node;
+
 /// NodeT is a unique pointer to a T (where T is a AST node)
-template <typename T>
-using NodeT = std::unique_ptr<T>;
+template <typename T = Node>
+using NodeT = T*;
 
 /// NodeV is a vector of NodeT
-template <typename T>
+template <typename T = Node>
 using NodeV = std::vector<NodeT<T>>;
 
 /// NodeVP is a unique pointer to a NodeV
@@ -75,11 +77,11 @@ using NodeVPR = NodeVP<T> &;
 /// @param args are the arguments to pass to the constructor of T
 /// @return a unique pointer to the new node
 template <typename T, typename... Args>
-inline consteval auto make_node(Args &&...args) {
+inline constexpr NodeT<T> make_node(Args &&...args) {
     // return a heap-alloc unique pointer to the new node with
     // perfect forwarding of the arguments allowing the caller
     // to identify any errors in the arguments at compile time
-    return std::make_unique<T>(std::forward<Args>(args)...);
+    return NodeT<T>(std::forward<Args>(args)...);
 }
 }  // namespace parser::ast
 

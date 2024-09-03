@@ -70,6 +70,7 @@ class TokenList : public std::vector<Token> {
         std::optional<std::reference_wrapper<Token>> peek_back(const std::int32_t n = 1) const;
         std::reference_wrapper<Token>                current() const;
         TokenList                                    remaining();
+        u64                                          position() const { return cursor_position; }
     };
 
     mutable const_iterator it;

@@ -9,13 +9,25 @@
 //  Copyright (c) 2024 (CC BY 4.0)                                                                //
 //                                                                                                //
 //====----------------------------------------------------------------------------------------====//
-//                                                                                                //
-//                                                                                                //
-//===-----------------------------------------------------------------------------------------====//
 
-#ifndef __AST_STATEMENTS_H__
-#define __AST_STATEMENTS_H__
+#include "parser/ast/include/AST.hh"
 
-#define STATEMENTS(GENERATE, DERIVE)
+namespace parser::ast::node {
+ParseResult Conditional::parse() {
+    if (tokens->empty()) [[unlikely]] {
+        return 0;
+    }
 
-#endif // __AST_STATEMENTS_H__
+    return 0;
+}
+
+bool Conditional::test() {
+    if (tokens->empty()) [[unlikely]] {
+        return false;
+    }
+    return false;
+}
+
+void Conditional::accept(Visitor &visitor) const { visitor.visit(*this); }
+
+}  // namespace parser::ast::node

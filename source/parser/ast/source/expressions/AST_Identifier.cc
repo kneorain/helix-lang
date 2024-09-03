@@ -9,15 +9,31 @@
 //  Copyright (c) 2024 (CC BY 4.0)                                                                //
 //                                                                                                //
 //====----------------------------------------------------------------------------------------====//
-//                                                                                                //
-//                                                                                                //
-//===-----------------------------------------------------------------------------------------====//
 
-#ifndef __AST_MATCHER_H__
-#define __AST_MATCHER_H__
+#include "parser/ast/include/AST.hh"
 
-namespace parser::ast {
+namespace parser::ast::node {
+ParseResult Identifier::parse() {
+    if (tokens->empty()) [[unlikely]] {
+        return 0;
+    }
 
+    if (tokens->front().token_kind() == token::IDENTIFIER) {
+        value = tokens->front();
+
+        return 1;
+    }
+
+    return 0;
 }
 
-#endif // __AST_MATCHER_H__
+bool Identifier::test() {
+    if (tokens->empty()) [[unlikely]] {
+        return false;
+    }
+    return false;
+}
+
+void Identifier::accept(Visitor &visitor) const { visitor.visit(*this); }
+
+}  // namespace parser::ast::node

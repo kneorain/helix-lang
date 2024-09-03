@@ -13,11 +13,17 @@
 //                                                                                                //
 //===-----------------------------------------------------------------------------------------====//
 
-#ifndef __AST_MATCHER_H__
-#define __AST_MATCHER_H__
+#ifndef __AST_DECLARATIONS_DEF__
+#define __AST_DECLARATIONS_DEF__
 
-namespace parser::ast {
+#define DECLARATIONS(GENERATE, DERIVE) \
+    GENERATE(VariableDecl, DERIVE,     \
+        AccessSpecifier access;        \
+        NodeT<Assignment> assignment;  \
+        bool is_unsafe = false;        \
+        bool is_const  = false;        \
+        bool is_eval   = false;        \
+    )                                  \
+                                       \
 
-}
-
-#endif // __AST_MATCHER_H__
+#endif // __AST_DECLARATIONS_DEF__

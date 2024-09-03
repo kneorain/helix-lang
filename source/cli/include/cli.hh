@@ -144,6 +144,7 @@ class CLIArgs {
     std::vector<std::string> module_dirs;
 
     explicit CLIArgs(int argc, char **argv, const std::string& version);
+    std::string get_all_flags;
 };
 
 inline void check_exit(CLIArgs &obj) {
