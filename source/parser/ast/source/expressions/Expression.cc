@@ -17,118 +17,69 @@
 #include "parser/ast/include/AST.hh"
 
 #include "parser/ast/include/case_types.def"
+#include "token/include/generate.hh"
 #include "token/include/token_list.hh"
 
+/* IDEINTIFIED
+
+break into 2 parts the compound expressions and the single expressions
+
+single expressions are:
+    [x] Literals
+    [x] Identifier
+    [x] UnaryOp
+    [x] FunctionCall
+    [x] ScopeAccess
+    [x] Parenthesized ( '(' CompoundExpression ')' )
+
+compound expressions are:
+    [-] PathAccess
+    [-] DotAccess
+
+    [-] BinaryOperation
+    [-] ArrayAccess
+    [-] Cast
+
+*/
+
 namespace parser::ast {
-enum class ExpressionType {
-    //< once we can confirm its a unary operator we know there cant be:
-    //  DotAccess | ScopeAccess | PathAccess | FunctionCall | Literal | Parenthesized
-    UnaryOp,
+NodeT<Expression> get_simple_Expression(token::TokenList &tokens) {
+    // Parse any simple expression
+    for (auto &tok : tokens) {
+        switch (tok->token_kind()) {
+            case IS_LITERAL:
+                return new node::Literal(tokens);
 
-    //< once we can confirm its a binary operator we know there cant be:
-    //  DotAccess | ScopeAccess | PathAccess | FunctionCall | Literal | Parenthesized
-    BinaryOp,
+            case IS_IDENTIFIER:
+                if (tok.peek().has_value() && tok.peek()->get().token_kind() == token::OPERATOR_SCOPE) {
+                    return new node::ScopeAccess(tokens);
+                } else if (tok.peek().has_value() && tok.peek()->get().token_kind() == token::PUNCTUATION_OPEN_PAREN) {
+                    return new node::FunctionCall(tokens);
+                }
 
-    //< once we can confirm its an dot path we know there cant be:
-    //  UnaryOp | Literal | Parenthesized
-    DotAccess,
+                return new node::Identifier(tokens);
 
-    //< once we can confirm its an scope path we know there cant be:
-    //  UnaryOp | Literal | Parenthesized
-    ScopeAccess,
+            case token ::PUNCTUATION_OPEN_ANGLE:
+            case token ::PUNCTUATION_CLOSE_ANGLE:
+            case IS_OPERATOR:
+                if (tok.peek().has_value() && tok.peek()->get().token_kind() == token::PUNCTUATION_OPEN_PAREN) {
+                    return new node::Parenthesized(tokens);
+                }
 
-    //< once we can confirm its an path we know there cant be:
-    //  UnaryOp | Literal | Parenthesized | DotAccess | ScopeAccess
-    PathAccess,
+                return new node::UnaryOp(tokens);
 
-    //< once we can confirm its a function call we know there cant be:
-    //  UnaryOp | Literal
-    FunctionCall,
+            case token::PUNCTUATION_OPEN_PAREN:
+                return new node::Parenthesized(tokens);
 
-    //< once we can confirm its a literal we know there can be anything
-    Literal,
-
-    //< we can confirm its a cast if we see an 'as' keyword
-    Cast,
-
-    //< we can confirm its a conditional if we see an 'if' keyword
-    Conditional,
-
-    //< we can confirm its a parenthesized expression if we see an '('
-    Parenthesized
-};
-
-
-
-
-bool is_termination_token(token::tokens kind, std::map<char, u32> &depth_map) {
-    switch (kind) {
-        case token::PUNCTUATION_SEMICOLON:
-            return true;
-
-        case token::PUNCTUATION_CLOSE_PAREN:
-            if (depth_map['('] == 0) {
-                return true;
-            }
-
-            --depth_map['('];
-            break;
-
-        case token::PUNCTUATION_CLOSE_BRACE:
-            if (depth_map['{'] == 0) {
-                return true;
-            }
-
-            --depth_map['{'];
-            break;
-
-        case token::PUNCTUATION_CLOSE_BRACKET:
-            if (depth_map['['] == 0) {
-                return true;
-            }
-
-            --depth_map['['];
-            break;
-
-        case token::PUNCTUATION_CLOSE_ANGLE:
-            if (depth_map['<'] == 0) {
-                return true;
-            }
-
-            --depth_map['<'];
-            break;
-
-        case token::PUNCTUATION_COMMA:
-            return true;
-
-        case token::PUNCTUATION_OPEN_PAREN:
-            ++depth_map['('];
-            break;
-
-        case token::PUNCTUATION_OPEN_BRACE:
-            ++depth_map['{'];
-            break;
-
-        case token::PUNCTUATION_OPEN_BRACKET:
-            ++depth_map['['];
-            break;
-
-        case token::PUNCTUATION_OPEN_ANGLE:
-            ++depth_map['<'];
-            break;
-
-        default:
-            return false;
+            default:
+                break;
+        }
     }
 
-    return false;
+    return nullptr;
 }
 
-/*
- *  get_Expression is a recursive reverse descent parser that parses an expression from a
- *  list of tokens. It returns a NodeT<Expression> which is a shared pointer to an Expression node.
- *
- */
+
 NodeT<Expression> get_Expression(token::TokenList &tokens) {
     /// Parse any expression
     /// Expression ::= Literal | AnySeparatedID | BinaryOperation | UnaryOperation | FunctionCall |
@@ -152,109 +103,7 @@ NodeT<Expression> get_Expression(token::TokenList &tokens) {
     // Conditional   ::= ... if ... else ...
     // Parenthesized ::= ( Expression )
 
-    // osmehting like:
-
-    // -1
-    // -1 + 2 < this is the unary -1 and binary + 2 but is still a binary operation
-    // -1 + 2 * 3 < this is the unary -1 and binary + 2 and binary * 3
-    // (((-1) '+' (2)) '*' 3)
-
-    // a termination of a expression is:
-    // a semicolon,
-    // a closing parenthesis,
-    // a closing brace,
-    // a closing bracket
-    // a closing angle bracket,
-    // a comma,
-
-
-    /// this only contains single len expressions
-    /// compound expressions are handled by the parent expression
-    std::vector<std::unique_ptr<Expression>> expr_stack;
-
-    std::map<char, u32> depth_map = {
-        {'(', 0},
-        {'{', 0},
-        {'[', 0},
-        {'<', 0},
-    };
-
-    i32 consumed = 0;
-
-    ExpressionType current_expr_type;
-
-    // once we know the type of expression it cant be we remove
-    std::vector<ExpressionType> possible_expr_types = {
-        ExpressionType::UnaryOp,
-        ExpressionType::BinaryOp,
-        ExpressionType::DotAccess,
-        ExpressionType::ScopeAccess,
-        ExpressionType::PathAccess,
-        ExpressionType::FunctionCall,
-        ExpressionType::Literal,
-        ExpressionType::Cast,
-        ExpressionType::Conditional,
-        ExpressionType::Parenthesized
-    };
-
-    for (auto &token : tokens) {
-        if (is_termination_token(token->token_kind(), depth_map)) {
-            
-            return expr_stack.back().get();
-        }
-
-        switch (token->token_kind()) {
-            case IS_IDENTIFIER:
-                expr_stack.push_back(std::make_unique<node::Identifier>(tokens));
-                consumed = expr_stack.back()->parse();
-
-                if (consumed > 1 && ((static_cast<i32>(consumed) - 1) > 0)) {
-                    token.advance(consumed - 1);
-                }
-
-                continue;
-
-            case IS_LITERAL:
-                expr_stack.push_back(std::make_unique<node::Literal>(tokens));
-                consumed = expr_stack.back()->parse();
-
-                if (consumed > 1 && ((static_cast<i32>(consumed) - 1) > 0)) {
-                    token.advance(consumed - 1);
-                }
-
-                continue;
-            
-            case token::tokens::PUNCTUATION_DOT:
-                [&](){
-                    auto slice = tokens;
-                
-                    expr_stack.push_back(std::make_unique<node::DotAccess>(slice));
-                    consumed = expr_stack.back()->parse();
-
-                    if (consumed > 1 && ((static_cast<i32>(consumed) - 1) > 0)) {
-                        token.advance(consumed - 1);
-                    }
-
-                }();
-                continue;
-
-            case token::tokens::OPERATOR_SCOPE:
-                [&](){
-                    auto slice = tokens;
-                
-                    expr_stack.push_back(std::make_unique<node::ScopeAccess>(slice));
-                    consumed = expr_stack.back()->parse();
-
-                    if (consumed > 1 && ((static_cast<i32>(consumed) - 1) > 0)) {
-                        token.advance(consumed - 1);
-                    }
-
-                }();
-                continue;
-        }
-    }
-
-    return nullptr;
+    return get_simple_Expression(tokens);
 }
 
 Expression::Expression() = default;

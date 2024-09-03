@@ -43,12 +43,12 @@ bool Literal::test() {
     }
 
     switch (tokens->front().token_kind()) {
-        case token::LITERAL_STRING:
-        case token::LITERAL_TRUE:
-        case token::LITERAL_FALSE:
-        case token::LITERAL_INTEGER:
-        case token::LITERAL_FLOATING_POINT:
-        case token::LITERAL_CHAR:
+        case token::LITERAL_STRING:         [[fallthrough]];
+        case token::LITERAL_TRUE:           [[fallthrough]];
+        case token::LITERAL_FALSE:          [[fallthrough]];
+        case token::LITERAL_INTEGER:        [[fallthrough]];
+        case token::LITERAL_FLOATING_POINT: [[fallthrough]];
+        case token::LITERAL_CHAR:           [[fallthrough]];
         case token::LITERAL_NULL:
             return true;
         default:

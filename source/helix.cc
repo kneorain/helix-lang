@@ -61,6 +61,7 @@ int compile(int argc, char **argv) {
         auto visit = parser::ast::visitors::JsonifyVisitor();
         
         auto ast = parser::ast::get_Expression(tokens);
+        ast->parse();
         ast->accept(visit);
 
         print(visit.json.to_json());

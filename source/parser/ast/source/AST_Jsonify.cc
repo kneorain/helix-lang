@@ -64,7 +64,12 @@ void JsonifyVisitor::visit(const node ::BinaryOp &node) {
     sub.add("type", (int)node.getNodeType());
 }
 
-void JsonifyVisitor::visit(const node ::UnaryOp &node) {}
+void JsonifyVisitor::visit(const node ::UnaryOp &node) {
+    auto sub = json.create_sub("unary_op")
+                     .add("operator", node.op)
+                     .add("type", (int)node.getNodeType());
+    node.right->accept(*this);
+}
 
 void JsonifyVisitor::visit(const node ::Identifier &node) {
     json.create_sub("identifier").add("value", node.value).add("type", (int)node.getNodeType());
@@ -97,11 +102,20 @@ void JsonifyVisitor::visit(const node ::PathAccess &node) {
     sub.add("type", (int)node.getNodeType());
 }
 
-void JsonifyVisitor::visit(const node ::FunctionCall &node) {}
+void JsonifyVisitor::visit(const node ::FunctionCall &node) {
+    auto sub = json.create_sub("function_call");
+    sub.add("type", (int)node.getNodeType());
+}
 
-void JsonifyVisitor::visit(const node ::ArrayAccess &node) {}
+void JsonifyVisitor::visit(const node ::ArrayAccess &node) {
+    auto sub = json.create_sub("array_access");
+    sub.add("type", (int)node.getNodeType());
+}
 
-void JsonifyVisitor::visit(const node ::Parenthesized &node) {}
+void JsonifyVisitor::visit(const node ::Parenthesized &node) {
+    auto sub = json.create_sub("parenthesized");
+    sub.add("type", (int)node.getNodeType());
+}
 
 void JsonifyVisitor::visit(const node ::Conditional &node) {}
 
