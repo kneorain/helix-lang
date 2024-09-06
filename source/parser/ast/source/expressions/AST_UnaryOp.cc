@@ -23,7 +23,6 @@ ParseResult UnaryOp::parse() {
     i32 len = 0;
 
     op = tokens->front();
-    tokens->pop_front();
 
     ++len;
 
@@ -31,7 +30,6 @@ ParseResult UnaryOp::parse() {
 
     if (right != nullptr) {
         len += right->parse();
-
         return len;
     }
 

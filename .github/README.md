@@ -98,64 +98,50 @@ Handle asynchronous tasks easily with `async` and `await`:
 
 > [!WARNING] Helix is currently under development and does not yet have a useable compiler. The following instructions are for development and building the compiler itself.
 
-> [!NOTE] Linux is not tested, Most development is done on MacOS, if any issues arise with building on Windows or Linux, please open an issue.
+> [!NOTE] Linux is not tested, Most development is done on MacOS or Windows, if any issues arise with building on Linux, please open an issue.
 
 ##### Prerequisites
 
 - [xmake](https://xmake.io/#/)
 - [python](https://www.python.org/downloads/)
-- git
-- C++ Compiler and STL (**clang**, **msvc** or **gcc**)
+- [git](https://git-scm.com/downloads)
+- [perl](https://www.perl.org/get.html) - Linux Only
+- C++ Compiler and STL (**clang**, **msvc** or **gcc**) - Only **msvc** for Windows
 
-##### Windows
+##### Windows (Visual Studio Build Tools)
 
-1. Clone the repo
+> [!WARNING] Only **msvc** is supported on Windows, **gcc** is not supported on Windows. and **clang** without Visual Studio Build Tools is not supported.
 
+1. Install [Visual Studio Build Tools](https://visualstudio.microsoft.com/visual-cpp-build-tools/)
+2. Make sure to install the **Desktop Development with C++** workload, with the **MSVC** compiler, **Windows SDK**, **C++ CMake Tools for Windows**, **C++ Clang Tools for Windows**, and **C++ ATL for Windows** components.
+3. Install [Python](https://www.python.org/downloads/)
+4. Install [xmake](https://xmake.io/#/) (PowerShell Only)
+
+  ```powershell
+  $ Invoke-Expression (Invoke-Webrequest 'https://xmake.io/psget.text' -UseBasicParsing).Content
+  ```
+
+4. Make a directory for the project and clone the repo
   ```sh
   $ git clone https://github.com/kneorain/helix-lang.git
   $ cd helix-lang
   ```
 
-2. Build
-
+5. Build Helix along with the LLVM backend, Clang, Tests, and the Helix Compiler Toolchain API (~30 minutes)
   ```sh
-  $ xmake build helix
+  $ xmake build
   ```
 
-3. Run
-
+6. Run the tests or the compiler
   ```sh
-  $ xmake run helix
+  $ xmake run tests
+  $ xmake run helix -h
   ```
 
-##### MacOS, Unix or Linux
-> Note: Perl is required for Linux compilation 
+##### MacOS, Unix or Linux (clang or gcc)
 
+> [!NOTE] **Perl** is required for building on Linux, if you don't have it installed, install using your package manager.
 
-1. if you don't have python or xmake installed, install using [Homebrew](https://brew.sh/)
-
-  ```sh
-  $ brew install xmake python
-  ```
-
-2. Clone the repo
-
-  ```sh
-  $ git clone https://github.com/kneorain/helix-lang.git
-  $ cd helix-lang
-  ```
-
-3. Build
-
-  ```sh
-  $ xmake build helix
-  ```
-
-4. Run
-
-  ```sh
-  $ xmake run helix
-  ```
 
 --------------------------------------------------------------------------------
 

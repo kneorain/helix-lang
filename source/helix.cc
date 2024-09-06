@@ -58,15 +58,17 @@ int compile(int argc, char **argv) {
 
     if (parsed_args.emit_ast) {
         // for testing only change to parse an entire program when done with ast
-        auto visit = parser::ast::visitors::JsonifyVisitor();
         
         auto ast = parser::ast::get_Expression(tokens);
         ast->parse();
+
+
+        end = std::chrono::high_resolution_clock::now();
+        auto visit = parser::ast::visitors::JsonifyVisitor();
         ast->accept(visit);
 
         print(visit.json.to_json());
     
-        end = std::chrono::high_resolution_clock::now();
 
     }
 

@@ -91,17 +91,8 @@ NodeT<Expression> get_Expression(token::TokenList &tokens) {
     // Literal       ::= Literal   | BinaryOp    | UnaryOp    | Cast         | Conditional
     // Parenthesized ::= ( Expression )
 
-    /// The order of operations is as follows:
-    // UnaryOp       ::= op ... | ... op
-    // BinaryOp      ::= ... op ...
-    // DotAccess     ::= ... . ...
-    // ScopeAccess   ::= ... :: ...
-    // PathAccess    ::= ... :: ... | ... . ...
-    // FunctionCall  ::= ... ( ... )
-    // Literal       ::= Literal
-    // Cast          ::= ... as ...
-    // Conditional   ::= ... if ... else ...
-    // Parenthesized ::= ( Expression )
+    // we parse compound expressions here
+
 
     return get_simple_Expression(tokens);
 }

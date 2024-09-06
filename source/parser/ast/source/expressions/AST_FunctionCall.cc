@@ -18,7 +18,38 @@ ParseResult FunctionCall::parse() {
         return 0;
     }
 
-    return 0;
+    // FunctionCall ::= AnySeparatedID GenericAccess? '(' (ExpressionList)? ')'
+    // TODO: add support for generic access
+
+    i32 len = 0;
+
+    // Parse the function name
+    callee = new PathAccess(*tokens);
+    len += 1;
+
+    for (auto &tok : *tokens) {
+        if (tok->token_kind() == token::PUNCTUATION_CLOSE_PAREN) {
+            len++;
+            break;
+        }
+
+        if (tok->token_kind() == token::PUNCTUATION_COMMA) {
+            len++;
+            continue;
+        }
+
+        auto slice = tokens->slice(len);
+        auto *arg = get_Expression(slice);
+        len += arg->parse();
+
+        args.push_back(arg);
+    }
+
+    for (auto &arg : args) {
+        print("arg");
+    }
+
+    return len;
 }
 
 bool FunctionCall::test() {

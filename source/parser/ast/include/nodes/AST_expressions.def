@@ -18,7 +18,9 @@
 
 #include "parser/ast/include/AST_types.hh"
 
-// Expression ::= Literal | AnySeparatedID | BinaryOperation | UnaryOperation | FunctionCall | ParenthesizedExpression | ArrayAccess | ObjectAccess | ConditionalExpression
+// Expression ::= BinaryOp     | UnaryOp     | Literal | Identifier  | DotAccess     | ScopeAccess |
+//                FunctionCall | ArrayAccess | Cast    | Conditional | Parenthesized | PathAccess  |
+// TODO:          List         | Tuple       | Map     | Match       | Range         | Lambda      |
 
 #define EXPRESSION(GENERATE, DERIVE)  \
     GENERATE(BinaryOp, DERIVE,        \
@@ -53,7 +55,7 @@
     )                                 \
                                       \
     GENERATE(FunctionCall, DERIVE,    \
-        NodeT<Expression> callee;     \
+        NodeT<PathAccess> callee;     \
         NodeV<Expression> args;       \
         NodeV<Assignment> defaults;   \
     )                                 \
