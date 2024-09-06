@@ -32,7 +32,7 @@
 
 #define MAKE_NODE_ENUM(T, D, B) T,
 #define MAKE_FORWARD_DECL(T, D, B) class T;
-#define MAKE_VISITOR_FUNCTION(T, D, B) virtual void visit(const node::T &) = 0;
+#define MAKE_VISITOR_FUNCTION(T, D, B) void visit(const parser::ast::node::T &) override;
 #define MAKE_NODE_CLASS(T, D, B)                                                       \
     class T final : public D {                                                         \
       protected:                                                                       \

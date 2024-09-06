@@ -33,34 +33,7 @@ namespace parser::ast::visitors {
 
         jsonify::Jsonify json = {"ast", 0};
 
-        void visit(const node ::Comment &)              override;
-        void visit(const node ::CompilerDirective &)    override;
-        void visit(const node ::Suite &)                override;
-        void visit(const node ::VariableDecl &)         override;
-        void visit(const node ::Assignment &)           override;
-        void visit(const node ::ForLoop &)              override;
-        void visit(const node ::RangeLoop &)            override;
-        void visit(const node ::WhileLoop &)            override;
-        void visit(const node ::IfStatement &)          override;
-        void visit(const node ::ElseIfStatement &)      override;
-        void visit(const node ::ElseStatement &)        override;
-        void visit(const node ::ConditionalStatement &) override;
-        void visit(const node ::ReturnStatement &)      override;
-        void visit(const node ::ContinueStatement &)    override;
-        void visit(const node ::BreakStatement &)       override;
-        void visit(const node ::YieldStatement &)       override;
-        void visit(const node ::BinaryOp &)             override;
-        void visit(const node ::UnaryOp &)              override;
-        void visit(const node ::Literal &)              override;
-        void visit(const node ::Identifier &)           override;
-        void visit(const node ::DotAccess &)            override;
-        void visit(const node ::ScopeAccess &)          override;
-        void visit(const node ::PathAccess &)           override;
-        void visit(const node ::FunctionCall &)         override;
-        void visit(const node ::ArrayAccess &)          override;
-        void visit(const node ::Parenthesized &)        override;
-        void visit(const node ::Conditional &)          override;
-        void visit(const node ::Cast &)                 override;
+        GENERATE_VISITOR_FUNCTIONS;
     };
 }
 
