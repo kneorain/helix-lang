@@ -65,9 +65,8 @@ void JsonifyVisitor::visit(const node ::BinaryOp &node) {
 }
 
 void JsonifyVisitor::visit(const node ::UnaryOp &node) {
-    auto sub = json.create_sub("unary_op")
-                     .add("operator", node.op)
-                     .add("type", (int)node.getNodeType());
+    auto sub =
+        json.create_sub("unary_op").add("operator", node.op).add("type", (int)node.getNodeType());
     node.right->accept(*this);
 }
 
@@ -95,16 +94,37 @@ void JsonifyVisitor::visit(const node ::ScopeAccess &node) {
 
 void JsonifyVisitor::visit(const node ::PathAccess &node) {
     auto sub = json.create_sub("path_access");
+
     for (auto &child : node.paths) {
         child->accept(*this);
     }
 
     sub.add("type", (int)node.getNodeType());
 }
-
+/*GENERATE(FunctionCall, DERIVE,    \
+    NodeT<PathAccess> callee;     \
+    NodeV<Expression> args;       \
+    NodeV<Assignment> defaults;   \
+)      */
 void JsonifyVisitor::visit(const node ::FunctionCall &node) {
-    auto sub = json.create_sub("function_call");
-    sub.add("type", (int)node.getNodeType());
+    auto fn_call = json.create_sub("function_call");
+    fn_call.add("type", (int)node.getNodeType());
+
+    // fn_call.create_sub("callee");
+
+    // node.callee->accept(*this);
+
+    // fn_call.create_sub("args");
+
+    // for (auto &child : node.args) {
+    //     child->accept(*this);
+    // }
+
+    // auto &defaults = fn_call.create_sub("defaults");
+
+    // for (auto &child : node.defaults) {
+    //     child->accept();
+    // }
 }
 
 void JsonifyVisitor::visit(const node ::ArrayAccess &node) {

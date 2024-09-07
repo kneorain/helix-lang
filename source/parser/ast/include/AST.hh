@@ -23,29 +23,31 @@
 #include "parser/ast/include/AST_context.hh"
 #include "parser/ast/include/AST_interface.hh"
 #include "parser/ast/include/AST_matcher.hh"
-#include "parser/ast/include/nodes/AST_generate.hh"
 #include "parser/ast/include/AST_types.hh"
 #include "parser/ast/include/AST_visitor.hh"
+#include "parser/ast/include/nodes/AST_generate.hh"
 
-#undef EXPR_VA_CLASS
-#undef STMT_VA_CLASS
-#undef DECL_VA_CLASS
-#undef ANNO_VA_CLASS
-#undef TYPE_VA_CLASS
+// TODO: Make this work again
 
-#undef MAKE_NODE_ENUM
-#undef MAKE_NODE_CLASS
-#undef MAKE_FORWARD_DECL
-#undef MAKE_VISITOR_FUNCTION
+// #undef EXPR_VA_CLASS
+// #undef STMT_VA_CLASS
+// #undef DECL_VA_CLASS
+// #undef ANNO_VA_CLASS
+// #undef TYPE_VA_CLASS
 
-#undef GENERATE_NODES_ENUM
-#undef GENERATE_NODES_FORWARD_DECLS
-#undef GENERATE_NODES_CLASSES
+// #undef MAKE_NODE_ENUM
+// #undef MAKE_NODE_CLASS
+// #undef MAKE_FORWARD_DECL
+// #undef MAKE_VISITOR_FUNCTION
 
-#undef GENERICS
-#undef STATEMENTS
-#undef EXPRESSION
-#undef ANNOTATIONS
-#undef DECLARATIONS
+// #undef GENERATE_NODES_ENUM
+// #undef GENERATE_NODES_FORWARD_DECLS
+// #undef GENERATE_NODES_CLASSES
+
+// #undef GENERICS
+// #undef STATEMENTS
+// #undef EXPRESSION
+// #undef ANNOTATIONS
+// #undef DECLARATIONS
 
 #endif  // __AST_HH__

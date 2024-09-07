@@ -20,12 +20,12 @@
 #include "core/error/error.hh"
 #include "core/utils/hx_print"
 #include "lexer/include/lexer.hh"
+#include "parser/ast/include/AST.hh"
 #include "parser/ast/include/AST_jsonify_visitor.hh"
+#include "parser/cpp/fn_signatures.hh"
 #include "parser/preprocessor/include/preprocessor.hh"
 #include "token/include/generate.hh"
 #include "token/include/token_list.hh"
-#include "parser/ast/include/AST.hh"
-#include "parser/cpp/fn_signatures.hh"
 
 int compile(int argc, char **argv) {
     using namespace token;
@@ -38,7 +38,6 @@ int compile(int argc, char **argv) {
 
     if (parsed_args.verbose) {
         print(parsed_args.get_all_flags);
-
     }
 
     auto start = std::chrono::high_resolution_clock::now();
@@ -58,18 +57,15 @@ int compile(int argc, char **argv) {
 
     if (parsed_args.emit_ast) {
         // for testing only change to parse an entire program when done with ast
-        
+
         auto ast = parser::ast::get_Expression(tokens);
         ast->parse();
 
-
-        end = std::chrono::high_resolution_clock::now();
+        end        = std::chrono::high_resolution_clock::now();
         auto visit = parser::ast::visitors::JsonifyVisitor();
         ast->accept(visit);
 
         print(visit.json.to_json());
-    
-
     }
 
     if (parsed_args.emit_tokens) {
@@ -90,7 +86,7 @@ int compile(int argc, char **argv) {
 int main(int argc, char **argv) {
     try {
         compile(argc, argv);
-    } catch (error::Panic&) {
+    } catch (error::Panic &) {
         // if (error::HAS_ERRORED) {
         // for (const auto& err : error::ERRORS) {
         //         print(err.to_json());

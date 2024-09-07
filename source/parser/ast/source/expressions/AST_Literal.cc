@@ -19,14 +19,20 @@ ParseResult Literal::parse() {
     }
 
     switch (tokens->front().token_kind()) {
-        case token::LITERAL_STRING:         [[fallthrough]];
+        case token::LITERAL_STRING:
+            [[fallthrough]];
             // string concat but handle edge cases like a mix or
             // r|b|u|f strings too, while maintaining the correct order and locational metadata
-        case token::LITERAL_TRUE:           [[fallthrough]];
-        case token::LITERAL_FALSE:          [[fallthrough]];
-        case token::LITERAL_INTEGER:        [[fallthrough]];
-        case token::LITERAL_FLOATING_POINT: [[fallthrough]];
-        case token::LITERAL_CHAR:           [[fallthrough]];
+        case token::LITERAL_TRUE:
+            [[fallthrough]];
+        case token::LITERAL_FALSE:
+            [[fallthrough]];
+        case token::LITERAL_INTEGER:
+            [[fallthrough]];
+        case token::LITERAL_FLOATING_POINT:
+            [[fallthrough]];
+        case token::LITERAL_CHAR:
+            [[fallthrough]];
         case token::LITERAL_NULL:
             value = tokens->front();
             return 1;
@@ -43,12 +49,18 @@ bool Literal::test() {
     }
 
     switch (tokens->front().token_kind()) {
-        case token::LITERAL_STRING:         [[fallthrough]];
-        case token::LITERAL_TRUE:           [[fallthrough]];
-        case token::LITERAL_FALSE:          [[fallthrough]];
-        case token::LITERAL_INTEGER:        [[fallthrough]];
-        case token::LITERAL_FLOATING_POINT: [[fallthrough]];
-        case token::LITERAL_CHAR:           [[fallthrough]];
+        case token::LITERAL_STRING:
+            [[fallthrough]];
+        case token::LITERAL_TRUE:
+            [[fallthrough]];
+        case token::LITERAL_FALSE:
+            [[fallthrough]];
+        case token::LITERAL_INTEGER:
+            [[fallthrough]];
+        case token::LITERAL_FLOATING_POINT:
+            [[fallthrough]];
+        case token::LITERAL_CHAR:
+            [[fallthrough]];
         case token::LITERAL_NULL:
             return true;
         default:

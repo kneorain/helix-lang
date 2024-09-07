@@ -65,18 +65,17 @@ struct Token {
     std::string token_kind_repr() const;
     std::string file_name() const;
     std::string to_string() const;
+
     TO_JSON_SIGNATURE {
         jsonify::Jsonify token_json("Token", depth);
 
-        token_json.add("length", len)
-                .add("kind", token_kind_repr())
-                .add("value", val);
-            
+        token_json.add("length", len).add("kind", token_kind_repr()).add("value", val);
+
         token_json.create_sub("loc")
-                .add("filename", filename)
-                .add("line_number", line)
-                .add("column_number", column)
-                .add("offset", _offset);
+            .add("filename", filename)
+            .add("line_number", line)
+            .add("column_number", column)
+            .add("offset", _offset);
 
         TO_JSON_RETURN(token_json);
     }

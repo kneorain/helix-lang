@@ -38,15 +38,15 @@ ParseResult FunctionCall::parse() {
             continue;
         }
 
-        auto slice = tokens->slice(len);
-        auto *arg = get_Expression(slice);
+        auto  slice = tokens->slice(len);
+        auto *arg   = get_Expression(slice);
         len += arg->parse();
 
         args.push_back(arg);
     }
 
     for (auto &arg : args) {
-        print("arg");
+        print(arg);
     }
 
     return len;

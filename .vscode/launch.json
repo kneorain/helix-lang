@@ -6,9 +6,20 @@
             "request": "launch",
             "name": "Launch",
             "target": "helix",
-            "args": ["/Volumes/Devolpment/Projects/Helix/helix-lang/tests/main.hlx", "--emit-ast"],
+            "args": [
+                "/Volumes/Devolpment/Projects/Helix/helix-lang/tests/main.hlx",
+                "--emit-ast"
+            ],
             "cwd": "${cwd}/helix-lang/",
             "stopAtEntry": true
         },
+        {
+            "type": "cmake",
+            "request": "launch",
+            "name": "Debug portfile(s)",
+            "cmakeDebugType": "external",
+            "pipeName": "/tmp/vcpkg_ext_portfile_dbg",
+            "preLaunchTask": "Debug vcpkg commands"
+        }
     ]
 }

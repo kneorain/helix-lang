@@ -14,8 +14,11 @@
 //                                                                                                //
 //===-----------------------------------------------------------------------------------------====//
 
-#include "parser/ast/include/AST.hh"
+#include <cstdio>
 
+#include "core/error/error.hh"
+#include "core/utils/hx_print"
+#include "parser/ast/include/AST.hh"
 #include "parser/ast/include/case_types.def"
 #include "token/include/generate.hh"
 #include "token/include/token_list.hh"
@@ -46,23 +49,37 @@ namespace parser::ast {
 NodeT<Expression> get_simple_Expression(token::TokenList &tokens) {
     // Parse any simple expression
     for (auto &tok : tokens) {
+
+        auto peek     = tok.peek();
+        bool has_peek = tok.peek().has_value();
+
         switch (tok->token_kind()) {
             case IS_LITERAL:
                 return new node::Literal(tokens);
 
-            case IS_IDENTIFIER:
-                if (tok.peek().has_value() && tok.peek()->get().token_kind() == token::OPERATOR_SCOPE) {
-                    return new node::ScopeAccess(tokens);
-                } else if (tok.peek().has_value() && tok.peek()->get().token_kind() == token::PUNCTUATION_OPEN_PAREN) {
-                    return new node::FunctionCall(tokens);
+            case IS_IDENTIFIER: {
+
+                if (has_peek) {
+                    switch (peek->get().token_kind()) {
+                        case token::OPERATOR_SCOPE:
+
+                            return new node::ScopeAccess(tokens);
+                        case token::PUNCTUATION_OPEN_PAREN:
+                            print("open_paran");
+                            return new node::FunctionCall(tokens);
+                        default:
+                            return new node::Identifier(tokens);
+                    }
                 }
-
                 return new node::Identifier(tokens);
+            }
 
-            case token ::PUNCTUATION_OPEN_ANGLE:
-            case token ::PUNCTUATION_CLOSE_ANGLE:
+            case token::PUNCTUATION_OPEN_ANGLE:
+            case token::PUNCTUATION_CLOSE_ANGLE:
+
             case IS_OPERATOR:
-                if (tok.peek().has_value() && tok.peek()->get().token_kind() == token::PUNCTUATION_OPEN_PAREN) {
+
+                if (peek && peek->get().token_kind() == token::PUNCTUATION_OPEN_PAREN) {
                     return new node::Parenthesized(tokens);
                 }
 
@@ -79,7 +96,6 @@ NodeT<Expression> get_simple_Expression(token::TokenList &tokens) {
     return nullptr;
 }
 
-
 NodeT<Expression> get_Expression(token::TokenList &tokens) {
     /// Parse any expression
     /// Expression ::= Literal | AnySeparatedID | BinaryOperation | UnaryOperation | FunctionCall |
@@ -92,7 +108,6 @@ NodeT<Expression> get_Expression(token::TokenList &tokens) {
     // Parenthesized ::= ( Expression )
 
     // we parse compound expressions here
-
 
     return get_simple_Expression(tokens);
 }
