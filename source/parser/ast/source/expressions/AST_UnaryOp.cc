@@ -26,7 +26,9 @@ ParseResult UnaryOp::parse() {
 
     ++len;
 
-    right = get_Expression(*tokens);
+    auto slice = tokens->slice(len);
+
+    right = get_Expression(slice);
 
     if (right != nullptr) {
         len += right->parse();

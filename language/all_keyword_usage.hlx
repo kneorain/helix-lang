@@ -1,11 +1,50 @@
 /* control flow */
 
+macro _string! {
+    to_string_some_special_name
+}
+
+
+class Foo {
+    let a: u8;
+    let b: u8;
+
+    fn _string!()  -> string {
+        return "Foo";
+    }
+}
+
+
+class Foo {
+    let a: u8;
+    let b: u8;
+
+    fn to_string_some_special_name()  -> string {
+        return "Foo";
+    }
+}
+
+class CustomType {
+    let ptr: *char;
+    let len: usize;
+
+    fn __pyObject__() -> PyObject* {
+        /// ...
+    }
+}
+
+let a = CustomType("hello world");
+
+let b = a as PyObject*;
+
+
+
 /// 9
 switch "word" {
     /// 2
-    case "hi": 
+    case "hi":
         /// 1
-        break; 
+        break;
     case "boi":
     case "word" {
         print("word");
@@ -23,7 +62,6 @@ else if false {
 } else {
     print("false");
 }
-
 
 /// 10
 unless false {
