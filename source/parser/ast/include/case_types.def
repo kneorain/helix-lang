@@ -137,6 +137,8 @@
     case token::OPERATOR_BITWISE_L_SHIFT_ASSIGN:    \
     case token::OPERATOR_BITWISE_R_SHIFT_ASSIGN:    \
     case token::OTHERS:                             \
+    case token::PUNCTUATION_OPEN_ANGLE:             \
+    case token::PUNCTUATION_CLOSE_ANGLE:            \
     case token::OPERATOR_RANGE_INCLUSIVE
 
 #define IS_PUNCTUATION                                                   \

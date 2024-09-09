@@ -1,7 +1,7 @@
 | **N** | **Control Flow** | **Function and Method** | **Class and Struct** |
 |-------|------------------|-------------------------|----------------------|
-|   1   | break            | async                   | class                |
-|   2   | case             | define                  | enum                 |
+|   1   | break            |                         | class                |
+|   2   | case             | ~~define~~              | enum                 |
 |   3   | continue         | fn                      | struct               |
 |   4   | default          | inline                  | type                 |
 |   5   | else             | macro                   | union                |
@@ -11,23 +11,22 @@
 |   9   | switch           |                         |                      |
 |   10  | unless           |                         |                      |
 |   11  | while            |                         |                      |
-|   12  | in               |                         |                      |
 
 | **N** | **Inheritance and Polymorphism** | **Error Handling** | **Variable Declaration** |
 |-------|----------------------------------|--------------------|--------------------------|
-|   1   | abstract                         | catch              | const                    |
+|   1   | ~~abstract~~                     | catch              | const                    |
 |   2   | derives                          | finally            | let                      |
 |   3   | interface                        | panic              | static                   |
 |   4   | requires                         | try                | eval                     |
 |   5   |                                  | test               |                          |
 
-| **N** | **Access Specifiers** | **Module Importing** | **Concurrency** | **Other** |
-|-------|-----------------------|----------------------|-----------------|-----------|
-|   1   | module                | as                   | atomic          | is        |
-|   2   | priv                  | ffi                  | await           | unsafe    |
-|   3   | pub                   | import               | spawn           | void      |
-|   4   | prot                  |                      | thread          |           |
-|   5   |                       |                      |                 |           |
+| **N** | **Access Specifiers** | **Module Importing** | **Concurrency** | **Other**   |
+|-------|-----------------------|----------------------|-----------------|-------------|
+|   1   | module                |                      | atomic          | is - maybe? |
+|   2   | priv                  | ffi                  | await           | unsafe      |
+|   3   | pub                   | import               | spawn           | void        |
+|   4   | prot                  |                      | thread          |             |
+|   5   |                       |                      | async           |             |
 
 | **N** | **Complex Types** | **Signed Types** | **Unsigned Types** | **Data Types** | **Float Types** |
 |-------|-------------------|------------------|--------------------|----------------|-----------------|
@@ -46,8 +45,8 @@
 |   3   | +=            | %=  | ^^=  | !     | ==  | =   |
 |   4   | +-            | &   | ~    | !=    | === | **  |
 |   5   | -             | &=  | ~&   | !&    | >   | **= |
-|   6   | --            | &&  | ~&=  | !&=   | >=  |     |
-|   7   | -=            | &&= | ~\|  | !\|   | <   |     |
+|   6   | --            | &&  | ~&=  | !&=   | >=  | as  |
+|   7   | -=            | &&= | ~\|  | !\|   | <   | in  |
 |   8   | *             | @   | ~\|= | !\|=  | <=  |     |
 |   9   | *=            | @=  | \|   | <<    | ..  |     |
 |   10  | /             | ^   | \|=  | <<=   | ..= |     |

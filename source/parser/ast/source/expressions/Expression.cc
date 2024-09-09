@@ -83,15 +83,7 @@ NodeT<Expression> get_simple_Expression(token::TokenList &tokens) {
                 return new node::Identifier(tokens);
             }
 
-            case token::PUNCTUATION_OPEN_ANGLE:
-            case token::PUNCTUATION_CLOSE_ANGLE:
-
             case IS_OPERATOR:
-
-                if (peek && peek->get().token_kind() == token::PUNCTUATION_OPEN_PAREN) {
-                    return new node::Parenthesized(tokens);
-                }
-                
                 return new node::UnaryOp(tokens);
 
             case token::PUNCTUATION_OPEN_PAREN:

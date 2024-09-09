@@ -46,10 +46,6 @@ ParseResult FunctionCall::parse() {
         args.push_back(arg);
     }
 
-    for (auto &arg : args) {
-        print(arg);
-    }
-
     return len;
 }
 
