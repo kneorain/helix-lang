@@ -1,0 +1,23 @@
+slowly start rewriting the following in helix itself:
+- [ ] Error Handling
+- [ ] AST Generation
+- [ ] Code Generation
+- [ ] Testing
+- [ ] Documentation
+- [ ] Benchmarking
+- [ ] Lexer
+- [ ] Parser
+- [ ] Semantic Analysis
+- [ ] Optimizer
+- [ ] AST Resolver
+- [ ] Borrow Checker
+- [ ] Type Checker
+- [ ] Compiler RT
+- [ ] Tooling
+- [ ] IDE Support
+- [ ] LSP
+- [ ] Json Generator
+- [ ] CST Generator
+- [ ] Preprocessor
+- [ ] Sys IO
+- [ ] CLI Parser

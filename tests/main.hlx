@@ -1,20 +1,30 @@
-fn divide(parm1: &int, const parm2: i32) -> Exception? {
+fn divide(parm1: &int, const parm2: &i32) -> Exception? {
     // some implementation
 }
 
+type SomeUnion = int | float | string;
+
+
 
 fn main() {
-    let x = 10;
-    let y = 2;
-    let result = divide(&x, y);
-    
-    if result != null {
-        match typeof!(result) {
-            DivideByZero -> println("Divide by zero error"),
-            _            -> println("Unknown error")
-        }
+    let x = 5;
+    let y = &x;
+
+    *y += 1;
+
+    print("{}", x);
+
+    let const new_re = (1, 2, 3)    ;
+    let const new_re = [1, 2, 3]    ;
+    let const new_re = {1, 2, 3}    ;
+    let const new_re = {"yes" : 123};
+
+    // const vars can be reassigned
+
+    if result is DivideByZero {
+        print("Divide by zero error");
     } else {
-        println("Result: ", x);
+        print(f"Result is: {result}");
     }
 }
 
