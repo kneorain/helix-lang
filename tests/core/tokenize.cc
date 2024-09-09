@@ -15,7 +15,7 @@
 #include <string>
 #include <string_view>
 
-#include "core/error/error.hh"
+#include "neo-panic/include/error.hh"
 #include "lexer/include/lexer.hh"
 #include "token/include/token.hh"
 #include "token/include/token_list.hh"

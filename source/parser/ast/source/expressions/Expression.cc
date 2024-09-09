@@ -16,8 +16,8 @@
 
 #include <cstdio>
 
-#include "core/error/error.hh"
-#include "core/utils/hx_print"
+#include "neo-panic/include/error.hh"
+#include "neo-pprint/include/hxpprint.hh"
 #include "parser/ast/include/AST.hh"
 #include "parser/ast/include/case_types.def"
 #include "token/include/generate.hh"
@@ -33,16 +33,27 @@ single expressions are:
     [x] UnaryOp
     [x] FunctionCall
     [x] ScopeAccess
-    [x] Parenthesized ( '(' CompoundExpression ')' )
+    [x] Parenthesized
 
 compound expressions are:
     [-] PathAccess
     [-] DotAccess
 
-    [-] BinaryOperation
+    [-] BinaryOp
     [-] ArrayAccess
     [-] Cast
 
+
+TODO: add the following:
+    [-] List
+    [-] Set
+    [-] Tuple
+    [-] Map
+    [-] Match
+    [-] Range
+    [-] Lambda
+    [-] GenericAccess
+    [-] TernaryOp
 */
 
 namespace parser::ast {
@@ -62,10 +73,8 @@ NodeT<Expression> get_simple_Expression(token::TokenList &tokens) {
                 if (has_peek) {
                     switch (peek->get().token_kind()) {
                         case token::OPERATOR_SCOPE:
-
                             return new node::ScopeAccess(tokens);
                         case token::PUNCTUATION_OPEN_PAREN:
-                            print("open_paran");
                             return new node::FunctionCall(tokens);
                         default:
                             return new node::Identifier(tokens);
@@ -82,7 +91,7 @@ NodeT<Expression> get_simple_Expression(token::TokenList &tokens) {
                 if (peek && peek->get().token_kind() == token::PUNCTUATION_OPEN_PAREN) {
                     return new node::Parenthesized(tokens);
                 }
-
+                
                 return new node::UnaryOp(tokens);
 
             case token::PUNCTUATION_OPEN_PAREN:

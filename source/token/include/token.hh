@@ -18,8 +18,8 @@
 #include <string>
 #include <string_view>
 
-#include "core/types/hx_ints"
-#include "core/utils/josnify.hh"
+#include "neo-types/include/hxint.hh"
+#include "neo-json/include/json.hh"
 #include "token/include/generate.hh"
 
 namespace token {
@@ -66,18 +66,22 @@ struct Token {
     std::string file_name() const;
     std::string to_string() const;
 
-    TO_JSON_SIGNATURE {
-        jsonify::Jsonify token_json("Token", depth);
+    TO_NEO_JSON_IMPL {
+        neo::json token_json("Token");
 
-        token_json.add("length", len).add("kind", token_kind_repr()).add("value", val);
+        token_json.add("length", len)
+                  .add("kind", token_kind_repr())
+                  .add("value", val);
 
-        token_json.create_sub("loc")
-            .add("filename", filename)
+        neo::json& loc_sec = token_json.section("loc");
+
+        
+        loc_sec.add("filename", filename)
             .add("line_number", line)
             .add("column_number", column)
             .add("offset", _offset);
 
-        TO_JSON_RETURN(token_json);
+        return token_json;
     }
 
     bool          operator==(const Token &rhs) const;

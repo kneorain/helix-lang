@@ -20,7 +20,7 @@
 #include <utility>
 #include <vector>
 
-#include "core/error/error.hh"
+#include "neo-panic/include/error.hh"
 #include "token/include/generate.hh"
 #include "token/include/token.hh"
 

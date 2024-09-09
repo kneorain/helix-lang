@@ -16,12 +16,21 @@
 //===-----------------------------------------------------------------------------------------====//
 
 #include <string>
+#include <vector>
 
 #include "parser/ast/include/AST_jsonify_visitor.hh"
 
 namespace parser::ast::visitors {
+neo::json get_node_json(const Node *node) {
+    auto visitor = JsonifyVisitor();
+    node->accept(visitor);
+    return visitor.json;
+}
+
 void JsonifyVisitor::visit(const node::Literal &node) {
-    json.create_sub("literal").add("value", node.value).add("type", (int)node.getNodeType());
+    json.section("literal")
+        .add("value", node.value)
+        .add("type", (int)node.getNodeType());
 };
 
 void JsonifyVisitor::visit(const node ::Comment &node) {}
@@ -57,49 +66,60 @@ void JsonifyVisitor::visit(const node ::BreakStatement &node) {}
 void JsonifyVisitor::visit(const node ::YieldStatement &node) {}
 
 void JsonifyVisitor::visit(const node ::BinaryOp &node) {
-    auto sub = json.create_sub("binary_op");
-    node.left->accept(*this);
-    node.right->accept(*this);
-
-    sub.add("type", (int)node.getNodeType());
+    json.section("binary_op")
+        .add("type", (int)node.getNodeType())
+        .add("left", get_node_json(node.left))
+        .add("operator", node.op)
+        .add("right", get_node_json(node.right));
 }
 
 void JsonifyVisitor::visit(const node ::UnaryOp &node) {
-    auto sub =
-        json.create_sub("unary_op").add("operator", node.op).add("type", (int)node.getNodeType());
-    node.right->accept(*this);
+    json.section("unary_op")
+        .add("operator", node.op)
+        .add("right", get_node_json(node.right))
+        .add("type", (int)node.getNodeType());
 }
 
 void JsonifyVisitor::visit(const node ::Identifier &node) {
-    json.create_sub("identifier").add("value", node.value).add("type", (int)node.getNodeType());
+    json.section("identifier")
+        .add("value", node.value)
+        .add("type", (int)node.getNodeType());
 }
 
 void JsonifyVisitor::visit(const node ::DotAccess &node) {
-    auto sub = json.create_sub("dot_access");
+    std::vector<neo::json> paths;
+
     for (auto &child : node.paths) {
-        child->accept(*this);
+        paths.push_back(get_node_json(child));
     }
 
-    sub.add("type", (int)node.getNodeType());
+    json.section("dot_access")
+        .add("paths", paths)
+        .add("type", (int)node.getNodeType());
 }
 
 void JsonifyVisitor::visit(const node ::ScopeAccess &node) {
-    auto sub = json.create_sub("scope_access");
+    std::vector<neo::json> paths;
+
     for (auto &child : node.paths) {
-        child->accept(*this);
+        paths.push_back(get_node_json(child));
     }
 
-    sub.add("type", (int)node.getNodeType());
+    json.section("scope_access")
+        .add("paths", paths)
+        .add("type", (int)node.getNodeType());
 }
 
 void JsonifyVisitor::visit(const node ::PathAccess &node) {
-    auto sub = json.create_sub("path_access");
+    std::vector<neo::json> paths;
 
     for (auto &child : node.paths) {
-        child->accept(*this);
+        paths.push_back(get_node_json(child));
     }
 
-    sub.add("type", (int)node.getNodeType());
+    json.section("path_access")
+        .add("paths", paths)
+        .add("type", (int)node.getNodeType());
 }
 /*GENERATE(FunctionCall, DERIVE,    \
     NodeT<PathAccess> callee;     \
@@ -107,20 +127,20 @@ void JsonifyVisitor::visit(const node ::PathAccess &node) {
     NodeV<Assignment> defaults;   \
 )      */
 void JsonifyVisitor::visit(const node ::FunctionCall &node) {
-    auto fn_call = json.create_sub("function_call");
-    fn_call.add("type", (int)node.getNodeType());
+    json.section("function_call")
+        .add("type", (int)node.getNodeType());
 
-    // fn_call.create_sub("callee");
+    // fn_call.section("callee");
 
     // node.callee->accept(*this);
 
-    // fn_call.create_sub("args");
+    // fn_call.section("args");
 
     // for (auto &child : node.args) {
     //     child->accept(*this);
     // }
 
-    // auto &defaults = fn_call.create_sub("defaults");
+    // auto &defaults = fn_call.section("defaults");
 
     // for (auto &child : node.defaults) {
     //     child->accept();
@@ -128,23 +148,22 @@ void JsonifyVisitor::visit(const node ::FunctionCall &node) {
 }
 
 void JsonifyVisitor::visit(const node ::ArrayAccess &node) {
-    auto sub = json.create_sub("array_access");
-    sub.add("type", (int)node.getNodeType());
+    json.section("array_access")
+        .add("type", (int)node.getNodeType());
 }
 
 void JsonifyVisitor::visit(const node ::Parenthesized &node) {
-    auto sub = json.create_sub("parenthesized");
-    sub.add("type", (int)node.getNodeType());
+    json.section("parenthesized")
+        .add("type", (int)node.getNodeType());
 }
 
 void JsonifyVisitor::visit(const node ::Conditional &node) {}
 
 void JsonifyVisitor::visit(const node ::Cast &node) {
-    auto sub = json.create_sub("cast");
-    node.type->accept(*this);
-    node.expr->accept(*this);
-
-    sub.add("type", (int)node.getNodeType());
+    json.section("cast")
+        .add("type", (int)node.getNodeType())
+        .add("cast_t", get_node_json(node.type))
+        .add("expr", get_node_json(node.expr));
 }
 
 }  // namespace parser::ast::visitors

@@ -20,7 +20,7 @@
 #include <utility>
 #include <vector>
 
-#include "core/types/hx_ints"
+#include "neo-types/include/hxint.hh"
 #include "token/include/token.hh"
 #include "token/include/token_list.hh"
 

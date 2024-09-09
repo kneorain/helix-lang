@@ -18,7 +18,7 @@
 #include <string>
 
 #include "cli/include/args.hh"
-#include "core/types/hx_ints"
+#include "neo-types/include/hxint.hh"
 
 /*
 Helios - package manager / build system

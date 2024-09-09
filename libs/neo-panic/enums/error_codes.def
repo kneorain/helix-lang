@@ -18,8 +18,8 @@
 #include <regex>
 #include <vector>
 
-#include "core/error/error.hh"
-#include "core/types/advanced_comptime_map.hh"
+#include "neo-panic/include/error.hh"
+#include "neo-panic/include/advanced_comptime_map.hh"
 
 namespace std {
 template <>

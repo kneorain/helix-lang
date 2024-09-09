@@ -44,7 +44,7 @@ public:
     CXXGenerator(CXXGenerator&&) = default;
     CXXGenerator& operator=(CXXGenerator&&) = default;
 
-    jsonify::Jsonify json = {"ast", 0};
+    neo::json json {"ast"};
 
     GENERATE_VISITOR_FUNCTIONS;
 };

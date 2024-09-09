@@ -20,7 +20,7 @@
 #include <utility>
 #include <vector>
 
-#include "core/utils/hx_print"
+#include "neo-pprint/include/hxpprint.hh"
 
 namespace parser::preprocessor {
 using ImportNodePtr  = std::shared_ptr<struct ImportNode>;

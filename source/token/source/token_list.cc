@@ -22,8 +22,8 @@
 #include <utility>
 #include <vector>
 
-#include "core/types/hx_ints"
-#include "core/utils/colors_ansi.hh"
+#include "neo-types/include/hxint.hh"
+#include "neo-pprint/include/ansi_colors.hh"
 #include "core/utils/josnify.hh"
 #include "token/include/generate.hh"
 #include "token/include/token.hh"

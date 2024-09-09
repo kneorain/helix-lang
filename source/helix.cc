@@ -12,13 +12,14 @@
 //===------------------------------------------------------------------------------------------===//
 
 #include <chrono>
+#include <cstdio>
 #include <memory>
 #include <vector>
 
 #include "cli/include/cli.hh"
-#include "controllers/include/file_system.hh"
-#include "core/error/error.hh"
-#include "core/utils/hx_print"
+#include "driver/include/file_system.hh"
+#include "neo-panic/include/error.hh"
+#include "neo-pprint/include/hxpprint.hh"
 #include "lexer/include/lexer.hh"
 #include "parser/ast/include/AST.hh"
 #include "parser/ast/include/AST_jsonify_visitor.hh"
@@ -31,6 +32,8 @@ int compile(int argc, char **argv) {
     using namespace token;
     using namespace parser::lexer;
     using namespace parser::preprocessor;
+
+    printf("");
 
     // relative to current working dir in POSIX shell (cmd/bash)
     command_line::CLIArgs parsed_args(argc, argv, "0.0.1-alpha-0112");
@@ -65,7 +68,7 @@ int compile(int argc, char **argv) {
         auto visit = parser::ast::visitors::JsonifyVisitor();
         ast->accept(visit);
 
-        print(visit.json.to_json());
+        print(visit.json);
     }
 
     if (parsed_args.emit_tokens) {

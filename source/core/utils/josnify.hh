@@ -25,8 +25,9 @@
 #include <variant>
 #include <vector>
 
-#include "core/types/hx_ints"
-#include "core/utils/hx_print"
+#include "neo-json/include/json.hh"
+#include "neo-types/include/hxint.hh"
+#include "neo-pprint/include/hxpprint.hh"
 
 #define stringify(object) std::string(#object)
 
@@ -222,7 +223,7 @@ class Jsonify {
             add_iterable(key, val);
             return "\1\2\1\u002biterable\1\2\1\u002b";
         } else {
-            static_assert(std::is_same_v<T, std::false_type>, "Unsupported type");
+            return val.to_string();
         }
 
         return "";

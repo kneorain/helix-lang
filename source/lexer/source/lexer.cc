@@ -16,7 +16,7 @@
 #include <string>
 #include <vector>
 
-#include "core/error/error.hh"
+#include "neo-panic/include/error.hh"
 #include "lexer/include/cases.def"
 
 namespace parser::lexer {

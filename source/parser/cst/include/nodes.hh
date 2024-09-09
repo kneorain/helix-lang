@@ -19,14 +19,14 @@
 #include <vector>
 #include <string>
 #include  <stdexcept>
-#include "core/error/error.hh"
-#include "core/utils/hx_print"
+#include "neo-panic/include/error.hh"
+#include "neo-pprint/include/hxpprint.hh"
 #include "core/utils/josnify.hh"
 #include "lexer/include/lexer.hh"
 #include "parser/cst/include/cst.hh"
 #include "token/include/token.hh"
 #include "token/include/token_list.hh"
-#include "core/types/hx_ints"
+#include "neo-types/include/hxint.hh"
 #include "token/include/generate.hh"
 
 #define CST_NODE_METHODS(name)               \

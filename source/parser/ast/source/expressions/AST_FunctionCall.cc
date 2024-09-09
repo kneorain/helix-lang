@@ -10,6 +10,7 @@
 //                                                                                                //
 //====----------------------------------------------------------------------------------------====//
 
+#include "neo-pprint/include/hxpprint.hh"
 #include "parser/ast/include/AST.hh"
 
 namespace parser::ast::node {

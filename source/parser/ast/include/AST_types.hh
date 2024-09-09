@@ -32,7 +32,7 @@
 #include <memory>
 #include <vector>
 
-#include "core/types/hx_ints"
+#include "neo-types/include/hxint.hh"
 
 namespace parser::ast {
 /// ParseResult is just an integer of the tokens consumed

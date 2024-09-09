@@ -9,7 +9,7 @@
 // Copyright (c) 2024 (CC BY 4.0)
 //
 //===------------------------------------------------------------------------------------------===//
-#include "core/error/error.hh"
+#include "neo-panic/include/error.hh"
 
 #include <array>
 #include <cstddef>
@@ -22,10 +22,10 @@
 #include <tuple>
 #include <vector>
 
-#include "controllers/include/file_system.hh"
-#include "core/error/error_codes.def"
-#include "core/utils/colors_ansi.hh"
-#include "core/utils/hx_print"
+#include "driver/include/file_system.hh"
+#include "neo-panic/enums/error_codes.def"
+#include "neo-pprint/include/ansi_colors.hh"
+#include "neo-pprint/include/hxpprint.hh"
 #include "token/include/token.hh"
 
 
@@ -486,7 +486,7 @@ void Panic::show_error() {
     // add the message
     formatted_error += A_W + final_err.level + ": " + final_err.msg + string(colors::reset) +
                        "\n";  // fatal: missing semicolon
-    formatted_error += A_W + whitespace + "╭─>  at " +
+    formatted_error += A_W + string(level_len-1, ' ') + "-->  at " +
                        format_loc_info(final_err.file, final_err.line, final_err.col) + "\n";
 
     string left_side;
@@ -495,25 +495,25 @@ void Panic::show_error() {
         left_side = generate_left_side(std::get<0>(line.second));
 
         if (std::get<2>(line.second)) {
-            markings = A_W + whitespace + "ː ";
+            markings = A_W + whitespace + ": ";
             markings += color_and_mark(
                 line, final_err.col, final_err.offset, final_err.quick_fix, mark_pof);
 
             formatted_error +=
-                left_side + "│ " + std::get<1>(line.second) + string(colors::reset) + "\n";
+                left_side + "| " + std::get<1>(line.second) + string(colors::reset) + "\n";
             formatted_error += markings + string(colors::reset) + "\n";
         } else if (line.first) {
             formatted_error += string((A_W.size() + whitespace.size() - 1), ' ') + "···" + "\n";
         } else {
-            formatted_error += left_side + "│ " + std::get<1>(line.second) + "\n";
+            formatted_error += left_side + "| " + std::get<1>(line.second) + "\n";
         }
     }
 
     if (!final_err.fix.empty()) {
-        formatted_error += A_W + whitespace + "│ " + "\n";
+        formatted_error += A_W + whitespace + "| " + "\n";
         formatted_error += string((A_W.size() + whitespace.size() - 3), ' ') +
                            string(colors::bold) + string(colors::fg8::green) + "fix" +
-                           string(colors::reset) + ": " + final_err.fix + "\n";
+                           string(colors::fg8::white) + ": " + final_err.fix + "\n";
     }
 
     formatted_error += string(colors::reset);
@@ -522,4 +522,5 @@ void Panic::show_error() {
 }
 }  // namespace error
 
+// │ : ː ╭ ─ >
 #undef LINES_TO_SHOW

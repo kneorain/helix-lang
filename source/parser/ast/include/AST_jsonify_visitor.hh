@@ -18,7 +18,7 @@
 #ifndef __AST_JSONIFY_VISITOR_H__
 #define __AST_JSONIFY_VISITOR_H__
 
-#include "core/utils/josnify.hh"
+#include "neo-json/include/json.hh"
 #include "parser/ast/include/AST_visitor.hh"
 
 namespace parser::ast::visitors {
@@ -31,7 +31,7 @@ namespace parser::ast::visitors {
         JsonifyVisitor(JsonifyVisitor&&) = default;
         JsonifyVisitor& operator=(JsonifyVisitor&&) = default;
 
-        jsonify::Jsonify json = {"ast", 0};
+        neo::json json {"ast"};
 
         GENERATE_VISITOR_FUNCTIONS;
     };

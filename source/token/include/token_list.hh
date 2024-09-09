@@ -20,8 +20,8 @@
 #include <utility>
 #include <vector>
 
-#include "core/types/hx_ints"
-#include "core/utils/josnify.hh"
+#include "neo-types/include/hxint.hh"
+#include "neo-json/include/json.hh"
 #include "token/include/token.hh"
 
 namespace token {
@@ -131,12 +131,10 @@ class TokenList : public std::vector<Token> {
     std::pair<TokenList, TokenList> split_at(const std::uint64_t i) const;
     TokenList                       pop(const std::uint64_t offset = 1);
     const Token                    &pop_front();
-    TO_JSON_SIGNATURE {
-        jsonify::Jsonify token_list_json("TokenList", depth);
-
+    TO_NEO_JSON_IMPL {
+        neo::json token_list_json("TokenList");
         token_list_json.add("tokens", std::vector<Token>(*this));
-
-        TO_JSON_RETURN(token_list_json);
+        return token_list_json;
     }
 
     [[nodiscard]] const std::string &file_name() const;

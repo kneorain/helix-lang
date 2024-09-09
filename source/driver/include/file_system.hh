@@ -23,7 +23,7 @@
 #include <utility>
 #include <vector>
 
-#include "core/types/hx_ints"
+#include "neo-types/include/hxint.hh"
 
 namespace file_system {
 std::string get_cwd();
