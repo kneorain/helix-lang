@@ -127,24 +127,16 @@ void JsonifyVisitor::visit(const node ::PathAccess &node) {
     NodeV<Assignment> defaults;   \
 )      */
 void JsonifyVisitor::visit(const node ::FunctionCall &node) {
+    std::vector<neo::json> args;
+    for (auto &arg : node.args) {
+        args.push_back(get_node_json(arg));
+    }
+
     json.section("function_call")
-        .add("type", (int)node.getNodeType());
+        .add("type", (int)node.getNodeType())
+        .add("callee", get_node_json(node.callee))
+        .add("args", args);
 
-    // fn_call.section("callee");
-
-    // node.callee->accept(*this);
-
-    // fn_call.section("args");
-
-    // for (auto &child : node.args) {
-    //     child->accept(*this);
-    // }
-
-    // auto &defaults = fn_call.section("defaults");
-
-    // for (auto &child : node.defaults) {
-    //     child->accept();
-    // }
 }
 
 void JsonifyVisitor::visit(const node ::ArrayAccess &node) {

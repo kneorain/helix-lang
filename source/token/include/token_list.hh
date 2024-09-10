@@ -127,7 +127,7 @@ class TokenList : public std::vector<Token> {
     void      remove_left();
     void      reset();
     TokenList raw_slice(const std::uint64_t start, const std::int64_t end) const;
-    TokenList slice(std::uint64_t start, std::int64_t end = -1);
+    TokenList&& slice(std::uint64_t start, std::int64_t end = -1);
     std::pair<TokenList, TokenList> split_at(const std::uint64_t i) const;
     TokenList                       pop(const std::uint64_t offset = 1);
     const Token                    &pop_front();

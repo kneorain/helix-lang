@@ -48,7 +48,7 @@ void TokenList::reset() { it = this->cbegin(); }
 
 const std::string &TokenList::file_name() const { return filename; }
 
-TokenList TokenList::slice(const std::uint64_t start, std::int64_t end) {
+TokenList&& TokenList::slice(const std::uint64_t start, std::int64_t end) {
     if (end < 0) {
         end = static_cast<std::int64_t>(this->size());  // - (-end);
     }

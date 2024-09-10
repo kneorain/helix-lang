@@ -12,6 +12,8 @@
 
 #include "neo-pprint/include/hxpprint.hh"
 #include "parser/ast/include/AST.hh"
+#include "parser/ast/include/AST_interface.hh"
+#include "token/include/token_list.hh"
 
 namespace parser::ast::node {
 ParseResult FunctionCall::parse() {
@@ -28,22 +30,39 @@ ParseResult FunctionCall::parse() {
     callee = new PathAccess(*tokens);
     len += 1;
 
+    i32 _len = 0;
+
+    auto slice = tokens->slice(len);
+    tokens = &slice;
+
     for (auto &tok : *tokens) {
-        if (tok->token_kind() == token::PUNCTUATION_CLOSE_PAREN) {
-            len++;
+        if (tok->token_kind() == token::tokens::PUNCTUATION_OPEN_PAREN) {
+            len += 1;
+            tok.advance();
+            continue;
+        }
+        
+        if (tok->token_kind() == token::tokens::PUNCTUATION_CLOSE_PAREN) {
+            len += 1;
+            tok.advance();
             break;
         }
 
-        if (tok->token_kind() == token::PUNCTUATION_COMMA) {
-            len++;
+        if (tok->token_kind() == token::tokens::PUNCTUATION_COMMA) {
+            len += 1;
+            tok.advance();
             continue;
         }
 
-        auto  slice = tokens->slice(len);
-        auto *arg   = get_Expression(slice);
-        len += arg->parse();
-
-        args.push_back(arg);
+        token::TokenList slice = tokens->slice(len);
+        token::print_tokens(slice);
+        auto *expr_node        = get_Expression(slice);
+        
+        if (expr_node != nullptr) {
+            args.push_back(expr_node);
+            tok.advance(_len = expr_node->parse());
+            len += _len;
+        }
     }
 
     return len;
