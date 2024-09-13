@@ -12,14 +12,6 @@
             ],
             "cwd": "${cwd}/helix-lang/",
             "stopAtEntry": true
-        },
-        {
-            "type": "cmake",
-            "request": "launch",
-            "name": "Debug portfile(s)",
-            "cmakeDebugType": "external",
-            "pipeName": "/tmp/vcpkg_ext_portfile_dbg",
-            "preLaunchTask": "Debug vcpkg commands"
         }
     ]
 }

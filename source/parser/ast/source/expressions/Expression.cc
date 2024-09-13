@@ -58,9 +58,7 @@ TODO: add the following:
 
 namespace parser::ast {
 NodeT<Expression> get_simple_Expression(token::TokenList &tokens) {
-    // Parse any simple expression
     for (auto &tok : tokens) {
-
         auto peek     = tok.peek();
         bool has_peek = tok.peek().has_value();
 

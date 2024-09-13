@@ -12,6 +12,8 @@
 
 #include "parser/ast/include/AST.hh"
 
+// Assignemnt := identifier = expresion;
+
 namespace parser::ast::node {
 ParseResult Assignment::parse() {
     if (tokens->empty()) [[unlikely]] {

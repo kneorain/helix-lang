@@ -4,6 +4,8 @@ set_description("The Helix Compiler. Python's Simplicity, Rust inspired Syntax, 
 
 add_rules("mode.debug", "mode.release")
 
+local target_tripple
+
 function install_llvm_clang(package)
     local gray = "\027[1;30m"
     print(gray .. "installing llvm/clang will take anywhere between 10 minutes to a few hours if you want to see progress re-run with -v" .. "\027[0m")
@@ -30,13 +32,13 @@ function install_llvm_clang(package)
 end
 
 function get_abi()
-    if is_plat("windows")
+    if os.host() == "windows"
     then
         return "msvc"
-    elseif is_plat("linux")
+    elseif os.host() == "linux"
     then
         return "gcc"
-    elseif is_plat("macosx")
+    elseif os.host() == "macosx"
     then
         return "llvm"
     end
@@ -123,7 +125,7 @@ function setup_release()
 end
 
 local function setup_build_folder()
-	set_targetdir("$(buildir)/$(mode)/$(arch)-$(abi)-$(plat)/bin")
+	set_targetdir("$(buildir)/$(mode)/"  .. target_tripple .. "/bin")
 	set_objectdir("$(buildir)/.resolver")
 	set_dependir ("$(buildir)/.shared")
 end
@@ -190,6 +192,8 @@ local function helix_src_setup()
 	add_files("libs/neo-panic/**.cc") -- add all files in the neo-json directory
 end
 
+target_tripple = os.arch() .. "-" .. get_abi() .. "-" .. os.host()
+
 -- Define the LLVM and Clang package
 package("llvm-clang")
     add_deps("cmake", "ninja") -- , "zlib", "zstd" , "perl"
@@ -230,7 +234,7 @@ target_end() -- empty target
 
 target("helix-api")
     set_kind("static")
-    set_targetdir("$(buildir)/$(mode)/$(arch)-$(abi)-$(plat)")
+    set_targetdir("$(buildir)/$(mode)/"  .. target_tripple .. "")
 
     after_build(function(target) -- make the helix library with all the appropriate header files
         -- determine the target output directory
