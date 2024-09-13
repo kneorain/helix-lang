@@ -48,8 +48,9 @@ data_to_write = ("""//===------------------------------------------ C++ --------
 //====----------------------------------------------------------------------------------------====//
 
 #include "parser/ast/include/AST.hh"
+#include "parser/ast/include/AST_core.def"
 
-namespace parser::ast::node {
+__AST_BEGIN::node {
 ParseResult \0REPLACE\0::parse() {
     if (tokens->empty()) [[unlikely]] {
         return 0;
@@ -67,7 +68,7 @@ bool \0REPLACE\0::test() {
 
 void \0REPLACE\0::accept(Visitor &visitor) const { visitor.visit(*this); }
 
-}  // namespace parser::ast::node
+}  // namespace __AST_BEGIN::node
 """)
 
 
@@ -103,7 +104,7 @@ NodeT<\0REPLACE\0> get_\0REPLACE\0(token::TokenList &tokens) {
 \0REPLACE\0::\0REPLACE\0(token::TokenList &tokens)
     : Node(tokens)
     , tokens(&tokens) {}
-}  // namespace parser::ast
+}  // namespace __AST_BEGIN
 """)
 
 

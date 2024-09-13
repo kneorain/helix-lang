@@ -30,4 +30,4 @@ bool ElseIfStatement::test() {
 
 void ElseIfStatement::accept(Visitor &visitor) const { visitor.visit(*this); }
 
-}  // namespace parser::ast::node
+}  // namespace __AST_BEGIN::node

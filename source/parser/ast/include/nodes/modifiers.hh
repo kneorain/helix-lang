@@ -18,7 +18,8 @@
 #define __MODIFIERS_H__
 
 #include "clang/AST/ASTTypeTraits.h"
-namespace parser::ast {
+#include "parser/ast/include/AST_core.def"
+__AST_BEGIN {
     enum class StorageSpecifier : char {
         Static, ///< 'static'
         FFI,    ///< 'ffi'

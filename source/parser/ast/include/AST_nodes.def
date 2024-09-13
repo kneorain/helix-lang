@@ -24,15 +24,16 @@
 #include "parser/ast/include/nodes/AST_generics.def"
 #include "parser/ast/include/nodes/AST_statements.def"
 
-#define EXPR_VA_CLASS parser::ast::Expression
-#define STMT_VA_CLASS parser::ast::Statement
-#define DECL_VA_CLASS parser::ast::Declaration
-#define ANNO_VA_CLASS parser::ast::Annotation
-#define TYPE_VA_CLASS parser::ast::Type
+#define EXPR_VA_CLASS __AST_N::Expression
+#define STMT_VA_CLASS __AST_N::Statement
+#define DECL_VA_CLASS __AST_N::Declaration
+#define ANNO_VA_CLASS __AST_N::Annotation
+#define TYPE_VA_CLASS __AST_N::Type
 
 #define MAKE_NODE_ENUM(T, D, B) T,
 #define MAKE_FORWARD_DECL(T, D, B) class T;
-#define MAKE_VISITOR_FUNCTION(T, D, B) void visit(const parser::ast::node::T &) override;
+#define MAKE_VISITOR_FUNCTION(T, D, B) void visit(const __AST_N::node::T &) override;
+#define MAKE_BASE_VISITOR_FUNCTION(T, D, B) virtual void visit(const __AST_N::node::T &) = 0;
 #define MAKE_NODE_CLASS(T, D, B)                                                       \
     class T final : public D {                                                         \
       protected:                                                                       \
@@ -47,9 +48,9 @@
         T(T &&)                 = default;                                             \
         T &operator=(T &&)      = delete;                                              \
                                                                                        \
-        parser::ast::ParseResult parse() override;                                     \
+        __AST_N::ParseResult parse() override;                                     \
         bool                     test() override;                                      \
-        void                     accept(parser::ast::Visitor &visitor) const override; \
+        void                     accept(__AST_N::Visitor &visitor) const override; \
         nodes                    getNodeType() const override { return nodes::T; }     \
                                                                                        \
         B                                                                              \
@@ -82,5 +83,12 @@
     DECLARATIONS(MAKE_VISITOR_FUNCTION, DECL_VA_CLASS) \
     STATEMENTS(MAKE_VISITOR_FUNCTION, STMT_VA_CLASS)   \
     EXPRESSION(MAKE_VISITOR_FUNCTION, EXPR_VA_CLASS)
+
+#define GENERATE_BASE_VISITOR_FUNCTIONS                \
+    ANNOTATIONS(MAKE_BASE_VISITOR_FUNCTION, ANNO_VA_CLASS)  \
+    GENERICS(MAKE_BASE_VISITOR_FUNCTION, TYPE_VA_CLASS)     \
+    DECLARATIONS(MAKE_BASE_VISITOR_FUNCTION, DECL_VA_CLASS) \
+    STATEMENTS(MAKE_BASE_VISITOR_FUNCTION, STMT_VA_CLASS)   \
+    EXPRESSION(MAKE_BASE_VISITOR_FUNCTION, EXPR_VA_CLASS)
 
 #endif  // __AST_NODES_HH__

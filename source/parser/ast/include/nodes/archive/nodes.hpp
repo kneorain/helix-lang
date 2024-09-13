@@ -257,6 +257,6 @@ class ExpressionList final : public ASTBase {
     NodeList<Expression> expressions;
 };
 
-}  // namespace parser::ast::node
+}  // namespace __AST_BEGIN::node
 
 #endif  // __AST_NODES_HH__

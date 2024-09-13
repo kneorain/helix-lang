@@ -17,6 +17,7 @@
 #ifndef __AST_INTERFACE_H__
 #define __AST_INTERFACE_H__
 
+#include "parser/ast/include/AST_core.def"
 #include "parser/ast/include/AST_types.hh"
 #include "token/include/token_list.hh"
 
@@ -43,7 +44,7 @@
                                                                                  \
     NodeT<name> get_##name(token::TokenList &tokens);
 
-namespace parser::ast {
+__AST_BEGIN {
 class Visitor;
 enum class nodes;
 
@@ -68,7 +69,7 @@ DEFINE_SUB_NODE(Expression);
 DEFINE_SUB_NODE(Statement);
 DEFINE_SUB_NODE(Annotation);
 DEFINE_SUB_NODE(Declaration);
-}  // namespace parser::ast
+}  // namespace __AST_BEGIN
 
 #undef DEFINE_SUB_NODE
 

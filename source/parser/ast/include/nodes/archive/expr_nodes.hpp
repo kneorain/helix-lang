@@ -194,6 +194,6 @@ class DotSeparatedID final : public Expression { // PATH so id::id::id...
         TO_JSON_RETURN(node_json);
     }
 };
-}  // namespace parser::ast::node
+}  // namespace __AST_BEGIN::node
 
 #endif  // __AST_EXPR_NODES_HH__

@@ -33,8 +33,9 @@
 #include <vector>
 
 #include "neo-types/include/hxint.hh"
+#include "parser/ast/include/AST_core.def"
 
-namespace parser::ast {
+__AST_BEGIN {
 /// ParseResult is just an integer of the tokens consumed
 using ParseResult = i32;
 
@@ -83,6 +84,6 @@ inline constexpr NodeT<T> make_node(Args &&...args) {
     // to identify any errors in the arguments at compile time
     return NodeT<T>(std::forward<Args>(args)...);
 }
-}  // namespace parser::ast
+}  // namespace __AST_BEGIN
 
 #endif  // __AST_TYPES_H__

@@ -12,22 +12,20 @@
 
 #include "parser/ast/include/AST.hh"
 
-namespace parser::ast::node {
-ParseResult ScopeAccess::parse() {
+__AST_BEGIN::node {
+PARSE_SIG(ScopeAccess) {
+    std::string eysa;
     if (tokens->empty()) [[unlikely]] {
         return 0;
     }
-
-    return 0;
 }
 
-bool ScopeAccess::test() {
+TEST_SIG(ScopeAccess) {
     if (tokens->empty()) [[unlikely]] {
         return false;
     }
     return false;
 }
 
-void ScopeAccess::accept(Visitor &visitor) const { visitor.visit(*this); }
-
-}  // namespace parser::ast::node
+VISITOR_IMPL(ScopeAccess);
+}  // namespace __AST_BEGIN::node

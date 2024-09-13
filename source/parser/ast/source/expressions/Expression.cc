@@ -117,4 +117,4 @@ Expression::Expression() = default;
 Expression::Expression(token::TokenList &tokens)
     : Node(tokens)
     , tokens(&tokens) {}
-}  // namespace parser::ast
+}  // namespace __AST_BEGIN

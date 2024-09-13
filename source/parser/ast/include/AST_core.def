@@ -10,24 +10,13 @@
 //                                                                                                //
 //====----------------------------------------------------------------------------------------====//
 
-#include "parser/ast/include/AST.hh"
+#ifndef __AST_CORE_DEF__
+#define __AST_CORE_DEF__
 
-namespace parser::ast::node {
-ParseResult Conditional::parse() {
-    if (tokens->empty()) [[unlikely]] {
-        return 0;
-    }
+#define PARSE_SIG(Tx) ParseResult Tx::parse()
+#define TEST_SIG(Tx) bool Tx::test()
+#define VISITOR_IMPL(Tx) void Tx::accept(Visitor &visitor) const { visitor.visit(*this); }
+#define __AST_BEGIN namespace parser::ast
+#define __AST_N parser::ast
 
-    return 0;
-}
-
-bool Conditional::test() {
-    if (tokens->empty()) [[unlikely]] {
-        return false;
-    }
-    return false;
-}
-
-void Conditional::accept(Visitor &visitor) const { visitor.visit(*this); }
-
-}  // namespace __AST_BEGIN::node
+#endif // __AST_CORE_DEF__

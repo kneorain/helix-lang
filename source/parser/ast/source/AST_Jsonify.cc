@@ -18,9 +18,10 @@
 #include <string>
 #include <vector>
 
+#include "parser/ast/include/AST_core.def"
 #include "parser/ast/include/AST_jsonify_visitor.hh"
 
-namespace parser::ast::visitors {
+__AST_BEGIN::visitors {
 neo::json get_node_json(const Node *node) {
     auto visitor = JsonifyVisitor();
     node->accept(visitor);
@@ -158,4 +159,4 @@ void JsonifyVisitor::visit(const node ::Cast &node) {
         .add("expr", get_node_json(node.expr));
 }
 
-}  // namespace parser::ast::visitors
+}  // namespace __AST_BEGIN::visitors

@@ -19,6 +19,7 @@
 #ifndef __AST_HH__
 #define __AST_HH__
 
+#include "parser/ast/include/AST_core.def"
 #include "parser/ast/include/AST_classifier.hh"
 #include "parser/ast/include/AST_context.hh"
 #include "parser/ast/include/AST_interface.hh"

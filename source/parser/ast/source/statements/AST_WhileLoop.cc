@@ -30,4 +30,4 @@ bool WhileLoop::test() {
 
 void WhileLoop::accept(Visitor &visitor) const { visitor.visit(*this); }
 
-}  // namespace parser::ast::node
+}  // namespace __AST_BEGIN::node

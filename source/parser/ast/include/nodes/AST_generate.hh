@@ -19,14 +19,15 @@
 #define __AST_GENERATE_H__
 
 #include "parser/ast/include/AST_nodes.def"
+#include "parser/ast/include/AST_core.def"
 
-namespace parser::ast {
+__AST_BEGIN {
 GENERATE_NODES_ENUM;
 
 namespace node {
     GENERATE_NODES_FORWARD_DECLS;
     GENERATE_NODES_CLASSES;  // NOLINT(cppcoreguidelines-pro-type-member-init)
 }  // namespace node
-}  // namespace parser::ast
+}  // namespace __AST_BEGIN
 
 #endif  // __AST_GENERATE_H__

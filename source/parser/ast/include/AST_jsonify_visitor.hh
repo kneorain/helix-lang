@@ -20,8 +20,9 @@
 
 #include "neo-json/include/json.hh"
 #include "parser/ast/include/AST_visitor.hh"
+#include "parser/ast/include/AST_core.def"
 
-namespace parser::ast::visitors {
+__AST_BEGIN::visitors {
     class JsonifyVisitor : public Visitor {
     public:
         JsonifyVisitor() = default;

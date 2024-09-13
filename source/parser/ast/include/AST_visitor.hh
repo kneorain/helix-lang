@@ -50,44 +50,16 @@
 #ifndef __AST_VISITOR_H__
 #define __AST_VISITOR_H__
 
-#include "parser/ast/include/nodes/AST_generate.hh"  // NOLINT(unused-includes)
+#include "parser/ast/include/nodes/AST_generate.hh"
+#include "parser/ast/include/AST_core.def"
 
-namespace parser::ast {
+__AST_BEGIN {
 
 class Visitor {
   public:
-    // GENERATE_VISITOR_FUNCTIONS;
-    virtual void visit(const node ::Comment &)              = 0;
-    virtual void visit(const node ::CompilerDirective &)    = 0;
-    virtual void visit(const node ::Suite &)                = 0;
-    virtual void visit(const node ::VariableDecl &)         = 0;
-    virtual void visit(const node ::Assignment &)           = 0;
-    virtual void visit(const node ::ForLoop &)              = 0;
-    virtual void visit(const node ::RangeLoop &)            = 0;
-    virtual void visit(const node ::WhileLoop &)            = 0;
-    virtual void visit(const node ::IfStatement &)          = 0;
-    virtual void visit(const node ::ElseIfStatement &)      = 0;
-    virtual void visit(const node ::ElseStatement &)        = 0;
-    virtual void visit(const node ::ConditionalStatement &) = 0;
-    virtual void visit(const node ::ReturnStatement &)      = 0;
-    virtual void visit(const node ::ContinueStatement &)    = 0;
-    virtual void visit(const node ::BreakStatement &)       = 0;
-    virtual void visit(const node ::YieldStatement &)       = 0;
-    virtual void visit(const node ::BinaryOp &)             = 0;
-    virtual void visit(const node ::UnaryOp &)              = 0;
-    virtual void visit(const node ::Literal &)              = 0;
-    virtual void visit(const node ::Identifier &)           = 0;
-    virtual void visit(const node ::DotAccess &)            = 0;
-    virtual void visit(const node ::ScopeAccess &)          = 0;
-    virtual void visit(const node ::PathAccess &)           = 0;
-    virtual void visit(const node ::FunctionCall &)         = 0;
-    virtual void visit(const node ::ArrayAccess &)          = 0;
-    virtual void visit(const node ::Parenthesized &)        = 0;
-    virtual void visit(const node ::Conditional &)          = 0;
-    virtual void visit(const node ::Cast &)                 = 0;
-    ;
+    GENERATE_BASE_VISITOR_FUNCTIONS;
 };
 
-}  // namespace parser::ast
+}  // namespace __AST_BEGIN
 
 #endif  // __AST_VISITOR_H__

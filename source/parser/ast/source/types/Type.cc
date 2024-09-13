@@ -30,4 +30,4 @@ Type::Type() = default;
 Type::Type(token::TokenList &tokens)
     : Node(tokens)
     , tokens(&tokens) {}
-}  // namespace parser::ast
+}  // namespace __AST_BEGIN

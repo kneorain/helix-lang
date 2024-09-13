@@ -17,7 +17,7 @@
 #include "parser/ast/include/ast.hh"
 #include "parser/ast/include/nodes/nodes.hh"
 
-namespace parser::ast::node {
+__AST_BEGIN::node {
 using namespace token;
 
 // Functions and Methods
@@ -117,6 +117,6 @@ class VariableDeclaration final : public Declaration {
     NodePtr<Expression> initializer;
 };
 
-}  // namespace parser::ast::node
+}  // namespace __AST_BEGIN::node
 
 #endif  // __AST_DECL_NODES_HH__

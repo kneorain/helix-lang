@@ -17,7 +17,9 @@
 #ifndef __AST_CONTEXT_H__
 #define __AST_CONTEXT_H__
 
-namespace parser::ast {
+#include "parser/ast/include/AST_core.def"
+
+__AST_BEGIN {
 
 }
 

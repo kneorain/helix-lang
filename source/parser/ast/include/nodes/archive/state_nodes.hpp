@@ -85,6 +85,6 @@ class BlockStatement final : public Statement {
     AST_NODE_METHODS(BlockStatement);
     NodePtr<Suite> suite;
 };
-}  // namespace parser::ast::node
+}  // namespace __AST_BEGIN::node
 
 #endif  // __AST_STATE_NODES_HH__

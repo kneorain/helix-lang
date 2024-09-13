@@ -12,6 +12,8 @@
 
 #include "parser/ast/include/AST.hh"
 
+// PathAccess := (DotAccess | ScopeAccess)*
+
 namespace parser::ast::node {
 ParseResult PathAccess::parse() {
     if (tokens->empty()) [[unlikely]] {
@@ -25,9 +27,10 @@ bool PathAccess::test() {
     if (tokens->empty()) [[unlikely]] {
         return false;
     }
+
     return false;
 }
 
 void PathAccess::accept(Visitor &visitor) const { visitor.visit(*this); }
 
-}  // namespace parser::ast::node
+}  // namespace __AST_BEGIN::node

@@ -18,7 +18,7 @@
 #include "parser/ast/include/case_types.def"
 #include "token/include/token_list.hh"
 
-namespace parser::ast {
+__AST_BEGIN {
 
 NodeT<Annotation> get_Annotation(token::TokenList &tokens) {
     for (auto &token : tokens) {}
@@ -30,4 +30,4 @@ Annotation::Annotation() = default;
 Annotation::Annotation(token::TokenList &tokens)
     : Node(tokens)
     , tokens(&tokens) {}
-}  // namespace parser::ast
+}  // namespace __AST_BEGIN

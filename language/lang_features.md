@@ -89,6 +89,9 @@ Helix has a `finally` keyword that can be used to execute a block of code after 
 
 ```helix
 fn example() -> int {
+    unsafe let sm_ptr* = malloc(10);
+    finally: delete sm_ptr;
+
     finally {
         print("1");
         print("2");
@@ -191,9 +194,9 @@ fn main() {
 
 ### Macros
 Helix has 3 types of macros:
-1. Function-like macros  - untyped
-2. Attribute-like macros - typed
-3. Procedural macros     - typed
+1. Function-like macros            - untyped
+2. Attribute-like macros           - typed
+3. Procedural Function-like macros - typed
 
 ```helix
 // this is a function-like macro
@@ -244,6 +247,8 @@ Helix allows for multiple types of casting.
 
 ```helix
 let a: int = 10;
+
+let const b: int = a as const int;
 
 // the following casts can happen
 a as float;       // regular cast

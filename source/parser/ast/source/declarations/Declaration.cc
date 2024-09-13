@@ -30,4 +30,4 @@ Declaration::Declaration() = default;
 Declaration::Declaration(token::TokenList &tokens)
     : Node(tokens)
     , tokens(&tokens) {}
-}  // namespace parser::ast
+}  // namespace __AST_BEGIN
