@@ -17,6 +17,7 @@
 #include <cstddef>
 #include <filesystem>
 #include <list>
+#include <map>
 #include <memory>
 #include <optional>
 #include <string>
@@ -26,68 +27,80 @@
 #include "token/include/token.hh"
 #include "token/include/token_list.hh"
 
-namespace parser {
+namespace parser::preprocessor {
 using namespace token;
-/**
- * The Preprocessor class is responsible for handling context-dependent elements in the source code,
- * such as imports and macro expansions. It processes the source tokens to produce a fully
- * context-aware token list. This token list provides all necessary information for subsequent
- * stages of the compiler, such as the AST dependency resolver, ensuring accurate parsing and code
- * analysis.
- */
+
+using QualifiedName      = TokenList;
+using IncludeDirectories = std::list<std::filesystem::path>;
+using OptToken           = std::optional<Token>;
+
+struct DefineStatement {
+    using ParamList = std::map<Token, TokenList>;  // alias for parameter list with default args
+
+    ParamList     params;  // parameters and default arguments
+    TokenList     body;    // body of the macro
+    QualifiedName loc;     // namespace location
+    Token         name;    // name of the macro
+
+    static bool is_valid(const QualifiedName &loc, const Token &invocation);
+};
+
+using DefineDefinitions = std::vector<DefineStatement>;
+
 class Preprocessor {
+  public:
+    using AllowedABIOptions = std::array<string, abi::reserved.size()>;
+
+    DefineDefinitions  defines;       // list of defined macros
+    AllowedABIOptions  allowed_abi;   // allowed ABI options
+    IncludeDirectories include_dirs;  // directories for module inclusion
+
   private:
-    TokenList source_tokens;
-    std::list<std::filesystem::path> include_dirs;
-    std::array<string, abi::reserved.size()> allowed_abi;
-    TokenList::TokenListIter *source_iter = nullptr;
+    using TokenIterator = TokenList::TokenListIter;
+    using BraceStack    = std::vector<i64>;
 
-    u32 current_pos{};
-    u32 end{};
+    TokenList      source_tokens;          // tokens from the source file
+    QualifiedName  current_namespace;      // current namespace, taking nesting into account
+    BraceStack     namespace_brace_level;  // pop when this is reached
+    TokenIterator *source_iter = nullptr;  // iterator over source tokens
 
-    friend void handle_invalid_abi_option(Preprocessor*);
-    friend void parse_import(Preprocessor*);
-    friend void parse_ffi(Preprocessor*);
-    friend void parse_define(Preprocessor*);
-    friend void parse_macro(Preprocessor*);
-    friend void parse_invocation(Preprocessor*);
+    //===-------------------------------------- friends ---------------------------------------===//
+
+    friend void parse_ffi(Preprocessor *);
+    friend void parse_brace(Preprocessor *);
+    friend void parse_macro(Preprocessor *);
+    friend void parse_import(Preprocessor *);
+    friend void parse_define(Preprocessor *);
+    friend void parse_namespace(Preprocessor *);
+    friend void parse_invocation(Preprocessor *);
+    friend void handle_invalid_abi_option(Preprocessor *);
 
     //===------------------------------------ iter helpers ------------------------------------===//
 
-    inline bool is_source_iter_set() { return source_iter != nullptr; }
-
+    inline bool   is_source_iter_set() { return source_iter != nullptr; }
     inline Token &current() { return source_iter->current().get(); }
-
     inline Token &advance(const std::int32_t n = 1) { return source_iter->advance(n).get(); }
-
     inline Token &reverse(const std::int32_t n = 1) { return source_iter->reverse(n).get(); }
 
-    std::optional<Token> peek(const std::int32_t n = 1) const {
-        return source_iter->peek(n)->get();
-    };
-
-    std::optional<Token> peek_back(const std::int32_t n = 1) const {
-        return source_iter->peek_back(n)->get();
-    };
+    OptToken peek(const std::int32_t n = 1) const { return source_iter->peek(n)->get(); }
+    OptToken peek_back(const std::int32_t n = 1) const { return source_iter->peek_back(n)->get(); }
 
     //===--------------------------------------------------------------------------------------===//
 
   public:
-    explicit Preprocessor(TokenList &tokens, const std::string &name = "",
+    explicit Preprocessor(TokenList                 &tokens,
+                          const std::string         &name                = "",
                           const std::vector<string> &custom_include_dirs = {});
+    Preprocessor(Preprocessor &&)                 = default;
+    Preprocessor(const Preprocessor &)            = default;
+    Preprocessor &operator=(const Preprocessor &) = delete;
+    Preprocessor &operator=(Preprocessor &&)      = delete;
 
-    ~Preprocessor() = default;
+    ~Preprocessor();
 
-    Preprocessor(Preprocessor &&other) = default;
-    Preprocessor(const Preprocessor &other) = default;
-    Preprocessor &operator=(const Preprocessor &other) = delete;
-    Preprocessor &operator=(Preprocessor &&other) = delete;
-
-    TokenList parse(std::shared_ptr<preprocessor::ImportNode> parent_node = nullptr);
-
-    static void finalize() { preprocessor::import_tree.reset(); };
+    TokenList parse(preprocessor::ImportNodePtr /* do NOT set when externally invoked */ = nullptr);
 };
 
-}  // namespace parser
+}  // namespace parser::preprocessor
 
 #endif  // __PRE_HH__

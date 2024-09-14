@@ -15,13 +15,13 @@
 #include <string>
 #include <string_view>
 
-#include "core/error/error.hh"
+#include "neo-panic/include/error.hh"
 #include "lexer/include/lexer.hh"
 #include "token/include/token.hh"
 #include "token/include/token_list.hh"
 
 using namespace token;
-using namespace lexer;
+using namespace parser::lexer;
 
 TEST_CASE("Test token::Token constructor", "[token::Token]") {
     SECTION("Testing keyword 'if'") {
@@ -106,19 +106,19 @@ TEST_CASE("Test Lexer error handling", "[lexer::Lexer]") {
     SECTION("Invalid character") {
         std::string source = "let x = $;";
         Lexer lexer(source, "<test>");
-        REQUIRE_THROWS_AS(lexer.tokenize(), error::Error);
+        REQUIRE_THROWS_AS(lexer.tokenize(), error::Panic);
     }
 
     SECTION("Unclosed string literal") {
         std::string source = "let message = \"Hello, world;";
         Lexer lexer(source, "<test>");
-        REQUIRE_THROWS_AS(lexer.tokenize(), error::Error);
+        REQUIRE_THROWS_AS(lexer.tokenize(), error::Panic);
     }
 
     SECTION("Invalid numeric literal") {
         std::string source = "let value = 3.14.15;";
         Lexer lexer(source, "<test>");
-        REQUIRE_THROWS_AS(lexer.tokenize(), error::Error);
+        REQUIRE_THROWS_AS(lexer.tokenize(), error::Panic);
     }
 }
 

@@ -1,0 +1,242 @@
+
+/* Main Program Structure */
+
+Program ::= (ImportStatement | PreprocessorDirective | Declaration | FunctionDefinition | Statement)*
+
+/* Modules and Imports */
+
+Module ::= 'module' QualifiedNamespaceID Suite // module ... { :: ... }..
+
+ImportStatement ::= 'import' QualifiedNamespaceID ('::' '{' (QualifiedNamespaceID (',' QualifiedNamespaceID)*) '}')? ('as' QualifiedNamespaceID)? ';'
+
+FFIImportStatement ::= 'ffi' String ImportStatement
+
+/* Preprocessor Directives */
+
+PreprocessorDirective ::= DefineMacro | ProcMacro
+
+DefineMacro ::= 'define' Identifier '!' ('(' (UntypedParameterList)? ')')? Suite ';'
+
+ProcMacro ::= 'macro' Identifier '(' (TypedParameterList)? ')' '->' Type '{' (Statement | Expression) '}' ';'
+
+/* Control Flow */
+
+ForLoop ::= 'for' '(' (CStyleForLoop | PyStyleForLoop) ')' | (CStyleForLoop | PyStyleForLoop) Suite
+
+CStyleForLoop ::= (VariableDeclaration | Expression?) ';' Expression? ';' Expression?
+
+PyStyleForLoop ::= AnySeparatedID (':' Type)? 'in' Expression
+
+WhileLoop ::= 'while' Expression Suite
+
+IfStatement ::= ('if' | 'unless') Expression Suite
+
+ElseIfStatement ::= 'else' ('if' | 'unless') Expression Suite
+
+ElseStatement ::= 'else' Suite
+
+ContinueStatement ::= 'continue' ';'
+
+BreakStatement ::= 'break' ';'
+
+SwitchStatement ::= 'switch' '{' (CaseStatement | DefaultCaseStatement)* '}'
+
+CaseStatement ::= 'case' Expression Suite
+
+DefaultCaseStatement ::= 'default' Suite
+
+MatchExpression ::= 'match' '{' ((Expression | '_') '->' (CodeBlock | (':' Expression)) (',' (Expression | '_') '->' (CodeBlock | (':' Expression)))*) '}'
+
+/* Functions and Methods */
+
+FunctionDecl ::= 'fn' QualifiedNamespaceID '(' (TypedParameterList)? (DefaultArgumentList)? ')' ('->' Type)?
+
+FunctionDefinition ::= 'unsafe'? BaseObjectDecl FunctionDecl RequiresDeclaration? (Suite | ';')
+
+OperatorDefinition ::= 'op' Operator 'as' FunctionDecl (Suite | ';')
+
+ReturnExpression ::= 'return' (Expression)? ';'
+
+YieldExpression ::= 'yield' (Expression)? ';'
+
+/* Class and Struct */
+
+BaseObjectDecl ::= AccessModifiers? (('inline' ('static' | 'eval')?) | 'async' | 'static' | 'eval' | 'const' | FFIAccess)
+
+ClassDefinition ::= BaseObjectDecl 'class' QualifiedNamespaceID DerivesDecl? RequiresDeclaration? (Suite | ';')
+
+EnumDefinition ::= BaseObjectDecl 'enum' QualifiedNamespaceID (EnumBody | ';')
+
+EnumBody ::= '{' ((TypedParameter | UntypedParameter) ('=' Expression)? (';' (TypedParameter | UntypedParameter) ('=' Expression)?)*) '}'
+
+StructDefinition ::= BaseObjectDecl 'struct' RequiresDeclaration? (Suite | ';')
+
+UnionDefinition ::= BaseObjectDecl 'union' RequiresDeclaration? (UnionBody | ';')
+
+UnionBody ::= '{' ((TypedParameter | UntypedParameter) (';' (TypedParameter | UntypedParameter))*) '}'
+
+TypeDefinition ::= BaseObjectDecl 'type' QualifiedNamespaceID (RequiresDeclaration | ('='? Type)) ';'
+
+/* Inheritance and Polymorphism */
+
+AbstractDefinition ::= BaseObjectDecl 'abstract' QualifiedNamespaceID DerivesDecl? RequiresDeclaration? (Suite | ';')
+
+InterfaceDefinition ::= BaseObjectDecl 'interface' QualifiedNamespaceID DerivesDecl? RequiresDeclaration? (Suite | ';')
+
+DerivesDecl ::= ('derives' | ':') (QualifiedNamespaceID (',' QualifiedNamespaceID)*)
+
+TypeBound ::= UntypedParameter 'has' (QualifiedNamespaceID GenericAccess? ('&' QualifiedNamespaceID GenericAccess?)*)
+
+GenericType ::= (('eval' TypedParameter) | UntypedParameter) ('=' Expression)?
+
+RequiresDeclaration ::= 'requires' '<' (GenericTypeList)? '>' ('if' TypeBoundList)?
+
+/* Error Handling */
+
+CatchDefinition ::= 'catch' (AnySeparatedID ('as' QualifiedNamespaceID)?)? Suite
+
+FinallyDefinition ::= 'finally' Suite
+
+PanicDefinition ::= 'panic' Expression ';'
+
+TryDefinition ::= 'try' Suite CatchDefinition? FinallyDefinition?
+
+TestDefinition ::= 'test' String Suite
+
+/* Access Specifiers */
+
+AccessModifiers ::= 'priv' | 'pub' | 'prot' | 'intrnl'
+
+/* Concurrency */
+
+AwaitCall ::= 'await' Expression ';'
+
+SpawnCall ::= 'spawn' Expression ';'
+
+ThreadCall ::= 'thread' Expression ';'
+
+/* Other */
+
+DeleteCall ::= 'delete' Expression ';'
+
+/* Variable Declarations */
+
+VariableDeclaration ::= AccessModifiers? 'let' (
+    (('unsafe')? ('const' | 'atomic' | 'shared')? (TypedParameter | UntypedParameter) ('=' Expression)?)
+    | ('eval' TypedParameter '=' Expression)
+) ';'
+
+/* Declarations */
+
+Declaration ::= VariableDeclaration | TypeDefinition | FunctionDefinition | OperatorDefinition | ClassDefinition | EnumDefinition | StructDefinition | UnionDefinition | AbstractDefinition | InterfaceDefinition
+
+/* Type Definitions */
+
+GenericAccess ::= '<' (QualifiedNamespaceIDOrLiteralList)? '>'
+
+TupleType ::= '(' (TypeList) ')'
+
+Type ::= ('int' | 'float' | 'decimal' | 'string' | 'char' | 'bool'
+         | 'list' GenericAccess | 'map' GenericAccess | 'set' GenericAccess
+         | 'tuple' GenericAccess | 'void'
+         | 'i8' | 'i16' | 'i32' | 'i64' | 'i128'
+         | 'u8' | 'u16' | 'u32' | 'u64' | 'u128'
+         | 'f32' | 'f64' | QualifiedNamespaceID GenericAccess?) | TupleType (('*' | '&')? ('?'))?
+
+/* Operators */
+
+Operator ::= '+' | '-' | '*' | '/' | '%' | '@' | '&'
+           | '^' | '~' | '=' | '!' | '**' | '+-' | '<<'
+           | '~&' | '>>' | '~|' | '==' | '!=' | '>=' | '++'
+           | '--' | '<=' | '+=' | '-=' | '*=' | '&=' | '|='
+           | '~|' | '^=' | '~=' | '/=' | '%=' | '@=' | '&&'
+           | '!&' | '||' | '!|' | '^^' | '..' | '->' | '~='
+           | '|' | '::' | '===' | '**=' | '&&=' | '!&=' | '||='
+           | '!|=' | '^^=' | '~&=' | '<<=' | '>>=' | '..=' | [^a-zA-Z0-9_]+
+
+/* Expressions */
+
+Expression ::= Literal | AnySeparatedID | BinaryOperation | UnaryOperation | FunctionCall | ParenthesizedExpression | ArrayAccess | ObjectAccess | ConditionalExpression
+
+BinaryOperation ::= Expression Operator Expression
+
+UnaryOperation ::= Operator Expression
+
+FunctionCall ::= AnySeparatedID GenericAccess? '(' (ExpressionList)? ')'
+
+ParenthesizedExpression ::= '(' Expression ')'
+
+ArrayAccess ::= AnySeparatedID '[' Expression ']'
+
+ObjectAccess ::= AnySeparatedID '.' Identifier
+
+/* all of these break down to the same node structure */
+ConditionalExpression ::= ('if' Expression ':' Expression (('else if' Expression ':' Expression)*)? 'else' ':' Expression) | (Expression '?' Expression ':' Expression) | (Expression 'if' Expression 'else' Expression)
+
+Expressions ::= Expression (',' Expression)*
+
+/* Statements */
+
+Assignment ::= AnySeparatedID '=' Expression ';'
+
+Statement ::= VariableDeclaration | Assignment | Expression ';' | ControlFlowStatement | ReturnExpression | YieldExpression | BlockStatement
+
+ControlFlowStatement ::= ForLoop | WhileLoop | IfStatement | UnlessStatement | ElseIfStatement | ElseStatement | ContinueStatement | BreakStatement | SwitchStatement | MatchExpression
+
+BlockStatement ::= Suite
+
+Statements ::= Statement*
+
+/* Code Structure */
+
+CodeBlock ::= '{' (Statements | Expressions) '}'
+
+CodeLine ::= ':' (Statement | Expression) ';'
+
+Suite ::= CodeLine | CodeBlock
+
+FFIAccess ::= 'ffi' String
+
+TypedParameter ::= Identifier ':' Type
+
+UntypedParameter ::= Identifier
+
+QualifiedNamespaceID ::= Identifier ('::' Identifier)*
+
+DotSeparatedID ::= Identifier ('.' Identifier)*
+
+AnySeparatedID ::= (DotSeparatedID | QualifiedNamespaceID) (DotSeparatedID | QualifiedNamespaceID)*
+
+/* Base Elements */
+
+Literal ::= Number | String | 'true' | 'false' | 'null' // nullptr == *null
+
+Number ::= Digit+ ('.' Digit+)?
+
+String ::= '"' [^"]* '"' | "'" [^']* "'"
+
+Identifier ::= [A-Za-z_][A-Za-z0-9_]*
+
+Digit ::= [0-9]
+
+/* Default Argument */
+
+DefaultArgument ::= TypedParameter '=' Expression
+
+/* Helper Functions */
+
+UntypedParameterList ::= UntypedParameter (',' UntypedParameter)* /* helpy */
+
+TypedParameterList ::= TypedParameter (',' TypedParameter)* /* helpy */
+
+DefaultArgumentList ::= DefaultArgument (',' DefaultArgument)* /* helpy */
+
+GenericTypeList ::= GenericType (',' GenericType)* /* helpy */
+
+TypeBoundList ::= TypeBound (',' TypeBound)* /* helpy */
+
+QualifiedNamespaceIDOrLiteralList ::= (QualifiedNamespaceID | Literal) (',' (QualifiedNamespaceID | Literal))* /* helpy */
+
+TypeList ::= Type (',' Type)* /* helpy */
+
+ExpressionList ::= Expression (',' Expression)* /* helpy */

@@ -5,12 +5,17 @@
             "label": "build",
             "type": "shell",
             "command": "xmake",
-            "args": ["build", "helix"],
+            "args": [
+                "build",
+                "helix"
+            ],
             "group": {
                 "kind": "build",
                 "isDefault": true
             },
-            "problemMatcher": ["$gcc"]
+            "problemMatcher": [
+                "$gcc"
+            ]
         }
     ]
 }

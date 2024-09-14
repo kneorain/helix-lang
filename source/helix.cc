@@ -12,37 +12,38 @@
 //===------------------------------------------------------------------------------------------===//
 
 #include <chrono>
+#include <cstdio>
 #include <memory>
 #include <vector>
 
 #include "cli/include/cli.hh"
-#include "controllers/include/file_system.hh"
-#include "core/error/error.hh"
-#include "core/utils/hx_print"
+#include "driver/include/file_system.hh"
+#include "neo-panic/include/error.hh"
+#include "neo-pprint/include/hxpprint.hh"
 #include "lexer/include/lexer.hh"
-#include "parser/ast/include/ast.hh"
-#include "parser/ast/include/nodes/expr_nodes.hh"
-#include "parser/preprocessor/include/preprocessor.hh"
-#include "token/include/token_list.hh"
+#include "parser/ast/include/AST.hh"
+#include "parser/ast/include/AST_jsonify_visitor.hh"
 #include "parser/cpp/fn_signatures.hh"
+#include "parser/preprocessor/include/preprocessor.hh"
+#include "token/include/generate.hh"
+#include "token/include/token_list.hh"
 
 int compile(int argc, char **argv) {
     using namespace token;
-    using namespace parser;
-    using namespace lexer;
-    using namespace parser::ast;
+    using namespace parser::lexer;
+    using namespace parser::preprocessor;
 
-    auto start = std::chrono::high_resolution_clock::now();
+    printf("");
 
-    // "D:\projects\helix-lang\tests\main.hlx"
-    // std::string file_name = "/Volumes/Container/Projects/Helix/helix-lang/tests/main.hlx"; //
     // relative to current working dir in POSIX shell (cmd/bash)
     command_line::CLIArgs parsed_args(argc, argv, "0.0.1-alpha-0112");
     check_exit(parsed_args);
 
-    // try getting function signatures from c++ file:
-    // const string& filename = file_system::resolve_path(parsed_args.file)->string();
-    // parse_signatures(filename);
+    if (parsed_args.verbose) {
+        print(parsed_args.get_all_flags);
+    }
+
+    auto start = std::chrono::high_resolution_clock::now();
 
     // read the file and tokenize its contents : stage 0
     TokenList tokens = Lexer(file_system::read_file(parsed_args.file), parsed_args.file).tokenize();
@@ -52,28 +53,30 @@ int compile(int argc, char **argv) {
     // preprocess the tokens with optional module import paths : stage 1
     Preprocessor(tokens, "main", pkg_paths).parse();
 
-    // end the timer and calculate the duration
-
     // preprocessor::import_tree->print_tree(preprocessor::import_tree->get_root());
 
     // print the preprocessed tokens
-
     auto end = std::chrono::high_resolution_clock::now();
 
     if (parsed_args.emit_ast) {
         // for testing only change to parse an entire program when done with ast
-        NodePtr<node::Literal> ast = make_node<node::Literal>(tokens);
-        ast->parse().value_or(0);
+        auto ast = parser::ast::get_Expression(tokens);
+        
+        ast->parse();
 
-        print(ast->to_json());
+        end        = std::chrono::high_resolution_clock::now();
+        auto visit = parser::ast::visitors::JsonifyVisitor();
+        ast->accept(visit);
+
+        print(visit.json);
     }
 
     if (parsed_args.emit_tokens) {
         // print(tokens.to_json());
         print(tokens.to_json());
+        print_tokens(tokens);
     }
 
-    
     std::chrono::duration<double> diff = end - start;
 
     // Print the time taken in nanoseconds and milliseconds
@@ -86,11 +89,21 @@ int compile(int argc, char **argv) {
 int main(int argc, char **argv) {
     try {
         compile(argc, argv);
-    } catch (error::Error&) {
-        if (error::HAS_ERRORED) {
-        for (const auto& err : error::ERRORS) {
-                print(err.to_json());
-            }
-        }
+    } catch (error::Panic &) {
+        // if (error::HAS_ERRORED) {
+        // for (const auto& err : error::ERRORS) {
+        //         print(err.to_json());
+        //     }
+        // }
     }
 }
+
+/*
+proposed toolchain:
+
+compile(
+    string source,
+    compiler_flags flags
+)
+
+*/

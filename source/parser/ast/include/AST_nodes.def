@@ -1,0 +1,94 @@
+//===------------------------------------------ C++ ------------------------------------------====//
+//                                                                                                //
+//  Part of the Helix Project, under the Attribution 4.0 International license (CC BY 4.0).       //
+//  You are allowed to use, modify, redistribute, and create derivative works, even for           //
+//  commercial purposes, provided that you give appropriate credit, and indicate if changes       //
+//   were made. For more information, please visit: https://creativecommons.org/licenses/by/4.0/  //
+//                                                                                                //
+//  SPDX-License-Identifier: CC-BY-4.0                                                            //
+//  Copyright (c) 2024 (CC BY 4.0)                                                                //
+//                                                                                                //
+//====----------------------------------------------------------------------------------------====//
+//                                                                                                //
+//  this file exports all the AST nodes used by the parser                                        //
+//                                                                                                //
+//===-----------------------------------------------------------------------------------------====//
+
+#ifndef __AST_NODES_HH__
+#define __AST_NODES_HH__
+
+#include "parser/ast/include/AST_interface.hh"
+#include "parser/ast/include/nodes/AST_annotations.def"
+#include "parser/ast/include/nodes/AST_declarations.def"
+#include "parser/ast/include/nodes/AST_expressions.def"
+#include "parser/ast/include/nodes/AST_generics.def"
+#include "parser/ast/include/nodes/AST_statements.def"
+
+#define EXPR_VA_CLASS __AST_N::Expression
+#define STMT_VA_CLASS __AST_N::Statement
+#define DECL_VA_CLASS __AST_N::Declaration
+#define ANNO_VA_CLASS __AST_N::Annotation
+#define TYPE_VA_CLASS __AST_N::Type
+
+#define MAKE_NODE_ENUM(T, D, B) T,
+#define MAKE_FORWARD_DECL(T, D, B) class T;
+#define MAKE_VISITOR_FUNCTION(T, D, B) void visit(const __AST_N::node::T &) override;
+#define MAKE_BASE_VISITOR_FUNCTION(T, D, B) virtual void visit(const __AST_N::node::T &) = 0;
+#define MAKE_NODE_CLASS(T, D, B)                                                       \
+    class T final : public D {                                                         \
+      protected:                                                                       \
+        token::TokenList *tokens;                                                      \
+                                                                                       \
+      public:                                                                          \
+        explicit T(token::TokenList &tokens)                                           \
+            : tokens(&tokens) {}                                                       \
+        ~T()                    = default;                                             \
+        T(const T &)            = delete;                                              \
+        T &operator=(const T &) = delete;                                              \
+        T(T &&)                 = default;                                             \
+        T &operator=(T &&)      = delete;                                              \
+                                                                                       \
+        __AST_N::ParseResult parse() override;                                     \
+        bool                     test() override;                                      \
+        void                     accept(__AST_N::Visitor &visitor) const override; \
+        nodes                    getNodeType() const override { return nodes::T; }     \
+                                                                                       \
+        B                                                                              \
+    };
+
+#define GENERATE_NODES_ENUM                                                                       \
+    enum class nodes {                                                                            \
+        ANNOTATIONS(MAKE_NODE_ENUM, ANNO_VA_CLASS) GENERICS(MAKE_NODE_ENUM, TYPE_VA_CLASS)        \
+            DECLARATIONS(MAKE_NODE_ENUM, DECL_VA_CLASS) STATEMENTS(MAKE_NODE_ENUM, STMT_VA_CLASS) \
+                EXPRESSION(MAKE_NODE_ENUM, EXPR_VA_CLASS)                                         \
+    }
+
+#define GENERATE_NODES_FORWARD_DECLS               \
+    ANNOTATIONS(MAKE_FORWARD_DECL, ANNO_VA_CLASS)  \
+    GENERICS(MAKE_FORWARD_DECL, TYPE_VA_CLASS)     \
+    DECLARATIONS(MAKE_FORWARD_DECL, DECL_VA_CLASS) \
+    STATEMENTS(MAKE_FORWARD_DECL, STMT_VA_CLASS)   \
+    EXPRESSION(MAKE_FORWARD_DECL, EXPR_VA_CLASS)
+
+#define GENERATE_NODES_CLASSES                   \
+    ANNOTATIONS(MAKE_NODE_CLASS, ANNO_VA_CLASS)  \
+    GENERICS(MAKE_NODE_CLASS, TYPE_VA_CLASS)     \
+    DECLARATIONS(MAKE_NODE_CLASS, DECL_VA_CLASS) \
+    STATEMENTS(MAKE_NODE_CLASS, STMT_VA_CLASS)   \
+    EXPRESSION(MAKE_NODE_CLASS, EXPR_VA_CLASS)
+
+#define GENERATE_VISITOR_FUNCTIONS                     \
+    ANNOTATIONS(MAKE_VISITOR_FUNCTION, ANNO_VA_CLASS)  \
+    GENERICS(MAKE_VISITOR_FUNCTION, TYPE_VA_CLASS)     \
+    DECLARATIONS(MAKE_VISITOR_FUNCTION, DECL_VA_CLASS) \
+    STATEMENTS(MAKE_VISITOR_FUNCTION, STMT_VA_CLASS)   \
+    EXPRESSION(MAKE_VISITOR_FUNCTION, EXPR_VA_CLASS)
+
+#define GENERATE_BASE_VISITOR_FUNCTIONS                \
+    ANNOTATIONS(MAKE_BASE_VISITOR_FUNCTION, ANNO_VA_CLASS)  \
+    GENERICS(MAKE_BASE_VISITOR_FUNCTION, TYPE_VA_CLASS)     \
+    DECLARATIONS(MAKE_BASE_VISITOR_FUNCTION, DECL_VA_CLASS) \
+    STATEMENTS(MAKE_BASE_VISITOR_FUNCTION, STMT_VA_CLASS)   \
+    EXPRESSION(MAKE_BASE_VISITOR_FUNCTION, EXPR_VA_CLASS)
+
+#endif  // __AST_NODES_HH__

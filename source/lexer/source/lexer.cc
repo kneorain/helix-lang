@@ -16,10 +16,10 @@
 #include <string>
 #include <vector>
 
-#include "core/error/error.hh"
+#include "neo-panic/include/error.hh"
 #include "lexer/include/cases.def"
 
-namespace lexer {
+namespace parser::lexer {
 using namespace token;
 
 Lexer::Lexer(std::string source, const std::string &filename)
@@ -34,7 +34,7 @@ Lexer::Lexer(std::string source, const std::string &filename)
     , offset(0)
     , end(this->source.size()) {}
 
-Lexer::Lexer(const token::Token& token)
+Lexer::Lexer(const token::Token &token)
     : tokens(token.file_name())
     , source(token.value())
     , file_name(token.file_name())
@@ -87,8 +87,8 @@ inline Token Lexer::process_single_line_comment() {
 }
 
 inline Token Lexer::process_multi_line_comment() {
-    auto start   = currentPos;
-    u32 comment_depth = 0;
+    auto start         = currentPos;
+    u32  comment_depth = 0;
 
     u32 start_line = line;
     u32 start_col  = column;
@@ -124,7 +124,8 @@ inline Token Lexer::process_multi_line_comment() {
 
     if (comment_depth != 0) {
         auto bad_token = Token{start_line, start_col, 2, offset, "", file_name};
-        throw error::Error(error::CodeError(&bad_token, 2.1002, {}, std::vector<string>{"block comment"}));
+        throw error::Panic(error::create_old_CodeError(
+            &bad_token, 2.1002, {}, std::vector<string>{"block comment"}));
     }
 
     return {line,
@@ -173,18 +174,20 @@ inline Token Lexer::next_token() {
     }
 
     auto bad_token = Token{line, column, 1, offset, std::string(1, current()), file_name};
-    
-    throw error::Error(error::CodeError(&bad_token, 1.0011, std::vector<string>{std::string(1, current())}));
+
+    throw error::Panic(error::create_old_CodeError(
+        &bad_token, 1.0011, std::vector<string>{std::string(1, current())}));
 }
 
 inline Token Lexer::parse_compiler_directive() {
-    auto start = currentPos;
-    auto end_loop = false;
-    u32 brace_level = 0;
+    auto start       = currentPos;
+    auto end_loop    = false;
+    u32  brace_level = 0;
 
     if (peek_forward() != '[') {
-        bare_advance();
-        return {line, column, 1, offset, source.substr(start, 1), file_name};
+        Token bad_token = {line, column, 1, offset, source.substr(start, 1), file_name};
+
+        throw error::Panic(error::CodeError{.pof = &bad_token, .err_code = 0.7006});
     }
 
     while (!end_loop && !is_eof()) {
@@ -204,13 +207,15 @@ inline Token Lexer::parse_compiler_directive() {
         bare_advance();
     }
 
-    return {line,
-            column - (currentPos - start),
-            currentPos - start,
-            offset,
-            source.substr(start + 2, (currentPos - start) - 3),
-            file_name,
-            "<complier_directive>"};
+    Token tok{line,
+              column - (currentPos - start),
+              currentPos - start,
+              offset,
+              source.substr(start + 2, (currentPos - start) - 3),
+              file_name,
+              "<complier_directive>"};
+
+    throw error::Panic(error::CodeError{.pof = &tok, .err_code = 0.7007});
 }
 
 inline Token Lexer::process_whitespace() {
@@ -265,9 +270,9 @@ inline Token Lexer::parse_numeric() {
     // TODO: add sci notation
     auto start = currentPos;
 
-    u32 dot_count = 0;
-    bool is_float = false;
-    bool end_loop = false;
+    u32  dot_count    = 0;
+    bool is_float     = false;
+    bool end_loop     = false;
     bool sci_notation = false;
 
     while (!end_loop && !is_eof()) {
@@ -293,9 +298,15 @@ inline Token Lexer::parse_numeric() {
     // if theres a . then it is a float
     if (is_float) {
         if (dot_count > 1) {
-            auto bad_token = Token{line, column - (currentPos - start), currentPos - start, offset, source.substr(start, currentPos - start), file_name, "<float>"};
+            auto bad_token = Token{line,
+                                   column - (currentPos - start),
+                                   currentPos - start,
+                                   offset,
+                                   source.substr(start, currentPos - start),
+                                   file_name,
+                                   "<float>"};
 
-            throw error::Error(error::CodeError(&bad_token, 0.0003));
+            throw error::Panic(error::create_old_CodeError(&bad_token, 0.0003));
         }
         return {line,
                 column - (currentPos - start),
@@ -316,14 +327,14 @@ inline Token Lexer::parse_numeric() {
 
 inline Token Lexer::parse_string() {
     // all the data within " (<string>) or ' (<char>) is a string
-    auto start = currentPos;
-    auto start_line = line;
+    auto start        = currentPos;
+    auto start_line   = line;
     auto start_column = column;
 
     std::string token_type;
 
     bool end_loop = false;
-    char quote = current();
+    char quote    = current();
 
     switch (current()) {
         case STRING_BYPASS:
@@ -348,7 +359,8 @@ inline Token Lexer::parse_string() {
 
     if (is_eof()) {
         auto bad_token = Token{start_line, start_column, 1, offset, "\"", file_name};
-        throw error::Error(error::CodeError(&bad_token, 2.1002, {}, std::vector<string>{"string"}));
+        throw error::Panic(
+            error::create_old_CodeError(&bad_token, 2.1002, {}, std::vector<string>{"string"}));
     }
 
     switch (quote) {
@@ -370,7 +382,7 @@ inline Token Lexer::parse_string() {
 }
 
 inline Token Lexer::parse_operator() {
-    auto start = currentPos;
+    auto start    = currentPos;
     bool end_loop = false;
 
     while (!end_loop && !is_eof()) {
@@ -468,7 +480,7 @@ inline char Lexer::current() {
         return currentChar;
     }
 
-    cachePos = currentPos;
+    cachePos    = currentPos;
     currentChar = source[currentPos];
 
     return currentChar;
@@ -491,4 +503,4 @@ inline char Lexer::peek_forward() const {
 }
 
 inline bool Lexer::is_eof() const { return currentPos >= end; }
-}  // namespace lexer
+}  // namespace parser::lexer

@@ -2,13 +2,16 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Launch - debug",
-            "type": "lldb",
+            "type": "xmake",
             "request": "launch",
-            "program": "/Volumes/Container/Projects/Helix/helix-lang/build/macosx/arm64/debug/helix",
-            "args": ["/Volumes/Container/Projects/Helix/helix-lang/tests/main.hlx", "--emit-tokens"],
-            "cwd": "/Volumes/Container/Projects/Helix/helix-lang/",
-            "stopOnEntry": false,
+            "name": "Launch",
+            "target": "helix",
+            "args": [
+                "/Volumes/Devolpment/Projects/Helix/helix-lang/tests/main.hlx",
+                "--emit-ast"
+            ],
+            "cwd": "${cwd}/helix-lang/",
+            "stopAtEntry": true
         }
     ]
 }

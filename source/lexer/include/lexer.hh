@@ -19,18 +19,18 @@
 #include "token/include/token.hh"
 #include "token/include/token_list.hh"
 
-namespace lexer {
+namespace parser::lexer {
 class Lexer {
   public:
     // TODO: Investigate if we can make this string not a copy
     Lexer(std::string source, const std::string &filename);
-    explicit Lexer(const token::Token& token);
-    Lexer(const Lexer &lexer) = delete;
-    Lexer(Lexer &&lexer) = delete;
+    explicit Lexer(const token::Token &token);
+    Lexer(const Lexer &lexer)            = delete;
+    Lexer(Lexer &&lexer)                 = delete;
     Lexer &operator=(const Lexer &lexer) = delete;
-    Lexer &operator=(Lexer &&lexer) = delete;
-    ~Lexer() = default;
-    
+    Lexer &operator=(Lexer &&lexer)      = delete;
+    ~Lexer()                             = default;
+
     token::TokenList tokenize();
 
   private:
@@ -55,17 +55,17 @@ class Lexer {
     [[nodiscard]] inline char peek_back() const;
     [[nodiscard]] inline bool is_eof() const;
 
-    token::TokenList tokens;  //> list of tokens
-    std::string source;       //> source code
-    std::string file_name;    //> file name
+    token::TokenList tokens;     //> list of tokens
+    std::string      source;     //> source code
+    std::string      file_name;  //> file name
 
     char currentChar;  //> current character
-    u64 cachePos;      //> cache position
-    u64 currentPos;    //> current position in the source
-    u64 line;          //> line number
-    u64 column;        //> position in the line
-    u64 offset;        //> position of the end of the token
-    u64 end;           //> end of the source
+    u64  cachePos;     //> cache position
+    u64  currentPos;   //> current position in the source
+    u64  line;         //> line number
+    u64  column;       //> position in the line
+    u64  offset;       //> position of the end of the token
+    u64  end;          //> end of the source
 };
 
 // prevent global namespace pollution
@@ -80,6 +80,6 @@ class Lexer {
 #undef PUNCTUATION
 #undef OPERATORS
 
-}  // namespace lexer
+}  // namespace parser::lexer
 
 #endif  // __LEXER_HH__
