@@ -6,9 +6,9 @@
 
 # Helix Programming Language
 
-Helix is an experimental language designed for seamless interoperability with Python, C, C++, and Rust. The project aims to provide developers with a fast, efficient, and easy-to-use language that can leverage the power of existing code and libraries in these languages. With its clean syntax and robust features, Helix aims to simplify the process of writing and maintaining code while maximizing performance.
+Helix is an experimental programming language designed for high-performance, safety, and seamless interoperability with Python, C, C++, and Rust. It provides developers with a clean syntax, a robust feature set, and a focus on efficient code writing and maintenance. Helix aims to simplify the development process while maximizing performance, making it ideal for systems programming and application development.
 
---------------------------------------------------------------------------------
+---
 
 <div>
   <img src="../assets/showcase.png" width="450" align="right" alt="Code Example">
@@ -16,93 +16,66 @@ Helix is an experimental language designed for seamless interoperability with Py
 
 ## Why Helix?
 
-- **Performance**: Optimized for speed and efficiency, making it ideal for critical applications and systems programming.
-- **Interoperability**: Seamlessly integrates with C++, Rust, and Python, allowing you to leverage existing codebases.
-- **Productivity**: Advanced tooling, including a robust standard library, package manager, and build system.
-- **Safety**: Strong type system and error handling to catch bugs at compile-time and runtime.
+Helix is designed to address several limitations found in other modern languages like Rust and Zig:
 
-## Features
+- **Performance:** Helix is optimized for speed and efficiency, making it ideal for performance-critical applications.
+- **Interoperability:** Seamless integration with Python, C++, Rust, and more allows developers to leverage existing codebases without sacrificing performance.
+- **Developer Productivity:** Advanced tooling, such as a robust standard library, package manager, and build system, streamlines the development process.
+- **Safety:** Helix includes a strong type system and error handling mechanisms to catch bugs at both compile-time and runtime, ensuring safer code.
 
-- **Concurrent Programming**: Easy-to-use async/await syntax for concurrent tasks.
-- **Pattern Matching**: Powerful pattern matching for more readable and maintainable code.
-- **Macros and Processors**: Extensible macros and -processors for code generation and optimization.
-- **Rich Error Reporting**: Detailed error messages and warnings to help you debug and optimize your code.
-- **Object-Oriented Programming**: Support for classes and objects, enabling encapsulation, inheritance, and polymorphism for modular and reusable code.
+## Key Features
 
-## Helix Syntax Examples
+- **Concurrency Support:** Helix offers easy-to-use `async` and `await` for writing concurrent programs.
+- **Pattern Matching:** A powerful pattern-matching system simplifies complex conditional logic.
+- **Macros and Processors:** Extensible macros and processors for code generation and optimization.
+- **Object-Oriented Programming (OOP):** Full OOP support with classes, inheritance, and polymorphism.
+- **Rich Error Reporting:** Detailed error messages to guide developers through debugging and optimization.
+- **Cross-Platform Interoperability:** Native support for Python, C, C++, and Rust out of the box.
+
+## Syntax Examples
 
 ### Error Reporting
-
-Helix provides detailed error messages and warnings to help you debug and optimize your code:
+Helix provides detailed and informative error messages to help with debugging:
 
 <div align="left"><img src="../assets/error-example.png" alt="error reporting" width="400">
   <a href="#">
   <img src="../assets/bumper.png">
 </a></div>
 
-### Unique Type System
-
-Helix supports strong typing and flexible typing (like python) with a unique type bounding generic system:
-
-<div align="left"><img src="../assets/type-bounds-example.png" alt="variables and types example" width="350">
-  <a href="#">
-  <img src="../assets/bumper.png">
-</a></div>
-
-### Native Interoperability
-
-Helix has native interop with (python, rust, c and c++) out of the box, with many more in the works by the community:
+### Strong Typing with Flexible Generics
+Helix allows for flexible typing with robust generic systems:
 
 <div align="left"><img src="../assets/ffi-example.png" alt="functions and classes example" width="450">
   <a href="#">
   <img src="../assets/bumper.png">
 </a></div>
 
-### Async Programming
 
-Handle asynchronous tasks easily with `async` and `await`:
+### Asynchronous Programming
+Helix supports asynchronous code with `async` and `await`:
 
 <div align="left"><img src="../assets/async-example.png" alt="async programming example" width="500">
   <a href="#">
   <img src="../assets/bumper.png">
 </a></div>
 
---------------------------------------------------------------------------------
+---
 
-## Why Not Use Rust or Zig?
+## Why Not Rust or Zig?
 
-At Helix, we believe there's a gap in the programming language space that neither Rust nor Zig fully addresses. While both languages have their strengths, they also have limitations that we aim to overcome with Helix.
-
-### Limitations of Both Rust and Zig
-
-- **Lack of OOP Support**: Both Rust and Zig lack comhensive object-oriented programming (OOP) support. This can make certain types of applications, like AI development and game development, more cumbersome to implement.
-- **Complex Syntax**: Both languages have syntaxes that can be verbose and complex, increasing the learning curve and potentially slowing down development.
-
-### Specific Limitations of Rust
-
-- **Strict Safety Mechanisms**: Rust’s borrow checker is often too strict, making it difficult for developers to write complex programs without extensive refactoring.
-- **Verbosity**: The syntax of Rust can be cumbersome and verbose, which can slow down development and increase the learning curve.
-
-### Specific Limitations of Zig
-
-- **Limited Features**: While Zig is simple and performant, it lacks features like a processor, which can limit its flexibility and control over the code compilation process.
-- **Less Focus on Safety**: Zig does not emphasize safety to the same extent as Rust, which can lead to potential issues in memory management and concurrency.
-
+While both Rust and Zig are excellent languages, they come with certain trade-offs that Helix seeks to address:
+- **Lack of OOP Support:** Both Rust and Zig lack comprehensive OOP support, which is essential for certain domains like AI or game development.
+- **Strict Safety Mechanisms (Rust):** While Rust's borrow checker is a powerful tool, it can sometimes be too strict, leading to complex refactoring for developers.
+- **Limited Features (Zig):** Zig, while performant, lacks certain features like a macro processor that Helix provides.
 
 ### Advantages of Helix
 
-Helix draws inspiration from the best parts of Rust, Python, Zig, and other modern languages, combining their strengths while addressing their weaknesses.
+Helix draws inspiration from Rust, Python, and C++, combining the strengths of these languages while addressing their weaknesses:
+- **Balanced Safety:** Helix features a borrow checker, but with a less strict enforcement, offering flexibility without sacrificing safety.
+- **Simpler Syntax:** Helix provides a modern, Python-like syntax, reducing verbosity while maintaining power.
+- **OOP Support:** Helix fully supports object-oriented programming, making it suitable for a wide range of applications.
 
-- **Balanced Safety**: Helix includes a borrow checker for pointers and references, but it's less strict. Code that fails the borrow checker emits a severe warning instead of an error, allowing developers to proceed while being aware of potential issues.
-- **Simpler Syntax**: Helix offers a syntax that is both modern and easy to use, inspired by Python’s simplicity. Variable/Paramater types are strict but flexiable, resembling Python’s syntax, making it more accessible to a broader range of developers.
-- **OOP Support**: Unlike Rust, Zig, and Mojo, Helix supports OOP, which is crucial for certain domains like AI development and game development. This allows for more intuitive code organization and reuse through classes and inheritance.
-- **processor**: Helix includes a processor, providing additional flexibility and control over code compilation.
-
-Helix aims to offer the right balance between safety, simplicity, and flexibility, while also trying to be a better cross paltfrom C++, unlike Zig and Rust which both try to be a better C.
-
-Helix aims to extract the cleanest and best parts of C++ without the bloat and unreadablity of it, as said by Bjarne Stroustrup, "Within C++, there is a much smaller and cleaner language struggling to get out". Helix aims to be the smaller and cleaner langauge thats getting out.
-
---------------------------------------------------------------------------------
+---
 
 ### Quick Start
 
@@ -114,24 +87,29 @@ Helix aims to extract the cleanest and best parts of C++ without the bloat and u
 > [!TIP]
 > Linux is not *yet* tested, Most development is done on MacOS or Windows, if any issues arise with building on Linux, please open an issue.
 
-##### Prerequisites
+### Prerequisites
 
-- [xmake](https://xmake.io/#/)
-- [python](https://www.python.org/downloads/)
-- [git](https://git-scm.com/downloads)
-- [perl](https://www.perl.org/get.html) - Linux Only
-- C++ Compiler and STL (**clang**, **msvc** or **gcc**)
+- **Xmake**: [Install Xmake](https://xmake.io/#/)
+- **Python**: [Install Python](https://www.python.org/downloads/)
+- **Git**: [Install Git](https://git-scm.com/downloads)
+- **C++ Compiler**: Ensure you have a C++ compiler (e.g., **Clang**, **MSVC**, or **GCC**).
 
 ##### Windows Specific (Visual Studio Build Tools)
 
 > [!CAUTION]
-> Only **msvc** is supported on Windows, **gcc** is not supported on Windows. and **clang** without Visual Studio Build Tools is not supported.
+> Only **msvc** is supported and tested on Windows, **gcc** is not supported on Windows. and **mingw** is not tested.
 
-1. Install [Visual Studio Build Tools](https://visualstudio.microsoft.com/visual-cpp-build-tools/)
-2. Make sure to install the **Desktop Development with C++** workload, with the **MSVC** compiler, **Windows SDK**, **C++ CMake Tools for Windows**, **C++ Clang Tools for Windows**, and **C++ ATL for Windows** components.
-3. Install [Python](https://www.python.org/downloads/)
+1. Install [Visual Studio Build Tools](https://visualstudio.microsoft.com/visual-cpp-build-tools/) and select the following components:
+   - **Desktop development with C++** (workload)
+   - **MSVC v143** or higher
+   - **Windows SDK**
+   - **C++ CMake tools for Windows**
+   - **C++ Clang Tools for Windows v17.0.x** or higher
+   - **C++ ATL for v143 build tools** or higher
+  
+2. Install [Python](https://www.python.org/downloads/)
 
-4. Install [xmake](https://xmake.io/#/) (PowerShell Only)
+3. Install [xmake](https://xmake.io/#/) (PowerShell Only)
 ```powershell
 $ Invoke-Expression (Invoke-Webrequest 'https://xmake.io/psget.text' -UseBasicParsing).Content
 ```
@@ -142,10 +120,13 @@ $ Invoke-Expression (Invoke-Webrequest 'https://xmake.io/psget.text' -UseBasicPa
 > **Perl** is required for building on Linux, if you don't have it installed, install using your package manager.
 
 1. Install [Python](https://www.python.org/downloads/)
-2. Install [xmake](https://xmake.io/#/) (bash or zsh)
+   
+2. Install Xmake (bash or zsh):
 ```sh
-$ curl -fsSL https://xmake.io/shget.text | bash
+curl -fsSL https://xmake.io/shget.text | bash
 ```
+
+3. Install necessary build tools such as Clang or GCC. (should be installed by default on MacOS)
 
 ##### All Platforms (After following platform specific steps)
 
@@ -184,52 +165,54 @@ path/to/helix hello_world.hlx
 ./hello_world
 ```
 
+---
+
 ## Goals
 
-The Helix project aims to achieve the following goals:
+Helix is built with the following goals in mind:
 
-- **Interoperability**: Helix will provide seamless interoperability with Python, C, C++, and Rust, allowing developers to integrate code from these languages with ease.
-- **Performance**: The language will prioritize speed and efficiency, enabling developers to write fast and efficient code without sacrificing simplicity.
-- **Simplicity**: Helix will feature a clean and intuitive syntax, making it easy for developers to write and understand code.
-- **Rich Feature Set**: The language will offer a rich set of features including variables, functions, control flow, data types, classes, and more, providing developers with the tools they need to write powerful code.
-- **Documentation**: Helix will provide comprehensive documentation to help developers learn the language and make the most of its features.
-- **Testing and Benchmarking**: The project will include robust testing and benchmarking tools to ensure the reliability and performance of the language.
-- **Community Involvement**: The Helix project will encourage community involvement, welcoming contributions, feedback, and collaboration to help improve the language.
-- **Standard Library**: Helix will include a standard library with a wide range of functions and modules to support common programming tasks.
-- **Package Manager**: The language will feature a package manager to help developers discover, install, and manage third-party libraries and tools.
-- **Debugging and Profiling**: Helix will provide tools for debugging and profiling code to help developers identify and fix issues and optimize performance.
-- **Memory Management**: The language will include memory management features to help developers manage memory efficiently and avoid memory leaks and other issues.
-- **Concurrency**: Helix will support concurrency to enable developers to write efficient, parallel code for multi-core and distributed systems.
-- **Error Handling**: The language will provide robust error handling features to help developers write reliable and resilient code.
+- **Interoperability:** Seamless interop with Python, C, C++, and Rust.
+- **Performance:** High-performance code generation with optimizations for speed.
+- **Simplicity:** Modern syntax inspired by Python for ease of use.
+- **Comprehensive Feature Set:** Robust support for error handling, concurrency, and more.
+- **Community-Driven Development:** Helix is open-source and encourages contributions from the community.
+
+---
 
 ## Community and Contributing
 
-Helix is an open-source project and we welcome contributions from the community. Whether you're fixing a bug, improving the documentation, or adding a new feature, we'd love to have your help!
+Helix is an open-source project, and we welcome contributions! Whether it's fixing bugs, improving documentation, or adding new features, your contributions are valuable.
 
-- [Submit issues](https://github.com/kneorain/helix-lang/issues) and [pull requests](https://github.com/kneorain/helix-lang/pulls) on GitHub.
-- Read our [Contributing Guide](CONTRIBUTING.md) to get started.
+- [Submit Issues](https://github.com/kneorain/helix-lang/issues)
+- [Submit Pull Requests](https://github.com/kneorain/helix-lang/pulls)
+
+Read our [Contributing Guide](CONTRIBUTING.md) for more details.
+
+---
 
 ## License
 
-Helix is released under the Attribution 4.0 International License. See the [LICENSE](https://github.com/kneorain/helix-lang/blob/main/license) file for details.
+Helix is licensed under the Attribution 4.0 International License. See the [LICENSE](https://github.com/kneorain/helix-lang/blob/main/license) for more details.
+
+---
 
 ## Acknowledgements
 
-The Helix project is made possible by the hard work and dedication of our contributors. Thank you to everyone who are helping make Helix a reality!
+We want to thank all contributors for their efforts in making Helix a reality. Your work is appreciated!
 
 <div align="center">
   <a href="https://github.com/kneorain/helix-lang/graphs/contributors">
-  <img src="https://contrib.rocks/image?repo=kneorain/helix-lang">
-</a>
+    <img src="https://contrib.rocks/image?repo=kneorain/helix-lang">
+  </a>
 </div>
 
---------------------------------------------------------------------------------
+---
 
 Happy coding with Helix! 🚀
 
---------------------------------------------------------------------------------
+---
 
-### Links
+## Links
 
 - [Official Website](https://helix-lang.com)
 - [Documentation](https://helix-lang.com/docs)
