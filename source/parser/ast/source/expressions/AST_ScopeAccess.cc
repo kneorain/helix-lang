@@ -14,10 +14,11 @@
 
 __AST_BEGIN::node {
 PARSE_SIG(ScopeAccess) {
-    std::string eysa;
     if (tokens->empty()) [[unlikely]] {
         return 0;
     }
+
+    return 0;
 }
 
 TEST_SIG(ScopeAccess) {

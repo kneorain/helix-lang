@@ -5,6 +5,8 @@ set_description("The Helix Compiler. Python's Simplicity, Rust inspired Syntax, 
 add_rules("mode.debug", "mode.release")
 
 local target_tripple
+local abi
+local runtime
 
 function install_llvm_clang(package)
     local gray = "\027[1;30m"
@@ -54,12 +56,7 @@ function get_runtime(abi)
 		return "stdc++_static"
 	elseif abi == "msvc"
 	then
-		if is_mode("debug")
-		then
-			return "MTd"
-		else
-			return "MT"
-		end
+		return "MT"
 	end
 	return "" -- error?
 end
@@ -103,9 +100,6 @@ function setup_macos()
 end
 
 function setup_debug()
-    print("mode: \027[1;31mdebug\027[0m")
-    print("warnings: \027[1;31mall\027[0m")
-    print("symbols: \027[1;31mall\027[0m")
 
 	set_symbols ("debug") -- Generate debug symbols
 	set_optimize("none")  -- Disable optimization
@@ -114,14 +108,11 @@ function setup_debug()
 end
 
 function setup_release()
-    print("mode: \027[1;32mrelease\027[0m")
-    print("warnings: \027[1;33mless\027[0m")
-    print("symbols: \027[1;33mnone\027[0m")
 
 	set_symbols ("hidden")     -- Hide symbols
 	set_optimize("aggressive") -- Enable maximum optimization
 	add_defines ("NDEBUG")     -- Define NDEBUG macro
-    set_warnings("less")
+    set_warnings("none")
 end
 
 local function setup_build_folder()
@@ -131,11 +122,6 @@ local function setup_build_folder()
 end
 
 local function setup_env()
-    local abi     = get_abi()
-    local runtime = get_runtime(abi)
-
-
-    print("os target: \027[1;33m" .. os.host() .. "\027[0m")
 	if os.host() == "windows"
 	then
 		setup_windows()
@@ -155,17 +141,12 @@ local function setup_env()
 		setup_release()
 	end
 
-	print("build multi-core: \027[1;33mtrue\027[0m")
 	set_policy("build.across_targets_in_parallel", true) -- optimization
 
     -- Set the C++ Standard
-	print("language: \027[1;33mc++23\027[0m")
 	set_languages("c++23")
 
     -- Set the runtime
-    print("abi: \027[1;33m" .. abi .. "\027[0m")
-    print("runtime: \027[1;33m" .. runtime .. "\027[0m")
-    print("target tripple: \027[1;33m" .. os.arch() .. "-" .. abi .. "-" .. os.host() .. "\027[0m")
     set_runtimes(runtime)
 end
 
@@ -192,7 +173,120 @@ local function helix_src_setup()
 	add_files("libs/neo-panic/**.cc") -- add all files in the neo-json directory
 end
 
-target_tripple = os.arch() .. "-" .. get_abi() .. "-" .. os.host()
+function sleep(seconds)
+    local start = os.mclock()
+    while os.mclock() - start < seconds do end
+end
+
+local function print_all_info()
+    print("\n\n")
+
+    local yellow = "\027[1;33m"
+    local green = "\027[1;32m"
+    local magenta = "\027[1;35m"
+    local cyan = "\027[1;36m"
+    local blue = "\027[1;34m"
+    local reset = "\027[0m"
+
+    if is_mode("release")
+    then
+        print(yellow .. "#===--------------------- " .. cyan .. "Welcome to Helix " .. yellow .. "---------------------===#")
+        print(yellow .. "#                                                                  #")
+        print(yellow .. "#  " .. reset .. "Thank you for using Helix, part of the Helix Project!" .. yellow .. "           #")
+        print(yellow .. "#                                                                  #")
+        print(yellow .. "#  " .. reset .. "Helix is licensed under the " .. magenta .. "Creative Commons Attribution 4.0" .. yellow .. "    #")
+        print(yellow .. "#  " .. magenta .. "International (CC BY 4.0)." .. yellow .. "                                      #")
+        print(yellow .. "#                                                                  #")
+        print(yellow .. "#  " .. reset .. "This means you're free to use, modify, and distribute Helix," .. yellow .. "    #")
+        print(yellow .. "#  " .. reset .. "even for commercial purposes, as long as you give proper" .. yellow .. "        #")
+        print(yellow .. "#  " .. reset .. "credit and indicate if any changes were made. For more" .. yellow .. "          #")
+        print(yellow .. "#  " .. reset .. "information, visit the link below." .. yellow .. "                              #")
+        print(yellow .. "#  " .. cyan .. "https://creativecommons.org/licenses/by/4.0/" .. yellow .. "                    #")
+        print(yellow .. "#                                                                  #")
+        print(yellow .. "#  " .. magenta .. "SPDX-License-Identifier: " .. reset .. "CC-BY-4.0" .. yellow .. "                              #")
+        print(yellow .. "#  " .. reset .. "Copyright (c) 2024 " .. cyan .. "Helix Project" .. yellow .. "                                #")
+        print(yellow .. "#                                                                  #")
+        print(yellow .. "#===------------------------------------------------------------===#" .. reset)
+
+        print("\n\n")
+    end
+
+    if is_mode("debug")
+    then
+        print("skipping checks:")
+    else
+        print("starting checks (switch to debug mode to skip checks):")
+    end
+
+	if is_mode("debug")
+	then
+        sleep(math.random(1, 10))
+        print("  mode: \027[1;31mdebug\027[0m")
+        sleep(math.random(1, 10))
+        print("  warnings: \027[1;31mall\027[0m")
+        sleep(math.random(1, 10))
+        print("  symbols: \027[1;31mall\027[0m")
+    else
+        sleep(math.random(1, 10))
+        print("  mode: \027[1;32mrelease\027[0m")
+        sleep(math.random(1, 10))
+        print("  warnings: \027[1;33mless\027[0m")
+        sleep(math.random(1, 10))
+        print("  symbols: \027[1;33mnone\027[0m")
+    end
+
+    print("  os target: \027[1;33m" .. os.host() .. "\027[0m")
+	sleep(math.random(1, 20))
+    print("  build multi-core: \027[1;33mtrue\027[0m")
+	sleep(math.random(1, 20))
+    print("  language: \027[1;33mc++23\027[0m")
+    sleep(math.random(1, 20))
+    print("  abi: \027[1;33m" .. abi .. "\027[0m")
+    sleep(math.random(1, 20))
+    print("  runtime: \027[1;33m" .. runtime .. "\027[0m")
+    sleep(math.random(1, 20))
+    print("  target tripple: \027[1;33m" .. target_tripple .. "\027[0m")
+    
+    sleep(500)
+    
+    if is_mode("debug")
+    then
+        print("\n\n")
+        print("starting build")
+    else
+        print("\n\n")
+        print("checking for components:")
+
+        sleep(2000)
+
+        -- loop thrugh all the folders along with thier subdirectories (do not include files)
+        for _, dir in ipairs(os.dirs("source/**")) do
+            -- Print directory name
+            print("  - found \027[1;33m\"" .. path.filename(dir) .. "\"\027[0m")
+
+            -- add a small delay between 0.1 - 0.3 seconds
+            sleep(math.random(10, 30))
+
+            -- loop through all files inside the directory
+            for _, file in ipairs(os.files(dir .. "/**")) do
+                print("  - found \027[1;33m\"" .. path.basename(path.filename(file)) .. "\"\027[0m")
+                -- add a small delay between 0.1 - 0.3 seconds
+                sleep(math.random(10, 30))
+            end
+        end
+
+        print("\n\n")
+
+        sleep(2000)
+        print("checks complete, starting build")
+    end
+
+    print("\n\n")
+end
+
+abi     = get_abi()
+runtime = get_runtime(abi)
+target_tripple = os.arch() .. "-" .. abi .. "-" .. os.host()
 
 -- Define the LLVM and Clang package
 package("llvm-clang")
@@ -228,6 +322,9 @@ target("tests")
 target_end()
 
 target("helix") -- target config defined in the config seciton
+    before_build(function (target)
+        print_all_info()
+    end)
     set_kind("binary")
     set_languages("c++23")
 target_end() -- empty target
@@ -276,4 +373,3 @@ target("helix-api")
         file:close()
     end)
 target_end()
-print("-----------------------------------------------------------------------------------------------")
