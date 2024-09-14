@@ -12,8 +12,8 @@
 
 #include "parser/ast/include/AST.hh"
 
-namespace parser::ast::node {
-ParseResult RangeLoop::parse() {
+__AST_NODE_BEGIN {
+PARSE_SIG(RangeLoop) {
     if (tokens->empty()) [[unlikely]] {
         return 0;
     }
@@ -21,13 +21,13 @@ ParseResult RangeLoop::parse() {
     return 0;
 }
 
-bool RangeLoop::test() {
+TEST_SIG(RangeLoop) {
     if (tokens->empty()) [[unlikely]] {
         return false;
     }
     return false;
 }
 
-void RangeLoop::accept(Visitor &visitor) const { visitor.visit(*this); }
+VISITOR_IMPL(RangeLoop);
 
-}  // namespace __AST_BEGIN::node
+}  // namespace __AST_NODE_BEGIN

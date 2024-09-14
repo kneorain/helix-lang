@@ -12,8 +12,8 @@
 
 #include "parser/ast/include/AST.hh"
 
-namespace parser::ast::node {
-ParseResult ArrayAccess::parse() {
+__AST_NODE_BEGIN {
+PARSE_SIG(ArrayAccess) {
     if (tokens->empty()) [[unlikely]] {
         return 0;
     }
@@ -21,13 +21,13 @@ ParseResult ArrayAccess::parse() {
     return 0;
 }
 
-bool ArrayAccess::test() {
+TEST_SIG(ArrayAccess) {
     if (tokens->empty()) [[unlikely]] {
         return false;
     }
     return false;
 }
 
-void ArrayAccess::accept(Visitor &visitor) const { visitor.visit(*this); }
+VISITOR_IMPL(ArrayAccess);
 
-}  // namespace __AST_BEGIN::node
+}  // namespace __AST_NODE_BEGIN

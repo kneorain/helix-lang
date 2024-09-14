@@ -14,8 +14,8 @@
 
 // PathAccess := (DotAccess | ScopeAccess)*
 
-namespace parser::ast::node {
-ParseResult PathAccess::parse() {
+__AST_NODE_BEGIN {
+PARSE_SIG(PathAccess) {
     if (tokens->empty()) [[unlikely]] {
         return 0;
     }
@@ -23,7 +23,7 @@ ParseResult PathAccess::parse() {
     return 0;
 }
 
-bool PathAccess::test() {
+TEST_SIG(PathAccess) {
     if (tokens->empty()) [[unlikely]] {
         return false;
     }
@@ -31,6 +31,5 @@ bool PathAccess::test() {
     return false;
 }
 
-void PathAccess::accept(Visitor &visitor) const { visitor.visit(*this); }
-
-}  // namespace __AST_BEGIN::node
+VISITOR_IMPL(PathAccess);
+}  // namespace __AST_NODE_BEGIN

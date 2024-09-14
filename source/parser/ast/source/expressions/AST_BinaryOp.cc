@@ -12,8 +12,8 @@
 
 #include "parser/ast/include/AST.hh"
 
-namespace parser::ast::node {
-ParseResult BinaryOp::parse() {
+__AST_NODE_BEGIN {
+PARSE_SIG(BinaryOp) {
     if (tokens->empty()) [[unlikely]] {
         return 0;
     }
@@ -21,13 +21,13 @@ ParseResult BinaryOp::parse() {
     return 0;
 }
 
-bool BinaryOp::test() {
+TEST_SIG(BinaryOp) {
     if (tokens->empty()) [[unlikely]] {
         return false;
     }
     return false;
 }
 
-void BinaryOp::accept(Visitor &visitor) const { visitor.visit(*this); }
+VISITOR_IMPL(BinaryOp);
 
-}  // namespace __AST_BEGIN::node
+}  // namespace __AST_NODE_BEGIN

@@ -12,8 +12,8 @@
 
 #include "parser/ast/include/AST.hh"
 
-namespace parser::ast::node {
-ParseResult ConditionalStatement::parse() {
+__AST_NODE_BEGIN {
+PARSE_SIG(ConditionalStatement) {
     if (tokens->empty()) [[unlikely]] {
         return 0;
     }
@@ -21,13 +21,12 @@ ParseResult ConditionalStatement::parse() {
     return 0;
 }
 
-bool ConditionalStatement::test() {
+TEST_SIG(ConditionalStatement) {
     if (tokens->empty()) [[unlikely]] {
         return false;
     }
     return false;
 }
 
-void ConditionalStatement::accept(Visitor &visitor) const { visitor.visit(*this); }
-
-}  // namespace __AST_BEGIN::node
+VISITOR_IMPL(ConditionalStatement);
+}  // namespace __AST_NODE_BEGIN

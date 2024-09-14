@@ -12,8 +12,8 @@
 
 #include "parser/ast/include/AST.hh"
 
-namespace parser::ast::node {
-ParseResult UnaryOp::parse() {
+__AST_NODE_BEGIN {
+PARSE_SIG(UnaryOp) {
     if (tokens->empty()) [[unlikely]] {
         return 0;
     }
@@ -38,13 +38,12 @@ ParseResult UnaryOp::parse() {
     return 0;
 }
 
-bool UnaryOp::test() {
+TEST_SIG(UnaryOp) {
     if (tokens->empty()) [[unlikely]] {
         return false;
     }
     return false;
 }
 
-void UnaryOp::accept(Visitor &visitor) const { visitor.visit(*this); }
-
-}  // namespace __AST_BEGIN::node
+VISITOR_IMPL(UnaryOp);
+}  // namespace __AST_NODE_BEGIN

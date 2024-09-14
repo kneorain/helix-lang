@@ -19,7 +19,7 @@
 #include "parser/ast/include/nodes/nodes.hh"
 #include "token/include/token_list.hh"
 
-namespace parser::ast::node {
+__AST_NODE_BEGIN {
 using namespace token;
 // Control Flow
 class MatchExpression final : public Expression {
@@ -194,6 +194,6 @@ class DotSeparatedID final : public Expression { // PATH so id::id::id...
         TO_JSON_RETURN(node_json);
     }
 };
-}  // namespace __AST_BEGIN::node
+}  // namespace __AST_NODE_BEGIN
 
 #endif  // __AST_EXPR_NODES_HH__

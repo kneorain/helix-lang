@@ -17,6 +17,7 @@
 #define TEST_SIG(Tx) bool Tx::test()
 #define VISITOR_IMPL(Tx) void Tx::accept(Visitor &visitor) const { visitor.visit(*this); }
 #define __AST_BEGIN namespace parser::ast
+#define __AST_NODE_BEGIN namespace parser::ast::node
 #define __AST_N parser::ast
 
 #endif // __AST_CORE_DEF__

@@ -12,8 +12,8 @@
 
 #include "parser/ast/include/AST.hh"
 
-namespace parser::ast::node {
-ParseResult Literal::parse() {
+__AST_NODE_BEGIN {
+PARSE_SIG(Literal) {
     if (tokens->empty()) [[unlikely]] {
         return 0;
     }
@@ -43,7 +43,7 @@ ParseResult Literal::parse() {
     return 0;
 }
 
-bool Literal::test() {
+TEST_SIG(Literal) {
     if (tokens->empty()) [[unlikely]] {
         return false;
     }
@@ -70,5 +70,5 @@ bool Literal::test() {
     return false;
 }
 
-void Literal::accept(Visitor &visitor) const { visitor.visit(*this); }
-}  // namespace __AST_BEGIN::node
+VISITOR_IMPL(Literal);
+}  // namespace __AST_NODE_BEGIN

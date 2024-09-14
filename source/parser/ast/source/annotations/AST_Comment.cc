@@ -12,8 +12,8 @@
 
 #include "parser/ast/include/AST.hh"
 
-namespace parser::ast::node {
-ParseResult Comment::parse() {
+__AST_NODE_BEGIN {
+PARSE_SIG(Comment) {
     if (tokens->empty()) [[unlikely]] {
         return 0;
     }
@@ -21,13 +21,13 @@ ParseResult Comment::parse() {
     return 0;
 }
 
-bool Comment::test() {
+TEST_SIG(Comment) {
     if (tokens->empty()) [[unlikely]] {
         return false;
     }
     return false;
 }
 
-void Comment::accept(Visitor &visitor) const { visitor.visit(*this); }
+VISITOR_IMPL(Comment);
 
-}  // namespace __AST_BEGIN::node
+}  // namespace __AST_NODE_BEGIN

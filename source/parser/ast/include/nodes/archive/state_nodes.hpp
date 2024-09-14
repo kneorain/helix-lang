@@ -17,7 +17,7 @@
 #include "parser/ast/include/ast.hh"
 #include "parser/ast/include/nodes/nodes.hh"
 
-namespace parser::ast::node {
+__AST_NODE_BEGIN {
 using namespace token;
 
 // Control Flow
@@ -85,6 +85,6 @@ class BlockStatement final : public Statement {
     AST_NODE_METHODS(BlockStatement);
     NodePtr<Suite> suite;
 };
-}  // namespace __AST_BEGIN::node
+}  // namespace __AST_NODE_BEGIN
 
 #endif  // __AST_STATE_NODES_HH__

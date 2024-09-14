@@ -14,8 +14,8 @@
 
 // Assignemnt := identifier = expresion;
 
-namespace parser::ast::node {
-ParseResult Assignment::parse() {
+__AST_NODE_BEGIN {
+PARSE_SIG(Assignment) {
     if (tokens->empty()) [[unlikely]] {
         return 0;
     }
@@ -23,13 +23,13 @@ ParseResult Assignment::parse() {
     return 0;
 }
 
-bool Assignment::test() {
+TEST_SIG(Assignment) {
     if (tokens->empty()) [[unlikely]] {
         return false;
     }
     return false;
 }
 
-void Assignment::accept(Visitor &visitor) const { visitor.visit(*this); }
+VISITOR_IMPL(Assignment);
 
-}  // namespace __AST_BEGIN::node
+}  // namespace __AST_NODE_BEGIN

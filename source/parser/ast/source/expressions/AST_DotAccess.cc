@@ -14,8 +14,8 @@
 
 #define __HIDE_FROM_LIBHELIX__
 
-namespace parser::ast::node {
-ParseResult DotAccess::parse() {
+__AST_NODE_BEGIN {
+PARSE_SIG(DotAccess) {
     if (tokens->empty()) [[unlikely]] {
         return 0;
     }
@@ -29,13 +29,12 @@ ParseResult DotAccess::parse() {
     return 0;
 }
 
-bool DotAccess::test() {
+TEST_SIG(DotAccess) {
     if (tokens->empty()) [[unlikely]] {
         return false;
     }
     return false;
 }
 
-void DotAccess::accept(Visitor &visitor) const { visitor.visit(*this); }
-
-}  // namespace __AST_BEGIN::node
+VISITOR_IMPL(DotAccess);
+}  // namespace __AST_NODE_BEGIN

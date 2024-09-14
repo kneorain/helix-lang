@@ -12,7 +12,7 @@
 
 #include "parser/ast/include/AST.hh"
 
-__AST_BEGIN::node {
+__AST_NODE_BEGIN {
 PARSE_SIG(ScopeAccess) {
     if (tokens->empty()) [[unlikely]] {
         return 0;
@@ -28,5 +28,5 @@ TEST_SIG(ScopeAccess) {
     return false;
 }
 
-VISITOR_IMPL(ScopeAccess);
-}  // namespace __AST_BEGIN::node
+VISITOR_IMPL(ScopeAccess);;
+}  // namespace __AST_NODE_BEGIN

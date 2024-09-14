@@ -12,8 +12,8 @@
 
 #include "parser/ast/include/AST.hh"
 
-namespace parser::ast::node {
-ParseResult ElseStatement::parse() {
+__AST_NODE_BEGIN {
+PARSE_SIG(ElseStatement) {
     if (tokens->empty()) [[unlikely]] {
         return 0;
     }
@@ -21,13 +21,13 @@ ParseResult ElseStatement::parse() {
     return 0;
 }
 
-bool ElseStatement::test() {
+TEST_SIG(ElseStatement) {
     if (tokens->empty()) [[unlikely]] {
         return false;
     }
     return false;
 }
 
-void ElseStatement::accept(Visitor &visitor) const { visitor.visit(*this); }
+VISITOR_IMPL(ElseStatement);
 
-}  // namespace __AST_BEGIN::node
+}  // namespace __AST_NODE_BEGIN

@@ -16,7 +16,7 @@
 
 #include "parser/ast/include/ast.hh"
 
-namespace parser::ast::node {
+__AST_NODE_BEGIN {
 using namespace token;
 
 class UntypedParameter;
@@ -257,6 +257,6 @@ class ExpressionList final : public ASTBase {
     NodeList<Expression> expressions;
 };
 
-}  // namespace __AST_BEGIN::node
+}  // namespace __AST_NODE_BEGIN
 
 #endif  // __AST_NODES_HH__

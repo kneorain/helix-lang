@@ -15,8 +15,8 @@
 #include "parser/ast/include/AST_interface.hh"
 #include "token/include/token_list.hh"
 
-namespace parser::ast::node {
-ParseResult FunctionCall::parse() {
+__AST_NODE_BEGIN {
+PARSE_SIG(FunctionCall) {
     if (tokens->empty()) [[unlikely]] {
         return 0;
     }
@@ -68,13 +68,12 @@ ParseResult FunctionCall::parse() {
     return len;
 }
 
-bool FunctionCall::test() {
+TEST_SIG(FunctionCall) {
     if (tokens->empty()) [[unlikely]] {
         return false;
     }
     return false;
 }
 
-void FunctionCall::accept(Visitor &visitor) const { visitor.visit(*this); }
-
-}  // namespace __AST_BEGIN::node
+VISITOR_IMPL(FunctionCall);
+}  // namespace __AST_NODE_BEGIN

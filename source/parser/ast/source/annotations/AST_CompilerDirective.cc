@@ -12,8 +12,8 @@
 
 #include "parser/ast/include/AST.hh"
 
-namespace parser::ast::node {
-ParseResult CompilerDirective::parse() {
+__AST_NODE_BEGIN {
+PARSE_SIG(CompilerDirective) {
     if (tokens->empty()) [[unlikely]] {
         return 0;
     }
@@ -21,13 +21,13 @@ ParseResult CompilerDirective::parse() {
     return 0;
 }
 
-bool CompilerDirective::test() {
+TEST_SIG(CompilerDirective) {
     if (tokens->empty()) [[unlikely]] {
         return false;
     }
     return false;
 }
 
-void CompilerDirective::accept(Visitor &visitor) const { visitor.visit(*this); }
+VISITOR_IMPL(CompilerDirective);
 
-}  // namespace __AST_BEGIN::node
+}  // namespace __AST_NODE_BEGIN
