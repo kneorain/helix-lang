@@ -17,7 +17,7 @@
 
 __AST_NODE_BEGIN {
 PARSE_SIG(FunctionCall) {
-    if (tokens->empty()) [[unlikely]] {
+    if (tokens == nullptr || tokens->empty()) [[unlikely]] {
         return 0;
     }
 
@@ -27,49 +27,30 @@ PARSE_SIG(FunctionCall) {
     i32 len = 0;
 
     // Parse the function name
-    callee = new PathAccess(*tokens);
-    len += 1;
+    callee = make_node<PathAccess>(*tokens);
+    len += callee->parse();
 
-    i32 _len = 0;
+    print("len: ", len);
 
-    auto slice = tokens->slice(len);
-    tokens = &slice;
+    /*
+    0x1 : open paren
+    0x2 : close paren
+    0x3 : generic access
+    0x4 : comma
+    0x5 : expression
 
-    for (auto &tok : *tokens) {
-        if (tok->token_kind() == token::tokens::PUNCTUATION_OPEN_PAREN) {
-            len += 1;
-            tok.advance();
-            continue;
-        }
-        
-        if (tok->token_kind() == token::tokens::PUNCTUATION_CLOSE_PAREN) {
-            len += 1;
-            tok.advance();
-            break;
-        }
+    */
 
-        if (tok->token_kind() == token::tokens::PUNCTUATION_COMMA) {
-            len += 1;
-            tok.advance();
-            continue;
-        }
+    auto slice = tokens->slice(len); // starting at ()
 
-        token::TokenList slice = tokens->slice(len);
-        token::print_tokens(slice);
-        auto *expr_node        = get_Expression(slice);
-        
-        if (expr_node != nullptr) {
-            args.push_back(expr_node);
-            tok.advance(_len = expr_node->parse());
-            len += _len;
-        }
-    }
+    token::print_tokens(slice);
+
 
     return len;
 }
 
 TEST_SIG(FunctionCall) {
-    if (tokens->empty()) [[unlikely]] {
+    if (tokens == nullptr || tokens->empty()) [[unlikely]] {
         return false;
     }
     return false;

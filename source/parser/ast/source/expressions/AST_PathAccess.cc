@@ -10,21 +10,32 @@
 //                                                                                                //
 //====----------------------------------------------------------------------------------------====//
 
+#include "neo-pprint/include/hxpprint.hh"
 #include "parser/ast/include/AST.hh"
+#include "parser/ast/include/AST_types.hh"
+#include "parser/ast/include/nodes/AST_generate.hh"
 
 // PathAccess := (DotAccess | ScopeAccess)*
 
 __AST_NODE_BEGIN {
 PARSE_SIG(PathAccess) {
-    if (tokens->empty()) [[unlikely]] {
+    ParseResult len = 0;
+
+    if (tokens == nullptr || tokens->empty()) [[unlikely]] {
         return 0;
     }
 
-    return 0;
+    auto tmp = make_node<ScopeAccess>(*tokens);
+
+    len += tmp->parse();
+
+    paths = tmp->paths;
+
+    return len;
 }
 
 TEST_SIG(PathAccess) {
-    if (tokens->empty()) [[unlikely]] {
+    if (tokens == nullptr || tokens->empty()) [[unlikely]] {
         return false;
     }
 

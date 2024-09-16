@@ -64,28 +64,28 @@ NodeT<Expression> get_simple_Expression(token::TokenList &tokens) {
 
         switch (tok->token_kind()) {
             case IS_LITERAL:
-                return new node::Literal(tokens);
+                return make_node<node::Literal>(tokens);
 
             case IS_IDENTIFIER: {
 
                 if (has_peek) {
                     switch (peek->get().token_kind()) {
                         case token::OPERATOR_SCOPE:
-                            return new node::ScopeAccess(tokens);
+                            return make_node<node::ScopeAccess>(tokens);
                         case token::PUNCTUATION_OPEN_PAREN:
-                            return new node::FunctionCall(tokens);
+                            return make_node<node::FunctionCall>(tokens);
                         default:
-                            return new node::Identifier(tokens);
+                            return make_node<node::Identifier>(tokens);
                     }
                 }
-                return new node::Identifier(tokens);
+                return make_node<node::Identifier>(tokens);
             }
 
             case IS_OPERATOR:
-                return new node::UnaryOp(tokens);
+                return make_node<node::UnaryOp>(tokens);
 
             case token::PUNCTUATION_OPEN_PAREN:
-                return new node::Parenthesized(tokens);
+                return make_node<node::Parenthesized>(tokens);
 
             default:
                 break;
@@ -115,4 +115,4 @@ Expression::Expression() = default;
 Expression::Expression(token::TokenList &tokens)
     : Node(tokens)
     , tokens(&tokens) {}
-}  // namespace __AST_BEGIN
+}  // namespace parser::ast

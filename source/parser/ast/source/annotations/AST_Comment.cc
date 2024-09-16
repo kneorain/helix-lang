@@ -14,7 +14,7 @@
 
 __AST_NODE_BEGIN {
 PARSE_SIG(Comment) {
-    if (tokens->empty()) [[unlikely]] {
+    if (tokens == nullptr || tokens->empty()) [[unlikely]] {
         return 0;
     }
 
@@ -22,7 +22,7 @@ PARSE_SIG(Comment) {
 }
 
 TEST_SIG(Comment) {
-    if (tokens->empty()) [[unlikely]] {
+    if (tokens == nullptr || tokens->empty()) [[unlikely]] {
         return false;
     }
     return false;

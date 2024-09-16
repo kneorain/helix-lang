@@ -11,6 +11,12 @@
 //
 //===------------------------------------------------------------------------------------------===//
 
+// if DEBUG and is windows
+#if defined(DEBUG) && defined(_WIN32)
+    #define _CRTDBG_MAP_ALLOC
+    #include <crtdbg.h>
+#endif
+
 #include <chrono>
 #include <cstdio>
 #include <memory>
@@ -32,8 +38,6 @@ int compile(int argc, char **argv) {
     using namespace token;
     using namespace parser::lexer;
     using namespace parser::preprocessor;
-
-    printf("");
 
     // relative to current working dir in POSIX shell (cmd/bash)
     command_line::CLIArgs parsed_args(argc, argv, "0.0.1-alpha-0112");
@@ -61,7 +65,6 @@ int compile(int argc, char **argv) {
     if (parsed_args.emit_ast) {
         // for testing only change to parse an entire program when done with ast
         auto ast = parser::ast::get_Expression(tokens);
-        
         ast->parse();
 
         end        = std::chrono::high_resolution_clock::now();

@@ -22,7 +22,7 @@
 #include "parser/ast/include/AST_jsonify_visitor.hh"
 
 __AST_BEGIN::visitors {
-neo::json get_node_json(const Node *node) {
+neo::json get_node_json(const NodeT<>& node) {
     auto visitor = JsonifyVisitor();
     node->accept(visitor);
     return visitor.json;

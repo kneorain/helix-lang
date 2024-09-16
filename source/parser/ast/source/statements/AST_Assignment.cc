@@ -16,7 +16,7 @@
 
 __AST_NODE_BEGIN {
 PARSE_SIG(Assignment) {
-    if (tokens->empty()) [[unlikely]] {
+    if (tokens == nullptr || tokens->empty()) [[unlikely]] {
         return 0;
     }
 
@@ -24,7 +24,7 @@ PARSE_SIG(Assignment) {
 }
 
 TEST_SIG(Assignment) {
-    if (tokens->empty()) [[unlikely]] {
+    if (tokens == nullptr || tokens->empty()) [[unlikely]] {
         return false;
     }
     return false;

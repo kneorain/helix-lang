@@ -14,7 +14,7 @@
 
 __AST_NODE_BEGIN {
 PARSE_SIG(WhileLoop) {
-    if (tokens->empty()) [[unlikely]] {
+    if (tokens == nullptr || tokens->empty()) [[unlikely]] {
         return 0;
     }
 
@@ -22,7 +22,7 @@ PARSE_SIG(WhileLoop) {
 }
 
 TEST_SIG(WhileLoop) {
-    if (tokens->empty()) [[unlikely]] {
+    if (tokens == nullptr || tokens->empty()) [[unlikely]] {
         return false;
     }
     return false;

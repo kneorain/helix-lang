@@ -43,7 +43,7 @@ class Node;
 
 /// NodeT is a unique pointer to a T (where T is a AST node)
 template <typename T = Node>
-using NodeT = T*;
+using NodeT = std::shared_ptr<T>;
 
 /// NodeV is a vector of NodeT
 template <typename T = Node>
@@ -82,7 +82,7 @@ inline constexpr NodeT<T> make_node(Args &&...args) {
     // return a heap-alloc unique pointer to the new node with
     // perfect forwarding of the arguments allowing the caller
     // to identify any errors in the arguments at compile time
-    return NodeT<T>(std::forward<Args>(args)...);
+    return std::make_shared<T>(std::forward<Args>(args)...);
 }
 }  // namespace __AST_BEGIN
 

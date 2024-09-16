@@ -40,6 +40,7 @@
                                       \
     GENERATE(Identifier, DERIVE,      \
         token::Token value;           \
+        Identifier(token::Token value) : value(value) {} \
     )                                 \
                                       \
     GENERATE(DotAccess, DERIVE,       \
@@ -56,6 +57,7 @@
                                       \
     GENERATE(FunctionCall, DERIVE,    \
         NodeT<PathAccess> callee;     \
+        NodeT<Expression> generics;   \
         NodeV<Expression> args;       \
         NodeV<Assignment> defaults;   \
     )                                 \

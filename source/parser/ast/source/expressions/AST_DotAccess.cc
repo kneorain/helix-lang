@@ -16,7 +16,7 @@
 
 __AST_NODE_BEGIN {
 PARSE_SIG(DotAccess) {
-    if (tokens->empty()) [[unlikely]] {
+    if (tokens == nullptr || tokens->empty()) [[unlikely]] {
         return 0;
     }
 
@@ -30,7 +30,7 @@ PARSE_SIG(DotAccess) {
 }
 
 TEST_SIG(DotAccess) {
-    if (tokens->empty()) [[unlikely]] {
+    if (tokens == nullptr || tokens->empty()) [[unlikely]] {
         return false;
     }
     return false;
