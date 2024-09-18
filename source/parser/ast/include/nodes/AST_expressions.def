@@ -56,10 +56,10 @@
     )                                 \
                                       \
     GENERATE(FunctionCall, DERIVE,    \
-        NodeT<PathAccess> callee;     \
+        NodeT<PathAccess> path;       \
         NodeT<Expression> generics;   \
         NodeV<Expression> args;       \
-        NodeV<Assignment> defaults;   \
+        NodeV<Expression> kw_args;    \
     )                                 \
                                       \
     GENERATE(ArrayAccess, DERIVE,     \

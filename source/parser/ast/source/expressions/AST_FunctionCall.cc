@@ -13,37 +13,60 @@
 #include "neo-pprint/include/hxpprint.hh"
 #include "parser/ast/include/AST.hh"
 #include "parser/ast/include/AST_interface.hh"
+#include "parser/ast/include/nodes/AST_generate.hh"
 #include "token/include/token_list.hh"
 
 __AST_NODE_BEGIN {
 PARSE_SIG(FunctionCall) {
+    using namespace token;
+
     if (tokens == nullptr || tokens->empty()) [[unlikely]] {
         return 0;
     }
 
     // FunctionCall ::= AnySeparatedID GenericAccess? '(' (ExpressionList)? ')'
-    // TODO: add support for generic access
 
     i32 len = 0;
+    std::vector<Token*> balance;
 
-    // Parse the function name
-    callee = make_node<PathAccess>(*tokens);
-    len += callee->parse();
+    // we break down the function call into parts
+    // 1. function path
+    // 2. generic access
+    // 3. arguments
 
-    print("len: ", len);
+    // 1. function path
+    path = make_node<PathAccess>(*tokens);
+    len += path->parse();
 
-    /*
-    0x1 : open paren
-    0x2 : close paren
-    0x3 : generic access
-    0x4 : comma
-    0x5 : expression
+    // 2. generic access
+    i32 generic_access_len = len;
+    for (auto &tok : (*tokens).slice(len)) {
+        if (tok->value() == "<") {
+            print("Found generic access at: {}", generic_access_len);
+            len++; // skip the '<'
+            break;
+        }
 
-    */
+        generic_access_len++;
+    }
 
-    auto slice = tokens->slice(len); // starting at ()
+    //generics = make_node<GenericAccess>((*tokens).slice(generic_access_len));
+    //len += generics->parse();
 
-    token::print_tokens(slice);
+    // 3. arguments
+    i32 arguments_len = len;
+    for (auto &tok : (*tokens).slice(len)) {
+        if (tok->value() == "(") {
+            print("Found arguments at: {}", arguments_len);
+            len++; // skip the '('
+            break;
+        }
+
+        arguments_len++;
+    }
+
+    arguments = make_node<ExpressionList>((*tokens).slice(arguments_len));
+    len += arguments->parse();
 
 
     return len;

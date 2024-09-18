@@ -12,10 +12,9 @@
 //===------------------------------------------------------------------------------------------===//
 
 // if DEBUG and is windows
-#if defined(DEBUG) && defined(_WIN32)
-    #define _CRTDBG_MAP_ALLOC
-    #include <crtdbg.h>
-#endif
+#define _SILENCE_CXX23_ALIGNED_UNION_DEPRECATION_WARNING
+#define _SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING
+#define _SILENCE_ALL_CXX17_DEPRECATION_WARNINGS
 
 #include <chrono>
 #include <cstdio>
@@ -92,12 +91,12 @@ int compile(int argc, char **argv) {
 int main(int argc, char **argv) {
     try {
         compile(argc, argv);
-    } catch (error::Panic &) {
-        // if (error::HAS_ERRORED) {
-        // for (const auto& err : error::ERRORS) {
-        //         print(err.to_json());
-        //     }
-        // }
+    } catch (error::Panic &e) {
+        if (error::HAS_ERRORED) {
+        for (const auto& err : error::ERRORS) {
+                print(err.to_json());
+            }
+        }
     }
 }
 
