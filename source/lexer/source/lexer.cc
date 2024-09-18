@@ -88,10 +88,10 @@ inline Token Lexer::process_single_line_comment() {
 
 inline Token Lexer::process_multi_line_comment() {
     auto start         = currentPos;
-    u32  comment_depth = 0;
+    u64  comment_depth = 0;
 
-    u32 start_line = line;
-    u32 start_col  = column;
+    u64 start_line = line;
+    u64 start_col  = column;
 
     while (!is_eof()) {
         switch (current()) {
