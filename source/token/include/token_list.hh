@@ -64,10 +64,10 @@ class TokenList : public std::vector<Token> {
         TokenListIter &operator*();
         std::reference_wrapper<TokenListIter>        operator--();
         std::reference_wrapper<TokenListIter>        operator++();
-        std::reference_wrapper<Token>                advance(const std::int32_t n = 1);
-        std::reference_wrapper<Token>                reverse(const std::int32_t n = 1);
-        std::optional<std::reference_wrapper<Token>> peek(const std::int32_t n = 1) const;
-        std::optional<std::reference_wrapper<Token>> peek_back(const std::int32_t n = 1) const;
+        std::reference_wrapper<Token>                advance(const i32 n = 1);
+        std::reference_wrapper<Token>                reverse(const i32 n = 1);
+        std::optional<std::reference_wrapper<Token>> peek(const i32 n = 1) const;
+        std::optional<std::reference_wrapper<Token>> peek_back(const i32 n = 1) const;
         std::reference_wrapper<Token>                current() const;
         TokenList                                    remaining();
         u64                                          position() const { return cursor_position; }
@@ -126,10 +126,10 @@ class TokenList : public std::vector<Token> {
 
     void      remove_left();
     void      reset();
-    TokenList raw_slice(const std::uint64_t start, const std::int64_t end) const;
-    TokenList&& slice(std::uint64_t start, std::int64_t end = -1);
-    std::pair<TokenList, TokenList> split_at(const std::uint64_t i) const;
-    TokenList                       pop(const std::uint64_t offset = 1);
+    [[nodiscard]] TokenList raw_slice(const u64 start, const i64 end) const;
+    [[nodiscard]] TokenList slice(u64 start, i64 end = -1);
+    std::pair<TokenList, TokenList> split_at(const u64 i) const;
+    TokenList                       pop(const u64 offset = 1);
     const Token                    &pop_front();
     TO_NEO_JSON_IMPL {
         neo::json token_list_json("TokenList");

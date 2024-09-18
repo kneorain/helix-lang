@@ -70,6 +70,7 @@ function setup_windows()
 	add_linkdirs(".\\libs\\llvm-18.1.9-src\\llvm\\lib")
 	add_includedirs(".\\libs\\llvm-18.1.9-src\\clang\\include")
 	add_linkdirs(".\\libs\\llvm-18.1.9-src\\clang\\lib")
+
 end
 
 function setup_linux()
