@@ -105,7 +105,7 @@ struct Errors {
 
 struct CodeError {
     token::Token *pof;  //< point of failure
-    float         err_code;
+    double         err_code;
     bool          mark_pof = true;
     string_vec    fix_fmt_args;
     string_vec    err_fmt_args;
@@ -116,7 +116,7 @@ struct CodeError {
 
 
 struct CompilerError {
-    float      err_code;
+    double      err_code;
     string_vec fix_fmt_args;
     string_vec err_fmt_args;
 };
@@ -143,7 +143,7 @@ class Panic {
 
 
 static inline CodeError create_old_CodeError(token::Token *pof,
-                                             float         err_code,
+                                             const double  err_code,
                                              string_vec    fix_fmt_args = {},
                                              string_vec    err_fmt_args = {},
                                              fix_pair_vec  opt_fixes    = {}) {
