@@ -33,7 +33,7 @@
 #include <vector>
 
 #include "neo-types/include/hxint.hh"
-#include "parser/ast/include/AST_core.def"
+#include "parser/ast/include/core/AST_core.def"
 
 __AST_BEGIN {
 /// ParseResult is just an integer of the tokens consumed

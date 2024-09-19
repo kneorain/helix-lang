@@ -1,3 +1,4 @@
+
 //===------------------------------------------ C++ ------------------------------------------====//
 //                                                                                                //
 //  Part of the Helix Project, under the Attribution 4.0 International license (CC BY 4.0).       //
@@ -9,25 +10,17 @@
 //  Copyright (c) 2024 (CC BY 4.0)                                                                //
 //                                                                                                //
 //====----------------------------------------------------------------------------------------====//
+//                                                                                                //
+//                                                                                                //
+//===-----------------------------------------------------------------------------------------====//
 
-#include "parser/ast/include/AST.hh"
+#ifndef __AST_CONTEXT_H__
+#define __AST_CONTEXT_H__
 
-__AST_NODE_BEGIN {
-PARSE_SIG(RangeLoop) {
-    if (tokens == nullptr || tokens->empty()) [[unlikely]] {
-        return 0;
-    }
+#include "parser/ast/include/core/AST_core.def"
 
-    return 0;
+__AST_BEGIN {
+
 }
 
-TEST_SIG(RangeLoop) {
-    if (tokens == nullptr || tokens->empty()) [[unlikely]] {
-        return false;
-    }
-    return false;
-}
-
-VISITOR_IMPL(RangeLoop);
-
-}  // namespace __AST_NODE_BEGIN
+#endif // __AST_CONTEXT_H__

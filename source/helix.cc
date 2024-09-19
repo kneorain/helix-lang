@@ -26,9 +26,8 @@
 #include "neo-panic/include/error.hh"
 #include "neo-pprint/include/hxpprint.hh"
 #include "lexer/include/lexer.hh"
-#include "parser/ast/include/AST.hh"
-#include "parser/ast/include/AST_jsonify_visitor.hh"
 #include "parser/cpp/fn_signatures.hh"
+#include "parser/ast/include/test.hh"
 #include "parser/preprocessor/include/preprocessor.hh"
 #include "token/include/generate.hh"
 #include "token/include/token_list.hh"
@@ -62,15 +61,14 @@ int compile(int argc, char **argv) {
     auto end = std::chrono::high_resolution_clock::now();
 
     if (parsed_args.emit_ast) {
-        // for testing only change to parse an entire program when done with ast
-        auto ast = parser::ast::get_Expression(tokens);
-        ast->parse();
-
-        end        = std::chrono::high_resolution_clock::now();
-        auto visit = parser::ast::visitors::JsonifyVisitor();
-        ast->accept(visit);
-
-        print(visit.json);
+        // Create a vector to store AST nodes
+        std::vector<std::shared_ptr<my_parser::ASTNode>> ast;
+        
+        if (my_parser::parse_var_decl(tokens, ast)) {
+            std::cout << "Parsed successfully! AST contains " << ast.size() << " node(s).\n";
+        } else {
+            std::cerr << "Parsing failed!\n";
+        }
     }
 
     if (parsed_args.emit_tokens) {
@@ -91,7 +89,7 @@ int compile(int argc, char **argv) {
 int main(int argc, char **argv) {
     try {
         compile(argc, argv);
-    } catch (error::Panic &e) {
+    } catch (error::Panic &) {
         if (error::HAS_ERRORED) {
         for (const auto& err : error::ERRORS) {
                 print(err.to_json());

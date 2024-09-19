@@ -9,24 +9,17 @@
 //  Copyright (c) 2024 (CC BY 4.0)                                                                //
 //                                                                                                //
 //====----------------------------------------------------------------------------------------====//
+//                                                                                                //
+//                                                                                                //
+//===-----------------------------------------------------------------------------------------====//
 
-#include "parser/ast/include/AST.hh"
+#ifndef __AST_MATCHER_H__
+#define __AST_MATCHER_H__
 
-__AST_NODE_BEGIN {
-PARSE_SIG(ConditionalStatement) {
-    if (tokens == nullptr || tokens->empty()) [[unlikely]] {
-        return 0;
-    }
+#include "parser/ast/include/core/AST_core.def"
 
-    return 0;
+__AST_BEGIN {
+
 }
 
-TEST_SIG(ConditionalStatement) {
-    if (tokens == nullptr || tokens->empty()) [[unlikely]] {
-        return false;
-    }
-    return false;
-}
-
-VISITOR_IMPL(ConditionalStatement);
-}  // namespace __AST_NODE_BEGIN
+#endif // __AST_MATCHER_H__

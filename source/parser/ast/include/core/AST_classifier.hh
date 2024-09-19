@@ -9,38 +9,17 @@
 //  Copyright (c) 2024 (CC BY 4.0)                                                                //
 //                                                                                                //
 //====----------------------------------------------------------------------------------------====//
+//                                                                                                //
+//                                                                                                //
+//===-----------------------------------------------------------------------------------------====//
 
-#include "neo-pprint/include/hxpprint.hh"
-#include "parser/ast/include/AST.hh"
-#include "parser/ast/include/AST_types.hh"
-#include "parser/ast/include/nodes/AST_generate.hh"
+#ifndef __AST_CLASSIFIER_H__
+#define __AST_CLASSIFIER_H__
 
-// PathAccess := (DotAccess | ScopeAccess)*
+#include "parser/ast/include/core/AST_core.def"
 
-__AST_NODE_BEGIN {
-PARSE_SIG(PathAccess) {
-    ParseResult len = 0;
+__AST_BEGIN {
 
-    if (tokens == nullptr || tokens->empty()) [[unlikely]] {
-        return 0;
-    }
-
-    auto tmp = make_node<ScopeAccess>(*tokens);
-
-    len += tmp->parse();
-
-    paths = tmp->paths;
-
-    return len;
 }
 
-TEST_SIG(PathAccess) {
-    if (tokens == nullptr || tokens->empty()) [[unlikely]] {
-        return false;
-    }
-
-    return false;
-}
-
-VISITOR_IMPL(PathAccess);
-}  // namespace __AST_NODE_BEGIN
+#endif // __AST_CLASSIFIER_H__

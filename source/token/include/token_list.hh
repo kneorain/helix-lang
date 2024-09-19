@@ -62,6 +62,7 @@ class TokenList : public std::vector<Token> {
         bool           operator==(const TokenListIter &other) const;
         Token         *operator->();  // TODO: Change if a shared ptr is needed
         TokenListIter &operator*();
+        const Token   &operator*() const;
         std::reference_wrapper<TokenListIter>        operator--();
         std::reference_wrapper<TokenListIter>        operator++();
         std::reference_wrapper<Token>                advance(const i32 n = 1);
@@ -141,6 +142,8 @@ class TokenList : public std::vector<Token> {
     void                             insert_remove(TokenList &tokens, u64 start, u64 end);
 
     bool operator==(const TokenList &rhs) const;
+    // impl the [] operator
+    Token &operator[](u64 index) const { return const_cast<Token&>(TokenVec::operator[](index)); }
 };
 
 void print_tokens(token::TokenList &tokens);

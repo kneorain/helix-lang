@@ -203,6 +203,10 @@ Token *TokenList::TokenListIter::operator->() {
 
 TokenList::TokenListIter &TokenList::TokenListIter::operator*() { return *this; }
 
+const Token &TokenList::TokenListIter::operator*() const {
+    return tokens.get()[cursor_position];
+}
+
 std::reference_wrapper<TokenList::TokenListIter> TokenList::TokenListIter::operator--() {
     if ((cursor_position - 1) >= 0) {
         --cursor_position;

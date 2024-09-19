@@ -26,67 +26,76 @@
 //
 //===------------------------------------------------------------------------------------------===//
 
-abstract Allocator:
+abstract Allocator {
     // allocates a block of memory of at least `size` bytes with the specified alignment.
     // returns a pointer to the allocated memory or a null pointer on failure.
-    fn alloc(self, size: usize, alignment: usize) -> *void:
-        ...
+    fn alloc(self, size: usize, alignment: usize) -> *void {}
 
     // deallocates a block of memory previously allocated by `alloc`.
     // the pointer `ptr` must point to the beginning of a block returned by `alloc`.
-    fn dealloc(self, ptr: *void, size: usize, alignment: usize):
-        ...
+    fn dealloc(self, ptr: *void, size: usize, alignment: usize) {}
 
     // reallocates a block of memory to a new size, with the specified alignment.
     // the pointer `ptr` must point to the beginning of a block returned by `alloc`.
     // returns a pointer to the newly allocated memory or a null pointer on failure.
-    fn realloc(self, ptr: *void, old_size: usize, new_size: usize, alignment: usize) -> *void:
-        ...
+    fn realloc(self, ptr: *void, old_size: usize, new_size: usize, alignment: usize) -> *void {}
 
     // optional: allocates a block of memory with default alignment (e.g., 8 or 16 bytes).
-    fn alloc_d(self, size: usize) -> *void:
-        if !self.can_alloc(size, 16):
-            panic SegmentationFault(f"alloc: cant allocate the specified:size}.")
+    fn alloc_d(self, size: usize) -> *void {
+        if !self.can_alloc(size, 16) {
+            panic SegmentationFault(f"alloc: cant allocate the specified:size}.");
+        }
     
-        return self.alloc(size, 16)  // default to 16-byte alignment
+        return self.alloc(size, 16);  // default to 16-byte alignment
+    }
 
     // optional: reallocates memory with default alignment.
-    fn realloc_d(self, ptr: *void, old_size: usize, new_size: usize) -> *void:
-        return self.realloc(ptr, old_size, new_size, 16)  // default to 16-byte alignment
+    fn realloc_d(self, ptr: *void, old_size: usize, new_size: usize) -> *void {
+        return self.realloc(ptr, old_size, new_size, 16);  // default to 16-byte alignment
+    }
 
     // optional: retrieves statistics about the allocator's memory usage.
-    fn get_stats(self) -> AllocatorStats:
-        return AllocatorStats::new()  // return a default stats object
+    fn get_stats(self) -> AllocatorStats {
+        return AllocatorStats::new();  // return a default stats object
+    }
 
     // checks if the allocator can satisfy an allocation of a given size and alignment.
     // useful for checking if the allocator is capable before attempting an allocation.
-    fn can_alloc(self, size: usize, alignment: usize) -> bool:
-        return true  // by default, assume the allocator can handle it
+    fn can_alloc(self, size: usize, alignment: usize) -> bool {
+        return true;  // by default, assume the allocator can handle it
+    }
+}
 
-interface Interop:
+interface Interop {
     // everything here works with tokens
-    eval fn import_to_helix(node: *ast::FFIImportNode) -> code_gen::CGObj:
-        finally:
-            delete node
-            delete node // double free
+    eval fn import_to_helix(node: *ast::FFIImportNode) -> code_gen::CGObj {
+        finally {
+            delete node;
+            delete node; // double free
+        }
 
-        let import_path = *node.value
-        
-        if *node._ffi != "py":
-            panic CompileError("invalid ffi standard")
+        let import_path = *node.value;
+
+        if *node._ffi != "py" {
+            panic CompileError("invalid ffi standard");
+        }
         
         // FusionX
+    }
+}
 
 // structure to hold memory statistics (optional feature)
-struct AllocatorStats:
-    let total_allocations:   usize
-    let total_deallocations: usize
-    let currently_allocated: usize
-    let max_allocated:       usize
+struct AllocatorStats {
+    let total_allocations:   usize;
+    let total_deallocations: usize;
+    let currently_allocated: usize;
+    let max_allocated:       usize;
 
-    fn new() -> AllocatorStats:
+    fn new() -> AllocatorStats {
         return {
-            total_allocations   = 0
-            total_deallocations = 0
-            currently_allocated = 0
+            total_allocations   = 0;
+            total_deallocations = 0;
+            currently_allocated = 0;
         }
+    }
+}

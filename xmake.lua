@@ -171,6 +171,8 @@ local function helix_src_setup()
 	add_headerfiles("libs/neo-pprint/**.hh") -- add all files in the neo-json directory
 	add_headerfiles("libs/neo-types/**.hh")  -- add all files in the neo-json directory
 
+	add_headerfiles("libs/PEGTL/**.hpp")  -- add all files in the neo-json directory
+
 	add_files("libs/neo-panic/**.cc") -- add all files in the neo-json directory
 end
 
