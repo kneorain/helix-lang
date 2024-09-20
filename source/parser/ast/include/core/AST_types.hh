@@ -49,30 +49,6 @@ using NodeT = std::shared_ptr<T>;
 template <typename T = Node>
 using NodeV = std::vector<NodeT<T>>;
 
-/// NodeVP is a unique pointer to a NodeV
-template <typename T>
-using NodeVP = std::unique_ptr<NodeV<T>>;
-
-/// NodeR is a reference to a T
-template <typename T>
-using NodeR = T &;
-
-/// NodeCR is a const reference to a T
-template <typename T>
-using NodeCR = const T &;
-
-/// NodeVR is a reference to a NodeV
-template <typename T>
-using NodeVR = NodeV<T> &;
-
-/// NodeVCR is a const reference to a NodeV
-template <typename T>
-using NodeVCR = const NodeV<T> &;
-
-/// NodeVPR is a reference to a NodeVP
-template <typename T>
-using NodeVPR = NodeVP<T> &;
-
 /// make_node is a helper function to create a new node with perfect forwarding
 /// @tparam T is the type of the node
 /// @param args are the arguments to pass to the constructor of T
