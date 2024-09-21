@@ -53,13 +53,13 @@ __AST_BEGIN {
         /// 'const'
     };
 
-    enum class FunctionQualifier : char {
-        NoExcept,          ///< 'noexcept'
-        Abstract,           ///< 'abstract'
-        Default,           ///< 'default'
-        Delete,            ///< 'delete'
-        /* TODO */ Const,  ///< 'const'
-        /* TODO */ Override ///< 'override'
+    enum class FunctionQualifier : char { // the part after the function signature
+        /* TODO */ NoExcept, ///< 'noexcept'
+        /* TODO */ Abstract, ///< 'abstract'
+        /* TODO */ Default,  ///< 'default'
+        Delete,              ///< 'delete'
+        Const,               ///< 'const'
+        Override             ///< 'override'
 
         /// ONLY allowed in the scope of a UDT:
         /// 'const'

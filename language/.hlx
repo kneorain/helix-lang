@@ -1,3 +1,7 @@
+// this is the language definition for helix
+// this is higher level then ebnf and is used to define the syntax of helix
+// this is a sudo code language that defines the syntax and ast structure of helix
+
 ffi "c++" enum tokens { // tokens in the c++ is defined in the token namespace - token::TOKEN_NAME
     KEYWORD_IF, KEYWORD_ELSE, KEYWORD_UNLESS, KEYWORD_MACRO, KEYWORD_DEFINE, KEYWORD_FUNCTION,
     KEYWORD_OPERATOR, KEYWORD_INLINE, KEYWORD_RETURN, KEYWORD_ENCLOSING, KEYWORD_ASYNC, KEYWORD_SPAWN,
@@ -121,7 +125,7 @@ class ArgumentListExpression:
     arguments[] = $1
 
 class GenericPositionalArgumentExpression:
-    := (class GenericArgumentExpression)$1
+    := (class Expression)$1
     value = $1
 
 class GenericKeywordArgumentExpression:

@@ -1,4 +1,3 @@
-
 //===------------------------------------------ C++ ------------------------------------------====//
 //                                                                                                //
 //  Part of the Helix Project, under the Attribution 4.0 International license (CC BY 4.0).       //

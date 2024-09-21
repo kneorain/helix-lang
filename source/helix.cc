@@ -27,7 +27,6 @@
 #include "neo-pprint/include/hxpprint.hh"
 #include "lexer/include/lexer.hh"
 #include "parser/cpp/fn_signatures.hh"
-#include "parser/ast/include/test.hh"
 #include "parser/preprocessor/include/preprocessor.hh"
 #include "token/include/generate.hh"
 #include "token/include/token_list.hh"
@@ -61,14 +60,7 @@ int compile(int argc, char **argv) {
     auto end = std::chrono::high_resolution_clock::now();
 
     if (parsed_args.emit_ast) {
-        // Create a vector to store AST nodes
-        std::vector<std::shared_ptr<my_parser::ASTNode>> ast;
         
-        if (my_parser::parse_var_decl(tokens, ast)) {
-            std::cout << "Parsed successfully! AST contains " << ast.size() << " node(s).\n";
-        } else {
-            std::cerr << "Parsing failed!\n";
-        }
     }
 
     if (parsed_args.emit_tokens) {
