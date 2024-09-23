@@ -425,7 +425,7 @@ AST_NODE_IMPL(ArgumentListExpression) {
 AST_NODE_IMPL_VISITOR(Jsonify, ArgumentListExpression) {
     std::vector<neo::json> args;
 
-    for (auto &arg : node.args) {
+    for (const auto &arg : node.args) {
         args.push_back(get_node_json(arg));
     }
 
