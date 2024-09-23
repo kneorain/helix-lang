@@ -24,12 +24,12 @@
 
 #include "cli/include/cli.hh"
 #include "driver/include/file_system.hh"
+#include "lexer/include/lexer.hh"
 #include "neo-panic/include/error.hh"
 #include "neo-pprint/include/hxpprint.hh"
-#include "lexer/include/lexer.hh"
+#include "parser/ast/include/AST.hh"
 #include "parser/cpp/fn_signatures.hh"
 #include "parser/preprocessor/include/preprocessor.hh"
-#include "parser/ast/include/AST.hh"
 #include "token/include/token_list.hh"
 
 int compile(int argc, char **argv) {
@@ -69,10 +69,10 @@ int compile(int argc, char **argv) {
     if (parsed_args.emit_ast) {
         // generate ast from the given tokens : stage 2
         auto expr_ast = parser::ast::node::Expression(&tokens);
-        auto ast = expr_ast.parse();
+        auto ast      = expr_ast.parse();
 
         parser::ast::visitor::Jsonify jsonify_visitor;
-        
+
         if (ast.has_value()) {
             ast.value()->accept(jsonify_visitor);
             print(jsonify_visitor.json);
@@ -95,7 +95,7 @@ int main(int argc, char **argv) {
         compile(argc, argv);
     } catch (error::Panic &) {
         if (error::HAS_ERRORED) {
-        for (const auto& err : error::ERRORS) {
+            for (const auto &err : error::ERRORS) {
                 print(err.to_json());
             }
         }
