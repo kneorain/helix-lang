@@ -9,17 +9,23 @@
 //  Copyright (c) 2024 (CC BY 4.0)                                                                //
 //                                                                                                //
 //====----------------------------------------------------------------------------------------====//
-//                                                                                                //
-//                                                                                                //
-//===-----------------------------------------------------------------------------------------====//
 
-#ifndef __AST_MATCHER_H__
-#define __AST_MATCHER_H__
+#ifndef __AST_GENERATE_DEF__
+#define __AST_GENERATE_DEF__
 
-#include "parser/ast/include/config/AST_config.def"
+#define FORWARD_DECL(name) class name;
+#define DECL_PARSE_FUNC(name) ParseResult<name> parse_##name();
+#define NODE_ENUM(name) name,
+#define VISIT_FUNC(name) virtual void visit(const __AST_NODE::name &) = 0;
+#define VISIT_EXTEND(name) void visit(const __AST_NODE::name &node) override;
 
-__AST_BEGIN {
+#define GENERATE_MACRO_HELPER(MACRO) EXPRS(MACRO)
 
-}
+#define GENERATE_NODES_ENUM enum class nodes { GENERATE_MACRO_HELPER(NODE_ENUM) };
+#define GENERATE_NODES_FORWARD_DECLS GENERATE_MACRO_HELPER(FORWARD_DECL)
+#define GENERATE_PARSE_FUNCS GENERATE_MACRO_HELPER(DECL_PARSE_FUNC)
+#define GENERATE_VISIT_FUNCS GENERATE_MACRO_HELPER(VISIT_FUNC)
+#define GENERATE_VISIT_EXTENDS GENERATE_MACRO_HELPER(VISIT_EXTEND)
 
-#endif // __AST_MATCHER_H__
+
+#endif // __AST_GENERATE_DEF__

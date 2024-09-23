@@ -9,17 +9,28 @@
 //  Copyright (c) 2024 (CC BY 4.0)                                                                //
 //                                                                                                //
 //====----------------------------------------------------------------------------------------====//
-//                                                                                                //
-//                                                                                                //
-//===-----------------------------------------------------------------------------------------====//
 
-#ifndef __AST_MATCHER_H__
-#define __AST_MATCHER_H__
+#ifndef __AST_STATEMENTS_DEF__
+#define __AST_STATEMENTS_DEF__
 
-#include "parser/ast/include/config/AST_config.def"
+#define STATES(MACRO)                   \
+    MACRO(CreateIdentifiers_HelperNode) \
+    MACRO(ForPyStatementCore)           \
+    MACRO(ForCStatementCore)            \
+    MACRO(ForStatement)                 \
+    MACRO(WhileStatement)               \
+    MACRO(ElseStatement)                \
+    MACRO(IfStatement)                  \
+    MACRO(SwitchCaseStatement)          \
+    MACRO(SwitchStatement)              \
+    MACRO(YieldStatement)               \
+    MACRO(AliasStatement)               \
+    MACRO(SingleImportStatement)        \
+    MACRO(GroupedStatement)             \
+    MACRO(ImportStatement)              \
+    MACRO(ReturnStatement)              \
+    MACRO(BreakStatement)               \
+    MACRO(ContinueStatement)            \
+    MACRO(ExpressionStatement)
 
-__AST_BEGIN {
-
-}
-
-#endif // __AST_MATCHER_H__
+#endif  // __AST_STATEMENTS_DEF__

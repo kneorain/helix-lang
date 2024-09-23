@@ -1,0 +1,75 @@
+//===------------------------------------------ C++ ------------------------------------------====//
+//                                                                                                //
+//  Part of the Helix Project, under the Attribution 4.0 International license (CC BY 4.0).       //
+//  You are allowed to use, modify, redistribute, and create derivative works, even for           //
+//  commercial purposes, provided that you give appropriate credit, and indicate if changes       //
+//   were made. For more information, please visit: https://creativecommons.org/licenses/by/4.0/  //
+//                                                                                                //
+//  SPDX-License-Identifier: CC-BY-4.0                                                            //
+//  Copyright (c) 2024 (CC BY 4.0)                                                                //
+//                                                                                                //
+//====----------------------------------------------------------------------------------------====//
+
+#ifndef __AST_CONFIG_DEF__
+#define __AST_CONFIG_DEF__
+
+#define PARSE_SIG(Tx) ParseResult Tx::parse()
+#define TEST_SIG(Tx) bool Tx::test()
+#define VISITOR_IMPL(Tx) \
+    void Tx::accept(Visitor &visitor) const { visitor.visit(*this); }
+#define __AST_BEGIN namespace parser::ast
+#define __AST_NODE_BEGIN namespace parser::ast::node
+#define __AST_VISITOR_BEGIN namespace parser::ast::visitor
+#define __AST_N parser::ast
+#define __AST_NODE parser::ast::node
+#define __AST_VISITOR parser::ast::visitor
+
+#define AST_NODE_IMPL(name, ...) \
+    __AST_N::ParseResult<__AST_NODE::name> __AST_NODE::Expression::parse_##name(__VA_ARGS__)
+
+#define AST_BASE_PARSE_IMPL(name, fn) __AST_N::ParseResult<> __AST_NODE::name::fn()
+
+#define AST_NODE_IMPL_VISITOR(visitor, name) \
+    void __AST_VISITOR::visitor::visit(const __AST_NODE::name &node)
+
+#define BASE_CORE_METHODS(name)                                                            \
+  public:                                                                                  \
+    name()                        = delete;                                                \
+    ~name() override              = default;                                               \
+    name(const name &)            = default;                                               \
+    name &operator=(const name &) = default;                                               \
+    name(name &&)                 = default;                                               \
+    name &operator=(name &&)      = default;                                               \
+    void  accept(__AST_VISITOR::Visitor &visitor) const override { visitor.visit(*this); } \
+    [[nodiscard]] nodes       getNodeType() const override { return nodes::name; }         \
+    [[nodiscard]] std::string getNodeName() const override { return #name; }
+
+#define IS_PEEK(x) iter.peek().has_value() && iter.peek().value().get().token_kind() == (x)
+#define RETURN_IF_ERROR(x)                 \
+    if (!x.has_value()) {                  \
+        return std::unexpected(x.error()); \
+    }
+#define IS_NOT_EMPTY                                                                    \
+    if (iter.remaining_n() == 0) {                                                      \
+        return std::unexpected(PARSE_ERROR_MSG("expected a expression, but found nothing")); \
+    }
+#define NOT_IMPLEMENTED return std::unexpected(PARSE_ERROR_MSG("not implemented yet"));
+#define EXPECT_TOK(x)                                                                   \
+    if (iter->token_kind() != (x)) {                                                    \
+        return std::unexpected(PARSE_ERROR(iter.current().get(),                         \
+                                          "expected a " #x " token, but found: " +      \
+                                              iter.current().get().token_kind_repr())); \
+    }
+
+#define CURRENT_TOK iter.current().get()
+
+#ifdef DEBUG
+#define GET_DEBUG_INFO std::string(colors::fg16::green) + std::string(__FILE__) + ":" + std::to_string(__LINE__) + colors::reset + " - "
+#else
+#define GET_DEBUG_INFO ""
+#endif
+
+#define PARSE_ERROR(tok, msg) ParseError(tok, GET_DEBUG_INFO + msg)
+#define PARSE_ERROR_MSG(msg) ParseError(GET_DEBUG_INFO + msg)
+
+#endif  // __AST_CONFIG_DEF__

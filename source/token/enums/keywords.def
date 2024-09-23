@@ -15,7 +15,9 @@
 #ifndef __KEYWORDS_DEF__
 #define __KEYWORDS_DEF__
 
-#define KEYWORD_TOKENS_COUNT 48
+#define KEYWORD_TOKENS_COUNT 49
+
+/* TODO determine if is needs to be removed */
 
 #define KEYWORD_TOKENS(GENERATE)             \
     GENERATE(KEYWORD_IF,        "if"       ) \
@@ -49,6 +51,7 @@
     GENERATE(KEYWORD_ABSTRACT,  "abstract" ) \
     GENERATE(KEYWORD_INTERFACE, "interface") \
     GENERATE(KEYWORD_IS,        "is"       ) \
+    GENERATE(KEYWORD_HAS,       "has"      ) \
     GENERATE(KEYWORD_TRY,       "try"      ) \
     GENERATE(KEYWORD_PANIC,     "panic"    ) \
     GENERATE(KEYWORD_CATCH,     "catch"    ) \

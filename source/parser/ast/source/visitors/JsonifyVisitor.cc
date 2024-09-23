@@ -9,17 +9,20 @@
 //  Copyright (c) 2024 (CC BY 4.0)                                                                //
 //                                                                                                //
 //====----------------------------------------------------------------------------------------====//
-//                                                                                                //
-//                                                                                                //
-//===-----------------------------------------------------------------------------------------====//
 
-#ifndef __AST_MATCHER_H__
-#define __AST_MATCHER_H__
-
+#include "neo-json/include/json.hh"
 #include "parser/ast/include/config/AST_config.def"
+#include "parser/ast/include/types/AST_jsonify_visitor.hh"
 
-__AST_BEGIN {
+__AST_VISITOR_BEGIN {
+    void Jsonify::visit(const parser ::ast ::node ::GenericPositionalArgumentExpression &node) {}
+    void Jsonify::visit(const parser ::ast ::node ::GenericKeywordArgumentExpression &node) {}
+    void Jsonify::visit(const parser ::ast ::node ::GenericArgumentExpression &node) {}
+    void Jsonify::visit(const parser ::ast ::node ::GenericInvocationExpression &node) {}
+    void Jsonify::visit(const parser ::ast ::node ::PathGenericInvocationExpression &node) {}
 
-}
+    
+    void Jsonify::visit(const parser ::ast ::node ::PtrType &node) {}
+    void Jsonify::visit(const parser ::ast ::node ::Type &node) {}
 
-#endif // __AST_MATCHER_H__
+}  // namespace __AST_BEGIN

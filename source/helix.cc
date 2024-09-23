@@ -12,6 +12,7 @@
 //===------------------------------------------------------------------------------------------===//
 
 // if DEBUG and is windows
+#include "parser/ast/include/core/AST_nodes.hh"
 #define _SILENCE_CXX23_ALIGNED_UNION_DEPRECATION_WARNING
 #define _SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING
 #define _SILENCE_ALL_CXX17_DEPRECATION_WARNINGS
@@ -28,7 +29,7 @@
 #include "lexer/include/lexer.hh"
 #include "parser/cpp/fn_signatures.hh"
 #include "parser/preprocessor/include/preprocessor.hh"
-#include "token/include/generate.hh"
+#include "parser/ast/include/AST.hh"
 #include "token/include/token_list.hh"
 
 int compile(int argc, char **argv) {
@@ -59,21 +60,32 @@ int compile(int argc, char **argv) {
     // print the preprocessed tokens
     auto end = std::chrono::high_resolution_clock::now();
 
-    if (parsed_args.emit_ast) {
-        
-    }
-
     if (parsed_args.emit_tokens) {
         // print(tokens.to_json());
         print(tokens.to_json());
         print_tokens(tokens);
     }
 
+    if (parsed_args.emit_ast) {
+        // generate ast from the given tokens : stage 2
+        auto expr_ast = parser::ast::node::Expression(&tokens);
+        auto ast = expr_ast.parse();
+
+        parser::ast::visitor::Jsonify jsonify_visitor;
+        
+        if (ast.has_value()) {
+            ast.value()->accept(jsonify_visitor);
+            print(jsonify_visitor.json);
+        } else {
+            print(ast.error().what());
+        }
+    }
+
     std::chrono::duration<double> diff = end - start;
 
     // Print the time taken in nanoseconds and milliseconds
-    print("time taken: ", diff.count() * 1e+9, " ns");
-    print("            ", diff.count() * 1000, " ms");
+    // print("time taken: ", diff.count() * 1e+9, " ns");
+    // print("            ", diff.count() * 1000, " ms");
 
     return 0;
 }

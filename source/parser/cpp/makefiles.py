@@ -26,7 +26,7 @@ data_to_write = (
 //====----------------------------------------------------------------------------------------====//
 
 #include "parser/ast/include/core/AST.hh"
-#include "parser/ast/include/core/AST_core.def"
+#include "parser/ast/include/config/AST_config.def"
 
 __AST_NODE_BEGIN {
 PARSE_SIG(\0REPLACE\0) {

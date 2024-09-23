@@ -9,17 +9,25 @@
 //  Copyright (c) 2024 (CC BY 4.0)                                                                //
 //                                                                                                //
 //====----------------------------------------------------------------------------------------====//
-//                                                                                                //
-//                                                                                                //
-//===-----------------------------------------------------------------------------------------====//
 
-#ifndef __AST_MATCHER_H__
-#define __AST_MATCHER_H__
+#ifndef __AST_H__
+#define __AST_H__
 
 #include "parser/ast/include/config/AST_config.def"
+#include "parser/ast/include/types/AST_types.hh"
+#include "parser/ast/include/config/AST_generate.hh"
+#include "parser/ast/include/types/AST_visitor.hh"
+#include "parser/ast/include/types/AST_jsonify_visitor.hh"
 
-__AST_BEGIN {
+#include "parser/ast/include/core/AST_nodes.hh"
+#include "parser/ast/include/core/AST_classifier.hh"
+#include "parser/ast/include/core/AST_context.hh"
+#include "parser/ast/include/core/AST_matcher.hh"
 
-}
+#include "parser/ast/include/nodes/AST_Declarations.hh"
+#include "parser/ast/include/nodes/AST_Expressions.hh"
+#include "parser/ast/include/nodes/AST_Statements.hh"
+#include "parser/ast/include/nodes/AST_Declarations.hh"
 
-#endif // __AST_MATCHER_H__
+
+#endif // __AST_H__

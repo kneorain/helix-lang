@@ -9,17 +9,12 @@
 //  Copyright (c) 2024 (CC BY 4.0)                                                                //
 //                                                                                                //
 //====----------------------------------------------------------------------------------------====//
-//                                                                                                //
-//                                                                                                //
-//===-----------------------------------------------------------------------------------------====//
 
-#ifndef __AST_MATCHER_H__
-#define __AST_MATCHER_H__
+#ifndef __AST_ANNOTATIONS_DEF__
+#define __AST_ANNOTATIONS_DEF__
 
-#include "parser/ast/include/config/AST_config.def"
+#define ANNOT(MACRO)         \
+    MACRO(CompilerDirective) \
+    MACRO(Comment)
 
-__AST_BEGIN {
-
-}
-
-#endif // __AST_MATCHER_H__
+#endif  // __AST_ANNOTATIONS_DEF__

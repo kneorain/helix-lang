@@ -1,0 +1,352 @@
+{
+    "ast": {
+        "BinaryExpression": {
+            "lhs": {
+                "ParenthesizedExpression": {
+                    "value": {
+                        "TernaryExpression": {
+                            "condition": {
+                                "LiteralExpression": {
+                                    "type": 0,
+                                    "value": {
+                                        "kind": "true",
+                                        "length": 4,
+                                        "loc": {
+                                            "column_number": 6,
+                                            "filename": "tests/main.hlx",
+                                            "line_number": 1,
+                                            "offset": 10
+                                        },
+                                        "value": "true"
+                                    }
+                                }
+                            },
+                            "if_false": {
+                                "LiteralExpression": {
+                                    "type": 0,
+                                    "value": {
+                                        "kind": "<int>",
+                                        "length": 1,
+                                        "loc": {
+                                            "column_number": 16,
+                                            "filename": "tests/main.hlx",
+                                            "line_number": 1,
+                                            "offset": 17
+                                        },
+                                        "value": "2"
+                                    }
+                                }
+                            },
+                            "if_true": {
+                                "LiteralExpression": {
+                                    "type": 0,
+                                    "value": {
+                                        "kind": "<int>",
+                                        "length": 1,
+                                        "loc": {
+                                            "column_number": 1,
+                                            "filename": "tests/main.hlx",
+                                            "line_number": 1,
+                                            "offset": 2
+                                        },
+                                        "value": "1"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "op": {
+                "kind": "-",
+                "length": 1,
+                "loc": {
+                    "column_number": 19,
+                    "filename": "tests/main.hlx",
+                    "line_number": 1,
+                    "offset": 20
+                },
+                "value": "-"
+            },
+            "rhs": {
+                "BinaryExpression": {
+                    "lhs": {
+                        "ParenthesizedExpression": {
+                            "value": {
+                                "TernaryExpression": {
+                                    "condition": {
+                                        "LiteralExpression": {
+                                            "type": 0,
+                                            "value": {
+                                                "kind": "true",
+                                                "length": 4,
+                                                "loc": {
+                                                    "column_number": 22,
+                                                    "filename": "tests/main.hlx",
+                                                    "line_number": 1,
+                                                    "offset": 26
+                                                },
+                                                "value": "true"
+                                            }
+                                        }
+                                    },
+                                    "if_false": {
+                                        "LiteralExpression": {
+                                            "type": 0,
+                                            "value": {
+                                                "kind": "<int>",
+                                                "length": 1,
+                                                "loc": {
+                                                    "column_number": 33,
+                                                    "filename": "tests/main.hlx",
+                                                    "line_number": 1,
+                                                    "offset": 34
+                                                },
+                                                "value": "2"
+                                            }
+                                        }
+                                    },
+                                    "if_true": {
+                                        "LiteralExpression": {
+                                            "type": 0,
+                                            "value": {
+                                                "kind": "<int>",
+                                                "length": 1,
+                                                "loc": {
+                                                    "column_number": 29,
+                                                    "filename": "tests/main.hlx",
+                                                    "line_number": 1,
+                                                    "offset": 30
+                                                },
+                                                "value": "1"
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "op": {
+                        "kind": "*",
+                        "length": 1,
+                        "loc": {
+                            "column_number": 36,
+                            "filename": "tests/main.hlx",
+                            "line_number": 1,
+                            "offset": 37
+                        },
+                        "value": "*"
+                    },
+                    "rhs": {
+                        "ScopeAccessExpression": {
+                            "lhs": {
+                                "IdentifierExpression": {
+                                    "name": {
+                                        "kind": "<id>",
+                                        "length": 4,
+                                        "loc": {
+                                            "column_number": 38,
+                                            "filename": "tests/main.hlx",
+                                            "line_number": 1,
+                                            "offset": 42
+                                        },
+                                        "value": "this"
+                                    }
+                                }
+                            },
+                            "rhs": {
+                                "ScopeAccessExpression": {
+                                    "lhs": {
+                                        "IdentifierExpression": {
+                                            "name": {
+                                                "kind": "<id>",
+                                                "length": 3,
+                                                "loc": {
+                                                    "column_number": 44,
+                                                    "filename": "tests/main.hlx",
+                                                    "line_number": 1,
+                                                    "offset": 47
+                                                },
+                                                "value": "_is"
+                                            }
+                                        }
+                                    },
+                                    "rhs": {
+                                        "ScopeAccessExpression": {
+                                            "lhs": {
+                                                "IdentifierExpression": {
+                                                    "name": {
+                                                        "kind": "<id>",
+                                                        "length": 1,
+                                                        "loc": {
+                                                            "column_number": 49,
+                                                            "filename": "tests/main.hlx",
+                                                            "line_number": 1,
+                                                            "offset": 50
+                                                        },
+                                                        "value": "a"
+                                                    }
+                                                }
+                                            },
+                                            "rhs": {
+                                                "FunctionCallExpression": {
+                                                    "args": {
+                                                        "ArgumentListExpression": {
+                                                            "args": [
+                                                                {
+                                                                    "ArgumentExpression": {
+                                                                        "type": 0,
+                                                                        "value": {
+                                                                            "ArrayLiteralExpression": {
+                                                                                "values": [
+                                                                                    {
+                                                                                        "LiteralExpression": {
+                                                                                            "type": 0,
+                                                                                            "value": {
+                                                                                                "kind": "<int>",
+                                                                                                "length": 1,
+                                                                                                "loc": {
+                                                                                                    "column_number": 62,
+                                                                                                    "filename": "tests/main.hlx",
+                                                                                                    "line_number": 1,
+                                                                                                    "offset": 63
+                                                                                                },
+                                                                                                "value": "1"
+                                                                                            }
+                                                                                        }
+                                                                                    },
+                                                                                    {
+                                                                                        "LiteralExpression": {
+                                                                                            "type": 0,
+                                                                                            "value": {
+                                                                                                "kind": "<int>",
+                                                                                                "length": 1,
+                                                                                                "loc": {
+                                                                                                    "column_number": 65,
+                                                                                                    "filename": "tests/main.hlx",
+                                                                                                    "line_number": 1,
+                                                                                                    "offset": 66
+                                                                                                },
+                                                                                                "value": "2"
+                                                                                            }
+                                                                                        }
+                                                                                    },
+                                                                                    {
+                                                                                        "MapLiteralExpression": {
+                                                                                            "values": [
+                                                                                                {
+                                                                                                    "MapPairExpression": {
+                                                                                                        "key": {
+                                                                                                            "LiteralExpression": {
+                                                                                                                "type": 0,
+                                                                                                                "value": {
+                                                                                                                    "kind": "<string>",
+                                                                                                                    "length": 3,
+                                                                                                                    "loc": {
+                                                                                                                        "column_number": 4,
+                                                                                                                        "filename": "tests/main.hlx",
+                                                                                                                        "line_number": 2,
+                                                                                                                        "offset": 76
+                                                                                                                    },
+                                                                                                                    "value": "\"a\""
+                                                                                                                }
+                                                                                                            }
+                                                                                                        },
+                                                                                                        "value": {
+                                                                                                            "LiteralExpression": {
+                                                                                                                "type": 0,
+                                                                                                                "value": {
+                                                                                                                    "kind": "<int>",
+                                                                                                                    "length": 1,
+                                                                                                                    "loc": {
+                                                                                                                        "column_number": 9,
+                                                                                                                        "filename": "tests/main.hlx",
+                                                                                                                        "line_number": 2,
+                                                                                                                        "offset": 79
+                                                                                                                    },
+                                                                                                                    "value": "1"
+                                                                                                                }
+                                                                                                            }
+                                                                                                        }
+                                                                                                    }
+                                                                                                },
+                                                                                                {
+                                                                                                    "MapPairExpression": {
+                                                                                                        "key": {
+                                                                                                            "LiteralExpression": {
+                                                                                                                "type": 0,
+                                                                                                                "value": {
+                                                                                                                    "kind": "<string>",
+                                                                                                                    "length": 3,
+                                                                                                                    "loc": {
+                                                                                                                        "column_number": 4,
+                                                                                                                        "filename": "tests/main.hlx",
+                                                                                                                        "line_number": 3,
+                                                                                                                        "offset": 87
+                                                                                                                    },
+                                                                                                                    "value": "\"b\""
+                                                                                                                }
+                                                                                                            }
+                                                                                                        },
+                                                                                                        "value": {
+                                                                                                            "LiteralExpression": {
+                                                                                                                "type": 0,
+                                                                                                                "value": {
+                                                                                                                    "kind": "<int>",
+                                                                                                                    "length": 1,
+                                                                                                                    "loc": {
+                                                                                                                        "column_number": 9,
+                                                                                                                        "filename": "tests/main.hlx",
+                                                                                                                        "line_number": 3,
+                                                                                                                        "offset": 90
+                                                                                                                    },
+                                                                                                                    "value": "2"
+                                                                                                                }
+                                                                                                            }
+                                                                                                        }
+                                                                                                    }
+                                                                                                }
+                                                                                            ]
+                                                                                        }
+                                                                                    }
+                                                                                ]
+                                                                            }
+                                                                        }
+                                                                    }
+                                                                }
+                                                            ]
+                                                        }
+                                                    },
+                                                    "path": {
+                                                        "PathExpression": {
+                                                            "path": {
+                                                                "IdentifierExpression": {
+                                                                    "name": {
+                                                                        "kind": "<id>",
+                                                                        "length": 8,
+                                                                        "loc": {
+                                                                            "column_number": 52,
+                                                                            "filename": "tests/main.hlx",
+                                                                            "line_number": 1,
+                                                                            "offset": 60
+                                                                        },
+                                                                        "value": "function"
+                                                                    }
+                                                                }
+                                                            },
+                                                            "type": 2
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

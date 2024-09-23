@@ -16,7 +16,7 @@
 #ifndef __AST_CLASSIFIER_H__
 #define __AST_CLASSIFIER_H__
 
-#include "parser/ast/include/core/AST_core.def"
+#include "parser/ast/include/config/AST_config.def"
 
 __AST_BEGIN {
 

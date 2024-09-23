@@ -9,17 +9,24 @@
 //  Copyright (c) 2024 (CC BY 4.0)                                                                //
 //                                                                                                //
 //====----------------------------------------------------------------------------------------====//
-//                                                                                                //
-//                                                                                                //
-//===-----------------------------------------------------------------------------------------====//
 
-#ifndef __AST_MATCHER_H__
-#define __AST_MATCHER_H__
+#ifndef __AST_VISITOR_H__
+#define __AST_VISITOR_H__
 
-#include "parser/ast/include/config/AST_config.def"
+#include "parser/ast/include/config/AST_generate.hh"
 
-__AST_BEGIN {
+__AST_VISITOR_BEGIN {
+    class Visitor {
+      public:
+        Visitor()                           = default;
+        Visitor(const Visitor &)            = default;
+        Visitor &operator=(const Visitor &) = default;
+        Visitor(Visitor &&)                 = default;
+        Visitor &operator=(Visitor &&)      = default;
+        virtual ~Visitor()                  = default;
 
+        GENERATE_VISIT_FUNCS;
+    };
 }
 
-#endif // __AST_MATCHER_H__
+#endif  // __AST_VISITOR_H__

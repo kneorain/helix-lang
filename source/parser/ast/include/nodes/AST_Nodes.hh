@@ -9,17 +9,13 @@
 //  Copyright (c) 2024 (CC BY 4.0)                                                                //
 //                                                                                                //
 //====----------------------------------------------------------------------------------------====//
-//                                                                                                //
-//                                                                                                //
-//===-----------------------------------------------------------------------------------------====//
 
-#ifndef __AST_MATCHER_H__
-#define __AST_MATCHER_H__
+#ifndef __AST_ALL_NODES_H__
+#define __AST_ALL_NODES_H__
 
-#include "parser/ast/include/config/AST_config.def"
+#include "parser/ast/include/nodes/AST_Annotations.hh"
+#include "parser/ast/include/nodes/AST_Declarations.hh"
+#include "parser/ast/include/nodes/AST_Expressions.hh"
+#include "parser/ast/include/nodes/AST_Statements.hh"
 
-__AST_BEGIN {
-
-}
-
-#endif // __AST_MATCHER_H__
+#endif  // __AST_ALL_NODES_H__

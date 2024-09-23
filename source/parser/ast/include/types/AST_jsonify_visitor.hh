@@ -9,17 +9,36 @@
 //  Copyright (c) 2024 (CC BY 4.0)                                                                //
 //                                                                                                //
 //====----------------------------------------------------------------------------------------====//
-//                                                                                                //
-//                                                                                                //
-//===-----------------------------------------------------------------------------------------====//
 
-#ifndef __AST_MATCHER_H__
-#define __AST_MATCHER_H__
+#ifndef __AST_JSONIFY_VISIT_H__
+#define __AST_JSONIFY_VISIT_H__
 
+#include "neo-json/include/json.hh"
 #include "parser/ast/include/config/AST_config.def"
+#include "parser/ast/include/nodes/AST_Nodes.hh"
+#include "parser/ast/include/types/AST_types.hh"
+#include "parser/ast/include/types/AST_visitor.hh"
 
-__AST_BEGIN {
+__AST_VISITOR_BEGIN {
+    class Jsonify : public Visitor {
+      public:
+        Jsonify()                           = default;
+        Jsonify(const Jsonify &)            = default;
+        Jsonify(Jsonify &&)                 = delete;
+        Jsonify &operator=(const Jsonify &) = default;
+        Jsonify &operator=(Jsonify &&)      = delete;
+        ~Jsonify() override                 = default;
 
-}
+        neo::json json{"ast"};
 
-#endif // __AST_MATCHER_H__
+        GENERATE_VISIT_EXTENDS;
+    };
+
+    inline neo::json get_node_json(const NodeT<> &node) {
+        auto visitor = Jsonify();
+        node->accept(visitor);
+        return visitor.json;
+    }
+}  // namespace __AST_BEGIN
+
+#endif  // __AST_JSONIFY_VISIT_H__

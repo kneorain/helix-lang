@@ -10,14 +10,27 @@
 //                                                                                                //
 //====----------------------------------------------------------------------------------------====//
 
-#ifndef __AST_CORE_DEF__
-#define __AST_CORE_DEF__
+#ifndef __AST_DECLARATIONS_DEF__
+#define __AST_DECLARATIONS_DEF__
 
-#define PARSE_SIG(Tx) ParseResult Tx::parse()
-#define TEST_SIG(Tx) bool Tx::test()
-#define VISITOR_IMPL(Tx) void Tx::accept(Visitor &visitor) const { visitor.visit(*this); }
-#define __AST_BEGIN namespace parser::ast
-#define __AST_NODE_BEGIN namespace parser::ast::node
-#define __AST_N parser::ast
+#define DECL(MACRO)              \
+    MACRO(VariableDeclaration)   \
+    MACRO(FFIDeclaration)        \
+    MACRO(GenericBound)          \
+    MACRO(ConstGenericParameter) \
+    MACRO(GenericParameter)      \
+    MACRO(GenericParameterList)  \
+    MACRO(GenericDeclaration)    \
+    MACRO(VariableCreation)      \
+    MACRO(ArgumentsDeclaration)  \
+    MACRO(FunctionDeclaration)   \
+    MACRO(EnumValueDeclaration)  \
+    MACRO(EnumDeclaration)       \
+    MACRO(TypeDeclaration)       \
+    MACRO(StructDeclaration)     \
+    MACRO(ClassDeclaration)      \
+    MACRO(AbstractDeclaration)   \
+    MACRO(InterfaceDeclaration)  \
+    MACRO(UnionDeclaration)
 
-#endif // __AST_CORE_DEF__
+#endif  // __AST_DECLARATIONS_DEF__

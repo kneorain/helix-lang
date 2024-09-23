@@ -1,0 +1,48 @@
+//===------------------------------------------ C++ ------------------------------------------====//
+//                                                                                                //
+//  Part of the Helix Project, under the Attribution 4.0 International license (CC BY 4.0).       //
+//  You are allowed to use, modify, redistribute, and create derivative works, even for           //
+//  commercial purposes, provided that you give appropriate credit, and indicate if changes       //
+//   were made. For more information, please visit: https://creativecommons.org/licenses/by/4.0/  //
+//                                                                                                //
+//  SPDX-License-Identifier: CC-BY-4.0                                                            //
+//  Copyright (c) 2024 (CC BY 4.0)                                                                //
+//                                                                                                //
+//====----------------------------------------------------------------------------------------====//
+
+#ifndef __AST_EXPRESSIONS_DEF__
+#define __AST_EXPRESSIONS_DEF__
+
+#define EXPRS(MACRO)                           \
+    MACRO(LiteralExpression)                   \
+    MACRO(BinaryExpression)                    \
+    MACRO(UnaryExpression)                     \
+    MACRO(IdentifierExpression)                \
+    MACRO(KeywordArgument)                     \
+    MACRO(ArgumentExpression)                  \
+    MACRO(ArgumentListExpression)              \
+    MACRO(GenericPositionalArgumentExpression) \
+    MACRO(GenericKeywordArgumentExpression)    \
+    MACRO(GenericArgumentExpression)           \
+    MACRO(GenericInvocationExpression)         \
+    MACRO(PathGenericInvocationExpression)     \
+    MACRO(ScopeAccessExpression)               \
+    MACRO(DotAccessExpression)                 \
+    MACRO(ArrayAccessExpression)               \
+    MACRO(PathExpression)                      \
+    MACRO(FunctionCallExpression)              \
+    MACRO(ArrayLiteralExpression)              \
+    MACRO(TupleLiteralExpression)              \
+    MACRO(SetLiteralExpression)                \
+    MACRO(MapPairExpression)                   \
+    MACRO(MapLiteralExpression)                \
+    MACRO(ObjectInitializerExpression)         \
+    MACRO(LambdaExpression)                    \
+    MACRO(TernaryExpression)                   \
+    MACRO(ParenthesizedExpression)             \
+    MACRO(CastExpression)                      \
+    MACRO(InstanceOfExpression)                \
+    MACRO(PtrType)                             \
+    MACRO(Type)
+
+#endif // __AST_EXPRESSIONS_DEF__
