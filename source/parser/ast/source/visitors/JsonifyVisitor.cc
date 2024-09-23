@@ -15,14 +15,11 @@
 #include "parser/ast/include/types/AST_jsonify_visitor.hh"
 
 __AST_VISITOR_BEGIN {
-    void Jsonify::visit(const parser ::ast ::node ::GenericPositionalArgumentExpression &node) {}
-    void Jsonify::visit(const parser ::ast ::node ::GenericKeywordArgumentExpression &node) {}
     void Jsonify::visit(const parser ::ast ::node ::GenericArgumentExpression &node) {}
     void Jsonify::visit(const parser ::ast ::node ::GenericInvocationExpression &node) {}
     void Jsonify::visit(const parser ::ast ::node ::PathGenericInvocationExpression &node) {}
 
-    
-    void Jsonify::visit(const parser ::ast ::node ::PtrType &node) {}
-    void Jsonify::visit(const parser ::ast ::node ::Type &node) {}
+    void Jsonify::visit(const parser ::ast ::node ::PtrType &node) {} /* DEPRECATED */
+    void Jsonify::visit(const parser ::ast ::node ::Type &node) {}    /* DEPRECATED */
 
 }  // namespace __AST_BEGIN

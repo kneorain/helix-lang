@@ -27,11 +27,11 @@
 __AST_NODE_BEGIN {
     class Node {  // base node
       public:
-        Node()                                                                    = default;
-        virtual ~Node()                                                           = default;
-        virtual void                accept(__AST_VISITOR::Visitor &visitor) const = 0;
-        [[nodiscard]] virtual nodes getNodeType() const                           = 0;
-        [[nodiscard]] virtual std::string getNodeName() const                     = 0;
+        Node()                                                                          = default;
+        virtual ~Node()                                                                 = default;
+        virtual void                      accept(__AST_VISITOR::Visitor &visitor) const = 0;
+        [[nodiscard]] virtual nodes       getNodeType() const                           = 0;
+        [[nodiscard]] virtual std::string getNodeName() const                           = 0;
 
         Node(const Node &)            = default;
         Node &operator=(const Node &) = default;
@@ -59,7 +59,8 @@ __AST_NODE_BEGIN {
     class Expression {  // THIS IS NOT A NODE
       public:
         explicit Expression(token::TokenList *tokens)
-            : tokens(tokens), iter(tokens->begin()) {}
+            : tokens(tokens)
+            , iter(tokens->begin()) {}
         Expression()                              = default;
         Expression(const Expression &)            = default;
         Expression &operator=(const Expression &) = default;
@@ -67,51 +68,52 @@ __AST_NODE_BEGIN {
         Expression &operator=(Expression &&)      = default;
         virtual ~Expression()                     = default;
 
-        ParseResult<LiteralExpression>            parse_LiteralExpression();
-        ParseResult<BinaryExpression>             parse_BinaryExpression(ParseResult<> lhs, int min_precedence);
-        ParseResult<UnaryExpression>              parse_UnaryExpression();
-        ParseResult<IdentifierExpression>         parse_IdentifierExpression();
-        ParseResult<KeywordArgument>              parse_KeywordArgument();
-        ParseResult<ArgumentExpression>           parse_ArgumentExpression();
-        ParseResult<ArgumentListExpression>       parse_ArgumentListExpression();
-        ParseResult<GenericPositionalArgumentExpression>
-                                                      parse_GenericPositionalArgumentExpression();
-        ParseResult<GenericKeywordArgumentExpression> parse_GenericKeywordArgumentExpression();
-        ParseResult<GenericArgumentExpression>        parse_GenericArgumentExpression();
-        ParseResult<GenericInvocationExpression>      parse_GenericInvocationExpression();
-        ParseResult<PathGenericInvocationExpression>  parse_PathGenericInvocationExpression();
-        ParseResult<ScopeAccessExpression>            parse_ScopeAccessExpression(ParseResult<> lhs = nullptr);
-        ParseResult<DotAccessExpression>              parse_DotAccessExpression(ParseResult<> lhs = nullptr);
-        ParseResult<ArrayAccessExpression>            parse_ArrayAccessExpression(ParseResult<> lhs = nullptr);
-        ParseResult<PathExpression>                   parse_PathExpression(ParseResult<> simple_path);
-        ParseResult<FunctionCallExpression>           parse_FunctionCallExpression(ParseResult<> lhs = nullptr, ParseResult<> gens = nullptr);
-        ParseResult<ArrayLiteralExpression>           parse_ArrayLiteralExpression();
-        ParseResult<TupleLiteralExpression>           parse_TupleLiteralExpression(ParseResult<> starting_element = nullptr);
-        ParseResult<SetLiteralExpression>             parse_SetLiteralExpression(ParseResult<> starting_value);
-        ParseResult<MapPairExpression>                parse_MapPairExpression();
-        ParseResult<MapLiteralExpression>             parse_MapLiteralExpression(ParseResult<> starting_value);
-        ParseResult<ObjectInitializerExpression>      parse_ObjectInitializerExpression(bool skip_start_brace = false);
-        ParseResult<LambdaExpression>                 parse_LambdaExpression();
-        ParseResult<TernaryExpression>                parse_TernaryExpression(ParseResult<> lhs = nullptr);
-        ParseResult<ParenthesizedExpression>          parse_ParenthesizedExpression(ParseResult<> expr = nullptr);
-        ParseResult<CastExpression>                   parse_CastExpression();
-        ParseResult<InstanceOfExpression>             parse_InstanceOfExpression(ParseResult<> lhs = nullptr);
-        ParseResult<PtrType>                          parse_PtrType();
-        ParseResult<Type>                             parse_Type();
+        ParseResult<LiteralExpression> parse_LiteralExpression();
+        ParseResult<BinaryExpression> parse_BinaryExpression(ParseResult<> lhs, int min_precedence);
+        ParseResult<UnaryExpression>  parse_UnaryExpression();
+        ParseResult<IdentifierExpression>            parse_IdentifierExpression();
+        ParseResult<NamedArgument>                   parse_NamedArgument();
+        ParseResult<ArgumentExpression>              parse_ArgumentExpression();
+        ParseResult<ArgumentListExpression>          parse_ArgumentListExpression();
+        ParseResult<GenericArgumentExpression>       parse_GenericArgumentExpression();
+        ParseResult<GenericInvocationExpression>     parse_GenericInvocationExpression();
+        ParseResult<PathGenericInvocationExpression> parse_PathGenericInvocationExpression();
+        ParseResult<ScopeAccessExpression> parse_ScopeAccessExpression(ParseResult<> lhs = nullptr);
+        ParseResult<DotAccessExpression>   parse_DotAccessExpression(ParseResult<> lhs = nullptr);
+        ParseResult<ArrayAccessExpression> parse_ArrayAccessExpression(ParseResult<> lhs = nullptr);
+        ParseResult<PathExpression>        parse_PathExpression(ParseResult<> simple_path);
+        ParseResult<FunctionCallExpression>
+        parse_FunctionCallExpression(ParseResult<> lhs = nullptr, ParseResult<> gens = nullptr);
+        ParseResult<ArrayLiteralExpression> parse_ArrayLiteralExpression();
+        ParseResult<TupleLiteralExpression>
+        parse_TupleLiteralExpression(ParseResult<> starting_element = nullptr);
+        ParseResult<SetLiteralExpression> parse_SetLiteralExpression(ParseResult<> starting_value);
+        ParseResult<MapPairExpression>    parse_MapPairExpression();
+        ParseResult<MapLiteralExpression> parse_MapLiteralExpression(ParseResult<> starting_value);
+        ParseResult<ObjectInitializerExpression>
+        parse_ObjectInitializerExpression(bool skip_start_brace = false);
+        ParseResult<LambdaExpression>  parse_LambdaExpression();
+        ParseResult<TernaryExpression> parse_TernaryExpression(ParseResult<> lhs = nullptr);
+        ParseResult<ParenthesizedExpression>
+                                    parse_ParenthesizedExpression(ParseResult<> expr = nullptr);
+        ParseResult<CastExpression> parse_CastExpression();
+        ParseResult<InstanceOfExpression> parse_InstanceOfExpression(ParseResult<> lhs = nullptr);
+        ParseResult<PtrType>              parse_PtrType();
+        ParseResult<Type>                 parse_Type();
         ;
 
         template <typename T>
         ParseResult<T> parse() {
             return std::dynamic_pointer_cast<T>(parse());
         }
-        
+
         ParseResult<> parse();
         ParseResult<> parse_primary();
 
       private:
-        token::TokenList *tokens = nullptr;
-        token::TokenList::TokenListIter iter = tokens->begin();
-        std::vector<ParseResult<>> parse_stack;
+        token::TokenList               *tokens = nullptr;
+        token::TokenList::TokenListIter iter   = tokens->begin();
+        std::vector<ParseResult<>>      parse_stack;
     };
 }  // namespace __AST_BEGIN
 

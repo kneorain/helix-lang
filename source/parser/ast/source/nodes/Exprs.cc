@@ -1,52 +1,111 @@
-//===---------------------------------------------------- C++
-//----------------------------------------------------====//
-//                                                                                                                    //
-//  Part of the Helix Project, under the Attribution 4.0 International license (CC BY 4.0). You //
-//  are allowed to use, modify, redistribute, and create derivative works, even for commercial //
-//  purposes, provided that you give appropriate credit, and indicate if changes // were made. For
-//  more information, please visit: https://creativecommons.org/licenses/by/4.0/ //
-//                                                                                                                    //
-//  SPDX-License-Identifier: CC-BY-4.0 // Copyright (c) 2024 (CC BY 4.0) //
-//                                                                                                                    //
-//====------------------------------------------------------------------------------------------------------------====//
-//
-//  @file Expr.cc
-//  @brief All of expression parsing is contained in this file.
-//
-//  This file contains the entire logic for parsing expressions using a recursive descent parser.
-//  The parser adheres to an LL(1) grammar, which means it processes the input left-to-right and
-//  constructs the leftmost derivation using one token of lookahead.
-//
-//  Below is a simplified grammar that outlines the expressions handled by this parser:
-//
-//  LiteralExpression                   := LITERAL
-//  BinaryExpression                    := E op E
-//  UnaryExpression                     := op E
-//  IdentifierExpression                := T
-//  KeywordArgument                     := '.' IdentifierExpression '=' E
-//  ArgumentExpression                  := E | (IdentifierExpression '=' E)
-//  ArgumentListExpression              := '(' ArgumentExpression (',' ArgumentExpression)* ')'
-//  GenericPositionalArgumentExpression := E
-//  GenericKeywordArgumentExpression    := IdentifierExpression '=' E
-//  GenericArgumentExpression           := GenericPositionalArgumentExpression
-//  GenericInvocationExpression         := '<' GenericArgumentExpression ((','
-//  GenericArgumentExpression)*)? '>' PathGenericInvocationExpression     := E
-//  GenericInvocationExpression ScopeAccessExpression               := E '::' E DotAccessExpression
-//  := E '.' E ArrayAccessExpression               := E '[' E ']' PathExpression :=
-//  ScopeAccessExpression | DotAccessExpression FunctionCallExpression              :=
-//  PathExpression GenericInvocationExpression? ArgumentListExpression ArrayLiteralExpression := '['
-//  E (',' E)* ']' TupleLiteralExpression              := '(' E (',' E)* ')' SetLiteralExpression :=
-//  '{' E (',' E)* '}' MapPairExpression                   := E ':' E ObjectInitializerExpression :=
-//  '{' (MapPairExpression (',' MapPairExpression)*)? '}' LambdaExpression                    := /*
-//  TODO: complete */ TernaryExpression                   := (E '?' E ':' E) | (E 'if' E 'else' E)
-//  ParenthesizedExpression             := '(' E ')'
-//  CastExpression                      := E 'as' E
-//  InstanceOfExpression                := E ('has' | 'derives') E
-//  PtrType                             := ((E '*') | (('*' E)) | ((E '&') | ('&' E)))  /* TODO
-//  remove and merge with unary op */ Type                                := IdentifierExpression |
-//  PtrType  /* TODO: remove */
-//
-//===-------------------------------------------------------------------------------------------------------------====//
+//===------------------------------------------ C++ ------------------------------------------====//
+//                                                                                                //
+//  Part of the Helix Project, under the Attribution 4.0 International license (CC BY 4.0). You   //
+//  are allowed to use, modify, redistribute, and create derivative works, even for commercial    //
+//  purposes, provided that you give appropriate credit, and indicate if changes                  //
+//  were made. For more information, please visit: https://creativecommons.org/licenses/by/4.0/   //
+//                                                                                                //
+//  SPDX-License-Identifier: CC-BY-4.0 // Copyright (c) 2024 (CC BY 4.0)                          //
+//                                                                                                //
+//====----------------------------------------------------------------------------------------====//
+///                                                                                              ///
+///  @file Expr.cc                                                                               ///
+///  @brief This file contains the entire logic to parse expressions using a recursive descent   ///
+///         parser. the parser adheres to an ll(1) grammar, which means it processes the input   ///
+///         left-to-right and constructs the leftmost derivation using one token of lookahead.   ///
+///                                                                                              ///
+///  The parser is implemented using the `parse` method, which is a recursive descent parser     ///
+///     that uses the token list to parse the expression grammar.                                ///
+///                                                                                              ///
+///  @code                                                                                       ///
+///  Expression expr(tokens);                                                                    ///
+///  ParseResult<> node = expr.parse();                                                          ///
+///                                                                                              ///
+///  if (node.has_value()) {                                                                     ///
+///      NodeT<> ast = node.value();                                                             ///
+///  } else {                                                                                    ///
+///      std::cerr << node.error().what() << std::endl;                                          ///
+///  }                                                                                           ///
+///  @endcode                                                                                    ///
+///                                                                                              ///
+///  By default, the parser will parse the entire expression, but you can also parse a specific  ///
+///     expression by calling the specific parse method. or get a specific node by calling parse ///
+///     and then passing a template argument to the method.                                      ///
+///                                                                                              ///
+///  @code                                                                                       ///
+///  Expression expr(tokens);                                                                    ///
+///  ParseResult<BinaryExpression> node = expr.parse<BinaryExpression>();                        ///
+///  @endcode                                                                                    ///
+///                                                                                              ///
+/// The parser is implemented using the following grammar:                                       ///
+///                                                                                              ///
+/// STS *         /* node types */                                                               ///
+/// [x] * Literal  * L                                                                           ///
+/// [x] * Operator * O                                                                           ///
+/// [x] * Token    * T                                                                           ///
+///                                                                                              ///
+///                             /* helper nodes (not supposed to be explicitly used) */          ///
+/// [x] * ArgumentListExpression * AL -> ( AE? ( ',' AE )* )                                     ///
+/// [x] * NamedArgument        * KA -> '.' ID '=' E                                              ///
+/// [x] * ArgumentExpression     * AE -> E | ID '=' E                                            ///
+/// [x] * MapPairExpression      * MP -> E ':' E                                                 ///
+///                                                                                              ///
+///                       /* primary nodes */                                                    ///
+/// [x] * UnaryExpression  * UE  -> O    PE                                                      ///
+/// [x] * BinaryExpression * BE  -> UE   BE'                                                     ///
+///                          BE' -> O UE BE' | ϵ                                                 ///
+///                                                                                              ///
+///                           /* core single associative */                                      ///
+/// [x] * IdentifierExpression * ID -> T                                                         ///
+/// [x] * LiteralExpression    * LE -> L                                                         ///
+///                                                                                              ///
+///                             /* multi-associative */                                          ///
+/// [x] * ScopeAccessExpression  * SA -> ID '::' ID                                              ///
+/// [x] * DotAccessExpression    * DE -> PE '.'  ID                                              ///
+/// [x] * PathExpression         * PA -> SA | DE                                                 ///
+///                                                                                              ///
+/// [x] * TernaryExpression      * TE -> PE '?' E ':' E | PE 'if' E 'else' E                     ///
+/// [x] * InstanceOfExpression   * IE -> PE ( 'has' | 'derives' ) ID                             ///
+/// [x] * CastExpression         * CE -> PE 'as' E                                               ///
+///                                                                                              ///
+/// [x] * ArrayAccessExpression  * AA -> PE '[' E ']'                                            ///
+/// [x] * FunctionCallExpression * FC -> PA GI? AL                                               ///
+///                                                                                              ///
+///                                  /* right associative recursive */                           ///
+/// [x] * ObjectInitializerExpression * OI -> '{' ( KA ( ',' KA )* )? '}'                        ///
+/// [x] * SetLiteralExpression        * SE -> '{' E ( ',' E )* '}'                               ///
+/// [x] * TupleLiteralExpression      * TL -> '(' E ( ',' E )* ')'                               ///
+/// [x] * ArrayLiteralExpression      * AE -> '[' E ( ',' E )* ']'                               ///
+/// [x] * ParenthesizedExpression     * PAE -> '(' E? ')'                                        ///
+///                                                                                              ///
+///                                      /* generics */                                          ///
+/// [ ] * GenericInvocationExpression     * GI -> '<' GAE? ( ',' GAE )* '>'                      ///
+/// [ ] * GenericArgumentExpression       * GAE -> E | ID '=' E                                  ///
+/// [ ] * PathGenericInvocationExpression * PGE -> PE GI                                         ///
+///                                                                                              ///
+///              /* FIXME: remove and merge 'PtrType' with unary op and remove 'Type' */         ///
+/// [ ] * Type    * TY -> ID | PT                                                                ///
+/// [ ] * PtrType * PT -> PrimaryExpression '*' | '*' PrimaryExpression                          ///
+///                     | PrimaryExpression '&' | '&' PrimaryExpression                          ///
+///                                                                                              ///
+///    /* complete parser */                                                                     ///
+/// [x] * PE -> LE | ID | AE | SE | TL | OI | PA | PAE                                           ///
+/// [x] * E  -> PE | UE | BE | TE | CE | IE | AA | FC                                            ///
+///                                                                                              ///
+/// TODO: big problem: the parser needs to be able to parse generics in the context of exprs,    ///
+///          since doing something like `foo<int>` is a valid expression. This is not currently  ///
+///          supported. a better example would be:                                               ///
+///                                                                                              ///
+///       @code                                                                                  ///
+///       const eval let PI: T = T(3.1415926535) requires <T>;                                   ///
+///       let x: int = PI<int>;                                                                  ///
+///       @endcode                                                                               ///
+///                                                                                              ///
+///       this is a valid expression, but how do we parse it?                                    ///
+///          how can we parse the `PI<int>` and not confuse it with a BinaryExpression like      ///
+///          `PI < int`? and the > becoming a syntax error?                                      ///
+///                                                                                              ///
+//===-----------------------------------------------------------------------------------------====//
 
 #include <expected>
 #include <memory>
@@ -54,8 +113,6 @@
 #include <unordered_set>
 #include <vector>
 
-#include "neo-pprint/include/ansi_colors.hh"
-#include "neo-pprint/include/hxpprint.hh"
 #include "parser/ast/include/config/AST_config.def"
 #include "parser/ast/include/config/AST_generate.hh"
 #include "parser/ast/include/config/case_types.def"
@@ -242,8 +299,8 @@ AST_NODE_IMPL_VISITOR(Jsonify, IdentifierExpression) {
 // ---------------------------------------------------------------------------------------------- //
 
 /* FIXME: use this method, if unused remove */
-AST_NODE_IMPL(
-    KeywordArgument) {  // should not be called by `parse` directly as it is a helper function
+// should not be called by `parse` directly as it is a helper function
+AST_NODE_IMPL(NamedArgument) {
     IS_NOT_EMPTY;
 
     // := '.' IdentifierExpression '=' E
@@ -270,52 +327,46 @@ AST_NODE_IMPL(
     ParseResult<> value = parse();
     RETURN_IF_ERROR(value);
 
-    return make_node<KeywordArgument>(name.value(), value.value());
+    return make_node<NamedArgument>(name.value(), value.value());
 }
 
-AST_NODE_IMPL_VISITOR(Jsonify, KeywordArgument) {
-    json.section("KeywordArgument")
+AST_NODE_IMPL_VISITOR(Jsonify, NamedArgument) {
+    json.section("NamedArgument")
         .add("name", get_node_json(node.name))
         .add("value", get_node_json(node.value));
 }
 
 // ---------------------------------------------------------------------------------------------- //
 
-AST_NODE_IMPL(
-    ArgumentExpression) {  // should not be called by `parse` directly as it is a helper function
+// should not be called by `parse` directly as it is a helper function
+AST_NODE_IMPL(ArgumentExpression) {
     IS_NOT_EMPTY;
-    // := E | IdentifierExpression '=' E
-
-    // parse then if peek is '=' then its a keyword argument else its a positional argument
 
     NodeT<ArgumentExpression> result;
 
     ParseResult<> lhs = parse();  // E(1)
     RETURN_IF_ERROR(lhs);
 
-    if (IS_PEEK(token::tokens::OPERATOR_ASSIGN)) {  // the lhs parse gets us to the point where we
-                                                    // can check if the next token is '=' or not
-        if (lhs->get()->getNodeType() != nodes::IdentifierExpression) {
-            return std::unexpected(PARSE_ERROR(iter.current().get(),
-                                               "expected an identifier, but found: " +
-                                                   iter.current().get().token_kind_repr()));
+    NodeT<> lhs_node = lhs.value();
+
+    if (lhs_node->getNodeType() == nodes::BinaryExpression) {
+        NodeT<BinaryExpression> bin_expr = std::static_pointer_cast<BinaryExpression>(lhs_node);
+
+        if (bin_expr->lhs->getNodeType() == nodes::IdentifierExpression &&
+            bin_expr->op.token_kind() == token::tokens::OPERATOR_ASSIGN) {
+
+            NodeT<NamedArgument> kwarg = make_node<NamedArgument>(
+                std::static_pointer_cast<IdentifierExpression>(bin_expr->lhs), bin_expr->rhs);
+
+            result       = make_node<ArgumentExpression>(kwarg);
+            result->type = ArgumentExpression::ArgumentType::Keyword;
+
+            return result;
         }
-
-        iter.advance();               // skip '='
-        ParseResult<> rhs = parse();  // E(2)
-        RETURN_IF_ERROR(lhs);
-
-        ParseResult<KeywordArgument> kwarg = make_node<KeywordArgument>(
-            std::static_pointer_cast<IdentifierExpression>(lhs.value()), rhs.value());
-        RETURN_IF_ERROR(kwarg);
-
-        result       = make_node<ArgumentExpression>(kwarg.value());
-        result->type = ArgumentExpression::ArgumentType::Keyword;
-
-    } else {  // positional argument
-        result       = make_node<ArgumentExpression>(lhs.value());
-        result->type = ArgumentExpression::ArgumentType::Positional;
     }
+
+    result       = make_node<ArgumentExpression>(lhs_node);
+    result->type = ArgumentExpression::ArgumentType::Positional;
 
     return result;
 }
@@ -379,20 +430,6 @@ AST_NODE_IMPL_VISITOR(Jsonify, ArgumentListExpression) {
     }
 
     json.section("ArgumentListExpression").add("args", args);
-}
-
-// ---------------------------------------------------------------------------------------------- //
-
-AST_NODE_IMPL(GenericPositionalArgumentExpression) {
-    IS_NOT_EMPTY;
-    NOT_IMPLEMENTED;
-}
-
-// ---------------------------------------------------------------------------------------------- //
-
-AST_NODE_IMPL(GenericKeywordArgumentExpression) {
-    IS_NOT_EMPTY;
-    NOT_IMPLEMENTED;
 }
 
 // ---------------------------------------------------------------------------------------------- //
@@ -924,7 +961,7 @@ AST_NODE_IMPL_VISITOR(Jsonify, MapLiteralExpression) {
 AST_NODE_IMPL(ObjectInitializerExpression, bool skip_start_brace) {
     IS_NOT_EMPTY;
 
-    // := '{' (KeywordArgument (',' KeywordArgument)*)? '}'
+    // := '{' (NamedArgument (',' NamedArgument)*)? '}'
 
     if (!skip_start_brace) {
         if (!(CURRENT_TOK == token::tokens::PUNCTUATION_OPEN_BRACE)) {
@@ -942,7 +979,7 @@ AST_NODE_IMPL(ObjectInitializerExpression, bool skip_start_brace) {
                         "expected a keyword argument, but got an empty object initializer"));
     }
 
-    ParseResult<KeywordArgument> first = parse_KeywordArgument();
+    ParseResult<NamedArgument> first = parse_NamedArgument();
     RETURN_IF_ERROR(first);
 
     NodeT<ObjectInitializerExpression> obj = make_node<ObjectInitializerExpression>(first.value());
@@ -954,7 +991,7 @@ AST_NODE_IMPL(ObjectInitializerExpression, bool skip_start_brace) {
             break;
         }
 
-        ParseResult<KeywordArgument> next = parse_KeywordArgument();
+        ParseResult<NamedArgument> next = parse_NamedArgument();
         RETURN_IF_ERROR(next);
         obj->kwargs.push_back(next.value());
     }
@@ -982,7 +1019,8 @@ AST_NODE_IMPL_VISITOR(Jsonify, ObjectInitializerExpression) {
 
 // ---------------------------------------------------------------------------------------------- //
 
-AST_NODE_IMPL(LambdaExpression) { /* TODO: after Suite can be parsed */
+/* TODO: after Suite can be parsed */
+AST_NODE_IMPL(LambdaExpression) {
     IS_NOT_EMPTY;
     NOT_IMPLEMENTED;
 }
@@ -1171,21 +1209,24 @@ AST_NODE_IMPL_VISITOR(Jsonify, InstanceOfExpression) {
 
 // ---------------------------------------------------------------------------------------------- //
 
-AST_NODE_IMPL(PtrType) { /* DEPRECATED */
+/* DEPRECATED: a pointer or ref type is deduced from context and at this stage is considered a
+ * UnaryExpression */
+AST_NODE_IMPL(PtrType) {
     IS_NOT_EMPTY;
     NOT_IMPLEMENTED;
 }
 
 // ---------------------------------------------------------------------------------------------- //
 
-AST_NODE_IMPL(Type) { /* DEPRECATED */
+/* DEPRECATED: a Type is deduced from context and at this stage is considered a Expression */
+AST_NODE_IMPL(Type) {
     IS_NOT_EMPTY;
     NOT_IMPLEMENTED;
 }
 
 // ---------------------------------------------------------------------------------------------- //
 
-AST_BASE_PARSE_IMPL(Expression, parse_primary) {  // NOLINT(readability-function-cognitive-complexity)
+AST_BASE_IMPL(Expression, parse_primary) {  // NOLINT(readability-function-cognitive-complexity)
     IS_NOT_EMPTY;
 
     token::Token  tok = CURRENT_TOK;
@@ -1264,7 +1305,8 @@ AST_BASE_PARSE_IMPL(Expression, parse_primary) {  // NOLINT(readability-function
             return std::unexpected(PARSE_ERROR_MSG("Expected an expression, but found nothing"));
         }
     } else {
-        return std::unexpected(PARSE_ERROR_MSG("Expected an expression, but found nothing"));
+        return std::unexpected(PARSE_ERROR_MSG("Expected an expression, but found : " +
+                                               tok.token_kind_repr() + " " + tok.value() + " at " + tok.file_name() + ":" + std::to_string(tok.line_number()) + ":" + std::to_string(tok.column_number())));
     }
 
     return node;
@@ -1272,8 +1314,8 @@ AST_BASE_PARSE_IMPL(Expression, parse_primary) {  // NOLINT(readability-function
 
 // ---------------------------------------------------------------------------------------------- //
 
-AST_BASE_PARSE_IMPL(Expression, parse) {  // NOLINT(readability-function-cognitive-complexity)
-    IS_NOT_EMPTY;  /// simple macro to check if the iterator is empty, expands to:
+AST_BASE_IMPL(Expression, parse) {  // NOLINT(readability-function-cognitive-complexity)
+    IS_NOT_EMPTY;                   /// simple macro to check if the iterator is empty, expands to:
                    /// if (iter.remaining_n() == 0) { return std::unexpected(...); }
 
     ParseResult<> expr = parse_primary();  /// E(1) - this is always the first expression in the

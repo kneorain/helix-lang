@@ -1,1 +1,53 @@
-function_call(foo = "bar") /* FAILING */
+{
+    1,
+    3.14,
+    -5,
+    !true,
+    x,
+    y,
+    arg_parse_test(x),
+    arg_parse_test(1, 2),
+    arg_parse_test(x = 10, y = 20),
+    arg_parse_test(12, 34, y = 20),
+    implicit_obj_init_test({
+        .x = 10,
+        .y = 20
+    }),
+    implicit_obj_init_test({
+        .x = 10,
+        .y = 20,
+    }),
+
+    y + 1,
+    y = 1,
+
+    {
+        2: 1,
+        3: 2,
+        4: 3
+    },
+
+    [1, 2, 3, 4, 5],
+    Namespace::Class::Method(),
+    Foo::Bar::Class,
+    object.property,
+    instance.method,
+
+    x ? 1 : 2,
+    1 if x else 2,
+
+    array[0],
+    matrix[1][2],
+    (1, 2, 3, 4),
+    (1, ),
+    (x - y) * 2,
+    7 - 1 * 4
+}
+
+/*
+only these dont work for some reason:
+    Namespace::Class::method().chain().property,
+    Namespace::Class::method().chain().property[0],
+    x as int,
+    y as *float,
+*/

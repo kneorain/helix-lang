@@ -13,36 +13,34 @@
 #ifndef __AST_EXPRESSIONS_DEF__
 #define __AST_EXPRESSIONS_DEF__
 
-#define EXPRS(MACRO)                           \
-    MACRO(LiteralExpression)                   \
-    MACRO(BinaryExpression)                    \
-    MACRO(UnaryExpression)                     \
-    MACRO(IdentifierExpression)                \
-    MACRO(KeywordArgument)                     \
-    MACRO(ArgumentExpression)                  \
-    MACRO(ArgumentListExpression)              \
-    MACRO(GenericPositionalArgumentExpression) \
-    MACRO(GenericKeywordArgumentExpression)    \
-    MACRO(GenericArgumentExpression)           \
-    MACRO(GenericInvocationExpression)         \
-    MACRO(PathGenericInvocationExpression)     \
-    MACRO(ScopeAccessExpression)               \
-    MACRO(DotAccessExpression)                 \
-    MACRO(ArrayAccessExpression)               \
-    MACRO(PathExpression)                      \
-    MACRO(FunctionCallExpression)              \
-    MACRO(ArrayLiteralExpression)              \
-    MACRO(TupleLiteralExpression)              \
-    MACRO(SetLiteralExpression)                \
-    MACRO(MapPairExpression)                   \
-    MACRO(MapLiteralExpression)                \
-    MACRO(ObjectInitializerExpression)         \
-    MACRO(LambdaExpression)                    \
-    MACRO(TernaryExpression)                   \
-    MACRO(ParenthesizedExpression)             \
-    MACRO(CastExpression)                      \
-    MACRO(InstanceOfExpression)                \
-    MACRO(PtrType)                             \
+#define EXPRS(MACRO)                       \
+    MACRO(LiteralExpression)               \
+    MACRO(BinaryExpression)                \
+    MACRO(UnaryExpression)                 \
+    MACRO(IdentifierExpression)            \
+    MACRO(NamedArgument)                   \
+    MACRO(ArgumentExpression)              \
+    MACRO(ArgumentListExpression)          \
+    MACRO(GenericArgumentExpression)       \
+    MACRO(GenericInvocationExpression)     \
+    MACRO(PathGenericInvocationExpression) \
+    MACRO(ScopeAccessExpression)           \
+    MACRO(DotAccessExpression)             \
+    MACRO(ArrayAccessExpression)           \
+    MACRO(PathExpression)                  \
+    MACRO(FunctionCallExpression)          \
+    MACRO(ArrayLiteralExpression)          \
+    MACRO(TupleLiteralExpression)          \
+    MACRO(SetLiteralExpression)            \
+    MACRO(MapPairExpression)               \
+    MACRO(MapLiteralExpression)            \
+    MACRO(ObjectInitializerExpression)     \
+    MACRO(LambdaExpression)                \
+    MACRO(TernaryExpression)               \
+    MACRO(ParenthesizedExpression)         \
+    MACRO(CastExpression)                  \
+    MACRO(InstanceOfExpression)            \
+    MACRO(PtrType)                         \
     MACRO(Type)
 
-#endif // __AST_EXPRESSIONS_DEF__
+#endif  // __AST_EXPRESSIONS_DEF__

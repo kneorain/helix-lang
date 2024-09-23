@@ -27,7 +27,7 @@
 #define AST_NODE_IMPL(name, ...) \
     __AST_N::ParseResult<__AST_NODE::name> __AST_NODE::Expression::parse_##name(__VA_ARGS__)
 
-#define AST_BASE_PARSE_IMPL(name, fn) __AST_N::ParseResult<> __AST_NODE::name::fn()
+#define AST_BASE_IMPL(name, fn) __AST_N::ParseResult<> __AST_NODE::name::fn()
 
 #define AST_NODE_IMPL_VISITOR(visitor, name) \
     void __AST_VISITOR::visitor::visit(const __AST_NODE::name &node)
@@ -49,22 +49,25 @@
     if (!x.has_value()) {                  \
         return std::unexpected(x.error()); \
     }
-#define IS_NOT_EMPTY                                                                    \
-    if (iter.remaining_n() == 0) {                                                      \
+#define IS_NOT_EMPTY                                                                         \
+    if (iter.remaining_n() == 0) {                                                           \
         return std::unexpected(PARSE_ERROR_MSG("expected a expression, but found nothing")); \
     }
 #define NOT_IMPLEMENTED return std::unexpected(PARSE_ERROR_MSG("not implemented yet"));
-#define EXPECT_TOK(x)                                                                   \
-    if (iter->token_kind() != (x)) {                                                    \
+#define EXPECT_TOK(x)                                                                    \
+    if (iter->token_kind() != (x)) {                                                     \
         return std::unexpected(PARSE_ERROR(iter.current().get(),                         \
-                                          "expected a " #x " token, but found: " +      \
-                                              iter.current().get().token_kind_repr())); \
+                                           "expected a " #x " token, but found: " +      \
+                                               iter.current().get().token_kind_repr())); \
     }
 
 #define CURRENT_TOK iter.current().get()
 
 #ifdef DEBUG
-#define GET_DEBUG_INFO std::string(colors::fg16::green) + std::string(__FILE__) + ":" + std::to_string(__LINE__) + colors::reset + " - "
+#include "neo-pprint/include/ansi_colors.hh"
+#define GET_DEBUG_INFO                                                                          \
+    std::string(colors::fg16::green) + std::string(__FILE__) + ":" + std::to_string(__LINE__) + \
+        colors::reset + " - "
 #else
 #define GET_DEBUG_INFO ""
 #endif

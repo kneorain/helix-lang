@@ -18,8 +18,6 @@
 
 #include "parser/ast/include/config/AST_config.def"
 
-__AST_BEGIN {
+__AST_BEGIN {}
 
-}
-
-#endif // __AST_CONTEXT_H__
+#endif  // __AST_CONTEXT_H__

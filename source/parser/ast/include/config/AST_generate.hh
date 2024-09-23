@@ -15,10 +15,10 @@
 
 #include "parser/ast/include/config/AST_config.def"
 #include "parser/ast/include/config/AST_generate.def"
-// #include "parser/ast/include/config/AST_Annotations.def"
-// #include "parser/ast/include/config/AST_Declarations.def"
+#include "parser/ast/include/config/AST_Annotations.def"
+#include "parser/ast/include/config/AST_Declarations.def"
 #include "parser/ast/include/config/AST_Expressions.def"
-// #include "parser/ast/include/config/AST_Statements.def"
+#include "parser/ast/include/config/AST_Statements.def"
 
 __AST_NODE_BEGIN {
     class Node;

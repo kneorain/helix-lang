@@ -106,7 +106,7 @@ class IdentifierExpression:
     := Identifier_T$1
     name = $1
 
-class KeywordArgument:
+class NamedArgument:
     := (class IdentifierExpression)$1 + tokens::PUNCTUATION_ASSIGN + (class Expression)$2
     name  = $1
     value = $2
@@ -116,7 +116,7 @@ class PositionalArgumentExpression:
     value = $1
 
 class ArgumentExpression:
-    := (class PositionalArgumentExpression)$1 | (class KeywordArgument)$1
+    := (class PositionalArgumentExpression)$1 | (class NamedArgument)$1
     value = $1
     arg_t = 'positional' else 'keyword'
 
@@ -128,13 +128,13 @@ class GenericPositionalArgumentExpression:
     := (class Expression)$1
     value = $1
 
-class GenericKeywordArgumentExpression:
+class GenericNamedArgumentExpression:
     := (class IdentifierExpression)$1 + tokens::PUNCTUATION_ASSIGN + (class Expression)$2
     name  = $1
     value = $2
 
 class GenericArgumentExpression:
-    := (class GenericPositionalArgumentExpression)$1 | (class GenericKeywordArgumentExpression)$1
+    := (class GenericPositionalArgumentExpression)$1 | (class GenericNamedArgumentExpression)$1
     value = $1
     arg_t = 'positional' else 'keyword'
 
