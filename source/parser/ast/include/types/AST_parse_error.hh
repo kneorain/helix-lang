@@ -16,6 +16,7 @@
 #include <string>
 #include <utility>
 
+#include "neo-panic/include/error.hh"
 #include "parser/ast/include/config/AST_config.def"
 #include "token/include/token.hh"
 
@@ -48,7 +49,14 @@ __AST_BEGIN {
             : msg(std::move(msg)) {}
 
         [[nodiscard]] std::string what() const { return msg; }
+        void                      panic() const {
+            error::Panic(error::CodeError{
+                                     .pof      = const_cast<token::Token *>(&err),
+                                     .err_code = 0.0001,
+                                     .mark_pof = true,
+            });
+        }
     };
-}
+}  // namespace __AST_BEGIN
 
 #endif  // __AST_PARSE_ERROR_H__

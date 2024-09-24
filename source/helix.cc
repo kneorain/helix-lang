@@ -77,6 +77,7 @@ int compile(int argc, char **argv) {
             ast.value()->accept(jsonify_visitor);
             print(jsonify_visitor.json);
         } else {
+            ast.error().panic();
             print(ast.error().what());
         }
     }

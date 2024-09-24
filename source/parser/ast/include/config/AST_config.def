@@ -73,6 +73,6 @@
 #endif
 
 #define PARSE_ERROR(tok, msg) ParseError(tok, GET_DEBUG_INFO + msg)
-#define PARSE_ERROR_MSG(msg) ParseError(GET_DEBUG_INFO + msg)
+#define PARSE_ERROR_MSG(msg) ParseError(CURRENT_TOK, GET_DEBUG_INFO + msg)
 
 #endif  // __AST_CONFIG_DEF__

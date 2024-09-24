@@ -121,53 +121,167 @@
 #include "parser/ast/include/types/AST_jsonify_visitor.hh"
 #include "parser/ast/include/types/AST_types.hh"
 
-bool is_excepted(const token::Token &tok, const std::unordered_set<token::tokens> &tokens) {
-    return tokens.find(tok.token_kind()) != tokens.end();
-}
+// ---------------------------------------------------------------------------------------------- //
 
-int get_precedence(const token::Token &tok) {
-    switch (tok.token_kind()) {
-        case token::OPERATOR_MUL:
-        case token::OPERATOR_DIV:
-        case token::OPERATOR_MOD:
-        case token::OPERATOR_POW:
-            return 5;
+bool is_excepted(const token::Token &tok, const std::unordered_set<token::tokens> &tokens);
+int  get_precedence(const token::Token &tok);
 
-        case token::OPERATOR_ADD:
-        case token::OPERATOR_SUB:
-            return 4;
+// ---------------------------------------------------------------------------------------------- //
 
-        case token::OPERATOR_BITWISE_AND:
-        case token::OPERATOR_BITWISE_OR:
-        case token::OPERATOR_BITWISE_XOR:
-        case token::OPERATOR_BITWISE_L_SHIFT:
-        case token::OPERATOR_BITWISE_R_SHIFT:
-            return 3;
+AST_BASE_IMPL(Expression, parse_primary) {  // NOLINT(readability-function-cognitive-complexity)
+    IS_NOT_EMPTY;
 
-        case token::OPERATOR_EQUAL:
-        case token::OPERATOR_NOT_EQUAL:
-        case token::OPERATOR_GREATER_THAN_EQUALS:
-        case token::OPERATOR_LESS_THAN_EQUALS:
-        case token::PUNCTUATION_OPEN_ANGLE:
-        case token::PUNCTUATION_CLOSE_ANGLE:
-            return 2;
+    token::Token  tok = CURRENT_TOK;
+    ParseResult<> node;
 
-        case token::OPERATOR_ASSIGN:
-        case token::OPERATOR_ADD_ASSIGN:
-        case token::OPERATOR_SUB_ASSIGN:
-        case token::OPERATOR_MUL_ASSIGN:
-        case token::OPERATOR_DIV_ASSIGN:
-        case token::OPERATOR_MOD_ASSIGN:
-        case token::OPERATOR_LOGICAL_AND:
-        case token::OPERATOR_LOGICAL_OR:
-        case token::OPERATOR_RANGE:
-        case token::OPERATOR_RANGE_INCLUSIVE:
-            return 1;
+    if (is_excepted(tok, IS_LITERAL)) {
+        node = parse_LiteralExpression();
+    } else if (is_excepted(tok, IS_IDENTIFIER)) {
+        node = parse_IdentifierExpression();
 
-        default:
-            return 0;  // Return 0 for non-binary operators
+        while (true) {  // this loop is used to build a simple compound expression from the primary
+                        // expression parsed above, but now we need way to limit the number of times
+                        // for the same reason as the other loop /* TODO */
+
+            if (CURRENT_TOK ==
+                token::tokens::PUNCTUATION_OPEN_ANGLE) {  /// why are generics so hard
+                                                          /// to parse, fuck them fr
+                NOT_IMPLEMENTED;
+            } else if (CURRENT_TOK ==
+                       token::tokens::PUNCTUATION_OPEN_PAREN) {  /// see? how simple these are to do
+                                                                 /// compared to generics
+                node = parse_FunctionCallExpression(node);
+            } else if (CURRENT_TOK == token::tokens::PUNCTUATION_OPEN_BRACKET) {
+                node = parse_ArrayAccessExpression(node);
+            } else if (CURRENT_TOK == token::tokens::PUNCTUATION_DOT) {
+                node = parse_DotAccessExpression(node);
+            } else if (CURRENT_TOK == token::tokens::OPERATOR_SCOPE) {
+                node = parse_ScopeAccessExpression(node);
+            } else {
+                break;  /// exit the loop
+            }
+        }
+    } else if (is_excepted(tok, IS_UNARY_OPERATOR)) {
+        node = parse_UnaryExpression();
+    } else if (is_excepted(tok, IS_PUNCTUATION)) {
+        if (tok.token_kind() ==
+            token::tokens::PUNCTUATION_OPEN_PAREN) {  /// at this point we either have a tuple or a
+                                                      /// parenthesized expression, so we need to do
+                                                      /// further analysis to determine which one it
+                                                      /// is
+            iter.advance();                           /// skip '('
+            ParseResult<> expr = parse();
+            RETURN_IF_ERROR(expr);
+
+            if (CURRENT_TOK == token::tokens::PUNCTUATION_COMMA) {  /// if the next token is a
+                                                                    /// comma, then its a tuple
+                node = parse_TupleLiteralExpression(expr);
+            } else {
+                node = parse_ParenthesizedExpression(expr);
+            }
+        } else if (tok.token_kind() == token::tokens::PUNCTUATION_OPEN_BRACKET) {
+            node = parse_ArrayLiteralExpression();
+        } else if (tok.token_kind() ==
+                   token::tokens::
+                       PUNCTUATION_OPEN_BRACE) {  /// heres its either a set, a map or an object
+                                                  /// initializer, to determine which one it is, its
+                                                  /// quite simple we need to check if the next
+                                                  /// token is a '.' which if it is, then its an
+                                                  /// object initializer otherwise we parse E(1) and
+                                                  /// check if the next token is a ':', if it is,
+                                                  /// then its a map otherwise its a set
+            iter.advance();                       // skip '{'
+            if (CURRENT_TOK == token::tokens::PUNCTUATION_DOT) {
+                node = parse_ObjectInitializerExpression(true);
+            } else {
+                ParseResult<> first = parse();
+                RETURN_IF_ERROR(first);
+
+                if (CURRENT_TOK == token::tokens::PUNCTUATION_COLON) {
+                    node = parse_MapLiteralExpression(first);
+                } else {
+                    node = parse_SetLiteralExpression(first);
+                }
+            }
+        } else {
+            return std::unexpected(PARSE_ERROR_MSG("Expected an expression, but found nothing"));
+        }
+    } else {
+        return std::unexpected(PARSE_ERROR_MSG("Expected an expression, but found nothing"));
     }
+
+    return node;
 }
+
+// ---------------------------------------------------------------------------------------------- //
+
+AST_BASE_IMPL(Expression, parse) {  // NOLINT(readability-function-cognitive-complexity)
+    IS_NOT_EMPTY;                   /// simple macro to check if the iterator is empty, expands to:
+                   /// if (iter.remaining_n() == 0) { return std::unexpected(...); }
+
+    ParseResult<> expr = parse_primary();  /// E(1) - this is always the first expression in the
+                                           /// expression, we then build coumpound expressions from
+                                           /// this
+
+    RETURN_IF_ERROR(expr);  /// simple macro to return if the expression is an error expands to:
+                            /// if (!expr.has_value()) { return std::unexpected(expr.error()); }
+
+    while (true) {  /// this loop is used to build compound expressions from the primary expression
+                    /// parsed above, but now we need way to limit the number of times we can loop
+                    /// since if we have a really really long expression, we could end up in an
+                    /// memory exhaustion situation or a stack overflow situation. /* TODO */
+
+        token::Token tok = CURRENT_TOK;  /// simple macro to get the current token expands to:
+                                         /// iter.current().get()
+
+        if (tok == token::tokens::PUNCTUATION_OPEN_ANGLE) {  /// what to do if its ident '<' parms
+                                                             /// '>' '(' args ')' its now either a
+                                                             /// function call w a generic or its a
+                                                             /// binary expression may god help me
+            NOT_IMPLEMENTED;
+        } else if (tok == token::tokens::PUNCTUATION_OPEN_PAREN) {
+            expr = parse_FunctionCallExpression(expr);
+            RETURN_IF_ERROR(expr);
+        } else if (tok == token::tokens::PUNCTUATION_OPEN_BRACKET) {
+            expr = parse_ArrayAccessExpression(expr);
+            RETURN_IF_ERROR(expr);
+        } else if (tok == token::tokens::PUNCTUATION_DOT) {
+            expr = parse_DotAccessExpression(expr);
+            RETURN_IF_ERROR(expr);
+        } else if (tok == token::tokens::OPERATOR_SCOPE) {
+            expr = parse_ScopeAccessExpression(expr);
+            RETURN_IF_ERROR(expr);
+        } else if (tok == token::tokens::PUNCTUATION_OPEN_BRACE) {
+            expr = parse_ObjectInitializerExpression();
+            RETURN_IF_ERROR(expr);
+        } else if (tok == token::tokens::PUNCTUATION_OPEN_PAREN) {
+            iter.advance();                              // skip '('
+            expr = parse_ParenthesizedExpression(expr);  /// im not sure why this works, but based
+                                                         /// on small tests, it seems to work fine
+                                                         /// i'll find out soon enough if it doesn't
+            RETURN_IF_ERROR(expr);
+        } else if (is_excepted(tok, IS_BINARY_OPERATOR)) {
+            expr = parse_BinaryExpression(expr, get_precedence(tok));
+            RETURN_IF_ERROR(expr);
+        } else if (is_excepted(tok, {token::tokens::KEYWORD_HAS, token::tokens::KEYWORD_DERIVES})) {
+            expr = parse_InstanceOfExpression(expr);
+            RETURN_IF_ERROR(expr);
+        } else if (is_excepted(
+                       tok,
+                       {token::tokens::PUNCTUATION_QUESTION_MARK, token::tokens::KEYWORD_IF})) {
+            expr = parse_TernaryExpression(expr);
+            RETURN_IF_ERROR(expr);
+        } else {
+            break;
+        }
+
+        tok = CURRENT_TOK;
+    }
+
+    return expr;
+}
+
+// ---------------------------------------------------------------------------------------------- //
 
 AST_NODE_IMPL(LiteralExpression) {
     if (iter.remaining_n() == 0) {
@@ -1226,156 +1340,51 @@ AST_NODE_IMPL(Type) {
 
 // ---------------------------------------------------------------------------------------------- //
 
-AST_BASE_IMPL(Expression, parse_primary) {  // NOLINT(readability-function-cognitive-complexity)
-    IS_NOT_EMPTY;
 
-    token::Token  tok = CURRENT_TOK;
-    ParseResult<> node;
-
-    if (is_excepted(tok, IS_LITERAL)) {
-        node = parse_LiteralExpression();
-    } else if (is_excepted(tok, IS_IDENTIFIER)) {
-        node = parse_IdentifierExpression();
-
-        while (true) {  // this loop is used to build a simple compound expression from the primary
-                        // expression parsed above, but now we need way to limit the number of times
-                        // for the same reason as the other loop /* TODO */
-
-            if (CURRENT_TOK ==
-                token::tokens::PUNCTUATION_OPEN_ANGLE) {  /// why are generics so hard
-                                                          /// to parse, fuck them fr
-                NOT_IMPLEMENTED;
-            } else if (CURRENT_TOK ==
-                       token::tokens::PUNCTUATION_OPEN_PAREN) {  /// see? how simple these are to do
-                                                                 /// compared to generics
-                node = parse_FunctionCallExpression(node);
-            } else if (CURRENT_TOK == token::tokens::PUNCTUATION_OPEN_BRACKET) {
-                node = parse_ArrayAccessExpression(node);
-            } else if (CURRENT_TOK == token::tokens::PUNCTUATION_DOT) {
-                node = parse_DotAccessExpression(node);
-            } else if (CURRENT_TOK == token::tokens::OPERATOR_SCOPE) {
-                node = parse_ScopeAccessExpression(node);
-            } else {
-                break;  /// exit the loop
-            }
-        }
-    } else if (is_excepted(tok, IS_UNARY_OPERATOR)) {
-        node = parse_UnaryExpression();
-    } else if (is_excepted(tok, IS_PUNCTUATION)) {
-        if (tok.token_kind() ==
-            token::tokens::PUNCTUATION_OPEN_PAREN) {  /// at this point we either have a tuple or a
-                                                      /// parenthesized expression, so we need to do
-                                                      /// further analysis to determine which one it
-                                                      /// is
-            iter.advance();                           // skip '('
-            ParseResult<> expr = parse();
-            RETURN_IF_ERROR(expr);
-
-            if (CURRENT_TOK == token::tokens::PUNCTUATION_COMMA) {  /// if the next token is a
-                                                                    /// comma, then its a tuple
-                node = parse_TupleLiteralExpression(expr);
-            } else {
-                node = parse_ParenthesizedExpression(expr);
-            }
-        } else if (tok.token_kind() == token::tokens::PUNCTUATION_OPEN_BRACKET) {
-            node = parse_ArrayLiteralExpression();
-        } else if (tok.token_kind() ==
-                   token::tokens::
-                       PUNCTUATION_OPEN_BRACE) {  /// heres its either a set, a map or an object
-                                                  /// initializer, to determine which one it is, its
-                                                  /// quite simple we need to check if the next
-                                                  /// token is a '.' which if it is, then its an
-                                                  /// object initializer otherwise we parse E(1) and
-                                                  /// check if the next token is a ':', if it is,
-                                                  /// then its a map otherwise its a set
-            iter.advance();                       // skip '{'
-            if (CURRENT_TOK == token::tokens::PUNCTUATION_DOT) {
-                node = parse_ObjectInitializerExpression(true);
-            } else {
-                ParseResult<> first = parse();
-                RETURN_IF_ERROR(first);
-
-                if (CURRENT_TOK == token::tokens::PUNCTUATION_COLON) {
-                    node = parse_MapLiteralExpression(first);
-                } else {
-                    node = parse_SetLiteralExpression(first);
-                }
-            }
-        } else {
-            return std::unexpected(PARSE_ERROR_MSG("Expected an expression, but found nothing"));
-        }
-    } else {
-        return std::unexpected(PARSE_ERROR_MSG("Expected an expression, but found : " +
-                                               tok.token_kind_repr() + " " + tok.value() + " at " + tok.file_name() + ":" + std::to_string(tok.line_number()) + ":" + std::to_string(tok.column_number())));
-    }
-
-    return node;
+bool is_excepted(const token::Token &tok, const std::unordered_set<token::tokens> &tokens) {
+    return tokens.find(tok.token_kind()) != tokens.end();
 }
 
-// ---------------------------------------------------------------------------------------------- //
+int get_precedence(const token::Token &tok) {
+    switch (tok.token_kind()) {
+        case token::OPERATOR_MUL:
+        case token::OPERATOR_DIV:
+        case token::OPERATOR_MOD:
+        case token::OPERATOR_POW:
+            return 5;
 
-AST_BASE_IMPL(Expression, parse) {  // NOLINT(readability-function-cognitive-complexity)
-    IS_NOT_EMPTY;                   /// simple macro to check if the iterator is empty, expands to:
-                   /// if (iter.remaining_n() == 0) { return std::unexpected(...); }
+        case token::OPERATOR_ADD:
+        case token::OPERATOR_SUB:
+            return 4;
 
-    ParseResult<> expr = parse_primary();  /// E(1) - this is always the first expression in the
-                                           /// expression, we then build coumpound expressions from
-                                           /// this
+        case token::OPERATOR_BITWISE_AND:
+        case token::OPERATOR_BITWISE_OR:
+        case token::OPERATOR_BITWISE_XOR:
+        case token::OPERATOR_BITWISE_L_SHIFT:
+        case token::OPERATOR_BITWISE_R_SHIFT:
+            return 3;
 
-    RETURN_IF_ERROR(expr);  /// simple macro to return if the expression is an error expands to:
-                            /// if (!expr.has_value()) { return std::unexpected(expr.error()); }
+        case token::OPERATOR_EQUAL:
+        case token::OPERATOR_NOT_EQUAL:
+        case token::OPERATOR_GREATER_THAN_EQUALS:
+        case token::OPERATOR_LESS_THAN_EQUALS:
+        case token::PUNCTUATION_OPEN_ANGLE:
+        case token::PUNCTUATION_CLOSE_ANGLE:
+            return 2;
 
-    while (true) {  /// this loop is used to build compound expressions from the primary expression
-                    /// parsed above, but now we need way to limit the number of times we can loop
-                    /// since if we have a really really long expression, we could end up in an
-                    /// memory exhaustion situation or a stack overflow situation. /* TODO */
+        case token::OPERATOR_ASSIGN:
+        case token::OPERATOR_ADD_ASSIGN:
+        case token::OPERATOR_SUB_ASSIGN:
+        case token::OPERATOR_MUL_ASSIGN:
+        case token::OPERATOR_DIV_ASSIGN:
+        case token::OPERATOR_MOD_ASSIGN:
+        case token::OPERATOR_LOGICAL_AND:
+        case token::OPERATOR_LOGICAL_OR:
+        case token::OPERATOR_RANGE:
+        case token::OPERATOR_RANGE_INCLUSIVE:
+            return 1;
 
-        token::Token tok = CURRENT_TOK;  /// simple macro to get the current token expands to:
-                                         /// iter.current().get()
-
-        if (tok == token::tokens::PUNCTUATION_OPEN_ANGLE) {  /// what to do if its ident '<' parms
-                                                             /// '>' '(' args ')' its now either a
-                                                             /// function call w a generic or its a
-                                                             /// binary expression may god help me
-            NOT_IMPLEMENTED;
-        } else if (tok == token::tokens::PUNCTUATION_OPEN_PAREN) {
-            expr = parse_FunctionCallExpression(expr);
-            RETURN_IF_ERROR(expr);
-        } else if (tok == token::tokens::PUNCTUATION_OPEN_BRACKET) {
-            expr = parse_ArrayAccessExpression(expr);
-            RETURN_IF_ERROR(expr);
-        } else if (tok == token::tokens::PUNCTUATION_DOT) {
-            expr = parse_DotAccessExpression(expr);
-            RETURN_IF_ERROR(expr);
-        } else if (tok == token::tokens::OPERATOR_SCOPE) {
-            expr = parse_ScopeAccessExpression(expr);
-            RETURN_IF_ERROR(expr);
-        } else if (tok == token::tokens::PUNCTUATION_OPEN_BRACE) {
-            expr = parse_ObjectInitializerExpression();
-            RETURN_IF_ERROR(expr);
-        } else if (tok == token::tokens::PUNCTUATION_OPEN_PAREN) {
-            iter.advance();                              // skip '('
-            expr = parse_ParenthesizedExpression(expr);  /// im not sure why this works, but based
-                                                         /// on small tests, it seems to work fine
-                                                         /// i'll find out soon enough if it doesn't
-            RETURN_IF_ERROR(expr);
-        } else if (is_excepted(tok, IS_BINARY_OPERATOR)) {
-            expr = parse_BinaryExpression(expr, get_precedence(tok));
-            RETURN_IF_ERROR(expr);
-        } else if (is_excepted(tok, {token::tokens::KEYWORD_HAS, token::tokens::KEYWORD_DERIVES})) {
-            expr = parse_InstanceOfExpression(expr);
-            RETURN_IF_ERROR(expr);
-        } else if (is_excepted(
-                       tok,
-                       {token::tokens::PUNCTUATION_QUESTION_MARK, token::tokens::KEYWORD_IF})) {
-            expr = parse_TernaryExpression(expr);
-            RETURN_IF_ERROR(expr);
-        } else {
-            break;
-        }
-
-        tok = CURRENT_TOK;
+        default:
+            return 0;  // Return 0 for non-binary operators
     }
-
-    return expr;
 }

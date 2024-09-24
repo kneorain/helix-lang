@@ -44,6 +44,27 @@
     7 - 1 * 4
 }
 
+fn sad() -> fn () {
+    let a = 1;
+
+    fn happy() { // happy can access the scope of sad but not vice versa
+        a = 29;
+    }
+
+    return happy;
+}
+
+fn main() {
+    let a = 1;
+    let b = 2;
+    let c = 3;
+
+    let d = a + b + c;
+
+    let e = sad();
+    e();
+}
+
 /*
 only these dont work for some reason:
     Namespace::Class::method().chain().property,
