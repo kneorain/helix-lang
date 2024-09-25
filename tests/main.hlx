@@ -41,34 +41,9 @@
     (1, 2, 3, 4),
     (1, ),
     (x - y) * 2,
-    7 - 1 * 4
-}
-
-fn sad() -> fn () {
-    let a = 1;
-
-    fn happy() { // happy can access the scope of sad but not vice versa
-        a = 29;
-    }
-
-    return happy;
-}
-
-fn main() {
-    let a = 1;
-    let b = 2;
-    let c = 3;
-
-    let d = a + b + c;
-
-    let e = sad();
-    e();
-}
-
-/*
-only these dont work for some reason:
+    7 - 1 * 4,
     Namespace::Class::method().chain().property,
     Namespace::Class::method().chain().property[0],
     x as int,
     y as *float,
-*/
+}

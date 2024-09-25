@@ -27,7 +27,18 @@
      token::LITERAL_CHAR,               \
      token::LITERAL_NULL}
 
-#define IS_IDENTIFIER {token::IDENTIFIER}
+#define IS_IDENTIFIER                                                              \
+    {                                                                              \
+        token::IDENTIFIER,       token::PRIMITIVE_VOID,  token::PRIMITIVE_BOOL,    \
+        token::PRIMITIVE_BYTE,   token::PRIMITIVE_CHAR,  token::PRIMITIVE_POINTER, \
+        token::PRIMITIVE_I8,     token::PRIMITIVE_U8,    token::PRIMITIVE_I16,     \
+        token::PRIMITIVE_U16,    token::PRIMITIVE_I32,   token::PRIMITIVE_U32,     \
+        token::PRIMITIVE_F32,    token::PRIMITIVE_I64,   token::PRIMITIVE_U64,     \
+        token::PRIMITIVE_F64,    token::PRIMITIVE_FLOAT, token::PRIMITIVE_I128,    \
+        token::PRIMITIVE_U128,   token::PRIMITIVE_INT,   token::PRIMITIVE_DECIMAL, \
+        token::PRIMITIVE_STRING, token::PRIMITIVE_LIST,  token::PRIMITIVE_TUPLE,   \
+        token::PRIMITIVE_SET,    token::PRIMITIVE_MAP,   token::PRIMITIVE_ANY,     \
+    }
 
 #define IS_KEYWORD                                                                \
     {token::KEYWORD_IF,        token::KEYWORD_ELSE,      token::KEYWORD_UNLESS,   \
