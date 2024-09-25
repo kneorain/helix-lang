@@ -96,7 +96,7 @@ __AST_NODE_BEGIN {
         ParseResult<TernaryExpression> parse_TernaryExpression(ParseResult<> lhs = nullptr);
         ParseResult<ParenthesizedExpression>
                                     parse_ParenthesizedExpression(ParseResult<> expr = nullptr);
-        ParseResult<CastExpression> parse_CastExpression();
+        ParseResult<CastExpression> parse_CastExpression(ParseResult<> lhs);
         ParseResult<InstanceOfExpression> parse_InstanceOfExpression(ParseResult<> lhs = nullptr);
         ParseResult<PtrType>              parse_PtrType();
         ParseResult<Type>                 parse_Type();

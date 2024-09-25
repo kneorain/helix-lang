@@ -65,10 +65,11 @@ __AST_NODE_BEGIN {
     class IdentifierExpression final : public Node {  // := T
         BASE_CORE_METHODS(IdentifierExpression);
 
-        explicit IdentifierExpression(token::Token name)
-            : name(std::move(name)) {}
+        explicit IdentifierExpression(token::Token name, bool is_reserved_primitive = false)
+            : name(std::move(name)), is_reserved_primitive(is_reserved_primitive) {}
 
         token::Token name;
+        bool is_reserved_primitive = false;
     };
 
     class NamedArgument final : public Node {  // := IdentifierExpression '=' E

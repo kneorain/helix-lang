@@ -107,6 +107,7 @@
 ///                                                                                              ///
 //===-----------------------------------------------------------------------------------------====//
 
+#include <cstddef>
 #include <expected>
 #include <memory>
 #include <string>
@@ -138,29 +139,6 @@ AST_BASE_IMPL(Expression, parse_primary) {  // NOLINT(readability-function-cogni
         node = parse_LiteralExpression();
     } else if (is_excepted(tok, IS_IDENTIFIER)) {
         node = parse_IdentifierExpression();
-
-        while (true) {  // this loop is used to build a simple compound expression from the primary
-                        // expression parsed above, but now we need way to limit the number of times
-                        // for the same reason as the other loop /* TODO */
-
-            if (CURRENT_TOK ==
-                token::tokens::PUNCTUATION_OPEN_ANGLE) {  /// why are generics so hard
-                                                          /// to parse, fuck them fr
-                NOT_IMPLEMENTED;
-            } else if (CURRENT_TOK ==
-                       token::tokens::PUNCTUATION_OPEN_PAREN) {  /// see? how simple these are to do
-                                                                 /// compared to generics
-                node = parse_FunctionCallExpression(node);
-            } else if (CURRENT_TOK == token::tokens::PUNCTUATION_OPEN_BRACKET) {
-                node = parse_ArrayAccessExpression(node);
-            } else if (CURRENT_TOK == token::tokens::PUNCTUATION_DOT) {
-                node = parse_DotAccessExpression(node);
-            } else if (CURRENT_TOK == token::tokens::OPERATOR_SCOPE) {
-                node = parse_ScopeAccessExpression(node);
-            } else {
-                break;  /// exit the loop
-            }
-        }
     } else if (is_excepted(tok, IS_UNARY_OPERATOR)) {
         node = parse_UnaryExpression();
     } else if (is_excepted(tok, IS_PUNCTUATION)) {
@@ -181,16 +159,17 @@ AST_BASE_IMPL(Expression, parse_primary) {  // NOLINT(readability-function-cogni
             }
         } else if (tok.token_kind() == token::tokens::PUNCTUATION_OPEN_BRACKET) {
             node = parse_ArrayLiteralExpression();
-        } else if (tok.token_kind() ==
-                   token::tokens::
-                       PUNCTUATION_OPEN_BRACE) {  /// heres its either a set, a map or an object
-                                                  /// initializer, to determine which one it is, its
-                                                  /// quite simple we need to check if the next
-                                                  /// token is a '.' which if it is, then its an
-                                                  /// object initializer otherwise we parse E(1) and
-                                                  /// check if the next token is a ':', if it is,
-                                                  /// then its a map otherwise its a set
-            iter.advance();                       // skip '{'
+        } else if (tok.token_kind() == token::tokens::PUNCTUATION_OPEN_BRACE) {
+            /// heres its either a set, a map or an object
+            /// initializer, to determine which one it is, its
+            /// quite simple we need to check if the next
+            /// token is a '.' which if it is, then its an
+            /// object initializer otherwise we parse E(1) and
+            /// check if the next token is a ':', if it is,
+            /// then its a map otherwise its a set
+
+            iter.advance();  // skip '{'
+
             if (CURRENT_TOK == token::tokens::PUNCTUATION_DOT) {
                 node = parse_ObjectInitializerExpression(true);
             } else {
@@ -217,8 +196,16 @@ AST_BASE_IMPL(Expression, parse_primary) {  // NOLINT(readability-function-cogni
 
 AST_BASE_IMPL(Expression, parse) {  // NOLINT(readability-function-cognitive-complexity)
     IS_NOT_EMPTY;                   /// simple macro to check if the iterator is empty, expands to:
-                   /// if (iter.remaining_n() == 0) { return std::unexpected(...); }
+                                    /// if(iter.remaining_n() == 0) { return std::unexpected(...); }
 
+    token::Token tok;
+    size_t iter_n = 0;
+    size_t n_max = iter.remaining_n() << 1;  /// this is a way to approx the tokens to parse, and is
+                                             /// used to prevent the parser from going into an
+                                             /// infinite loop  if the expression is malformed, this
+                                             /// is a simple way to prevent stack overflows and
+                                             /// memory exhaustion
+    bool          continue_loop = true;
     ParseResult<> expr = parse_primary();  /// E(1) - this is always the first expression in the
                                            /// expression, we then build coumpound expressions from
                                            /// this
@@ -226,56 +213,86 @@ AST_BASE_IMPL(Expression, parse) {  // NOLINT(readability-function-cognitive-com
     RETURN_IF_ERROR(expr);  /// simple macro to return if the expression is an error expands to:
                             /// if (!expr.has_value()) { return std::unexpected(expr.error()); }
 
-    while (true) {  /// this loop is used to build compound expressions from the primary expression
-                    /// parsed above, but now we need way to limit the number of times we can loop
-                    /// since if we have a really really long expression, we could end up in an
-                    /// memory exhaustion situation or a stack overflow situation. /* TODO */
+    /// parsed above, but now we need way to limit the number of times we can loop since if we have
+    /// a really really long expression, we could end up in an memory exhaustion situation or a
+    /// stack overflow situation. /* TODO */
+    for (; iter_n < n_max && continue_loop; iter_n++) {  /// this is a simple loop that will
+                                                           /// continue to loop until we have parsed
+                                                           /// all the tokens in the expression, the
+                                                           /// expression
 
-        token::Token tok = CURRENT_TOK;  /// simple macro to get the current token expands to:
-                                         /// iter.current().get()
+        tok = CURRENT_TOK;  /// simple macro to get the current token expands to:
+                            /// CURRENT_TOK
 
-        if (tok == token::tokens::PUNCTUATION_OPEN_ANGLE) {  /// what to do if its ident '<' parms
-                                                             /// '>' '(' args ')' its now either a
-                                                             /// function call w a generic or its a
-                                                             /// binary expression may god help me
-            NOT_IMPLEMENTED;
-        } else if (tok == token::tokens::PUNCTUATION_OPEN_PAREN) {
-            expr = parse_FunctionCallExpression(expr);
-            RETURN_IF_ERROR(expr);
-        } else if (tok == token::tokens::PUNCTUATION_OPEN_BRACKET) {
-            expr = parse_ArrayAccessExpression(expr);
-            RETURN_IF_ERROR(expr);
-        } else if (tok == token::tokens::PUNCTUATION_DOT) {
-            expr = parse_DotAccessExpression(expr);
-            RETURN_IF_ERROR(expr);
-        } else if (tok == token::tokens::OPERATOR_SCOPE) {
-            expr = parse_ScopeAccessExpression(expr);
-            RETURN_IF_ERROR(expr);
-        } else if (tok == token::tokens::PUNCTUATION_OPEN_BRACE) {
-            expr = parse_ObjectInitializerExpression();
-            RETURN_IF_ERROR(expr);
-        } else if (tok == token::tokens::PUNCTUATION_OPEN_PAREN) {
-            iter.advance();                              // skip '('
-            expr = parse_ParenthesizedExpression(expr);  /// im not sure why this works, but based
-                                                         /// on small tests, it seems to work fine
-                                                         /// i'll find out soon enough if it doesn't
-            RETURN_IF_ERROR(expr);
-        } else if (is_excepted(tok, IS_BINARY_OPERATOR)) {
-            expr = parse_BinaryExpression(expr, get_precedence(tok));
-            RETURN_IF_ERROR(expr);
-        } else if (is_excepted(tok, {token::tokens::KEYWORD_HAS, token::tokens::KEYWORD_DERIVES})) {
-            expr = parse_InstanceOfExpression(expr);
-            RETURN_IF_ERROR(expr);
-        } else if (is_excepted(
-                       tok,
-                       {token::tokens::PUNCTUATION_QUESTION_MARK, token::tokens::KEYWORD_IF})) {
-            expr = parse_TernaryExpression(expr);
-            RETURN_IF_ERROR(expr);
-        } else {
-            break;
+        switch (tok.token_kind()) {
+            case token::tokens::PUNCTUATION_OPEN_ANGLE:  /// what to do if its ident '<' parms
+                                                         /// '>' '(' args ')' its now either a
+                                                         /// function call w a generic or its a
+                                                         /// binary expression may god help me
+                NOT_IMPLEMENTED;
+            case token::tokens::PUNCTUATION_OPEN_PAREN:
+                expr = parse_FunctionCallExpression(expr);
+                RETURN_IF_ERROR(expr);
+                break;
+
+            case token::tokens::PUNCTUATION_OPEN_BRACKET:
+                expr = parse_ArrayAccessExpression(expr);
+                RETURN_IF_ERROR(expr);
+                break;
+
+            case token::tokens::PUNCTUATION_DOT:
+                expr = parse_DotAccessExpression(expr);
+                RETURN_IF_ERROR(expr);
+                break;
+
+            case token::tokens::OPERATOR_SCOPE:
+                expr = parse_ScopeAccessExpression(expr);
+                RETURN_IF_ERROR(expr);
+                break;
+
+            case token::tokens::PUNCTUATION_OPEN_BRACE:
+                expr = parse_ObjectInitializerExpression();
+                RETURN_IF_ERROR(expr);
+                break;
+
+            case token::tokens::KEYWORD_HAS:
+                [[fallthrough]];
+            case token::tokens::KEYWORD_DERIVES:
+                expr = parse_InstanceOfExpression(expr);
+                RETURN_IF_ERROR(expr);
+                break;
+
+            case token::tokens::PUNCTUATION_QUESTION_MARK:
+                [[fallthrough]];
+            case token::tokens::KEYWORD_IF:
+                expr = parse_TernaryExpression(expr);
+                RETURN_IF_ERROR(expr);
+                break;
+
+            case token::tokens::KEYWORD_AS:
+                expr = parse_CastExpression(expr);
+                RETURN_IF_ERROR(expr);
+                break;
+
+            default:
+                if (is_excepted(tok, IS_BINARY_OPERATOR)) {
+                    expr = parse_BinaryExpression(expr, get_precedence(tok));
+                    RETURN_IF_ERROR(expr);
+                } else if (tok == token::tokens::PUNCTUATION_OPEN_PAREN) {
+                    iter.advance();                              // skip '('
+                    expr = parse_ParenthesizedExpression(expr);  /// im not sure why this works, but
+                                                                 /// based on small tests, it seems
+                                                                 /// to work fine i'll find out soon
+                                                                 /// enough if it doesn't
+                    RETURN_IF_ERROR(expr);
+                } else {
+                    continue_loop = false;
+                }
         }
+    }
 
-        tok = CURRENT_TOK;
+    if (iter_n >= n_max) {
+        return std::unexpected(PARSE_ERROR_MSG("expression is too long"));
     }
 
     return expr;
@@ -288,8 +305,8 @@ AST_NODE_IMPL(LiteralExpression) {
         return std::unexpected(PARSE_ERROR_MSG("expected a literal expression, but found nothing"));
     }
 
-    token::Token tok = iter.current().get();  // get tokens[0]
-    iter.advance();                           // pop tokens[0]
+    token::Token tok = CURRENT_TOK;  // get tokens[0]
+    iter.advance();                  // pop tokens[0]
 
     LiteralExpression::LiteralType type{};
 
@@ -370,12 +387,11 @@ AST_NODE_IMPL(UnaryExpression) {
 
     // := op E
     if (!is_excepted(CURRENT_TOK, IS_UNARY_OPERATOR)) {
-        return std::unexpected(PARSE_ERROR(iter.current().get(),
-                                           "expected a unary operator, but found: " +
-                                               iter.current().get().token_kind_repr()));
+        return std::unexpected(PARSE_ERROR(
+            CURRENT_TOK, "expected a unary operator, but found: " + CURRENT_TOK.token_kind_repr()));
     }
 
-    token::Token op = iter.current().get();
+    token::Token op = CURRENT_TOK;
     iter.advance();  // pop the token
 
     ParseResult<> rhs = parse();
@@ -394,16 +410,73 @@ AST_NODE_IMPL(IdentifierExpression) {
     IS_NOT_EMPTY;
 
     // verify the current token is an identifier
-    token::Token tok = iter.current().get();
+    token::Token tok                   = CURRENT_TOK;
+    bool         is_reserved_primitive = false;
 
-    if (tok.token_kind() != token::tokens::IDENTIFIER) {
-        return std::unexpected(
-            PARSE_ERROR(tok, +"expected an identifier, but found: " + tok.token_kind_repr()));
+    switch (tok.token_kind()) {
+        case token::PRIMITIVE_VOID:
+            [[fallthrough]];
+        case token::PRIMITIVE_BOOL:
+            [[fallthrough]];
+        case token::PRIMITIVE_BYTE:
+            [[fallthrough]];
+        case token::PRIMITIVE_CHAR:
+            [[fallthrough]];
+        case token::PRIMITIVE_POINTER:
+            [[fallthrough]];
+        case token::PRIMITIVE_I8:
+            [[fallthrough]];
+        case token::PRIMITIVE_U8:
+            [[fallthrough]];
+        case token::PRIMITIVE_I16:
+            [[fallthrough]];
+        case token::PRIMITIVE_U16:
+            [[fallthrough]];
+        case token::PRIMITIVE_I32:
+            [[fallthrough]];
+        case token::PRIMITIVE_U32:
+            [[fallthrough]];
+        case token::PRIMITIVE_F32:
+            [[fallthrough]];
+        case token::PRIMITIVE_I64:
+            [[fallthrough]];
+        case token::PRIMITIVE_U64:
+            [[fallthrough]];
+        case token::PRIMITIVE_F64:
+            [[fallthrough]];
+        case token::PRIMITIVE_FLOAT:
+            [[fallthrough]];
+        case token::PRIMITIVE_I128:
+            [[fallthrough]];
+        case token::PRIMITIVE_U128:
+            [[fallthrough]];
+        case token::PRIMITIVE_INT:
+            [[fallthrough]];
+        case token::PRIMITIVE_DECIMAL:
+            [[fallthrough]];
+        case token::PRIMITIVE_STRING:
+            [[fallthrough]];
+        case token::PRIMITIVE_LIST:
+            [[fallthrough]];
+        case token::PRIMITIVE_TUPLE:
+            [[fallthrough]];
+        case token::PRIMITIVE_SET:
+            [[fallthrough]];
+        case token::PRIMITIVE_MAP:
+            [[fallthrough]];
+        case token::PRIMITIVE_ANY:
+            is_reserved_primitive = true;
+            break;
+        case token::IDENTIFIER:
+            break;
+        default:
+            return std::unexpected(
+                PARSE_ERROR(tok, +"expected an identifier, but found: " + tok.token_kind_repr()));
     }
 
     iter.advance();  // pop the token
 
-    return make_node<IdentifierExpression>(tok);
+    return make_node<IdentifierExpression>(tok, is_reserved_primitive);
 }
 
 AST_NODE_IMPL_VISITOR(Jsonify, IdentifierExpression) {
@@ -419,10 +492,9 @@ AST_NODE_IMPL(NamedArgument) {
 
     // := '.' IdentifierExpression '=' E
 
-    if (!(CURRENT_TOK == token::tokens::PUNCTUATION_DOT)) {
+    if ((CURRENT_TOK != token::tokens::PUNCTUATION_DOT)) {
         return std::unexpected(
-            PARSE_ERROR(iter.current().get(),
-                        "expected '.', but found: " + iter.current().get().token_kind_repr()));
+            PARSE_ERROR(CURRENT_TOK, "expected '.', but found: " + CURRENT_TOK.token_kind_repr()));
     }
 
     iter.advance();  // skip '.'
@@ -430,10 +502,9 @@ AST_NODE_IMPL(NamedArgument) {
     ParseResult<IdentifierExpression> name = parse_IdentifierExpression();
     RETURN_IF_ERROR(name);
 
-    if (!(CURRENT_TOK == token::tokens::OPERATOR_ASSIGN)) {
+    if ((CURRENT_TOK != token::tokens::OPERATOR_ASSIGN)) {
         return std::unexpected(
-            PARSE_ERROR(iter.current().get(),
-                        "expected '=', but found: " + iter.current().get().token_kind_repr()));
+            PARSE_ERROR(CURRENT_TOK, "expected '=', but found: " + CURRENT_TOK.token_kind_repr()));
     }
 
     iter.advance();  // skip '='
@@ -499,10 +570,9 @@ AST_NODE_IMPL(ArgumentListExpression) {
     // := '(' ArgumentExpression (',' ArgumentExpression)* ')'
     // in typical recursive descent fashion, we parse the first argument expression
 
-    if (!(CURRENT_TOK == token::tokens::PUNCTUATION_OPEN_PAREN)) {
+    if ((CURRENT_TOK != token::tokens::PUNCTUATION_OPEN_PAREN)) {
         return std::unexpected(
-            PARSE_ERROR(iter.current().get(),
-                        "expected '(', but found: " + iter.current().get().token_kind_repr()));
+            PARSE_ERROR(CURRENT_TOK, "expected '(', but found: " + CURRENT_TOK.token_kind_repr()));
     }
 
     iter.advance();  // skip '('
@@ -525,10 +595,9 @@ AST_NODE_IMPL(ArgumentListExpression) {
         args->args.push_back(arg.value());
     }
 
-    if (!(CURRENT_TOK == token::tokens::PUNCTUATION_CLOSE_PAREN)) {
+    if ((CURRENT_TOK != token::tokens::PUNCTUATION_CLOSE_PAREN)) {
         return std::unexpected(
-            PARSE_ERROR(iter.current().get(),
-                        "expected ')', but found: " + iter.current().get().token_kind_repr()));
+            PARSE_ERROR(CURRENT_TOK, "expected ')', but found: " + CURRENT_TOK.token_kind_repr()));
     }
 
     iter.advance();  // skip ')'
@@ -579,10 +648,9 @@ AST_NODE_IMPL(ScopeAccessExpression, ParseResult<> lhs) {
         RETURN_IF_ERROR(lhs);
     }
 
-    if (!(CURRENT_TOK == token::tokens::OPERATOR_SCOPE)) {
+    if ((CURRENT_TOK != token::tokens::OPERATOR_SCOPE)) {
         return std::unexpected(
-            PARSE_ERROR(iter.current().get(),
-                        "expected '::', but found: " + iter.current().get().token_kind_repr()));
+            PARSE_ERROR(CURRENT_TOK, "expected '::', but found: " + CURRENT_TOK.token_kind_repr()));
     }
 
     iter.advance();  // skip '::'
@@ -611,10 +679,9 @@ AST_NODE_IMPL(DotAccessExpression, ParseResult<> lhs) {
         RETURN_IF_ERROR(lhs);
     }
 
-    if (!(CURRENT_TOK == token::tokens::PUNCTUATION_DOT)) {
+    if ((CURRENT_TOK != token::tokens::PUNCTUATION_DOT)) {
         return std::unexpected(
-            PARSE_ERROR(iter.current().get(),
-                        "expected '.', but found: " + iter.current().get().token_kind_repr()));
+            PARSE_ERROR(CURRENT_TOK, "expected '.', but found: " + CURRENT_TOK.token_kind_repr()));
     }
 
     iter.advance();  // skip '.'
@@ -643,10 +710,9 @@ AST_NODE_IMPL(ArrayAccessExpression, ParseResult<> lhs) {
         RETURN_IF_ERROR(lhs);
     }
 
-    if (!(CURRENT_TOK == token::tokens::PUNCTUATION_OPEN_BRACKET)) {
+    if ((CURRENT_TOK != token::tokens::PUNCTUATION_OPEN_BRACKET)) {
         return std::unexpected(
-            PARSE_ERROR(iter.current().get(),
-                        "expected '[', but found: " + iter.current().get().token_kind_repr()));
+            PARSE_ERROR(CURRENT_TOK, "expected '[', but found: " + CURRENT_TOK.token_kind_repr()));
     }
 
     iter.advance();  // skip '['
@@ -654,10 +720,9 @@ AST_NODE_IMPL(ArrayAccessExpression, ParseResult<> lhs) {
     ParseResult<> index = parse();
     RETURN_IF_ERROR(index);
 
-    if (!(CURRENT_TOK == token::tokens::PUNCTUATION_CLOSE_BRACKET)) {
+    if ((CURRENT_TOK != token::tokens::PUNCTUATION_CLOSE_BRACKET)) {
         return std::unexpected(
-            PARSE_ERROR(iter.current().get(),
-                        "expected ']', but found: " + iter.current().get().token_kind_repr()));
+            PARSE_ERROR(CURRENT_TOK, "expected ']', but found: " + CURRENT_TOK.token_kind_repr()));
     }
 
     iter.advance();  // skip ']'
@@ -761,10 +826,9 @@ AST_NODE_IMPL(ArrayLiteralExpression) {
 
     // [1, 2, 3, ]
 
-    if (!(CURRENT_TOK == token::tokens::PUNCTUATION_OPEN_BRACKET)) {
+    if ((CURRENT_TOK != token::tokens::PUNCTUATION_OPEN_BRACKET)) {
         return std::unexpected(
-            PARSE_ERROR(iter.current().get(),
-                        "expected '[', but found: " + iter.current().get().token_kind_repr()));
+            PARSE_ERROR(CURRENT_TOK, "expected '[', but found: " + CURRENT_TOK.token_kind_repr()));
     }
 
     iter.advance();  // skip '['
@@ -792,10 +856,9 @@ AST_NODE_IMPL(ArrayLiteralExpression) {
         array->values.push_back(next.value());
     }
 
-    if (!(CURRENT_TOK == token::tokens::PUNCTUATION_CLOSE_BRACKET)) {
+    if ((CURRENT_TOK != token::tokens::PUNCTUATION_CLOSE_BRACKET)) {
         return std::unexpected(
-            PARSE_ERROR(iter.current().get(),
-                        "expected ']', but found: " + iter.current().get().token_kind_repr()));
+            PARSE_ERROR(CURRENT_TOK, "expected ']', but found: " + CURRENT_TOK.token_kind_repr()));
     }
 
     iter.advance();  // skip ']'
@@ -826,10 +889,9 @@ AST_NODE_IMPL(TupleLiteralExpression, ParseResult<> starting_element) {
         first = starting_element;  // we have a starting element
         // the current token is ',' the '(' has already been parsed
     } else {
-        if (!(CURRENT_TOK == token::tokens::PUNCTUATION_OPEN_PAREN)) {
-            return std::unexpected(
-                PARSE_ERROR(iter.current().get(),
-                            "expected '(', but found: " + iter.current().get().token_kind_repr()));
+        if ((CURRENT_TOK != token::tokens::PUNCTUATION_OPEN_PAREN)) {
+            return std::unexpected(PARSE_ERROR(
+                CURRENT_TOK, "expected '(', but found: " + CURRENT_TOK.token_kind_repr()));
         }
 
         iter.advance();  // skip '('
@@ -864,10 +926,9 @@ AST_NODE_IMPL(TupleLiteralExpression, ParseResult<> starting_element) {
         tuple->values.push_back(next.value());
     }
 
-    if (!(CURRENT_TOK == token::tokens::PUNCTUATION_CLOSE_PAREN)) {
+    if ((CURRENT_TOK != token::tokens::PUNCTUATION_CLOSE_PAREN)) {
         return std::unexpected(
-            PARSE_ERROR(iter.current().get(),
-                        "expected ')', but found: " + iter.current().get().token_kind_repr()));
+            PARSE_ERROR(CURRENT_TOK, "expected ')', but found: " + CURRENT_TOK.token_kind_repr()));
     }
 
     iter.advance();  // skip ')'
@@ -905,18 +966,16 @@ AST_NODE_IMPL(SetLiteralExpression, ParseResult<> starting_value) {
             return set;
         }
 
-        if (!(CURRENT_TOK == token::tokens::PUNCTUATION_COMMA)) {
-            return std::unexpected(
-                PARSE_ERROR(iter.current().get(),
-                            "expected ',', but found: " + iter.current().get().token_kind_repr()));
+        if ((CURRENT_TOK != token::tokens::PUNCTUATION_COMMA)) {
+            return std::unexpected(PARSE_ERROR(
+                CURRENT_TOK, "expected ',', but found: " + CURRENT_TOK.token_kind_repr()));
         }
 
         set = make_node<SetLiteralExpression>(starting_value.value());
     } else {
-        if (!(CURRENT_TOK == token::tokens::PUNCTUATION_OPEN_BRACE)) {
-            return std::unexpected(
-                PARSE_ERROR(iter.current().get(),
-                            "expected '{', but found: " + iter.current().get().token_kind_repr()));
+        if ((CURRENT_TOK != token::tokens::PUNCTUATION_OPEN_BRACE)) {
+            return std::unexpected(PARSE_ERROR(
+                CURRENT_TOK, "expected '{', but found: " + CURRENT_TOK.token_kind_repr()));
         }
 
         iter.advance();  // skip '{'
@@ -940,10 +999,9 @@ AST_NODE_IMPL(SetLiteralExpression, ParseResult<> starting_value) {
         set->values.push_back(next.value());
     }
 
-    if (!(CURRENT_TOK == token::tokens::PUNCTUATION_CLOSE_BRACE)) {
+    if ((CURRENT_TOK != token::tokens::PUNCTUATION_CLOSE_BRACE)) {
         return std::unexpected(
-            PARSE_ERROR(iter.current().get(),
-                        "expected '}', but found: " + iter.current().get().token_kind_repr()));
+            PARSE_ERROR(CURRENT_TOK, "expected '}', but found: " + CURRENT_TOK.token_kind_repr()));
     }
 
     iter.advance();  // skip '}'
@@ -972,10 +1030,9 @@ AST_NODE_IMPL(MapPairExpression) {
 
     RETURN_IF_ERROR(key);
 
-    if (!(CURRENT_TOK == token::tokens::PUNCTUATION_COLON)) {
+    if ((CURRENT_TOK != token::tokens::PUNCTUATION_COLON)) {
         return std::unexpected(
-            PARSE_ERROR(iter.current().get(),
-                        "expected ':', but found: " + iter.current().get().token_kind_repr()));
+            PARSE_ERROR(CURRENT_TOK, "expected ':', but found: " + CURRENT_TOK.token_kind_repr()));
     }
 
     iter.advance();  // skip ':'
@@ -1004,10 +1061,9 @@ AST_NODE_IMPL(MapLiteralExpression, ParseResult<> starting_key) {
 
     if (starting_key != nullptr && starting_key.has_value()) {
         // we have parsed the '{' and the first E, so we need to check if the current token is ':'
-        if (!(CURRENT_TOK == token::tokens::PUNCTUATION_COLON)) {
-            return std::unexpected(
-                PARSE_ERROR(iter.current().get(),
-                            "expected ':', but found: " + iter.current().get().token_kind_repr()));
+        if ((CURRENT_TOK != token::tokens::PUNCTUATION_COLON)) {
+            return std::unexpected(PARSE_ERROR(
+                CURRENT_TOK, "expected ':', but found: " + CURRENT_TOK.token_kind_repr()));
         }
 
         iter.advance();  // skip ':'
@@ -1017,10 +1073,9 @@ AST_NODE_IMPL(MapLiteralExpression, ParseResult<> starting_key) {
 
         pair = make_node<MapPairExpression>(starting_key.value(), value.value());
     } else {
-        if (!(CURRENT_TOK == token::tokens::PUNCTUATION_OPEN_BRACE)) {
-            return std::unexpected(
-                PARSE_ERROR(iter.current().get(),
-                            "expected '{', but found: " + iter.current().get().token_kind_repr()));
+        if ((CURRENT_TOK != token::tokens::PUNCTUATION_OPEN_BRACE)) {
+            return std::unexpected(PARSE_ERROR(
+                CURRENT_TOK, "expected '{', but found: " + CURRENT_TOK.token_kind_repr()));
         }
 
         iter.advance();  // skip '{'
@@ -1049,10 +1104,9 @@ AST_NODE_IMPL(MapLiteralExpression, ParseResult<> starting_key) {
         map->values.push_back(next_pair.value());
     }
 
-    if (!(CURRENT_TOK == token::tokens::PUNCTUATION_CLOSE_BRACE)) {
+    if ((CURRENT_TOK != token::tokens::PUNCTUATION_CLOSE_BRACE)) {
         return std::unexpected(
-            PARSE_ERROR(iter.current().get(),
-                        "expected '}', but found: " + iter.current().get().token_kind_repr()));
+            PARSE_ERROR(CURRENT_TOK, "expected '}', but found: " + CURRENT_TOK.token_kind_repr()));
     }
 
     iter.advance();  // skip '}'
@@ -1078,19 +1132,17 @@ AST_NODE_IMPL(ObjectInitializerExpression, bool skip_start_brace) {
     // := '{' (NamedArgument (',' NamedArgument)*)? '}'
 
     if (!skip_start_brace) {
-        if (!(CURRENT_TOK == token::tokens::PUNCTUATION_OPEN_BRACE)) {
-            return std::unexpected(
-                PARSE_ERROR(iter.current().get(),
-                            "expected '{', but found: " + iter.current().get().token_kind_repr()));
+        if ((CURRENT_TOK != token::tokens::PUNCTUATION_OPEN_BRACE)) {
+            return std::unexpected(PARSE_ERROR(
+                CURRENT_TOK, "expected '{', but found: " + CURRENT_TOK.token_kind_repr()));
         }
 
         iter.advance();  // skip '{'
     }
 
     if (CURRENT_TOK == token::tokens::PUNCTUATION_CLOSE_BRACE) {
-        return std::unexpected(
-            PARSE_ERROR(iter.current().get(),
-                        "expected a keyword argument, but got an empty object initializer"));
+        return std::unexpected(PARSE_ERROR(
+            CURRENT_TOK, "expected a keyword argument, but got an empty object initializer"));
     }
 
     ParseResult<NamedArgument> first = parse_NamedArgument();
@@ -1110,10 +1162,9 @@ AST_NODE_IMPL(ObjectInitializerExpression, bool skip_start_brace) {
         obj->kwargs.push_back(next.value());
     }
 
-    if (!(CURRENT_TOK == token::tokens::PUNCTUATION_CLOSE_BRACE)) {
+    if ((CURRENT_TOK != token::tokens::PUNCTUATION_CLOSE_BRACE)) {
         return std::unexpected(
-            PARSE_ERROR(iter.current().get(),
-                        "expected '}', but found: " + iter.current().get().token_kind_repr()));
+            PARSE_ERROR(CURRENT_TOK, "expected '}', but found: " + CURRENT_TOK.token_kind_repr()));
     }
 
     iter.advance();  // skip '}'
@@ -1160,10 +1211,9 @@ AST_NODE_IMPL(TernaryExpression, ParseResult<> E1) {
         ParseResult<> E2 = parse();
         RETURN_IF_ERROR(E2);
 
-        if (!(CURRENT_TOK == token::tokens::PUNCTUATION_COLON)) {
-            return std::unexpected(
-                PARSE_ERROR(iter.current().get(),
-                            "expected ':', but found: " + iter.current().get().token_kind_repr()));
+        if ((CURRENT_TOK != token::tokens::PUNCTUATION_COLON)) {
+            return std::unexpected(PARSE_ERROR(
+                CURRENT_TOK, "expected ':', but found: " + CURRENT_TOK.token_kind_repr()));
         }
 
         iter.advance();  // skip ':'
@@ -1180,10 +1230,9 @@ AST_NODE_IMPL(TernaryExpression, ParseResult<> E1) {
         ParseResult<> E2 = parse();
         RETURN_IF_ERROR(E2);
 
-        if (!(CURRENT_TOK == token::tokens::KEYWORD_ELSE)) {
-            return std::unexpected(PARSE_ERROR(iter.current().get(),
-                                               "expected 'else', but found: " +
-                                                   iter.current().get().token_kind_repr()));
+        if ((CURRENT_TOK != token::tokens::KEYWORD_ELSE)) {
+            return std::unexpected(PARSE_ERROR(
+                CURRENT_TOK, "expected 'else', but found: " + CURRENT_TOK.token_kind_repr()));
         }
 
         iter.advance();  // skip 'else'
@@ -1194,9 +1243,8 @@ AST_NODE_IMPL(TernaryExpression, ParseResult<> E1) {
         return make_node<TernaryExpression>(E2.value(), E1.value(), E3.value());
     }
 
-    return std::unexpected(
-        PARSE_ERROR(iter.current().get(),
-                    "expected '?' or 'if', but found: " + iter.current().get().token_kind_repr()));
+    return std::unexpected(PARSE_ERROR(
+        CURRENT_TOK, "expected '?' or 'if', but found: " + CURRENT_TOK.token_kind_repr()));
 }
 
 AST_NODE_IMPL_VISITOR(Jsonify, TernaryExpression) {
@@ -1215,10 +1263,9 @@ AST_NODE_IMPL(ParenthesizedExpression, ParseResult<> expr) {
 
     if (expr != nullptr && expr.has_value()) {
         // check if the current token is a ')'
-        if (!(CURRENT_TOK == token::tokens::PUNCTUATION_CLOSE_PAREN)) {
-            return std::unexpected(
-                PARSE_ERROR(iter.current().get(),
-                            "expected ')', but found: " + iter.current().get().token_kind_repr()));
+        if ((CURRENT_TOK != token::tokens::PUNCTUATION_CLOSE_PAREN)) {
+            return std::unexpected(PARSE_ERROR(
+                CURRENT_TOK, "expected ')', but found: " + CURRENT_TOK.token_kind_repr()));
         }
 
         iter.advance();  // skip ')'
@@ -1226,10 +1273,9 @@ AST_NODE_IMPL(ParenthesizedExpression, ParseResult<> expr) {
         return make_node<ParenthesizedExpression>(expr.value());
     }
 
-    if (!(CURRENT_TOK == token::tokens::PUNCTUATION_OPEN_PAREN)) {
+    if ((CURRENT_TOK != token::tokens::PUNCTUATION_OPEN_PAREN)) {
         return std::unexpected(
-            PARSE_ERROR(iter.current().get(),
-                        "expected '(', but found: " + iter.current().get().token_kind_repr()));
+            PARSE_ERROR(CURRENT_TOK, "expected '(', but found: " + CURRENT_TOK.token_kind_repr()));
     }
 
     iter.advance();  // skip '('
@@ -1238,10 +1284,9 @@ AST_NODE_IMPL(ParenthesizedExpression, ParseResult<> expr) {
 
     RETURN_IF_ERROR(inner);
 
-    if (!(CURRENT_TOK == token::tokens::PUNCTUATION_CLOSE_PAREN)) {
+    if ((CURRENT_TOK != token::tokens::PUNCTUATION_CLOSE_PAREN)) {
         return std::unexpected(
-            PARSE_ERROR(iter.current().get(),
-                        "expected ')', but found: " + iter.current().get().token_kind_repr()));
+            PARSE_ERROR(CURRENT_TOK, "expected ')', but found: " + CURRENT_TOK.token_kind_repr()));
     }
 
     iter.advance();  // skip ')'
@@ -1255,18 +1300,19 @@ AST_NODE_IMPL_VISITOR(Jsonify, ParenthesizedExpression) {
 
 // ---------------------------------------------------------------------------------------------- //
 
-AST_NODE_IMPL(CastExpression) {
+AST_NODE_IMPL(CastExpression, ParseResult<> lhs) {
     IS_NOT_EMPTY;
 
     // := E 'as' E
 
-    ParseResult<> lhs = parse();
-    RETURN_IF_ERROR(lhs);
+    if (lhs == nullptr || !lhs.has_value()) {
+        lhs = parse();
+        RETURN_IF_ERROR(lhs);
+    }
 
-    if (!(CURRENT_TOK == token::tokens::KEYWORD_AS)) {
+    if ((CURRENT_TOK != token::tokens::KEYWORD_AS)) {
         return std::unexpected(
-            PARSE_ERROR(iter.current().get(),
-                        "expected 'as', but found: " + iter.current().get().token_kind_repr()));
+            PARSE_ERROR(CURRENT_TOK, "expected 'as', but found: " + CURRENT_TOK.token_kind_repr()));
     }
 
     iter.advance();  // skip 'as'
@@ -1295,11 +1341,11 @@ AST_NODE_IMPL(InstanceOfExpression, ParseResult<> lhs) {
         RETURN_IF_ERROR(lhs);
     }
 
-    if (!(CURRENT_TOK == token::tokens::KEYWORD_HAS ||
-          CURRENT_TOK == token::tokens::KEYWORD_DERIVES)) {
+    if ((CURRENT_TOK != token::tokens::KEYWORD_HAS ||
+         CURRENT_TOK == token::tokens::KEYWORD_DERIVES)) {
         return std::unexpected(PARSE_ERROR(CURRENT_TOK,
                                            "expected 'has' or 'derives', but found: " +
-                                               iter.current().get().token_kind_repr()));
+                                               CURRENT_TOK.token_kind_repr()));
     }
 
     InstanceOfExpression::InstanceType op = (CURRENT_TOK == token::tokens::KEYWORD_HAS)
@@ -1339,7 +1385,6 @@ AST_NODE_IMPL(Type) {
 }
 
 // ---------------------------------------------------------------------------------------------- //
-
 
 bool is_excepted(const token::Token &tok, const std::unordered_set<token::tokens> &tokens) {
     return tokens.find(tok.token_kind()) != tokens.end();
