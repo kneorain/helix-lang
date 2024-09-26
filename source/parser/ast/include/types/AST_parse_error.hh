@@ -12,7 +12,7 @@
 
 #ifndef __AST_PARSE_ERROR_H__
 #define __AST_PARSE_ERROR_H__
-
+ 
 #include <string>
 #include <utility>
 

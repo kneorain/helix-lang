@@ -34,7 +34,7 @@
 ///                                                                                              ///
 ///  @code                                                                                       ///
 ///  Expression expr(tokens);                                                                    ///
-///  ParseResult<BinaryExpression> node = expr.parse<BinaryExpression>();                        ///
+///  ParseResult<BinaryExpr> node = expr.parse<BinaryExpr>();                        ///
 ///  @endcode                                                                                    ///
 ///                                                                                              ///
 /// The parser is implemented using the following grammar:                                       ///
@@ -45,48 +45,44 @@
 /// [x] * Token    * T                                                                           ///
 ///                                                                                              ///
 ///                             /* helper nodes (not supposed to be explicitly used) */          ///
-/// [x] * ArgumentListExpression * AL -> ( AE? ( ',' AE )* )                                     ///
-/// [x] * NamedArgument        * KA -> '.' ID '=' E                                              ///
-/// [x] * ArgumentExpression     * AE -> E | ID '=' E                                            ///
-/// [x] * MapPairExpression      * MP -> E ':' E                                                 ///
+/// [x] * ArgumentListExpr * AL -> ( AE? ( ',' AE )* )                                     ///
+/// [x] * NamedArgumentExpr        * KA -> '.' ID '=' E /// [x] * ArgumentExpr     * AE -> E | ID
+/// '=' E                                            /// [x] * MapPairExpr      * MP -> E ':' E ///
 ///                                                                                              ///
 ///                       /* primary nodes */                                                    ///
-/// [x] * UnaryExpression  * UE  -> O    PE                                                      ///
-/// [x] * BinaryExpression * BE  -> UE   BE'                                                     ///
+/// [x] * UnaryExpr  * UE  -> O    PE                                                      ///
+/// [x] * BinaryExpr * BE  -> UE   BE'                                                     ///
 ///                          BE' -> O UE BE' | ϵ                                                 ///
 ///                                                                                              ///
 ///                           /* core single associative */                                      ///
-/// [x] * IdentifierExpression * ID -> T                                                         ///
-/// [x] * LiteralExpression    * LE -> L                                                         ///
+/// [x] * IdentExpr * ID -> T                                                         ///
+/// [x] * LiteralExpr    * LE -> L                                                         ///
 ///                                                                                              ///
 ///                             /* multi-associative */                                          ///
-/// [x] * ScopeAccessExpression  * SA -> ID '::' ID                                              ///
-/// [x] * DotAccessExpression    * DE -> PE '.'  ID                                              ///
-/// [x] * PathExpression         * PA -> SA | DE                                                 ///
+/// [x] * ScopePathExpr  * SA -> ID '::' ID                                              ///
+/// [x] * DotPathExpr    * DE -> PE '.'  ID                                              ///
+/// [x] * PathExpr         * PA -> SA | DE                                                 ///
 ///                                                                                              ///
-/// [x] * TernaryExpression      * TE -> PE '?' E ':' E | PE 'if' E 'else' E                     ///
-/// [x] * InstanceOfExpression   * IE -> PE ( 'has' | 'derives' ) ID                             ///
-/// [x] * CastExpression         * CE -> PE 'as' E                                               ///
+/// [x] * TernaryExpr      * TE -> PE '?' E ':' E | PE 'if' E 'else' E                     ///
+/// [x] * InstOfExpr   * IE -> PE ( 'has' | 'derives' ) ID                             ///
+/// [x] * CastExpr         * CE -> PE 'as' E                                               ///
 ///                                                                                              ///
-/// [x] * ArrayAccessExpression  * AA -> PE '[' E ']'                                            ///
-/// [x] * FunctionCallExpression * FC -> PA GI? AL                                               ///
+/// [x] * ArrayAccessExpr  * AA -> PE '[' E ']'                                            ///
+/// [x] * FunctionCallExpr * FC -> PA GI? AL                                               ///
 ///                                                                                              ///
 ///                                  /* right associative recursive */                           ///
-/// [x] * ObjectInitializerExpression * OI -> '{' ( KA ( ',' KA )* )? '}'                        ///
-/// [x] * SetLiteralExpression        * SE -> '{' E ( ',' E )* '}'                               ///
-/// [x] * TupleLiteralExpression      * TL -> '(' E ( ',' E )* ')'                               ///
-/// [x] * ArrayLiteralExpression      * AE -> '[' E ( ',' E )* ']'                               ///
-/// [x] * ParenthesizedExpression     * PAE -> '(' E? ')'                                        ///
+/// [x] * ObjInitExpr * OI -> '{' ( KA ( ',' KA )* )? '}'                        ///
+/// [x] * SetLiteralExpr        * SE -> '{' E ( ',' E )* '}'                               ///
+/// [x] * TupleLiteralExpr      * TL -> '(' E ( ',' E )* ')'                               ///
+/// [x] * ArrayLiteralExpr      * AE -> '[' E ( ',' E )* ']'                               ///
+/// [x] * ParenthesizedExpr     * PAE -> '(' E? ')'                                        ///
 ///                                                                                              ///
 ///                                      /* generics */                                          ///
-/// [ ] * GenericInvocationExpression     * GI -> '<' GAE? ( ',' GAE )* '>'                      ///
-/// [ ] * GenericArgumentExpression       * GAE -> E | ID '=' E                                  ///
-/// [ ] * PathGenericInvocationExpression * PGE -> PE GI                                         ///
+/// [ ] * GenericInvokeExpr     * GI -> '<' GAE? ( ',' GAE )* '>'                      ///
+/// [ ] * GenericArgumentExpr       * GAE -> E | ID '=' E                                  ///
+/// [ ] * GenericInvokePathExpr * PGE -> PE GI                                         ///
 ///                                                                                              ///
-///              /* FIXME: remove and merge 'PtrType' with unary op and remove 'Type' */         ///
 /// [ ] * Type    * TY -> ID | PT                                                                ///
-/// [ ] * PtrType * PT -> PrimaryExpression '*' | '*' PrimaryExpression                          ///
-///                     | PrimaryExpression '&' | '&' PrimaryExpression                          ///
 ///                                                                                              ///
 ///    /* complete parser */                                                                     ///
 /// [x] * PE -> LE | ID | AE | SE | TL | OI | PA | PAE                                           ///
@@ -102,7 +98,7 @@
 ///       @endcode                                                                               ///
 ///                                                                                              ///
 ///       this is a valid expression, but how do we parse it?                                    ///
-///          how can we parse the `PI<int>` and not confuse it with a BinaryExpression like      ///
+///          how can we parse the `PI<int>` and not confuse it with a BinaryExpr like      ///
 ///          `PI < int`? and the > becoming a syntax error?                                      ///
 ///                                                                                              ///
 //===-----------------------------------------------------------------------------------------====//
@@ -136,11 +132,11 @@ AST_BASE_IMPL(Expression, parse_primary) {  // NOLINT(readability-function-cogni
     ParseResult<> node;
 
     if (is_excepted(tok, IS_LITERAL)) {
-        node = parse_LiteralExpression();
+        node = parse_LiteralExpr();
     } else if (is_excepted(tok, IS_IDENTIFIER)) {
-        node = parse_IdentifierExpression();
+        node = parse_IdentExpr();
     } else if (is_excepted(tok, IS_UNARY_OPERATOR)) {
-        node = parse_UnaryExpression();
+        node = parse_UnaryExpr();
     } else if (is_excepted(tok, IS_PUNCTUATION)) {
         if (tok.token_kind() ==
             token::tokens::PUNCTUATION_OPEN_PAREN) {  /// at this point we either have a tuple or a
@@ -153,12 +149,12 @@ AST_BASE_IMPL(Expression, parse_primary) {  // NOLINT(readability-function-cogni
 
             if (CURRENT_TOK == token::tokens::PUNCTUATION_COMMA) {  /// if the next token is a
                                                                     /// comma, then its a tuple
-                node = parse_TupleLiteralExpression(expr);
+                node = parse_TupleLiteralExpr(expr);
             } else {
-                node = parse_ParenthesizedExpression(expr);
+                node = parse_ParenthesizedExpr(expr);
             }
         } else if (tok.token_kind() == token::tokens::PUNCTUATION_OPEN_BRACKET) {
-            node = parse_ArrayLiteralExpression();
+            node = parse_ArrayLiteralExpr();
         } else if (tok.token_kind() == token::tokens::PUNCTUATION_OPEN_BRACE) {
             /// heres its either a set, a map or an object
             /// initializer, to determine which one it is, its
@@ -171,15 +167,15 @@ AST_BASE_IMPL(Expression, parse_primary) {  // NOLINT(readability-function-cogni
             iter.advance();  // skip '{'
 
             if (CURRENT_TOK == token::tokens::PUNCTUATION_DOT) {
-                node = parse_ObjectInitializerExpression(true);
+                node = parse_ObjInitExpr(true);
             } else {
                 ParseResult<> first = parse();
                 RETURN_IF_ERROR(first);
 
                 if (CURRENT_TOK == token::tokens::PUNCTUATION_COLON) {
-                    node = parse_MapLiteralExpression(first);
+                    node = parse_MapLiteralExpr(first);
                 } else {
-                    node = parse_SetLiteralExpression(first);
+                    node = parse_SetLiteralExpr(first);
                 }
             }
         } else {
@@ -199,7 +195,7 @@ AST_BASE_IMPL(Expression, parse) {  // NOLINT(readability-function-cognitive-com
                                     /// if(iter.remaining_n() == 0) { return std::unexpected(...); }
 
     token::Token tok;
-    size_t iter_n = 0;
+    size_t       iter_n = 0;
     size_t n_max = iter.remaining_n() << 1;  /// this is a way to approx the tokens to parse, and is
                                              /// used to prevent the parser from going into an
                                              /// infinite loop  if the expression is malformed, this
@@ -217,9 +213,9 @@ AST_BASE_IMPL(Expression, parse) {  // NOLINT(readability-function-cognitive-com
     /// a really really long expression, we could end up in an memory exhaustion situation or a
     /// stack overflow situation. /* TODO */
     for (; iter_n < n_max && continue_loop; iter_n++) {  /// this is a simple loop that will
-                                                           /// continue to loop until we have parsed
-                                                           /// all the tokens in the expression, the
-                                                           /// expression
+                                                         /// continue to loop until we have parsed
+                                                         /// all the tokens in the expression, the
+                                                         /// expression
 
         tok = CURRENT_TOK;  /// simple macro to get the current token expands to:
                             /// CURRENT_TOK
@@ -231,59 +227,59 @@ AST_BASE_IMPL(Expression, parse) {  // NOLINT(readability-function-cognitive-com
                                                          /// binary expression may god help me
                 NOT_IMPLEMENTED;
             case token::tokens::PUNCTUATION_OPEN_PAREN:
-                expr = parse_FunctionCallExpression(expr);
+                expr = parse_FunctionCallExpr(expr);
                 RETURN_IF_ERROR(expr);
                 break;
 
             case token::tokens::PUNCTUATION_OPEN_BRACKET:
-                expr = parse_ArrayAccessExpression(expr);
+                expr = parse_ArrayAccessExpr(expr);
                 RETURN_IF_ERROR(expr);
                 break;
 
             case token::tokens::PUNCTUATION_DOT:
-                expr = parse_DotAccessExpression(expr);
+                expr = parse_DotPathExpr(expr);
                 RETURN_IF_ERROR(expr);
                 break;
 
             case token::tokens::OPERATOR_SCOPE:
-                expr = parse_ScopeAccessExpression(expr);
+                expr = parse_ScopePathExpr(expr);
                 RETURN_IF_ERROR(expr);
                 break;
 
             case token::tokens::PUNCTUATION_OPEN_BRACE:
-                expr = parse_ObjectInitializerExpression();
+                expr = parse_ObjInitExpr();
                 RETURN_IF_ERROR(expr);
                 break;
 
             case token::tokens::KEYWORD_HAS:
                 [[fallthrough]];
             case token::tokens::KEYWORD_DERIVES:
-                expr = parse_InstanceOfExpression(expr);
+                expr = parse_InstOfExpr(expr);
                 RETURN_IF_ERROR(expr);
                 break;
 
             case token::tokens::PUNCTUATION_QUESTION_MARK:
                 [[fallthrough]];
             case token::tokens::KEYWORD_IF:
-                expr = parse_TernaryExpression(expr);
+                expr = parse_TernaryExpr(expr);
                 RETURN_IF_ERROR(expr);
                 break;
 
             case token::tokens::KEYWORD_AS:
-                expr = parse_CastExpression(expr);
+                expr = parse_CastExpr(expr);
                 RETURN_IF_ERROR(expr);
                 break;
 
             default:
                 if (is_excepted(tok, IS_BINARY_OPERATOR)) {
-                    expr = parse_BinaryExpression(expr, get_precedence(tok));
+                    expr = parse_BinaryExpr(expr, get_precedence(tok));
                     RETURN_IF_ERROR(expr);
                 } else if (tok == token::tokens::PUNCTUATION_OPEN_PAREN) {
-                    iter.advance();                              // skip '('
-                    expr = parse_ParenthesizedExpression(expr);  /// im not sure why this works, but
-                                                                 /// based on small tests, it seems
-                                                                 /// to work fine i'll find out soon
-                                                                 /// enough if it doesn't
+                    iter.advance();                        // skip '('
+                    expr = parse_ParenthesizedExpr(expr);  /// im not sure why this works, but
+                                                           /// based on small tests, it seems
+                                                           /// to work fine i'll find out soon
+                                                           /// enough if it doesn't
                     RETURN_IF_ERROR(expr);
                 } else {
                     continue_loop = false;
@@ -300,7 +296,7 @@ AST_BASE_IMPL(Expression, parse) {  // NOLINT(readability-function-cognitive-com
 
 // ---------------------------------------------------------------------------------------------- //
 
-AST_NODE_IMPL(LiteralExpression) {
+AST_NODE_IMPL(LiteralExpr) {
     if (iter.remaining_n() == 0) {
         return std::unexpected(PARSE_ERROR_MSG("expected a literal expression, but found nothing"));
     }
@@ -308,46 +304,48 @@ AST_NODE_IMPL(LiteralExpression) {
     token::Token tok = CURRENT_TOK;  // get tokens[0]
     iter.advance();                  // pop tokens[0]
 
-    LiteralExpression::LiteralType type{};
+    LiteralExpr::LiteralType type{};
 
     switch (tok.token_kind()) {
         case token::tokens::LITERAL_INTEGER:
-            type = LiteralExpression::LiteralType::Integer;
+            type = LiteralExpr::LiteralType::Integer;
             break;
         case token::tokens::LITERAL_FLOATING_POINT:
-            type = LiteralExpression::LiteralType::Float;
+            type = LiteralExpr::LiteralType::Float;
             break;
         case token::tokens::LITERAL_STRING:
-            type = LiteralExpression::LiteralType::String;
+            type = LiteralExpr::LiteralType::String;
             break;
         case token::tokens::LITERAL_CHAR:
-            type = LiteralExpression::LiteralType::Char;
+            type = LiteralExpr::LiteralType::Char;
             break;
         case token::tokens::LITERAL_TRUE:
         case token::tokens::LITERAL_FALSE:
-            type = LiteralExpression::LiteralType::Boolean;
+            type = LiteralExpr::LiteralType::Boolean;
             break;
         case token::tokens::LITERAL_NULL:
-            type = LiteralExpression::LiteralType::Null;
+            type = LiteralExpr::LiteralType::Null;
             break;
         default:
             return std::unexpected(
                 PARSE_ERROR(tok, "expected a literal. but found: " + tok.token_kind_repr()));
     }
 
-    return make_node<LiteralExpression>(tok, type);
+    return make_node<LiteralExpr>(tok, type);
 }
 
-AST_NODE_IMPL_VISITOR(Jsonify, LiteralExpression) {
-    json.section("LiteralExpression").add("value", node.value).add("type", (int)node.getNodeType());
+AST_NODE_IMPL_VISITOR(Jsonify, LiteralExpr) {
+    json.section("LiteralExpr").add("value", node.value).add("type", (int)node.getNodeType());
 }
 
 // ---------------------------------------------------------------------------------------------- //
 
-AST_NODE_IMPL(BinaryExpression, ParseResult<> lhs, int min_precedence) {
+AST_NODE_IMPL(BinaryExpr, ParseResult<> lhs, int min_precedence) {
     IS_NOT_EMPTY;
 
     // := E op E
+    // TODO if E(2) does not exist, check if its a & | * token, since if it is,
+    // then return a unary expression since its a pointer or reference type
 
     token::Token tok = CURRENT_TOK;
 
@@ -362,19 +360,19 @@ AST_NODE_IMPL(BinaryExpression, ParseResult<> lhs, int min_precedence) {
 
         tok = CURRENT_TOK;
         while (is_excepted(tok, IS_BINARY_OPERATOR) && get_precedence(tok) > precedence) {
-            rhs = parse_BinaryExpression(rhs, get_precedence(tok));
+            rhs = parse_BinaryExpr(rhs, get_precedence(tok));
             RETURN_IF_ERROR(rhs);
             tok = CURRENT_TOK;
         }
 
-        lhs = make_node<BinaryExpression>(lhs.value(), rhs.value(), op);
+        lhs = make_node<BinaryExpr>(lhs.value(), rhs.value(), op);
     }
 
-    return std::dynamic_pointer_cast<BinaryExpression>(lhs.value());
+    return std::dynamic_pointer_cast<BinaryExpr>(lhs.value());
 }
 
-AST_NODE_IMPL_VISITOR(Jsonify, BinaryExpression) {
-    json.section("BinaryExpression")
+AST_NODE_IMPL_VISITOR(Jsonify, BinaryExpr) {
+    json.section("BinaryExpr")
         .add("lhs", get_node_json(node.lhs))
         .add("op", node.op)
         .add("rhs", get_node_json(node.rhs));
@@ -382,7 +380,7 @@ AST_NODE_IMPL_VISITOR(Jsonify, BinaryExpression) {
 
 // ---------------------------------------------------------------------------------------------- //
 
-AST_NODE_IMPL(UnaryExpression) {
+AST_NODE_IMPL(UnaryExpr) {
     IS_NOT_EMPTY;
 
     // := op E
@@ -397,16 +395,16 @@ AST_NODE_IMPL(UnaryExpression) {
     ParseResult<> rhs = parse();
     RETURN_IF_ERROR(rhs);
 
-    return make_node<UnaryExpression>(rhs.value(), op);
+    return make_node<UnaryExpr>(rhs.value(), op);
 }
 
-AST_NODE_IMPL_VISITOR(Jsonify, UnaryExpression) {
-    json.section("UnaryExpression").add("rhs", get_node_json(node.rhs)).add("op", node.op);
+AST_NODE_IMPL_VISITOR(Jsonify, UnaryExpr) {
+    json.section("UnaryExpr").add("rhs", get_node_json(node.rhs)).add("op", node.op);
 }
 
 // ---------------------------------------------------------------------------------------------- //
 
-AST_NODE_IMPL(IdentifierExpression) {
+AST_NODE_IMPL(IdentExpr) {
     IS_NOT_EMPTY;
 
     // verify the current token is an identifier
@@ -476,21 +474,19 @@ AST_NODE_IMPL(IdentifierExpression) {
 
     iter.advance();  // pop the token
 
-    return make_node<IdentifierExpression>(tok, is_reserved_primitive);
+    return make_node<IdentExpr>(tok, is_reserved_primitive);
 }
 
-AST_NODE_IMPL_VISITOR(Jsonify, IdentifierExpression) {
-    json.section("IdentifierExpression").add("name", node.name);
-}
+AST_NODE_IMPL_VISITOR(Jsonify, IdentExpr) { json.section("IdentExpr").add("name", node.name); }
 
 // ---------------------------------------------------------------------------------------------- //
 
 /* FIXME: use this method, if unused remove */
 // should not be called by `parse` directly as it is a helper function
-AST_NODE_IMPL(NamedArgument) {
+AST_NODE_IMPL(NamedArgumentExpr) {
     IS_NOT_EMPTY;
 
-    // := '.' IdentifierExpression '=' E
+    // := '.' IdentExpr '=' E
 
     if ((CURRENT_TOK != token::tokens::PUNCTUATION_DOT)) {
         return std::unexpected(
@@ -499,7 +495,7 @@ AST_NODE_IMPL(NamedArgument) {
 
     iter.advance();  // skip '.'
 
-    ParseResult<IdentifierExpression> name = parse_IdentifierExpression();
+    ParseResult<IdentExpr> name = parse_IdentExpr();
     RETURN_IF_ERROR(name);
 
     if ((CURRENT_TOK != token::tokens::OPERATOR_ASSIGN)) {
@@ -512,11 +508,11 @@ AST_NODE_IMPL(NamedArgument) {
     ParseResult<> value = parse();
     RETURN_IF_ERROR(value);
 
-    return make_node<NamedArgument>(name.value(), value.value());
+    return make_node<NamedArgumentExpr>(name.value(), value.value());
 }
 
-AST_NODE_IMPL_VISITOR(Jsonify, NamedArgument) {
-    json.section("NamedArgument")
+AST_NODE_IMPL_VISITOR(Jsonify, NamedArgumentExpr) {
+    json.section("NamedArgumentExpr")
         .add("name", get_node_json(node.name))
         .add("value", get_node_json(node.value));
 }
@@ -524,50 +520,50 @@ AST_NODE_IMPL_VISITOR(Jsonify, NamedArgument) {
 // ---------------------------------------------------------------------------------------------- //
 
 // should not be called by `parse` directly as it is a helper function
-AST_NODE_IMPL(ArgumentExpression) {
+AST_NODE_IMPL(ArgumentExpr) {
     IS_NOT_EMPTY;
 
-    NodeT<ArgumentExpression> result;
+    NodeT<ArgumentExpr> result;
 
     ParseResult<> lhs = parse();  // E(1)
     RETURN_IF_ERROR(lhs);
 
     NodeT<> lhs_node = lhs.value();
 
-    if (lhs_node->getNodeType() == nodes::BinaryExpression) {
-        NodeT<BinaryExpression> bin_expr = std::static_pointer_cast<BinaryExpression>(lhs_node);
+    if (lhs_node->getNodeType() == nodes::BinaryExpr) {
+        NodeT<BinaryExpr> bin_expr = std::static_pointer_cast<BinaryExpr>(lhs_node);
 
-        if (bin_expr->lhs->getNodeType() == nodes::IdentifierExpression &&
+        if (bin_expr->lhs->getNodeType() == nodes::IdentExpr &&
             bin_expr->op.token_kind() == token::tokens::OPERATOR_ASSIGN) {
 
-            NodeT<NamedArgument> kwarg = make_node<NamedArgument>(
-                std::static_pointer_cast<IdentifierExpression>(bin_expr->lhs), bin_expr->rhs);
+            NodeT<NamedArgumentExpr> kwarg = make_node<NamedArgumentExpr>(
+                std::static_pointer_cast<IdentExpr>(bin_expr->lhs), bin_expr->rhs);
 
-            result       = make_node<ArgumentExpression>(kwarg);
-            result->type = ArgumentExpression::ArgumentType::Keyword;
+            result       = make_node<ArgumentExpr>(kwarg);
+            result->type = ArgumentExpr::ArgumentType::Keyword;
 
             return result;
         }
     }
 
-    result       = make_node<ArgumentExpression>(lhs_node);
-    result->type = ArgumentExpression::ArgumentType::Positional;
+    result       = make_node<ArgumentExpr>(lhs_node);
+    result->type = ArgumentExpr::ArgumentType::Positional;
 
     return result;
 }
 
-AST_NODE_IMPL_VISITOR(Jsonify, ArgumentExpression) {
-    json.section("ArgumentExpression")
+AST_NODE_IMPL_VISITOR(Jsonify, ArgumentExpr) {
+    json.section("ArgumentExpr")
         .add("type", (int)node.type)
         .add("value", get_node_json(node.value));
 }
 
 // ---------------------------------------------------------------------------------------------- //
 
-AST_NODE_IMPL(ArgumentListExpression) {
+AST_NODE_IMPL(ArgumentListExpr) {
     IS_NOT_EMPTY;
 
-    // := '(' ArgumentExpression (',' ArgumentExpression)* ')'
+    // := '(' ArgumentExpr (',' ArgumentExpr)* ')'
     // in typical recursive descent fashion, we parse the first argument expression
 
     if ((CURRENT_TOK != token::tokens::PUNCTUATION_OPEN_PAREN)) {
@@ -579,18 +575,18 @@ AST_NODE_IMPL(ArgumentListExpression) {
 
     if (CURRENT_TOK == token::tokens::PUNCTUATION_CLOSE_PAREN) {
         iter.advance();  // skip ')'
-        return make_node<ArgumentListExpression>(nullptr);
+        return make_node<ArgumentListExpr>(nullptr);
     }
 
-    ParseResult<ArgumentExpression> first = parse_ArgumentExpression();
+    ParseResult<ArgumentExpr> first = parse_ArgumentExpr();
 
     RETURN_IF_ERROR(first);
 
-    NodeT<ArgumentListExpression> args = make_node<ArgumentListExpression>(first.value());
+    NodeT<ArgumentListExpr> args = make_node<ArgumentListExpr>(first.value());
 
     while (CURRENT_TOK == token::tokens::PUNCTUATION_COMMA) {
         iter.advance();  // skip ','
-        ParseResult<ArgumentExpression> arg = parse_ArgumentExpression();
+        ParseResult<ArgumentExpr> arg = parse_ArgumentExpr();
         RETURN_IF_ERROR(arg);
         args->args.push_back(arg.value());
     }
@@ -605,40 +601,40 @@ AST_NODE_IMPL(ArgumentListExpression) {
     return args;
 }
 
-AST_NODE_IMPL_VISITOR(Jsonify, ArgumentListExpression) {
+AST_NODE_IMPL_VISITOR(Jsonify, ArgumentListExpr) {
     std::vector<neo::json> args;
 
     for (const auto &arg : node.args) {
         args.push_back(get_node_json(arg));
     }
 
-    json.section("ArgumentListExpression").add("args", args);
+    json.section("ArgumentListExpr").add("args", args);
 }
 
 // ---------------------------------------------------------------------------------------------- //
 
-AST_NODE_IMPL(GenericArgumentExpression) {
+AST_NODE_IMPL(GenericArgumentExpr) {
     IS_NOT_EMPTY;
     NOT_IMPLEMENTED;
 }
 
 // ---------------------------------------------------------------------------------------------- //
 
-AST_NODE_IMPL(GenericInvocationExpression) {
+AST_NODE_IMPL(GenericInvokeExpr) {
     IS_NOT_EMPTY;
     NOT_IMPLEMENTED;
 }
 
 // ---------------------------------------------------------------------------------------------- //
 
-AST_NODE_IMPL(PathGenericInvocationExpression) {
+AST_NODE_IMPL(GenericInvokePathExpr) {
     IS_NOT_EMPTY;
     NOT_IMPLEMENTED;
 }
 
 // ---------------------------------------------------------------------------------------------- //
 
-AST_NODE_IMPL(ScopeAccessExpression, ParseResult<> lhs) {
+AST_NODE_IMPL(ScopePathExpr, ParseResult<> lhs) {
     IS_NOT_EMPTY;
 
     // := E '::' E
@@ -658,18 +654,18 @@ AST_NODE_IMPL(ScopeAccessExpression, ParseResult<> lhs) {
     ParseResult<> rhs = parse();
     RETURN_IF_ERROR(rhs);
 
-    return make_node<ScopeAccessExpression>(lhs.value(), rhs.value());
+    return make_node<ScopePathExpr>(lhs.value(), rhs.value());
 }
 
-AST_NODE_IMPL_VISITOR(Jsonify, ScopeAccessExpression) {
-    json.section("ScopeAccessExpression")
+AST_NODE_IMPL_VISITOR(Jsonify, ScopePathExpr) {
+    json.section("ScopePathExpr")
         .add("lhs", get_node_json(node.lhs))
         .add("rhs", get_node_json(node.rhs));
 }
 
 // ---------------------------------------------------------------------------------------------- //
 
-AST_NODE_IMPL(DotAccessExpression, ParseResult<> lhs) {
+AST_NODE_IMPL(DotPathExpr, ParseResult<> lhs) {
     IS_NOT_EMPTY;
 
     // := E '.' E
@@ -689,18 +685,18 @@ AST_NODE_IMPL(DotAccessExpression, ParseResult<> lhs) {
     ParseResult<> rhs = parse();
     RETURN_IF_ERROR(rhs);
 
-    return make_node<DotAccessExpression>(lhs.value(), rhs.value());
+    return make_node<DotPathExpr>(lhs.value(), rhs.value());
 }
 
-AST_NODE_IMPL_VISITOR(Jsonify, DotAccessExpression) {
-    json.section("DotAccessExpression")
+AST_NODE_IMPL_VISITOR(Jsonify, DotPathExpr) {
+    json.section("DotPathExpr")
         .add("lhs", get_node_json(node.lhs))
         .add("rhs", get_node_json(node.rhs));
 }
 
 // ---------------------------------------------------------------------------------------------- //
 
-AST_NODE_IMPL(ArrayAccessExpression, ParseResult<> lhs) {
+AST_NODE_IMPL(ArrayAccessExpr, ParseResult<> lhs) {
     IS_NOT_EMPTY;
 
     // := E '[' E ']'
@@ -727,34 +723,34 @@ AST_NODE_IMPL(ArrayAccessExpression, ParseResult<> lhs) {
 
     iter.advance();  // skip ']'
 
-    return make_node<ArrayAccessExpression>(lhs.value(), index.value());
+    return make_node<ArrayAccessExpr>(lhs.value(), index.value());
 }
 
-AST_NODE_IMPL_VISITOR(Jsonify, ArrayAccessExpression) {
-    json.section("ArrayAccessExpression")
+AST_NODE_IMPL_VISITOR(Jsonify, ArrayAccessExpr) {
+    json.section("ArrayAccessExpr")
         .add("array", get_node_json(node.lhs))
         .add("index", get_node_json(node.rhs));
 }
 
 // ---------------------------------------------------------------------------------------------- //
 
-AST_NODE_IMPL(PathExpression, ParseResult<> simple_path) {
+AST_NODE_IMPL(PathExpr, ParseResult<> simple_path) {
     IS_NOT_EMPTY;
 
     if (simple_path != nullptr && simple_path.has_value()) {
-        NodeT<PathExpression> path = make_node<PathExpression>(simple_path.value());
+        NodeT<PathExpr> path = make_node<PathExpr>(simple_path.value());
 
         switch (simple_path.value()->getNodeType()) {
-            case parser::ast::node::nodes::IdentifierExpression:
-                path->type = PathExpression::PathType::Identifier;
+            case parser::ast::node::nodes::IdentExpr:
+                path->type = PathExpr::PathType::Identifier;
                 break;
 
-            case parser::ast::node::nodes::ScopeAccessExpression:
-                path->type = PathExpression::PathType::Scope;
+            case parser::ast::node::nodes::ScopePathExpr:
+                path->type = PathExpr::PathType::Scope;
                 break;
 
-            case parser::ast::node::nodes::DotAccessExpression:
-                path->type = PathExpression::PathType::Dot;
+            case parser::ast::node::nodes::DotPathExpr:
+                path->type = PathExpr::PathType::Dot;
                 break;
 
             default:
@@ -768,35 +764,33 @@ AST_NODE_IMPL(PathExpression, ParseResult<> simple_path) {
     return std::unexpected(PARSE_ERROR_MSG("expected a simple path expression, but found nothing"));
 }
 
-AST_NODE_IMPL_VISITOR(Jsonify, PathExpression) {
-    json.section("PathExpression")
-        .add("path", get_node_json(node.path))
-        .add("type", (int)node.type);
+AST_NODE_IMPL_VISITOR(Jsonify, PathExpr) {
+    json.section("PathExpr").add("path", get_node_json(node.path)).add("type", (int)node.type);
 }
 
 // ---------------------------------------------------------------------------------------------- //
 
-AST_NODE_IMPL(FunctionCallExpression, ParseResult<> lhs, ParseResult<> gens) {
+AST_NODE_IMPL(FunctionCallExpr, ParseResult<> lhs, ParseResult<> gens) {
     IS_NOT_EMPTY;
 
     /*
-        FunctionCallExpression = {
-            NodeT<PathExpression>
-            NodeT<ArgumentListExpression>
-            NodeT<GenericInvocationExpression>
+        FunctionCallExpr = {
+            NodeT<PathExpr>
+            NodeT<ArgumentListExpr>
+            NodeT<GenericInvokeExpr>
         }
     */
 
     // if lhs is not empty, then we have a path expression
-    ParseResult<PathExpression> path;
-    // ParseResult<GenericInvocationExpression> generics;
+    ParseResult<PathExpr> path;
+    // ParseResult<GenericInvokeExpr> generics;
 
     if (lhs != nullptr && lhs.has_value()) {
-        path = parse_PathExpression(lhs.value());
+        path = parse_PathExpr(lhs.value());
     } else {
         lhs = parse();
         RETURN_IF_ERROR(lhs);
-        path = parse_PathExpression(lhs.value());
+        path = parse_PathExpr(lhs.value());
     }
 
     RETURN_IF_ERROR(path);
@@ -805,22 +799,22 @@ AST_NODE_IMPL(FunctionCallExpression, ParseResult<> lhs, ParseResult<> gens) {
 
     IS_NOT_EMPTY;
 
-    ParseResult<ArgumentListExpression> args = parse_ArgumentListExpression();
+    ParseResult<ArgumentListExpr> args = parse_ArgumentListExpr();
 
     RETURN_IF_ERROR(args);
 
-    return make_node<FunctionCallExpression>(path.value(), args.value());
+    return make_node<FunctionCallExpr>(path.value(), args.value());
 }
 
-AST_NODE_IMPL_VISITOR(Jsonify, FunctionCallExpression) {
-    json.section("FunctionCallExpression")
+AST_NODE_IMPL_VISITOR(Jsonify, FunctionCallExpr) {
+    json.section("FunctionCallExpr")
         .add("path", get_node_json(node.path))
         .add("args", get_node_json(node.args));
 }
 
 // ---------------------------------------------------------------------------------------------- //
 
-AST_NODE_IMPL(ArrayLiteralExpression) {
+AST_NODE_IMPL(ArrayLiteralExpr) {
     IS_NOT_EMPTY;
     // := '[' E (',' E)* ']'
 
@@ -842,7 +836,7 @@ AST_NODE_IMPL(ArrayLiteralExpression) {
 
     RETURN_IF_ERROR(first);
 
-    NodeT<ArrayLiteralExpression> array = make_node<ArrayLiteralExpression>(first.value());
+    NodeT<ArrayLiteralExpr> array = make_node<ArrayLiteralExpr>(first.value());
 
     while (CURRENT_TOK == token::tokens::PUNCTUATION_COMMA) {
         iter.advance();  // skip ','
@@ -866,19 +860,19 @@ AST_NODE_IMPL(ArrayLiteralExpression) {
     return array;
 }
 
-AST_NODE_IMPL_VISITOR(Jsonify, ArrayLiteralExpression) {
+AST_NODE_IMPL_VISITOR(Jsonify, ArrayLiteralExpr) {
     std::vector<neo::json> values;
 
     for (const auto &value : node.values) {
         values.push_back(get_node_json(value));
     }
 
-    json.section("ArrayLiteralExpression").add("values", values);
+    json.section("ArrayLiteralExpr").add("values", values);
 }
 
 // ---------------------------------------------------------------------------------------------- //
 
-AST_NODE_IMPL(TupleLiteralExpression, ParseResult<> starting_element) {
+AST_NODE_IMPL(TupleLiteralExpr, ParseResult<> starting_element) {
     IS_NOT_EMPTY;
 
     // := '(' E (',' E)* ')'
@@ -912,7 +906,7 @@ AST_NODE_IMPL(TupleLiteralExpression, ParseResult<> starting_element) {
         return std::unexpected(PARSE_ERROR_MSG("tuple literals must have at least one element"));
     }
 
-    NodeT<TupleLiteralExpression> tuple = make_node<TupleLiteralExpression>(first.value());
+    NodeT<TupleLiteralExpr> tuple = make_node<TupleLiteralExpr>(first.value());
 
     while (CURRENT_TOK == token::tokens::PUNCTUATION_COMMA) {
         iter.advance();  // skip ','
@@ -936,31 +930,31 @@ AST_NODE_IMPL(TupleLiteralExpression, ParseResult<> starting_element) {
     return tuple;
 }
 
-AST_NODE_IMPL_VISITOR(Jsonify, TupleLiteralExpression) {
+AST_NODE_IMPL_VISITOR(Jsonify, TupleLiteralExpr) {
     std::vector<neo::json> values;
 
     for (const auto &value : node.values) {
         values.push_back(get_node_json(value));
     }
 
-    json.section("TupleLiteralExpression").add("values", values);
+    json.section("TupleLiteralExpr").add("values", values);
 }
 
 // ---------------------------------------------------------------------------------------------- //
 
-AST_NODE_IMPL(SetLiteralExpression, ParseResult<> starting_value) {
+AST_NODE_IMPL(SetLiteralExpr, ParseResult<> starting_value) {
     IS_NOT_EMPTY;
 
     // := '{' E (',' E)* '}'
     // {1}
     // {1, 2, 3, }
 
-    NodeT<SetLiteralExpression> set;
+    NodeT<SetLiteralExpr> set;
 
     if (starting_value != nullptr && starting_value.has_value()) {
         // we have parsed the '{' and the first E, so we need to check if the current token is ','
         if (CURRENT_TOK == token::tokens::PUNCTUATION_CLOSE_BRACE) {
-            set = make_node<SetLiteralExpression>(starting_value.value());
+            set = make_node<SetLiteralExpr>(starting_value.value());
 
             iter.advance();  // skip '}'
             return set;
@@ -971,7 +965,7 @@ AST_NODE_IMPL(SetLiteralExpression, ParseResult<> starting_value) {
                 CURRENT_TOK, "expected ',', but found: " + CURRENT_TOK.token_kind_repr()));
         }
 
-        set = make_node<SetLiteralExpression>(starting_value.value());
+        set = make_node<SetLiteralExpr>(starting_value.value());
     } else {
         if ((CURRENT_TOK != token::tokens::PUNCTUATION_OPEN_BRACE)) {
             return std::unexpected(PARSE_ERROR(
@@ -984,7 +978,7 @@ AST_NODE_IMPL(SetLiteralExpression, ParseResult<> starting_value) {
 
         RETURN_IF_ERROR(first);
 
-        set = make_node<SetLiteralExpression>(first.value());
+        set = make_node<SetLiteralExpr>(first.value());
     }
 
     while (CURRENT_TOK == token::tokens::PUNCTUATION_COMMA) {
@@ -1009,19 +1003,19 @@ AST_NODE_IMPL(SetLiteralExpression, ParseResult<> starting_value) {
     return set;
 }
 
-AST_NODE_IMPL_VISITOR(Jsonify, SetLiteralExpression) {
+AST_NODE_IMPL_VISITOR(Jsonify, SetLiteralExpr) {
     std::vector<neo::json> values;
 
     for (const auto &value : node.values) {
         values.push_back(get_node_json(value));
     }
 
-    json.section("SetLiteralExpression").add("values", values);
+    json.section("SetLiteralExpr").add("values", values);
 }
 
 // ---------------------------------------------------------------------------------------------- //
 
-AST_NODE_IMPL(MapPairExpression) {
+AST_NODE_IMPL(MapPairExpr) {
     IS_NOT_EMPTY;
 
     // := E ':' E
@@ -1041,23 +1035,23 @@ AST_NODE_IMPL(MapPairExpression) {
 
     RETURN_IF_ERROR(value);
 
-    return make_node<MapPairExpression>(key.value(), value.value());
+    return make_node<MapPairExpr>(key.value(), value.value());
 }
 
-AST_NODE_IMPL_VISITOR(Jsonify, MapPairExpression) {
-    json.section("MapPairExpression")
+AST_NODE_IMPL_VISITOR(Jsonify, MapPairExpr) {
+    json.section("MapPairExpr")
         .add("key", get_node_json(node.key))
         .add("value", get_node_json(node.value));
 }
 
 // ---------------------------------------------------------------------------------------------- //
 
-AST_NODE_IMPL(MapLiteralExpression, ParseResult<> starting_key) {
+AST_NODE_IMPL(MapLiteralExpr, ParseResult<> starting_key) {
     IS_NOT_EMPTY;
 
     // := '{' E (':' E)* '}'
 
-    NodeT<MapPairExpression> pair;
+    NodeT<MapPairExpr> pair;
 
     if (starting_key != nullptr && starting_key.has_value()) {
         // we have parsed the '{' and the first E, so we need to check if the current token is ':'
@@ -1071,7 +1065,7 @@ AST_NODE_IMPL(MapLiteralExpression, ParseResult<> starting_key) {
         ParseResult<> value = parse();
         RETURN_IF_ERROR(value);
 
-        pair = make_node<MapPairExpression>(starting_key.value(), value.value());
+        pair = make_node<MapPairExpr>(starting_key.value(), value.value());
     } else {
         if ((CURRENT_TOK != token::tokens::PUNCTUATION_OPEN_BRACE)) {
             return std::unexpected(PARSE_ERROR(
@@ -1080,7 +1074,7 @@ AST_NODE_IMPL(MapLiteralExpression, ParseResult<> starting_key) {
 
         iter.advance();  // skip '{'
 
-        ParseResult<MapPairExpression> tmp_pair = parse_MapPairExpression();
+        ParseResult<MapPairExpr> tmp_pair = parse_MapPairExpr();
         RETURN_IF_ERROR(tmp_pair);
 
         pair = tmp_pair.value();
@@ -1089,7 +1083,7 @@ AST_NODE_IMPL(MapLiteralExpression, ParseResult<> starting_key) {
     // := (',' E)* '}' is the remaining part of the map literal expression (there could be a
     // trailing comma)
 
-    NodeT<MapLiteralExpression> map = make_node<MapLiteralExpression>(pair);
+    NodeT<MapLiteralExpr> map = make_node<MapLiteralExpr>(pair);
 
     while (CURRENT_TOK == token::tokens::PUNCTUATION_COMMA) {
         iter.advance();  // skip ','
@@ -1098,7 +1092,7 @@ AST_NODE_IMPL(MapLiteralExpression, ParseResult<> starting_key) {
             break;
         }
 
-        ParseResult<MapPairExpression> next_pair = parse_MapPairExpression();
+        ParseResult<MapPairExpr> next_pair = parse_MapPairExpr();
         RETURN_IF_ERROR(next_pair);
 
         map->values.push_back(next_pair.value());
@@ -1114,22 +1108,22 @@ AST_NODE_IMPL(MapLiteralExpression, ParseResult<> starting_key) {
     return map;
 }
 
-AST_NODE_IMPL_VISITOR(Jsonify, MapLiteralExpression) {
+AST_NODE_IMPL_VISITOR(Jsonify, MapLiteralExpr) {
     std::vector<neo::json> values;
 
     for (const auto &value : node.values) {
         values.push_back(get_node_json(value));
     }
 
-    json.section("MapLiteralExpression").add("values", values);
+    json.section("MapLiteralExpr").add("values", values);
 }
 
 // ---------------------------------------------------------------------------------------------- //
 
-AST_NODE_IMPL(ObjectInitializerExpression, bool skip_start_brace) {
+AST_NODE_IMPL(ObjInitExpr, bool skip_start_brace) {
     IS_NOT_EMPTY;
 
-    // := '{' (NamedArgument (',' NamedArgument)*)? '}'
+    // := '{' (NamedArgumentExpr (',' NamedArgumentExpr)*)? '}'
 
     if (!skip_start_brace) {
         if ((CURRENT_TOK != token::tokens::PUNCTUATION_OPEN_BRACE)) {
@@ -1145,10 +1139,10 @@ AST_NODE_IMPL(ObjectInitializerExpression, bool skip_start_brace) {
             CURRENT_TOK, "expected a keyword argument, but got an empty object initializer"));
     }
 
-    ParseResult<NamedArgument> first = parse_NamedArgument();
+    ParseResult<NamedArgumentExpr> first = parse_NamedArgumentExpr();
     RETURN_IF_ERROR(first);
 
-    NodeT<ObjectInitializerExpression> obj = make_node<ObjectInitializerExpression>(first.value());
+    NodeT<ObjInitExpr> obj = make_node<ObjInitExpr>(first.value());
 
     while (CURRENT_TOK == token::tokens::PUNCTUATION_COMMA) {
         iter.advance();  // skip ','
@@ -1157,7 +1151,7 @@ AST_NODE_IMPL(ObjectInitializerExpression, bool skip_start_brace) {
             break;
         }
 
-        ParseResult<NamedArgument> next = parse_NamedArgument();
+        ParseResult<NamedArgumentExpr> next = parse_NamedArgumentExpr();
         RETURN_IF_ERROR(next);
         obj->kwargs.push_back(next.value());
     }
@@ -1172,29 +1166,29 @@ AST_NODE_IMPL(ObjectInitializerExpression, bool skip_start_brace) {
     return obj;
 }
 
-AST_NODE_IMPL_VISITOR(Jsonify, ObjectInitializerExpression) {
+AST_NODE_IMPL_VISITOR(Jsonify, ObjInitExpr) {
     std::vector<neo::json> kwargs;
 
     for (const auto &kwarg : node.kwargs) {
         kwargs.push_back(get_node_json(kwarg));
     }
 
-    json.section("ObjectInitializerExpression").add("keyword_args", kwargs);
+    json.section("ObjInitExpr").add("keyword_args", kwargs);
 }
 
 // ---------------------------------------------------------------------------------------------- //
 
 /* TODO: after Suite can be parsed */
-AST_NODE_IMPL(LambdaExpression) {
+AST_NODE_IMPL(LambdaExpr) {
     IS_NOT_EMPTY;
     NOT_IMPLEMENTED;
 }
 
-AST_NODE_IMPL_VISITOR(Jsonify, LambdaExpression) { json.section("LambdaExpression"); }
+AST_NODE_IMPL_VISITOR(Jsonify, LambdaExpr) { json.section("LambdaExpr"); }
 
 // ---------------------------------------------------------------------------------------------- //
 
-AST_NODE_IMPL(TernaryExpression, ParseResult<> E1) {
+AST_NODE_IMPL(TernaryExpr, ParseResult<> E1) {
     IS_NOT_EMPTY;
 
     // := (E '?' E ':' E) | (E 'if' E 'else' E)
@@ -1221,7 +1215,7 @@ AST_NODE_IMPL(TernaryExpression, ParseResult<> E1) {
         ParseResult<> E3 = parse();
         RETURN_IF_ERROR(E3);
 
-        return make_node<TernaryExpression>(E1.value(), E2.value(), E3.value());
+        return make_node<TernaryExpr>(E1.value(), E2.value(), E3.value());
     }
 
     if (CURRENT_TOK == token::tokens::KEYWORD_IF) {
@@ -1240,15 +1234,15 @@ AST_NODE_IMPL(TernaryExpression, ParseResult<> E1) {
         ParseResult<> E3 = parse();
         RETURN_IF_ERROR(E3);
 
-        return make_node<TernaryExpression>(E2.value(), E1.value(), E3.value());
+        return make_node<TernaryExpr>(E2.value(), E1.value(), E3.value());
     }
 
     return std::unexpected(PARSE_ERROR(
         CURRENT_TOK, "expected '?' or 'if', but found: " + CURRENT_TOK.token_kind_repr()));
 }
 
-AST_NODE_IMPL_VISITOR(Jsonify, TernaryExpression) {
-    json.section("TernaryExpression")
+AST_NODE_IMPL_VISITOR(Jsonify, TernaryExpr) {
+    json.section("TernaryExpr")
         .add("condition", get_node_json(node.condition))
         .add("if_true", get_node_json(node.if_true))
         .add("if_false", get_node_json(node.if_false));
@@ -1256,7 +1250,7 @@ AST_NODE_IMPL_VISITOR(Jsonify, TernaryExpression) {
 
 // ---------------------------------------------------------------------------------------------- //
 
-AST_NODE_IMPL(ParenthesizedExpression, ParseResult<> expr) {
+AST_NODE_IMPL(ParenthesizedExpr, ParseResult<> expr) {
     IS_NOT_EMPTY;
 
     // := '(' E ')'
@@ -1270,7 +1264,7 @@ AST_NODE_IMPL(ParenthesizedExpression, ParseResult<> expr) {
 
         iter.advance();  // skip ')'
 
-        return make_node<ParenthesizedExpression>(expr.value());
+        return make_node<ParenthesizedExpr>(expr.value());
     }
 
     if ((CURRENT_TOK != token::tokens::PUNCTUATION_OPEN_PAREN)) {
@@ -1291,16 +1285,16 @@ AST_NODE_IMPL(ParenthesizedExpression, ParseResult<> expr) {
 
     iter.advance();  // skip ')'
 
-    return make_node<ParenthesizedExpression>(inner.value());
+    return make_node<ParenthesizedExpr>(inner.value());
 }
 
-AST_NODE_IMPL_VISITOR(Jsonify, ParenthesizedExpression) {
-    json.section("ParenthesizedExpression").add("value", get_node_json(node.value));
+AST_NODE_IMPL_VISITOR(Jsonify, ParenthesizedExpr) {
+    json.section("ParenthesizedExpr").add("value", get_node_json(node.value));
 }
 
 // ---------------------------------------------------------------------------------------------- //
 
-AST_NODE_IMPL(CastExpression, ParseResult<> lhs) {
+AST_NODE_IMPL(CastExpr, ParseResult<> lhs) {
     IS_NOT_EMPTY;
 
     // := E 'as' E
@@ -1320,18 +1314,18 @@ AST_NODE_IMPL(CastExpression, ParseResult<> lhs) {
     ParseResult<> rhs = parse();
     RETURN_IF_ERROR(rhs);
 
-    return make_node<CastExpression>(lhs.value(), rhs.value());
+    return make_node<CastExpr>(lhs.value(), rhs.value());
 }
 
-AST_NODE_IMPL_VISITOR(Jsonify, CastExpression) {
-    json.section("CastExpression")
+AST_NODE_IMPL_VISITOR(Jsonify, CastExpr) {
+    json.section("CastExpr")
         .add("value", get_node_json(node.value))
         .add("type", get_node_json(node.type));
 }
 
 // ---------------------------------------------------------------------------------------------- //
 
-AST_NODE_IMPL(InstanceOfExpression, ParseResult<> lhs) {
+AST_NODE_IMPL(InstOfExpr, ParseResult<> lhs) {
     IS_NOT_EMPTY;
 
     // := E 'has' E | E 'derives' E
@@ -1348,20 +1342,20 @@ AST_NODE_IMPL(InstanceOfExpression, ParseResult<> lhs) {
                                                CURRENT_TOK.token_kind_repr()));
     }
 
-    InstanceOfExpression::InstanceType op = (CURRENT_TOK == token::tokens::KEYWORD_HAS)
-                                                ? InstanceOfExpression::InstanceType::Has
-                                                : InstanceOfExpression::InstanceType::Derives;
+    InstOfExpr::InstanceType op = (CURRENT_TOK == token::tokens::KEYWORD_HAS)
+                                      ? InstOfExpr::InstanceType::Has
+                                      : InstOfExpr::InstanceType::Derives;
 
     iter.advance();  // skip 'has' or 'derives'
 
     ParseResult<> rhs = parse();
     RETURN_IF_ERROR(rhs);
 
-    return make_node<InstanceOfExpression>(lhs.value(), rhs.value(), op);
+    return make_node<InstOfExpr>(lhs.value(), rhs.value(), op);
 }
 
-AST_NODE_IMPL_VISITOR(Jsonify, InstanceOfExpression) {
-    json.section("InstanceOfExpression")
+AST_NODE_IMPL_VISITOR(Jsonify, InstOfExpr) {
+    json.section("InstOfExpr")
         .add("value", get_node_json(node.value))
         .add("type", get_node_json(node.type))
         .add("op", (int)node.op);
@@ -1369,17 +1363,10 @@ AST_NODE_IMPL_VISITOR(Jsonify, InstanceOfExpression) {
 
 // ---------------------------------------------------------------------------------------------- //
 
-/* DEPRECATED: a pointer or ref type is deduced from context and at this stage is considered a
- * UnaryExpression */
-AST_NODE_IMPL(PtrType) {
-    IS_NOT_EMPTY;
-    NOT_IMPLEMENTED;
-}
-
-// ---------------------------------------------------------------------------------------------- //
-
 /* DEPRECATED: a Type is deduced from context and at this stage is considered a Expression */
 AST_NODE_IMPL(Type) {
+    // if E(2) does not exist, check if its a & | * token, since if it is,
+    // then return a unary expression since its a pointer or reference type
     IS_NOT_EMPTY;
     NOT_IMPLEMENTED;
 }

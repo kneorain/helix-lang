@@ -17,9 +17,10 @@
 #include "parser/ast/include/core/AST_nodes.hh"
 #include "parser/ast/include/types/AST_types.hh"
 
+
 __AST_NODE_BEGIN {
-    class LiteralExpression final : public Node {  // := LITERAL
-        BASE_CORE_METHODS(LiteralExpression);
+    class LiteralExpr final : public Node {  // := LITERAL
+        BASE_CORE_METHODS(LiteralExpr);
 
         enum class LiteralType {
             Integer,
@@ -30,7 +31,7 @@ __AST_NODE_BEGIN {
             Null,
         };
 
-        LiteralExpression(token::Token value, LiteralType type)
+        LiteralExpr(token::Token value, LiteralType type)
             : value(std::move(value))
             , type(type) {}
 
@@ -38,10 +39,10 @@ __AST_NODE_BEGIN {
         LiteralType  type;
     };
 
-    class BinaryExpression final : public Node {  // := E op E
-        BASE_CORE_METHODS(BinaryExpression);
+    class BinaryExpr final : public Node {  // := E op E
+        BASE_CORE_METHODS(BinaryExpr);
 
-        BinaryExpression(NodeT<> lhs, NodeT<> rhs, token::Token op)
+        BinaryExpr(NodeT<> lhs, NodeT<> rhs, token::Token op)
             : lhs(std::move(lhs))
             , op(std::move(op))
             , rhs(std::move(rhs)) {}
@@ -51,10 +52,10 @@ __AST_NODE_BEGIN {
         NodeT<>      rhs;
     };
 
-    class UnaryExpression final : public Node {  // := op E
-        BASE_CORE_METHODS(UnaryExpression);
+    class UnaryExpr final : public Node {  // := op E
+        BASE_CORE_METHODS(UnaryExpr);
 
-        UnaryExpression(NodeT<> rhs, token::Token op)
+        UnaryExpr(NodeT<> rhs, token::Token op)
             : rhs(std::move(rhs))
             , op(std::move(op)) {}
 
@@ -62,34 +63,34 @@ __AST_NODE_BEGIN {
         token::Token op;
     };
 
-    class IdentifierExpression final : public Node {  // := T
-        BASE_CORE_METHODS(IdentifierExpression);
+    class IdentExpr final : public Node {  // := T
+        BASE_CORE_METHODS(IdentExpr);
 
-        explicit IdentifierExpression(token::Token name, bool is_reserved_primitive = false)
-            : name(std::move(name)), is_reserved_primitive(is_reserved_primitive) {}
+        explicit IdentExpr(token::Token name, bool is_reserved_primitive = false)
+            : name(std::move(name))
+            , is_reserved_primitive(is_reserved_primitive) {}
 
         token::Token name;
-        bool is_reserved_primitive = false;
+        bool         is_reserved_primitive = false;
     };
 
-    class NamedArgument final : public Node {  // := IdentifierExpression '=' E
-        BASE_CORE_METHODS(NamedArgument);
+    class NamedArgumentExpr final : public Node {  // := IdentExpr '=' E
+        BASE_CORE_METHODS(NamedArgumentExpr);
 
-        NamedArgument(NodeT<IdentifierExpression> name, NodeT<> value)
+        NamedArgumentExpr(NodeT<IdentExpr> name, NodeT<> value)
             : name(std::move(name))
             , value(std::move(value)) {}
 
-        NodeT<IdentifierExpression> name;
-        NodeT<>                     value;
+        NodeT<IdentExpr> name;
+        NodeT<>          value;
     };
 
-    class ArgumentExpression final
-        : public Node {  // := PositionalArgumentExpression | NamedArgument
-        BASE_CORE_METHODS(ArgumentExpression);
+    class ArgumentExpr final : public Node {  // := PositionalArgumentExpr | NamedArgumentExpr
+        BASE_CORE_METHODS(ArgumentExpr);
 
-        explicit ArgumentExpression(NodeT<> value)
+        explicit ArgumentExpr(NodeT<> value)
             : value(std::move(value))
-            , type(ArgumentType::Positional) {};
+            , type(ArgumentType::Positional){};
 
         enum class ArgumentType {
             Positional,
@@ -100,11 +101,10 @@ __AST_NODE_BEGIN {
         ArgumentType type;
     };
 
-    class ArgumentListExpression final
-        : public Node {  // := '(' ArgumentExpression (',' ArgumentExpression)* ')'
-        BASE_CORE_METHODS(ArgumentListExpression);
+    class ArgumentListExpr final : public Node {  // := '(' ArgumentExpr (',' ArgumentExpr)* ')'
+        BASE_CORE_METHODS(ArgumentListExpr);
 
-        explicit ArgumentListExpression(NodeT<> args) {
+        explicit ArgumentListExpr(NodeT<> args) {
             if (args != nullptr) {
                 (this->args).emplace_back(std::move(args));
             }
@@ -113,11 +113,11 @@ __AST_NODE_BEGIN {
         NodeV<> args;
     };
 
-    class GenericArgumentExpression final : public Node {  // := GenericPositionalArgumentExpression
-                                                           // | GenericNamedArgumentExpression
-        BASE_CORE_METHODS(GenericArgumentExpression);
+    class GenericArgumentExpr final : public Node {  // := GenericPositionalArgumentExpr
+                                                     // | GenericNamedArgumentExprExpr
+        BASE_CORE_METHODS(GenericArgumentExpr);
 
-        explicit GenericArgumentExpression(NodeT<> value);
+        explicit GenericArgumentExpr(NodeT<> value);
 
         enum class ArgumentType {
             Positional,
@@ -127,29 +127,29 @@ __AST_NODE_BEGIN {
         NodeT<> value;
     };
 
-    class GenericInvocationExpression final
-        : public Node {  // := '<' GenericArgumentExpression ((',' GenericArgumentExpression)*)? '>'
-        BASE_CORE_METHODS(GenericInvocationExpression);
+    class GenericInvokeExpr final
+        : public Node {  // := '<' GenericArgumentExpr ((',' GenericArgumentExpr)*)? '>'
+        BASE_CORE_METHODS(GenericInvokeExpr);
 
-        explicit GenericInvocationExpression(NodeT<> args);
-        GenericInvocationExpression(NodeT<GenericInvocationExpression> args, NodeT<> next);
+        explicit GenericInvokeExpr(NodeT<> args);
+        GenericInvokeExpr(NodeT<GenericInvokeExpr> args, NodeT<> next);
 
         NodeV<> args;
     };
 
-    class PathGenericInvocationExpression final : public Node {  // := E GenericInvocationExpression
-        BASE_CORE_METHODS(PathGenericInvocationExpression);
+    class GenericInvokePathExpr final : public Node {  // := E GenericInvokeExpr
+        BASE_CORE_METHODS(GenericInvokePathExpr);
 
-        PathGenericInvocationExpression(NodeT<> path, NodeT<> generic);
+        GenericInvokePathExpr(NodeT<> path, NodeT<> generic);
 
         NodeT<> path;
         NodeT<> generic;
     };
 
-    class ScopeAccessExpression final : public Node {  // := E '::' E
-        BASE_CORE_METHODS(ScopeAccessExpression);
+    class ScopePathExpr final : public Node {  // := E '::' E
+        BASE_CORE_METHODS(ScopePathExpr);
 
-        ScopeAccessExpression(NodeT<> lhs, NodeT<> rhs)
+        ScopePathExpr(NodeT<> lhs, NodeT<> rhs)
             : lhs(std::move(lhs))
             , rhs(std::move(rhs)) {}
 
@@ -157,10 +157,10 @@ __AST_NODE_BEGIN {
         NodeT<> rhs;
     };
 
-    class DotAccessExpression final : public Node {  // := E '.' E
-        BASE_CORE_METHODS(DotAccessExpression);
+    class DotPathExpr final : public Node {  // := E '.' E
+        BASE_CORE_METHODS(DotPathExpr);
 
-        DotAccessExpression(NodeT<> lhs, NodeT<> rhs)
+        DotPathExpr(NodeT<> lhs, NodeT<> rhs)
             : lhs(std::move(lhs))
             , rhs(std::move(rhs)) {}
 
@@ -168,10 +168,10 @@ __AST_NODE_BEGIN {
         NodeT<> rhs;
     };
 
-    class ArrayAccessExpression final : public Node {  // := E '[' E ']'
-        BASE_CORE_METHODS(ArrayAccessExpression);
+    class ArrayAccessExpr final : public Node {  // := E '[' E ']'
+        BASE_CORE_METHODS(ArrayAccessExpr);
 
-        ArrayAccessExpression(NodeT<> lhs, NodeT<> rhs)
+        ArrayAccessExpr(NodeT<> lhs, NodeT<> rhs)
             : lhs(std::move(lhs))
             , rhs(std::move(rhs)) {}
 
@@ -179,10 +179,10 @@ __AST_NODE_BEGIN {
         NodeT<> rhs;
     };
 
-    class PathExpression final : public Node {  // := ScopeAccessExpression | DotAccessExpression
-        BASE_CORE_METHODS(PathExpression);
+    class PathExpr final : public Node {  // := ScopePathExpr | DotPathExpr
+        BASE_CORE_METHODS(PathExpr);
 
-        explicit PathExpression(NodeT<> path)
+        explicit PathExpr(NodeT<> path)
             : path(std::move(path))
             , type(PathType::Identifier) {}
 
@@ -196,50 +196,49 @@ __AST_NODE_BEGIN {
         PathType type;
     };
 
-    class FunctionCallExpression final
-        : public Node {  // := PathExpression GenericInvocationExpression? ArgumentListExpression
-        BASE_CORE_METHODS(FunctionCallExpression);
+    class FunctionCallExpr final : public Node {  // := PathExpr GenericInvokeExpr? ArgumentListExpr
+        BASE_CORE_METHODS(FunctionCallExpr);
 
-        FunctionCallExpression(NodeT<PathExpression>              path,
-                               NodeT<ArgumentListExpression>      args,
-                               NodeT<GenericInvocationExpression> generic = nullptr)
+        FunctionCallExpr(NodeT<PathExpr>          path,
+                         NodeT<ArgumentListExpr>  args,
+                         NodeT<GenericInvokeExpr> generic = nullptr)
             : path(std::move(path))
             , args(std::move(args))
             , generic(std::move(generic)) {}
 
-        NodeT<PathExpression>              path;
-        NodeT<ArgumentListExpression>      args;
-        NodeT<GenericInvocationExpression> generic;
+        NodeT<PathExpr>          path;
+        NodeT<ArgumentListExpr>  args;
+        NodeT<GenericInvokeExpr> generic;
     };
 
-    class ArrayLiteralExpression final : public Node {  // := '[' E (',' E)* ']'
-        BASE_CORE_METHODS(ArrayLiteralExpression);
+    class ArrayLiteralExpr final : public Node {  // := '[' E (',' E)* ']'
+        BASE_CORE_METHODS(ArrayLiteralExpr);
 
-        explicit ArrayLiteralExpression(NodeT<> value) { values.emplace_back(std::move(value)); }
+        explicit ArrayLiteralExpr(NodeT<> value) { values.emplace_back(std::move(value)); }
 
         NodeV<> values;
     };
 
-    class TupleLiteralExpression final : public Node {  // := '(' E (',' E)* ')'
-        BASE_CORE_METHODS(TupleLiteralExpression);
+    class TupleLiteralExpr final : public Node {  // := '(' E (',' E)* ')'
+        BASE_CORE_METHODS(TupleLiteralExpr);
 
-        explicit TupleLiteralExpression(NodeT<> value) { values.emplace_back(std::move(value)); }
-
-        NodeV<> values;
-    };
-
-    class SetLiteralExpression final : public Node {  // := '{' E (',' E)* '}'
-        BASE_CORE_METHODS(SetLiteralExpression);
-
-        explicit SetLiteralExpression(NodeT<> value) { values.emplace_back(std::move(value)); }
+        explicit TupleLiteralExpr(NodeT<> value) { values.emplace_back(std::move(value)); }
 
         NodeV<> values;
     };
 
-    class MapPairExpression final : public Node {  // := E ':' E
-        BASE_CORE_METHODS(MapPairExpression);
+    class SetLiteralExpr final : public Node {  // := '{' E (',' E)* '}'
+        BASE_CORE_METHODS(SetLiteralExpr);
 
-        MapPairExpression(NodeT<> key, NodeT<> value)
+        explicit SetLiteralExpr(NodeT<> value) { values.emplace_back(std::move(value)); }
+
+        NodeV<> values;
+    };
+
+    class MapPairExpr final : public Node {  // := E ':' E
+        BASE_CORE_METHODS(MapPairExpr);
+
+        MapPairExpr(NodeT<> key, NodeT<> value)
             : key(std::move(key))
             , value(std::move(value)) {}
 
@@ -247,35 +246,33 @@ __AST_NODE_BEGIN {
         NodeT<> value;
     };
 
-    class MapLiteralExpression final : public Node {
-        BASE_CORE_METHODS(MapLiteralExpression);
+    class MapLiteralExpr final : public Node {
+        BASE_CORE_METHODS(MapLiteralExpr);
 
-        explicit MapLiteralExpression(NodeT<MapPairExpression> value) {
-            values.emplace_back(std::move(value));
-        }
+        explicit MapLiteralExpr(NodeT<MapPairExpr> value) { values.emplace_back(std::move(value)); }
 
-        NodeV<MapPairExpression> values;
+        NodeV<MapPairExpr> values;
     };
 
-    class ObjectInitializerExpression final
-        : public Node {  // := '{' (NamedArgument (',' NamedArgument)*)? '}'
-        BASE_CORE_METHODS(ObjectInitializerExpression);
+    class ObjInitExpr final
+        : public Node {  // := '{' (NamedArgumentExpr (',' NamedArgumentExpr)*)? '}'
+        BASE_CORE_METHODS(ObjInitExpr);
 
-        explicit ObjectInitializerExpression(NodeT<NamedArgument> args) {
+        explicit ObjInitExpr(NodeT<NamedArgumentExpr> args) {
             this->kwargs.emplace_back(std::move(args));
         }
 
-        NodeV<NamedArgument> kwargs;
+        NodeV<NamedArgumentExpr> kwargs;
     };
 
-    class LambdaExpression final : public Node {  // TODO
-        BASE_CORE_METHODS(LambdaExpression);
+    class LambdaExpr final : public Node {  // TODO
+        BASE_CORE_METHODS(LambdaExpr);
     };
 
-    class TernaryExpression final : public Node {  // := (E '?' E ':' E) | (E 'if' E 'else' E)
-        BASE_CORE_METHODS(TernaryExpression);
+    class TernaryExpr final : public Node {  // := (E '?' E ':' E) | (E 'if' E 'else' E)
+        BASE_CORE_METHODS(TernaryExpr);
 
-        TernaryExpression(NodeT<> condition, NodeT<> if_true, NodeT<> if_false)
+        TernaryExpr(NodeT<> condition, NodeT<> if_true, NodeT<> if_false)
             : condition(std::move(condition))
             , if_true(std::move(if_true))
             , if_false(std::move(if_false)) {}
@@ -285,19 +282,19 @@ __AST_NODE_BEGIN {
         NodeT<> if_false;
     };
 
-    class ParenthesizedExpression final : public Node {  // := '(' E ')'
-        BASE_CORE_METHODS(ParenthesizedExpression);
+    class ParenthesizedExpr final : public Node {  // := '(' E ')'
+        BASE_CORE_METHODS(ParenthesizedExpr);
 
-        explicit ParenthesizedExpression(NodeT<> value)
+        explicit ParenthesizedExpr(NodeT<> value)
             : value(std::move(value)) {}
 
         NodeT<> value;
     };
 
-    class CastExpression final : public Node {  // := E 'as' E
-        BASE_CORE_METHODS(CastExpression);
+    class CastExpr final : public Node {  // := E 'as' E
+        BASE_CORE_METHODS(CastExpr);
 
-        CastExpression(NodeT<> value, NodeT<> type)
+        CastExpr(NodeT<> value, NodeT<> type)
             : value(std::move(value))
             , type(std::move(type)) {}
 
@@ -305,15 +302,15 @@ __AST_NODE_BEGIN {
         NodeT<> type;
     };
 
-    class InstanceOfExpression final : public Node {  // := E ('has' | 'derives') E
-        BASE_CORE_METHODS(InstanceOfExpression);
+    class InstOfExpr final : public Node {  // := E ('has' | 'derives') E
+        BASE_CORE_METHODS(InstOfExpr);
 
         enum class InstanceType {
             Has,
             Derives,
         };
 
-        InstanceOfExpression(NodeT<> value, NodeT<> type, InstanceType op)
+        InstOfExpr(NodeT<> value, NodeT<> type, InstanceType op)
             : value(std::move(value))
             , type(std::move(type))
             , op(op) {}
@@ -324,22 +321,7 @@ __AST_NODE_BEGIN {
     };
 
     /* DEPRECATED */
-    class PtrType final : public Node {  // := ((E '*') | (('*' E)) | ((E '&') | ('&' E))
-        BASE_CORE_METHODS(PtrType);
-
-        PtrType(NodeT<> value, token::Token op);
-
-        enum class PtrTypeType {
-            Pointer,
-            Reference,
-        };
-
-        NodeT<>     value;
-        PtrTypeType type;
-    };
-
-    /* DEPRECATED */
-    class Type final : public Node {  // := IdentifierExpression | PtrType
+    class Type final : public Node {  // := IdentExpr
         BASE_CORE_METHODS(Type);
 
         explicit Type(NodeT<> value);

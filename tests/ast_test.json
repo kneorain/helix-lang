@@ -1,9 +1,9 @@
 {
     "ast": {
-        "SetLiteralExpression": {
+        "SetLiteralExpr": {
             "values": [
                 {
-                    "LiteralExpression": {
+                    "LiteralExpr": {
                         "type": 0,
                         "value": {
                             "kind": "<int>",
@@ -12,14 +12,14 @@
                                 "column_number": 4,
                                 "filename": "tests/main.hlx",
                                 "line_number": 2,
-                                "offset": 6
+                                "offset": 7
                             },
                             "value": "1"
                         }
                     }
                 },
                 {
-                    "LiteralExpression": {
+                    "LiteralExpr": {
                         "type": 0,
                         "value": {
                             "kind": "<float>",
@@ -28,14 +28,14 @@
                                 "column_number": 4,
                                 "filename": "tests/main.hlx",
                                 "line_number": 3,
-                                "offset": 15
+                                "offset": 17
                             },
                             "value": "3.14"
                         }
                     }
                 },
                 {
-                    "UnaryExpression": {
+                    "UnaryExpr": {
                         "op": {
                             "kind": "-",
                             "length": 1,
@@ -43,12 +43,12 @@
                                 "column_number": 4,
                                 "filename": "tests/main.hlx",
                                 "line_number": 4,
-                                "offset": 21
+                                "offset": 24
                             },
                             "value": "-"
                         },
                         "rhs": {
-                            "LiteralExpression": {
+                            "LiteralExpr": {
                                 "type": 0,
                                 "value": {
                                     "kind": "<int>",
@@ -57,7 +57,7 @@
                                         "column_number": 5,
                                         "filename": "tests/main.hlx",
                                         "line_number": 4,
-                                        "offset": 22
+                                        "offset": 25
                                     },
                                     "value": "5"
                                 }
@@ -66,7 +66,7 @@
                     }
                 },
                 {
-                    "UnaryExpression": {
+                    "UnaryExpr": {
                         "op": {
                             "kind": "!",
                             "length": 1,
@@ -74,12 +74,12 @@
                                 "column_number": 4,
                                 "filename": "tests/main.hlx",
                                 "line_number": 5,
-                                "offset": 28
+                                "offset": 32
                             },
                             "value": "!"
                         },
                         "rhs": {
-                            "LiteralExpression": {
+                            "LiteralExpr": {
                                 "type": 0,
                                 "value": {
                                     "kind": "true",
@@ -88,7 +88,7 @@
                                         "column_number": 5,
                                         "filename": "tests/main.hlx",
                                         "line_number": 5,
-                                        "offset": 32
+                                        "offset": 36
                                     },
                                     "value": "true"
                                 }
@@ -97,7 +97,7 @@
                     }
                 },
                 {
-                    "IdentifierExpression": {
+                    "IdentExpr": {
                         "name": {
                             "kind": "<id>",
                             "length": 1,
@@ -105,14 +105,14 @@
                                 "column_number": 4,
                                 "filename": "tests/main.hlx",
                                 "line_number": 6,
-                                "offset": 38
+                                "offset": 43
                             },
                             "value": "x"
                         }
                     }
                 },
                 {
-                    "IdentifierExpression": {
+                    "IdentExpr": {
                         "name": {
                             "kind": "<id>",
                             "length": 1,
@@ -120,22 +120,22 @@
                                 "column_number": 4,
                                 "filename": "tests/main.hlx",
                                 "line_number": 7,
-                                "offset": 44
+                                "offset": 50
                             },
                             "value": "y"
                         }
                     }
                 },
                 {
-                    "FunctionCallExpression": {
+                    "FunctionCallExpr": {
                         "args": {
-                            "ArgumentListExpression": {
+                            "ArgumentListExpr": {
                                 "args": [
                                     {
-                                        "ArgumentExpression": {
+                                        "ArgumentExpr": {
                                             "type": 0,
                                             "value": {
-                                                "IdentifierExpression": {
+                                                "IdentExpr": {
                                                     "name": {
                                                         "kind": "<id>",
                                                         "length": 1,
@@ -143,7 +143,7 @@
                                                             "column_number": 19,
                                                             "filename": "tests/main.hlx",
                                                             "line_number": 8,
-                                                            "offset": 65
+                                                            "offset": 72
                                                         },
                                                         "value": "x"
                                                     }
@@ -155,9 +155,9 @@
                             }
                         },
                         "path": {
-                            "PathExpression": {
+                            "PathExpr": {
                                 "path": {
-                                    "IdentifierExpression": {
+                                    "IdentExpr": {
                                         "name": {
                                             "kind": "<id>",
                                             "length": 14,
@@ -165,7 +165,7 @@
                                                 "column_number": 4,
                                                 "filename": "tests/main.hlx",
                                                 "line_number": 8,
-                                                "offset": 63
+                                                "offset": 70
                                             },
                                             "value": "arg_parse_test"
                                         }
@@ -177,15 +177,15 @@
                     }
                 },
                 {
-                    "FunctionCallExpression": {
+                    "FunctionCallExpr": {
                         "args": {
-                            "ArgumentListExpression": {
+                            "ArgumentListExpr": {
                                 "args": [
                                     {
-                                        "ArgumentExpression": {
+                                        "ArgumentExpr": {
                                             "type": 0,
                                             "value": {
-                                                "LiteralExpression": {
+                                                "LiteralExpr": {
                                                     "type": 0,
                                                     "value": {
                                                         "kind": "<int>",
@@ -194,7 +194,7 @@
                                                             "column_number": 19,
                                                             "filename": "tests/main.hlx",
                                                             "line_number": 9,
-                                                            "offset": 87
+                                                            "offset": 95
                                                         },
                                                         "value": "1"
                                                     }
@@ -203,10 +203,10 @@
                                         }
                                     },
                                     {
-                                        "ArgumentExpression": {
+                                        "ArgumentExpr": {
                                             "type": 0,
                                             "value": {
-                                                "LiteralExpression": {
+                                                "LiteralExpr": {
                                                     "type": 0,
                                                     "value": {
                                                         "kind": "<int>",
@@ -215,7 +215,7 @@
                                                             "column_number": 22,
                                                             "filename": "tests/main.hlx",
                                                             "line_number": 9,
-                                                            "offset": 90
+                                                            "offset": 98
                                                         },
                                                         "value": "2"
                                                     }
@@ -227,9 +227,9 @@
                             }
                         },
                         "path": {
-                            "PathExpression": {
+                            "PathExpr": {
                                 "path": {
-                                    "IdentifierExpression": {
+                                    "IdentExpr": {
                                         "name": {
                                             "kind": "<id>",
                                             "length": 14,
@@ -237,7 +237,7 @@
                                                 "column_number": 4,
                                                 "filename": "tests/main.hlx",
                                                 "line_number": 9,
-                                                "offset": 85
+                                                "offset": 93
                                             },
                                             "value": "arg_parse_test"
                                         }
@@ -249,17 +249,17 @@
                     }
                 },
                 {
-                    "FunctionCallExpression": {
+                    "FunctionCallExpr": {
                         "args": {
-                            "ArgumentListExpression": {
+                            "ArgumentListExpr": {
                                 "args": [
                                     {
-                                        "ArgumentExpression": {
+                                        "ArgumentExpr": {
                                             "type": 1,
                                             "value": {
-                                                "NamedArgument": {
+                                                "NamedArgumentExpr": {
                                                     "name": {
-                                                        "IdentifierExpression": {
+                                                        "IdentExpr": {
                                                             "name": {
                                                                 "kind": "<id>",
                                                                 "length": 1,
@@ -267,14 +267,14 @@
                                                                     "column_number": 19,
                                                                     "filename": "tests/main.hlx",
                                                                     "line_number": 10,
-                                                                    "offset": 112
+                                                                    "offset": 121
                                                                 },
                                                                 "value": "x"
                                                             }
                                                         }
                                                     },
                                                     "value": {
-                                                        "LiteralExpression": {
+                                                        "LiteralExpr": {
                                                             "type": 0,
                                                             "value": {
                                                                 "kind": "<int>",
@@ -283,7 +283,7 @@
                                                                     "column_number": 23,
                                                                     "filename": "tests/main.hlx",
                                                                     "line_number": 10,
-                                                                    "offset": 117
+                                                                    "offset": 126
                                                                 },
                                                                 "value": "10"
                                                             }
@@ -294,12 +294,12 @@
                                         }
                                     },
                                     {
-                                        "ArgumentExpression": {
+                                        "ArgumentExpr": {
                                             "type": 1,
                                             "value": {
-                                                "NamedArgument": {
+                                                "NamedArgumentExpr": {
                                                     "name": {
-                                                        "IdentifierExpression": {
+                                                        "IdentExpr": {
                                                             "name": {
                                                                 "kind": "<id>",
                                                                 "length": 1,
@@ -307,14 +307,14 @@
                                                                     "column_number": 27,
                                                                     "filename": "tests/main.hlx",
                                                                     "line_number": 10,
-                                                                    "offset": 120
+                                                                    "offset": 129
                                                                 },
                                                                 "value": "y"
                                                             }
                                                         }
                                                     },
                                                     "value": {
-                                                        "LiteralExpression": {
+                                                        "LiteralExpr": {
                                                             "type": 0,
                                                             "value": {
                                                                 "kind": "<int>",
@@ -323,7 +323,7 @@
                                                                     "column_number": 31,
                                                                     "filename": "tests/main.hlx",
                                                                     "line_number": 10,
-                                                                    "offset": 125
+                                                                    "offset": 134
                                                                 },
                                                                 "value": "20"
                                                             }
@@ -337,9 +337,9 @@
                             }
                         },
                         "path": {
-                            "PathExpression": {
+                            "PathExpr": {
                                 "path": {
-                                    "IdentifierExpression": {
+                                    "IdentExpr": {
                                         "name": {
                                             "kind": "<id>",
                                             "length": 14,
@@ -347,7 +347,7 @@
                                                 "column_number": 4,
                                                 "filename": "tests/main.hlx",
                                                 "line_number": 10,
-                                                "offset": 110
+                                                "offset": 119
                                             },
                                             "value": "arg_parse_test"
                                         }
@@ -359,15 +359,15 @@
                     }
                 },
                 {
-                    "FunctionCallExpression": {
+                    "FunctionCallExpr": {
                         "args": {
-                            "ArgumentListExpression": {
+                            "ArgumentListExpr": {
                                 "args": [
                                     {
-                                        "ArgumentExpression": {
+                                        "ArgumentExpr": {
                                             "type": 0,
                                             "value": {
-                                                "LiteralExpression": {
+                                                "LiteralExpr": {
                                                     "type": 0,
                                                     "value": {
                                                         "kind": "<int>",
@@ -376,7 +376,7 @@
                                                             "column_number": 19,
                                                             "filename": "tests/main.hlx",
                                                             "line_number": 11,
-                                                            "offset": 148
+                                                            "offset": 158
                                                         },
                                                         "value": "12"
                                                     }
@@ -385,10 +385,10 @@
                                         }
                                     },
                                     {
-                                        "ArgumentExpression": {
+                                        "ArgumentExpr": {
                                             "type": 0,
                                             "value": {
-                                                "LiteralExpression": {
+                                                "LiteralExpr": {
                                                     "type": 0,
                                                     "value": {
                                                         "kind": "<int>",
@@ -397,7 +397,7 @@
                                                             "column_number": 23,
                                                             "filename": "tests/main.hlx",
                                                             "line_number": 11,
-                                                            "offset": 152
+                                                            "offset": 162
                                                         },
                                                         "value": "34"
                                                     }
@@ -406,12 +406,12 @@
                                         }
                                     },
                                     {
-                                        "ArgumentExpression": {
+                                        "ArgumentExpr": {
                                             "type": 1,
                                             "value": {
-                                                "NamedArgument": {
+                                                "NamedArgumentExpr": {
                                                     "name": {
-                                                        "IdentifierExpression": {
+                                                        "IdentExpr": {
                                                             "name": {
                                                                 "kind": "<id>",
                                                                 "length": 1,
@@ -419,14 +419,14 @@
                                                                     "column_number": 27,
                                                                     "filename": "tests/main.hlx",
                                                                     "line_number": 11,
-                                                                    "offset": 155
+                                                                    "offset": 165
                                                                 },
                                                                 "value": "y"
                                                             }
                                                         }
                                                     },
                                                     "value": {
-                                                        "LiteralExpression": {
+                                                        "LiteralExpr": {
                                                             "type": 0,
                                                             "value": {
                                                                 "kind": "<int>",
@@ -435,7 +435,7 @@
                                                                     "column_number": 31,
                                                                     "filename": "tests/main.hlx",
                                                                     "line_number": 11,
-                                                                    "offset": 160
+                                                                    "offset": 170
                                                                 },
                                                                 "value": "20"
                                                             }
@@ -449,9 +449,9 @@
                             }
                         },
                         "path": {
-                            "PathExpression": {
+                            "PathExpr": {
                                 "path": {
-                                    "IdentifierExpression": {
+                                    "IdentExpr": {
                                         "name": {
                                             "kind": "<id>",
                                             "length": 14,
@@ -459,7 +459,7 @@
                                                 "column_number": 4,
                                                 "filename": "tests/main.hlx",
                                                 "line_number": 11,
-                                                "offset": 145
+                                                "offset": 155
                                             },
                                             "value": "arg_parse_test"
                                         }
@@ -471,20 +471,20 @@
                     }
                 },
                 {
-                    "FunctionCallExpression": {
+                    "FunctionCallExpr": {
                         "args": {
-                            "ArgumentListExpression": {
+                            "ArgumentListExpr": {
                                 "args": [
                                     {
-                                        "ArgumentExpression": {
+                                        "ArgumentExpr": {
                                             "type": 0,
                                             "value": {
-                                                "ObjectInitializerExpression": {
+                                                "ObjInitExpr": {
                                                     "keyword_args": [
                                                         {
-                                                            "NamedArgument": {
+                                                            "NamedArgumentExpr": {
                                                                 "name": {
-                                                                    "IdentifierExpression": {
+                                                                    "IdentExpr": {
                                                                         "name": {
                                                                             "kind": "<id>",
                                                                             "length": 1,
@@ -492,14 +492,14 @@
                                                                                 "column_number": 9,
                                                                                 "filename": "tests/main.hlx",
                                                                                 "line_number": 13,
-                                                                                "offset": 200
+                                                                                "offset": 212
                                                                             },
                                                                             "value": "x"
                                                                         }
                                                                     }
                                                                 },
                                                                 "value": {
-                                                                    "LiteralExpression": {
+                                                                    "LiteralExpr": {
                                                                         "type": 0,
                                                                         "value": {
                                                                             "kind": "<int>",
@@ -508,7 +508,7 @@
                                                                                 "column_number": 13,
                                                                                 "filename": "tests/main.hlx",
                                                                                 "line_number": 13,
-                                                                                "offset": 205
+                                                                                "offset": 217
                                                                             },
                                                                             "value": "10"
                                                                         }
@@ -517,9 +517,9 @@
                                                             }
                                                         },
                                                         {
-                                                            "NamedArgument": {
+                                                            "NamedArgumentExpr": {
                                                                 "name": {
-                                                                    "IdentifierExpression": {
+                                                                    "IdentExpr": {
                                                                         "name": {
                                                                             "kind": "<id>",
                                                                             "length": 1,
@@ -527,14 +527,14 @@
                                                                                 "column_number": 9,
                                                                                 "filename": "tests/main.hlx",
                                                                                 "line_number": 14,
-                                                                                "offset": 216
+                                                                                "offset": 229
                                                                             },
                                                                             "value": "y"
                                                                         }
                                                                     }
                                                                 },
                                                                 "value": {
-                                                                    "LiteralExpression": {
+                                                                    "LiteralExpr": {
                                                                         "type": 0,
                                                                         "value": {
                                                                             "kind": "<int>",
@@ -543,7 +543,7 @@
                                                                                 "column_number": 13,
                                                                                 "filename": "tests/main.hlx",
                                                                                 "line_number": 14,
-                                                                                "offset": 221
+                                                                                "offset": 234
                                                                             },
                                                                             "value": "20"
                                                                         }
@@ -560,9 +560,9 @@
                             }
                         },
                         "path": {
-                            "PathExpression": {
+                            "PathExpr": {
                                 "path": {
-                                    "IdentifierExpression": {
+                                    "IdentExpr": {
                                         "name": {
                                             "kind": "<id>",
                                             "length": 22,
@@ -570,7 +570,7 @@
                                                 "column_number": 4,
                                                 "filename": "tests/main.hlx",
                                                 "line_number": 12,
-                                                "offset": 188
+                                                "offset": 199
                                             },
                                             "value": "implicit_obj_init_test"
                                         }
@@ -582,20 +582,20 @@
                     }
                 },
                 {
-                    "FunctionCallExpression": {
+                    "FunctionCallExpr": {
                         "args": {
-                            "ArgumentListExpression": {
+                            "ArgumentListExpr": {
                                 "args": [
                                     {
-                                        "ArgumentExpression": {
+                                        "ArgumentExpr": {
                                             "type": 0,
                                             "value": {
-                                                "ObjectInitializerExpression": {
+                                                "ObjInitExpr": {
                                                     "keyword_args": [
                                                         {
-                                                            "NamedArgument": {
+                                                            "NamedArgumentExpr": {
                                                                 "name": {
-                                                                    "IdentifierExpression": {
+                                                                    "IdentExpr": {
                                                                         "name": {
                                                                             "kind": "<id>",
                                                                             "length": 1,
@@ -603,14 +603,14 @@
                                                                                 "column_number": 9,
                                                                                 "filename": "tests/main.hlx",
                                                                                 "line_number": 17,
-                                                                                "offset": 266
+                                                                                "offset": 282
                                                                             },
                                                                             "value": "x"
                                                                         }
                                                                     }
                                                                 },
                                                                 "value": {
-                                                                    "LiteralExpression": {
+                                                                    "LiteralExpr": {
                                                                         "type": 0,
                                                                         "value": {
                                                                             "kind": "<int>",
@@ -619,7 +619,7 @@
                                                                                 "column_number": 13,
                                                                                 "filename": "tests/main.hlx",
                                                                                 "line_number": 17,
-                                                                                "offset": 271
+                                                                                "offset": 287
                                                                             },
                                                                             "value": "10"
                                                                         }
@@ -628,9 +628,9 @@
                                                             }
                                                         },
                                                         {
-                                                            "NamedArgument": {
+                                                            "NamedArgumentExpr": {
                                                                 "name": {
-                                                                    "IdentifierExpression": {
+                                                                    "IdentExpr": {
                                                                         "name": {
                                                                             "kind": "<id>",
                                                                             "length": 1,
@@ -638,14 +638,14 @@
                                                                                 "column_number": 9,
                                                                                 "filename": "tests/main.hlx",
                                                                                 "line_number": 18,
-                                                                                "offset": 282
+                                                                                "offset": 299
                                                                             },
                                                                             "value": "y"
                                                                         }
                                                                     }
                                                                 },
                                                                 "value": {
-                                                                    "LiteralExpression": {
+                                                                    "LiteralExpr": {
                                                                         "type": 0,
                                                                         "value": {
                                                                             "kind": "<int>",
@@ -654,7 +654,7 @@
                                                                                 "column_number": 13,
                                                                                 "filename": "tests/main.hlx",
                                                                                 "line_number": 18,
-                                                                                "offset": 287
+                                                                                "offset": 304
                                                                             },
                                                                             "value": "20"
                                                                         }
@@ -671,9 +671,9 @@
                             }
                         },
                         "path": {
-                            "PathExpression": {
+                            "PathExpr": {
                                 "path": {
-                                    "IdentifierExpression": {
+                                    "IdentExpr": {
                                         "name": {
                                             "kind": "<id>",
                                             "length": 22,
@@ -681,7 +681,7 @@
                                                 "column_number": 4,
                                                 "filename": "tests/main.hlx",
                                                 "line_number": 16,
-                                                "offset": 254
+                                                "offset": 269
                                             },
                                             "value": "implicit_obj_init_test"
                                         }
@@ -693,9 +693,9 @@
                     }
                 },
                 {
-                    "BinaryExpression": {
+                    "BinaryExpr": {
                         "lhs": {
-                            "IdentifierExpression": {
+                            "IdentExpr": {
                                 "name": {
                                     "kind": "<id>",
                                     "length": 1,
@@ -703,7 +703,7 @@
                                         "column_number": 4,
                                         "filename": "tests/main.hlx",
                                         "line_number": 21,
-                                        "offset": 300
+                                        "offset": 320
                                     },
                                     "value": "y"
                                 }
@@ -716,12 +716,12 @@
                                 "column_number": 6,
                                 "filename": "tests/main.hlx",
                                 "line_number": 21,
-                                "offset": 302
+                                "offset": 322
                             },
                             "value": "+"
                         },
                         "rhs": {
-                            "LiteralExpression": {
+                            "LiteralExpr": {
                                 "type": 0,
                                 "value": {
                                     "kind": "<int>",
@@ -730,7 +730,7 @@
                                         "column_number": 8,
                                         "filename": "tests/main.hlx",
                                         "line_number": 21,
-                                        "offset": 304
+                                        "offset": 324
                                     },
                                     "value": "1"
                                 }
@@ -739,9 +739,9 @@
                     }
                 },
                 {
-                    "BinaryExpression": {
+                    "BinaryExpr": {
                         "lhs": {
-                            "IdentifierExpression": {
+                            "IdentExpr": {
                                 "name": {
                                     "kind": "<id>",
                                     "length": 1,
@@ -749,7 +749,7 @@
                                         "column_number": 4,
                                         "filename": "tests/main.hlx",
                                         "line_number": 22,
-                                        "offset": 310
+                                        "offset": 331
                                     },
                                     "value": "y"
                                 }
@@ -762,12 +762,12 @@
                                 "column_number": 6,
                                 "filename": "tests/main.hlx",
                                 "line_number": 22,
-                                "offset": 312
+                                "offset": 333
                             },
                             "value": "="
                         },
                         "rhs": {
-                            "LiteralExpression": {
+                            "LiteralExpr": {
                                 "type": 0,
                                 "value": {
                                     "kind": "<int>",
@@ -776,7 +776,7 @@
                                         "column_number": 8,
                                         "filename": "tests/main.hlx",
                                         "line_number": 22,
-                                        "offset": 314
+                                        "offset": 335
                                     },
                                     "value": "1"
                                 }
@@ -785,12 +785,12 @@
                     }
                 },
                 {
-                    "MapLiteralExpression": {
+                    "MapLiteralExpr": {
                         "values": [
                             {
-                                "MapPairExpression": {
+                                "MapPairExpr": {
                                     "key": {
-                                        "LiteralExpression": {
+                                        "LiteralExpr": {
                                             "type": 0,
                                             "value": {
                                                 "kind": "<int>",
@@ -799,14 +799,14 @@
                                                     "column_number": 8,
                                                     "filename": "tests/main.hlx",
                                                     "line_number": 25,
-                                                    "offset": 329
+                                                    "offset": 353
                                                 },
                                                 "value": "2"
                                             }
                                         }
                                     },
                                     "value": {
-                                        "LiteralExpression": {
+                                        "LiteralExpr": {
                                             "type": 0,
                                             "value": {
                                                 "kind": "<int>",
@@ -815,7 +815,7 @@
                                                     "column_number": 11,
                                                     "filename": "tests/main.hlx",
                                                     "line_number": 25,
-                                                    "offset": 332
+                                                    "offset": 356
                                                 },
                                                 "value": "1"
                                             }
@@ -824,9 +824,9 @@
                                 }
                             },
                             {
-                                "MapPairExpression": {
+                                "MapPairExpr": {
                                     "key": {
-                                        "LiteralExpression": {
+                                        "LiteralExpr": {
                                             "type": 0,
                                             "value": {
                                                 "kind": "<int>",
@@ -835,14 +835,14 @@
                                                     "column_number": 8,
                                                     "filename": "tests/main.hlx",
                                                     "line_number": 26,
-                                                    "offset": 342
+                                                    "offset": 367
                                                 },
                                                 "value": "3"
                                             }
                                         }
                                     },
                                     "value": {
-                                        "LiteralExpression": {
+                                        "LiteralExpr": {
                                             "type": 0,
                                             "value": {
                                                 "kind": "<int>",
@@ -851,7 +851,7 @@
                                                     "column_number": 11,
                                                     "filename": "tests/main.hlx",
                                                     "line_number": 26,
-                                                    "offset": 345
+                                                    "offset": 370
                                                 },
                                                 "value": "2"
                                             }
@@ -860,9 +860,9 @@
                                 }
                             },
                             {
-                                "MapPairExpression": {
+                                "MapPairExpr": {
                                     "key": {
-                                        "LiteralExpression": {
+                                        "LiteralExpr": {
                                             "type": 0,
                                             "value": {
                                                 "kind": "<int>",
@@ -871,14 +871,14 @@
                                                     "column_number": 8,
                                                     "filename": "tests/main.hlx",
                                                     "line_number": 27,
-                                                    "offset": 355
+                                                    "offset": 381
                                                 },
                                                 "value": "4"
                                             }
                                         }
                                     },
                                     "value": {
-                                        "LiteralExpression": {
+                                        "LiteralExpr": {
                                             "type": 0,
                                             "value": {
                                                 "kind": "<int>",
@@ -887,7 +887,7 @@
                                                     "column_number": 11,
                                                     "filename": "tests/main.hlx",
                                                     "line_number": 27,
-                                                    "offset": 358
+                                                    "offset": 384
                                                 },
                                                 "value": "3"
                                             }
@@ -899,10 +899,10 @@
                     }
                 },
                 {
-                    "ArrayLiteralExpression": {
+                    "ArrayLiteralExpr": {
                         "values": [
                             {
-                                "LiteralExpression": {
+                                "LiteralExpr": {
                                     "type": 0,
                                     "value": {
                                         "kind": "<int>",
@@ -911,14 +911,14 @@
                                             "column_number": 5,
                                             "filename": "tests/main.hlx",
                                             "line_number": 30,
-                                            "offset": 370
+                                            "offset": 399
                                         },
                                         "value": "1"
                                     }
                                 }
                             },
                             {
-                                "LiteralExpression": {
+                                "LiteralExpr": {
                                     "type": 0,
                                     "value": {
                                         "kind": "<int>",
@@ -927,14 +927,14 @@
                                             "column_number": 8,
                                             "filename": "tests/main.hlx",
                                             "line_number": 30,
-                                            "offset": 373
+                                            "offset": 402
                                         },
                                         "value": "2"
                                     }
                                 }
                             },
                             {
-                                "LiteralExpression": {
+                                "LiteralExpr": {
                                     "type": 0,
                                     "value": {
                                         "kind": "<int>",
@@ -943,14 +943,14 @@
                                             "column_number": 11,
                                             "filename": "tests/main.hlx",
                                             "line_number": 30,
-                                            "offset": 376
+                                            "offset": 405
                                         },
                                         "value": "3"
                                     }
                                 }
                             },
                             {
-                                "LiteralExpression": {
+                                "LiteralExpr": {
                                     "type": 0,
                                     "value": {
                                         "kind": "<int>",
@@ -959,14 +959,14 @@
                                             "column_number": 14,
                                             "filename": "tests/main.hlx",
                                             "line_number": 30,
-                                            "offset": 379
+                                            "offset": 408
                                         },
                                         "value": "4"
                                     }
                                 }
                             },
                             {
-                                "LiteralExpression": {
+                                "LiteralExpr": {
                                     "type": 0,
                                     "value": {
                                         "kind": "<int>",
@@ -975,7 +975,7 @@
                                             "column_number": 17,
                                             "filename": "tests/main.hlx",
                                             "line_number": 30,
-                                            "offset": 382
+                                            "offset": 411
                                         },
                                         "value": "5"
                                     }
@@ -985,9 +985,9 @@
                     }
                 },
                 {
-                    "ScopeAccessExpression": {
+                    "ScopePathExpr": {
                         "lhs": {
-                            "IdentifierExpression": {
+                            "IdentExpr": {
                                 "name": {
                                     "kind": "<id>",
                                     "length": 9,
@@ -995,16 +995,16 @@
                                         "column_number": 4,
                                         "filename": "tests/main.hlx",
                                         "line_number": 31,
-                                        "offset": 397
+                                        "offset": 427
                                     },
                                     "value": "Namespace"
                                 }
                             }
                         },
                         "rhs": {
-                            "ScopeAccessExpression": {
+                            "ScopePathExpr": {
                                 "lhs": {
-                                    "IdentifierExpression": {
+                                    "IdentExpr": {
                                         "name": {
                                             "kind": "<id>",
                                             "length": 5,
@@ -1012,23 +1012,23 @@
                                                 "column_number": 15,
                                                 "filename": "tests/main.hlx",
                                                 "line_number": 31,
-                                                "offset": 404
+                                                "offset": 434
                                             },
                                             "value": "Class"
                                         }
                                     }
                                 },
                                 "rhs": {
-                                    "FunctionCallExpression": {
+                                    "FunctionCallExpr": {
                                         "args": {
-                                            "ArgumentListExpression": {
+                                            "ArgumentListExpr": {
                                                 "args": {}
                                             }
                                         },
                                         "path": {
-                                            "PathExpression": {
+                                            "PathExpr": {
                                                 "path": {
-                                                    "IdentifierExpression": {
+                                                    "IdentExpr": {
                                                         "name": {
                                                             "kind": "<id>",
                                                             "length": 6,
@@ -1036,7 +1036,7 @@
                                                                 "column_number": 22,
                                                                 "filename": "tests/main.hlx",
                                                                 "line_number": 31,
-                                                                "offset": 412
+                                                                "offset": 442
                                                             },
                                                             "value": "Method"
                                                         }
@@ -1052,9 +1052,9 @@
                     }
                 },
                 {
-                    "ScopeAccessExpression": {
+                    "ScopePathExpr": {
                         "lhs": {
-                            "IdentifierExpression": {
+                            "IdentExpr": {
                                 "name": {
                                     "kind": "<id>",
                                     "length": 3,
@@ -1062,16 +1062,16 @@
                                         "column_number": 4,
                                         "filename": "tests/main.hlx",
                                         "line_number": 32,
-                                        "offset": 422
+                                        "offset": 453
                                     },
                                     "value": "Foo"
                                 }
                             }
                         },
                         "rhs": {
-                            "ScopeAccessExpression": {
+                            "ScopePathExpr": {
                                 "lhs": {
-                                    "IdentifierExpression": {
+                                    "IdentExpr": {
                                         "name": {
                                             "kind": "<id>",
                                             "length": 3,
@@ -1079,14 +1079,14 @@
                                                 "column_number": 9,
                                                 "filename": "tests/main.hlx",
                                                 "line_number": 32,
-                                                "offset": 427
+                                                "offset": 458
                                             },
                                             "value": "Bar"
                                         }
                                     }
                                 },
                                 "rhs": {
-                                    "IdentifierExpression": {
+                                    "IdentExpr": {
                                         "name": {
                                             "kind": "<id>",
                                             "length": 5,
@@ -1094,7 +1094,7 @@
                                                 "column_number": 14,
                                                 "filename": "tests/main.hlx",
                                                 "line_number": 32,
-                                                "offset": 434
+                                                "offset": 465
                                             },
                                             "value": "Class"
                                         }
@@ -1105,9 +1105,9 @@
                     }
                 },
                 {
-                    "DotAccessExpression": {
+                    "DotPathExpr": {
                         "lhs": {
-                            "IdentifierExpression": {
+                            "IdentExpr": {
                                 "name": {
                                     "kind": "<id>",
                                     "length": 6,
@@ -1115,14 +1115,14 @@
                                         "column_number": 4,
                                         "filename": "tests/main.hlx",
                                         "line_number": 33,
-                                        "offset": 445
+                                        "offset": 477
                                     },
                                     "value": "object"
                                 }
                             }
                         },
                         "rhs": {
-                            "IdentifierExpression": {
+                            "IdentExpr": {
                                 "name": {
                                     "kind": "<id>",
                                     "length": 8,
@@ -1130,7 +1130,7 @@
                                         "column_number": 11,
                                         "filename": "tests/main.hlx",
                                         "line_number": 33,
-                                        "offset": 454
+                                        "offset": 486
                                     },
                                     "value": "property"
                                 }
@@ -1139,9 +1139,9 @@
                     }
                 },
                 {
-                    "DotAccessExpression": {
+                    "DotPathExpr": {
                         "lhs": {
-                            "IdentifierExpression": {
+                            "IdentExpr": {
                                 "name": {
                                     "kind": "<id>",
                                     "length": 8,
@@ -1149,14 +1149,14 @@
                                         "column_number": 4,
                                         "filename": "tests/main.hlx",
                                         "line_number": 34,
-                                        "offset": 467
+                                        "offset": 500
                                     },
                                     "value": "instance"
                                 }
                             }
                         },
                         "rhs": {
-                            "IdentifierExpression": {
+                            "IdentExpr": {
                                 "name": {
                                     "kind": "<id>",
                                     "length": 6,
@@ -1164,7 +1164,7 @@
                                         "column_number": 13,
                                         "filename": "tests/main.hlx",
                                         "line_number": 34,
-                                        "offset": 474
+                                        "offset": 507
                                     },
                                     "value": "method"
                                 }
@@ -1173,9 +1173,9 @@
                     }
                 },
                 {
-                    "TernaryExpression": {
+                    "TernaryExpr": {
                         "condition": {
-                            "IdentifierExpression": {
+                            "IdentExpr": {
                                 "name": {
                                     "kind": "<id>",
                                     "length": 1,
@@ -1183,14 +1183,14 @@
                                         "column_number": 4,
                                         "filename": "tests/main.hlx",
                                         "line_number": 36,
-                                        "offset": 480
+                                        "offset": 515
                                     },
                                     "value": "x"
                                 }
                             }
                         },
                         "if_false": {
-                            "LiteralExpression": {
+                            "LiteralExpr": {
                                 "type": 0,
                                 "value": {
                                     "kind": "<int>",
@@ -1199,14 +1199,14 @@
                                         "column_number": 12,
                                         "filename": "tests/main.hlx",
                                         "line_number": 36,
-                                        "offset": 488
+                                        "offset": 523
                                     },
                                     "value": "2"
                                 }
                             }
                         },
                         "if_true": {
-                            "LiteralExpression": {
+                            "LiteralExpr": {
                                 "type": 0,
                                 "value": {
                                     "kind": "<int>",
@@ -1215,7 +1215,7 @@
                                         "column_number": 8,
                                         "filename": "tests/main.hlx",
                                         "line_number": 36,
-                                        "offset": 484
+                                        "offset": 519
                                     },
                                     "value": "1"
                                 }
@@ -1224,9 +1224,9 @@
                     }
                 },
                 {
-                    "TernaryExpression": {
+                    "TernaryExpr": {
                         "condition": {
-                            "IdentifierExpression": {
+                            "IdentExpr": {
                                 "name": {
                                     "kind": "<id>",
                                     "length": 1,
@@ -1234,14 +1234,14 @@
                                         "column_number": 9,
                                         "filename": "tests/main.hlx",
                                         "line_number": 37,
-                                        "offset": 499
+                                        "offset": 535
                                     },
                                     "value": "x"
                                 }
                             }
                         },
                         "if_false": {
-                            "LiteralExpression": {
+                            "LiteralExpr": {
                                 "type": 0,
                                 "value": {
                                     "kind": "<int>",
@@ -1250,14 +1250,14 @@
                                         "column_number": 16,
                                         "filename": "tests/main.hlx",
                                         "line_number": 37,
-                                        "offset": 506
+                                        "offset": 542
                                     },
                                     "value": "2"
                                 }
                             }
                         },
                         "if_true": {
-                            "LiteralExpression": {
+                            "LiteralExpr": {
                                 "type": 0,
                                 "value": {
                                     "kind": "<int>",
@@ -1266,7 +1266,7 @@
                                         "column_number": 4,
                                         "filename": "tests/main.hlx",
                                         "line_number": 37,
-                                        "offset": 494
+                                        "offset": 530
                                     },
                                     "value": "1"
                                 }
@@ -1275,9 +1275,9 @@
                     }
                 },
                 {
-                    "ArrayAccessExpression": {
+                    "ArrayAccessExpr": {
                         "array": {
-                            "IdentifierExpression": {
+                            "IdentExpr": {
                                 "name": {
                                     "kind": "<id>",
                                     "length": 5,
@@ -1285,14 +1285,14 @@
                                         "column_number": 4,
                                         "filename": "tests/main.hlx",
                                         "line_number": 39,
-                                        "offset": 516
+                                        "offset": 554
                                     },
                                     "value": "array"
                                 }
                             }
                         },
                         "index": {
-                            "LiteralExpression": {
+                            "LiteralExpr": {
                                 "type": 0,
                                 "value": {
                                     "kind": "<int>",
@@ -1301,7 +1301,7 @@
                                         "column_number": 10,
                                         "filename": "tests/main.hlx",
                                         "line_number": 39,
-                                        "offset": 518
+                                        "offset": 556
                                     },
                                     "value": "0"
                                 }
@@ -1310,11 +1310,11 @@
                     }
                 },
                 {
-                    "ArrayAccessExpression": {
+                    "ArrayAccessExpr": {
                         "array": {
-                            "ArrayAccessExpression": {
+                            "ArrayAccessExpr": {
                                 "array": {
-                                    "IdentifierExpression": {
+                                    "IdentExpr": {
                                         "name": {
                                             "kind": "<id>",
                                             "length": 6,
@@ -1322,14 +1322,14 @@
                                                 "column_number": 4,
                                                 "filename": "tests/main.hlx",
                                                 "line_number": 40,
-                                                "offset": 530
+                                                "offset": 569
                                             },
                                             "value": "matrix"
                                         }
                                     }
                                 },
                                 "index": {
-                                    "LiteralExpression": {
+                                    "LiteralExpr": {
                                         "type": 0,
                                         "value": {
                                             "kind": "<int>",
@@ -1338,7 +1338,7 @@
                                                 "column_number": 11,
                                                 "filename": "tests/main.hlx",
                                                 "line_number": 40,
-                                                "offset": 532
+                                                "offset": 571
                                             },
                                             "value": "1"
                                         }
@@ -1347,7 +1347,7 @@
                             }
                         },
                         "index": {
-                            "LiteralExpression": {
+                            "LiteralExpr": {
                                 "type": 0,
                                 "value": {
                                     "kind": "<int>",
@@ -1356,7 +1356,7 @@
                                         "column_number": 14,
                                         "filename": "tests/main.hlx",
                                         "line_number": 40,
-                                        "offset": 535
+                                        "offset": 574
                                     },
                                     "value": "2"
                                 }
@@ -1365,10 +1365,10 @@
                     }
                 },
                 {
-                    "TupleLiteralExpression": {
+                    "TupleLiteralExpr": {
                         "values": [
                             {
-                                "LiteralExpression": {
+                                "LiteralExpr": {
                                     "type": 0,
                                     "value": {
                                         "kind": "<int>",
@@ -1377,14 +1377,14 @@
                                             "column_number": 5,
                                             "filename": "tests/main.hlx",
                                             "line_number": 41,
-                                            "offset": 543
+                                            "offset": 583
                                         },
                                         "value": "1"
                                     }
                                 }
                             },
                             {
-                                "LiteralExpression": {
+                                "LiteralExpr": {
                                     "type": 0,
                                     "value": {
                                         "kind": "<int>",
@@ -1393,14 +1393,14 @@
                                             "column_number": 8,
                                             "filename": "tests/main.hlx",
                                             "line_number": 41,
-                                            "offset": 546
+                                            "offset": 586
                                         },
                                         "value": "2"
                                     }
                                 }
                             },
                             {
-                                "LiteralExpression": {
+                                "LiteralExpr": {
                                     "type": 0,
                                     "value": {
                                         "kind": "<int>",
@@ -1409,14 +1409,14 @@
                                             "column_number": 11,
                                             "filename": "tests/main.hlx",
                                             "line_number": 41,
-                                            "offset": 549
+                                            "offset": 589
                                         },
                                         "value": "3"
                                     }
                                 }
                             },
                             {
-                                "LiteralExpression": {
+                                "LiteralExpr": {
                                     "type": 0,
                                     "value": {
                                         "kind": "<int>",
@@ -1425,7 +1425,7 @@
                                             "column_number": 14,
                                             "filename": "tests/main.hlx",
                                             "line_number": 41,
-                                            "offset": 552
+                                            "offset": 592
                                         },
                                         "value": "4"
                                     }
@@ -1435,10 +1435,10 @@
                     }
                 },
                 {
-                    "TupleLiteralExpression": {
+                    "TupleLiteralExpr": {
                         "values": [
                             {
-                                "LiteralExpression": {
+                                "LiteralExpr": {
                                     "type": 0,
                                     "value": {
                                         "kind": "<int>",
@@ -1447,7 +1447,7 @@
                                             "column_number": 5,
                                             "filename": "tests/main.hlx",
                                             "line_number": 42,
-                                            "offset": 560
+                                            "offset": 601
                                         },
                                         "value": "1"
                                     }
@@ -1457,13 +1457,13 @@
                     }
                 },
                 {
-                    "BinaryExpression": {
+                    "BinaryExpr": {
                         "lhs": {
-                            "ParenthesizedExpression": {
+                            "ParenthesizedExpr": {
                                 "value": {
-                                    "BinaryExpression": {
+                                    "BinaryExpr": {
                                         "lhs": {
-                                            "IdentifierExpression": {
+                                            "IdentExpr": {
                                                 "name": {
                                                     "kind": "<id>",
                                                     "length": 1,
@@ -1471,7 +1471,7 @@
                                                         "column_number": 5,
                                                         "filename": "tests/main.hlx",
                                                         "line_number": 43,
-                                                        "offset": 570
+                                                        "offset": 612
                                                     },
                                                     "value": "x"
                                                 }
@@ -1484,12 +1484,12 @@
                                                 "column_number": 7,
                                                 "filename": "tests/main.hlx",
                                                 "line_number": 43,
-                                                "offset": 572
+                                                "offset": 614
                                             },
                                             "value": "-"
                                         },
                                         "rhs": {
-                                            "IdentifierExpression": {
+                                            "IdentExpr": {
                                                 "name": {
                                                     "kind": "<id>",
                                                     "length": 1,
@@ -1497,7 +1497,7 @@
                                                         "column_number": 9,
                                                         "filename": "tests/main.hlx",
                                                         "line_number": 43,
-                                                        "offset": 574
+                                                        "offset": 616
                                                     },
                                                     "value": "y"
                                                 }
@@ -1514,12 +1514,12 @@
                                 "column_number": 12,
                                 "filename": "tests/main.hlx",
                                 "line_number": 43,
-                                "offset": 577
+                                "offset": 619
                             },
                             "value": "*"
                         },
                         "rhs": {
-                            "LiteralExpression": {
+                            "LiteralExpr": {
                                 "type": 0,
                                 "value": {
                                     "kind": "<int>",
@@ -1528,7 +1528,7 @@
                                         "column_number": 14,
                                         "filename": "tests/main.hlx",
                                         "line_number": 43,
-                                        "offset": 579
+                                        "offset": 621
                                     },
                                     "value": "2"
                                 }
@@ -1537,9 +1537,9 @@
                     }
                 },
                 {
-                    "BinaryExpression": {
+                    "BinaryExpr": {
                         "lhs": {
-                            "LiteralExpression": {
+                            "LiteralExpr": {
                                 "type": 0,
                                 "value": {
                                     "kind": "<int>",
@@ -1548,7 +1548,7 @@
                                         "column_number": 4,
                                         "filename": "tests/main.hlx",
                                         "line_number": 44,
-                                        "offset": 585
+                                        "offset": 628
                                     },
                                     "value": "7"
                                 }
@@ -1561,14 +1561,14 @@
                                 "column_number": 6,
                                 "filename": "tests/main.hlx",
                                 "line_number": 44,
-                                "offset": 587
+                                "offset": 630
                             },
                             "value": "-"
                         },
                         "rhs": {
-                            "BinaryExpression": {
+                            "BinaryExpr": {
                                 "lhs": {
-                                    "LiteralExpression": {
+                                    "LiteralExpr": {
                                         "type": 0,
                                         "value": {
                                             "kind": "<int>",
@@ -1577,7 +1577,7 @@
                                                 "column_number": 8,
                                                 "filename": "tests/main.hlx",
                                                 "line_number": 44,
-                                                "offset": 589
+                                                "offset": 632
                                             },
                                             "value": "1"
                                         }
@@ -1590,12 +1590,12 @@
                                         "column_number": 10,
                                         "filename": "tests/main.hlx",
                                         "line_number": 44,
-                                        "offset": 591
+                                        "offset": 634
                                     },
                                     "value": "*"
                                 },
                                 "rhs": {
-                                    "LiteralExpression": {
+                                    "LiteralExpr": {
                                         "type": 0,
                                         "value": {
                                             "kind": "<int>",
@@ -1604,7 +1604,7 @@
                                                 "column_number": 12,
                                                 "filename": "tests/main.hlx",
                                                 "line_number": 44,
-                                                "offset": 593
+                                                "offset": 636
                                             },
                                             "value": "4"
                                         }
@@ -1615,9 +1615,9 @@
                     }
                 },
                 {
-                    "ScopeAccessExpression": {
+                    "ScopePathExpr": {
                         "lhs": {
-                            "IdentifierExpression": {
+                            "IdentExpr": {
                                 "name": {
                                     "kind": "<id>",
                                     "length": 9,
@@ -1625,16 +1625,16 @@
                                         "column_number": 4,
                                         "filename": "tests/main.hlx",
                                         "line_number": 45,
-                                        "offset": 607
+                                        "offset": 651
                                     },
                                     "value": "Namespace"
                                 }
                             }
                         },
                         "rhs": {
-                            "ScopeAccessExpression": {
+                            "ScopePathExpr": {
                                 "lhs": {
-                                    "IdentifierExpression": {
+                                    "IdentExpr": {
                                         "name": {
                                             "kind": "<id>",
                                             "length": 5,
@@ -1642,25 +1642,25 @@
                                                 "column_number": 15,
                                                 "filename": "tests/main.hlx",
                                                 "line_number": 45,
-                                                "offset": 614
+                                                "offset": 658
                                             },
                                             "value": "Class"
                                         }
                                     }
                                 },
                                 "rhs": {
-                                    "DotAccessExpression": {
+                                    "DotPathExpr": {
                                         "lhs": {
-                                            "FunctionCallExpression": {
+                                            "FunctionCallExpr": {
                                                 "args": {
-                                                    "ArgumentListExpression": {
+                                                    "ArgumentListExpr": {
                                                         "args": {}
                                                     }
                                                 },
                                                 "path": {
-                                                    "PathExpression": {
+                                                    "PathExpr": {
                                                         "path": {
-                                                            "IdentifierExpression": {
+                                                            "IdentExpr": {
                                                                 "name": {
                                                                     "kind": "<id>",
                                                                     "length": 6,
@@ -1668,7 +1668,7 @@
                                                                         "column_number": 22,
                                                                         "filename": "tests/main.hlx",
                                                                         "line_number": 45,
-                                                                        "offset": 622
+                                                                        "offset": 666
                                                                     },
                                                                     "value": "method"
                                                                 }
@@ -1680,18 +1680,18 @@
                                             }
                                         },
                                         "rhs": {
-                                            "DotAccessExpression": {
+                                            "DotPathExpr": {
                                                 "lhs": {
-                                                    "FunctionCallExpression": {
+                                                    "FunctionCallExpr": {
                                                         "args": {
-                                                            "ArgumentListExpression": {
+                                                            "ArgumentListExpr": {
                                                                 "args": {}
                                                             }
                                                         },
                                                         "path": {
-                                                            "PathExpression": {
+                                                            "PathExpr": {
                                                                 "path": {
-                                                                    "IdentifierExpression": {
+                                                                    "IdentExpr": {
                                                                         "name": {
                                                                             "kind": "<id>",
                                                                             "length": 5,
@@ -1699,7 +1699,7 @@
                                                                                 "column_number": 31,
                                                                                 "filename": "tests/main.hlx",
                                                                                 "line_number": 45,
-                                                                                "offset": 630
+                                                                                "offset": 674
                                                                             },
                                                                             "value": "chain"
                                                                         }
@@ -1711,7 +1711,7 @@
                                                     }
                                                 },
                                                 "rhs": {
-                                                    "IdentifierExpression": {
+                                                    "IdentExpr": {
                                                         "name": {
                                                             "kind": "<id>",
                                                             "length": 8,
@@ -1719,7 +1719,7 @@
                                                                 "column_number": 39,
                                                                 "filename": "tests/main.hlx",
                                                                 "line_number": 45,
-                                                                "offset": 641
+                                                                "offset": 685
                                                             },
                                                             "value": "property"
                                                         }
@@ -1734,9 +1734,9 @@
                     }
                 },
                 {
-                    "ScopeAccessExpression": {
+                    "ScopePathExpr": {
                         "lhs": {
-                            "IdentifierExpression": {
+                            "IdentExpr": {
                                 "name": {
                                     "kind": "<id>",
                                     "length": 9,
@@ -1744,16 +1744,16 @@
                                         "column_number": 4,
                                         "filename": "tests/main.hlx",
                                         "line_number": 46,
-                                        "offset": 655
+                                        "offset": 700
                                     },
                                     "value": "Namespace"
                                 }
                             }
                         },
                         "rhs": {
-                            "ScopeAccessExpression": {
+                            "ScopePathExpr": {
                                 "lhs": {
-                                    "IdentifierExpression": {
+                                    "IdentExpr": {
                                         "name": {
                                             "kind": "<id>",
                                             "length": 5,
@@ -1761,25 +1761,25 @@
                                                 "column_number": 15,
                                                 "filename": "tests/main.hlx",
                                                 "line_number": 46,
-                                                "offset": 662
+                                                "offset": 707
                                             },
                                             "value": "Class"
                                         }
                                     }
                                 },
                                 "rhs": {
-                                    "DotAccessExpression": {
+                                    "DotPathExpr": {
                                         "lhs": {
-                                            "FunctionCallExpression": {
+                                            "FunctionCallExpr": {
                                                 "args": {
-                                                    "ArgumentListExpression": {
+                                                    "ArgumentListExpr": {
                                                         "args": {}
                                                     }
                                                 },
                                                 "path": {
-                                                    "PathExpression": {
+                                                    "PathExpr": {
                                                         "path": {
-                                                            "IdentifierExpression": {
+                                                            "IdentExpr": {
                                                                 "name": {
                                                                     "kind": "<id>",
                                                                     "length": 6,
@@ -1787,7 +1787,7 @@
                                                                         "column_number": 22,
                                                                         "filename": "tests/main.hlx",
                                                                         "line_number": 46,
-                                                                        "offset": 670
+                                                                        "offset": 715
                                                                     },
                                                                     "value": "method"
                                                                 }
@@ -1799,18 +1799,18 @@
                                             }
                                         },
                                         "rhs": {
-                                            "DotAccessExpression": {
+                                            "DotPathExpr": {
                                                 "lhs": {
-                                                    "FunctionCallExpression": {
+                                                    "FunctionCallExpr": {
                                                         "args": {
-                                                            "ArgumentListExpression": {
+                                                            "ArgumentListExpr": {
                                                                 "args": {}
                                                             }
                                                         },
                                                         "path": {
-                                                            "PathExpression": {
+                                                            "PathExpr": {
                                                                 "path": {
-                                                                    "IdentifierExpression": {
+                                                                    "IdentExpr": {
                                                                         "name": {
                                                                             "kind": "<id>",
                                                                             "length": 5,
@@ -1818,7 +1818,7 @@
                                                                                 "column_number": 31,
                                                                                 "filename": "tests/main.hlx",
                                                                                 "line_number": 46,
-                                                                                "offset": 678
+                                                                                "offset": 723
                                                                             },
                                                                             "value": "chain"
                                                                         }
@@ -1830,9 +1830,9 @@
                                                     }
                                                 },
                                                 "rhs": {
-                                                    "ArrayAccessExpression": {
+                                                    "ArrayAccessExpr": {
                                                         "array": {
-                                                            "IdentifierExpression": {
+                                                            "IdentExpr": {
                                                                 "name": {
                                                                     "kind": "<id>",
                                                                     "length": 8,
@@ -1840,14 +1840,14 @@
                                                                         "column_number": 39,
                                                                         "filename": "tests/main.hlx",
                                                                         "line_number": 46,
-                                                                        "offset": 689
+                                                                        "offset": 734
                                                                     },
                                                                     "value": "property"
                                                                 }
                                                             }
                                                         },
                                                         "index": {
-                                                            "LiteralExpression": {
+                                                            "LiteralExpr": {
                                                                 "type": 0,
                                                                 "value": {
                                                                     "kind": "<int>",
@@ -1856,7 +1856,7 @@
                                                                         "column_number": 48,
                                                                         "filename": "tests/main.hlx",
                                                                         "line_number": 46,
-                                                                        "offset": 691
+                                                                        "offset": 736
                                                                     },
                                                                     "value": "0"
                                                                 }
@@ -1873,9 +1873,9 @@
                     }
                 },
                 {
-                    "CastExpression": {
+                    "CastExpr": {
                         "type": {
-                            "IdentifierExpression": {
+                            "IdentExpr": {
                                 "name": {
                                     "kind": "int",
                                     "length": 3,
@@ -1883,14 +1883,14 @@
                                         "column_number": 9,
                                         "filename": "tests/main.hlx",
                                         "line_number": 47,
-                                        "offset": 705
+                                        "offset": 751
                                     },
                                     "value": "int"
                                 }
                             }
                         },
                         "value": {
-                            "IdentifierExpression": {
+                            "IdentExpr": {
                                 "name": {
                                     "kind": "<id>",
                                     "length": 1,
@@ -1898,7 +1898,7 @@
                                         "column_number": 4,
                                         "filename": "tests/main.hlx",
                                         "line_number": 47,
-                                        "offset": 698
+                                        "offset": 744
                                     },
                                     "value": "x"
                                 }
@@ -1907,9 +1907,9 @@
                     }
                 },
                 {
-                    "CastExpression": {
+                    "CastExpr": {
                         "type": {
-                            "UnaryExpression": {
+                            "UnaryExpr": {
                                 "op": {
                                     "kind": "*",
                                     "length": 1,
@@ -1917,12 +1917,12 @@
                                         "column_number": 9,
                                         "filename": "tests/main.hlx",
                                         "line_number": 48,
-                                        "offset": 716
+                                        "offset": 763
                                     },
                                     "value": "*"
                                 },
                                 "rhs": {
-                                    "IdentifierExpression": {
+                                    "IdentExpr": {
                                         "name": {
                                             "kind": "float",
                                             "length": 5,
@@ -1930,7 +1930,7 @@
                                                 "column_number": 10,
                                                 "filename": "tests/main.hlx",
                                                 "line_number": 48,
-                                                "offset": 721
+                                                "offset": 768
                                             },
                                             "value": "float"
                                         }
@@ -1939,7 +1939,7 @@
                             }
                         },
                         "value": {
-                            "IdentifierExpression": {
+                            "IdentExpr": {
                                 "name": {
                                     "kind": "<id>",
                                     "length": 1,
@@ -1947,7 +1947,7 @@
                                         "column_number": 4,
                                         "filename": "tests/main.hlx",
                                         "line_number": 48,
-                                        "offset": 711
+                                        "offset": 758
                                     },
                                     "value": "y"
                                 }

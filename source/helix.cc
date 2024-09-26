@@ -13,6 +13,8 @@
 
 // if DEBUG and is windows
 #include "parser/ast/include/core/AST_nodes.hh"
+#include "parser/ast/include/types/AST_jsonify_visitor.hh"
+#include "parser/ast/include/types/AST_types.hh"
 #define _SILENCE_CXX23_ALIGNED_UNION_DEPRECATION_WARNING
 #define _SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING
 #define _SILENCE_ALL_CXX17_DEPRECATION_WARNINGS
@@ -68,17 +70,19 @@ int compile(int argc, char **argv) {
 
     if (parsed_args.emit_ast) {
         // generate ast from the given tokens : stage 2
-        auto expr_ast = parser::ast::node::Expression(&tokens);
-        auto ast      = expr_ast.parse();
+        auto iter = tokens.begin();
+        auto ast  = parser::ast::node::Expression(iter);
+        auto expr = ast.parse();
 
-        parser::ast::visitor::Jsonify jsonify_visitor;
+        parser::ast::visitor::Jsonify json_visitor;
 
-        if (ast.has_value()) {
-            ast.value()->accept(jsonify_visitor);
-            print(jsonify_visitor.json);
+        if (expr.has_value()) {
+            expr.value()->accept(json_visitor);
+
+            print(json_visitor.json);
         } else {
-            ast.error().panic();
-            print(ast.error().what());
+            expr.error().panic();
+            print(expr.error().what());
         }
     }
 

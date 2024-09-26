@@ -24,6 +24,7 @@
 #include "token/enums/punctuation.def"
 #include "token/types/mapping.hh"
 
+
 #define MAKE_TOKEN(name, string) name,
 #define MAKE_TOKEN_PAIR(name, string) std::pair{name, string},
 #define MAKE_TOKEN_CLASS(name, string)                            \
@@ -61,50 +62,50 @@
     TOKENS(MAKE_TOKEN_CLASS)                                                       \
     }
 
-#define GENERATE_RESERVED_ENUM_AND_MAPPING()                                                      \
-                                                                                                  \
-    enum reserved { RESERVED(MAKE_TOKEN) };                                                       \
-                                                                                                  \
+#define GENERATE_RESERVED_ENUM_AND_MAPPING()                                                  \
+                                                                                              \
+    enum reserved { RESERVED(MAKE_TOKEN) };                                                   \
+                                                                                              \
     constexpr token::Mapping<reserved, RESERVED_COUNT> reserved{{RESERVED(MAKE_TOKEN_PAIR)}}; \
-                                                                                                  \
-    namespace classes {                                                                           \
-        RESERVED(MAKE_TOKEN_CLASS)                                                                \
+                                                                                              \
+    namespace classes {                                                                       \
+    RESERVED(MAKE_TOKEN_CLASS)                                                                \
     }
 
 namespace abi {
-    GENERATE_RESERVED_ENUM_AND_MAPPING()
+GENERATE_RESERVED_ENUM_AND_MAPPING()
 
-    #undef GENERATE_RESERVED_ENUM_AND_MAPPING
+#undef GENERATE_RESERVED_ENUM_AND_MAPPING
 
-    #undef RESERVED_ABI_COUNT
+#undef RESERVED_ABI_COUNT
 
-    #undef RESERVED_ABI
+#undef RESERVED_ABI
 }  // namespace abi
 
 namespace token {
-    GENERATE_TOKENS_ENUM_AND_MAPPING()  // generate enum and maps for all tokens
+GENERATE_TOKENS_ENUM_AND_MAPPING()  // generate enum and maps for all tokens
 
-    // undefine the macros to prevent global namespace pollution
-    #undef MAKE_TOKEN
-    #undef MAKE_TOKEN_PAIR
-    #undef GENERATE_TOKENS_ENUM_AND_MAPPING
+// undefine the macros to prevent global namespace pollution
+#undef MAKE_TOKEN
+#undef MAKE_TOKEN_PAIR
+#undef GENERATE_TOKENS_ENUM_AND_MAPPING
 
-    #undef KEYWORD_TOKENS_COUNT
-    #undef DELIMITER_TOKENS_COUNT
-    #undef LITERAL_TOKENS_COUNT
-    #undef OPERATOR_TOKENS_COUNT
-    #undef OTHER_TOKENS_COUNT
-    #undef PRIMITIVE_TOKENS_COUNT
-    #undef PUNCTUATION_TOKENS_COUNT
+#undef KEYWORD_TOKENS_COUNT
+#undef DELIMITER_TOKENS_COUNT
+#undef LITERAL_TOKENS_COUNT
+#undef OPERATOR_TOKENS_COUNT
+#undef OTHER_TOKENS_COUNT
+#undef PRIMITIVE_TOKENS_COUNT
+#undef PUNCTUATION_TOKENS_COUNT
 
-    #undef TOKENS
-    #undef KEYWORD_TOKENS
-    #undef DELIMITER_TOKENS
-    #undef LITERAL_TOKENS
-    #undef OPERATOR_TOKENS
-    #undef OTHER_TOKENS
-    #undef PRIMITIVE_TOKENS
-    #undef PUNCTUATION_TOKENS
+#undef TOKENS
+#undef KEYWORD_TOKENS
+#undef DELIMITER_TOKENS
+#undef LITERAL_TOKENS
+#undef OPERATOR_TOKENS
+#undef OTHER_TOKENS
+#undef PRIMITIVE_TOKENS
+#undef PUNCTUATION_TOKENS
 }  // namespace token
 
 #endif  // __TOKENS_HH__

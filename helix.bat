@@ -22,6 +22,6 @@ if "%1"=="" goto endloop
 
 :endloop
 rem Now run the binary with the collected arguments, without passing '--'
-build\debug\x64-msvc-windows\bin\helix %ARGS% > tests\ast_test.json
+build\debug\x64-msvc-windows\bin\helix %ARGS%
 
 endlocal
