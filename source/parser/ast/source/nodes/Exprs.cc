@@ -34,7 +34,7 @@
 ///                                                                                              ///
 ///  @code                                                                                       ///
 ///  Expression expr(tokens);                                                                    ///
-///  ParseResult<BinaryExpr> node = expr.parse<BinaryExpr>();                        ///
+///  ParseResult<BinaryExpr> node = expr.parse<BinaryExpr>();                                    ///
 ///  @endcode                                                                                    ///
 ///                                                                                              ///
 /// The parser is implemented using the following grammar:                                       ///
@@ -44,43 +44,47 @@
 /// [x] * Operator * O                                                                           ///
 /// [x] * Token    * T                                                                           ///
 ///                                                                                              ///
-///                             /* helper nodes (not supposed to be explicitly used) */          ///
-/// [x] * ArgumentListExpr * AL -> ( AE? ( ',' AE )* )                                     ///
-/// [x] * NamedArgumentExpr        * KA -> '.' ID '=' E /// [x] * ArgumentExpr     * AE -> E | ID
-/// '=' E                                            /// [x] * MapPairExpr      * MP -> E ':' E ///
+///                          * helper nodes (not supposed to be explicitly used) */              ///
+/// [x] * ArgumentListExpr   * AL -> ( AE? ( ',' AE )* )                                         ///
+/// [x] * NamedArgumentExpr  * KA -> '.' ID '=' E                                                ///
+/// [x] * ArgumentExpr       * AE -> E | ID '=' E                                                ///
+/// [x] * MapPairExpr        * MP -> E ':' E                                                     ///
 ///                                                                                              ///
-///                       /* primary nodes */                                                    ///
-/// [x] * UnaryExpr  * UE  -> O    PE                                                      ///
-/// [x] * BinaryExpr * BE  -> UE   BE'                                                     ///
-///                          BE' -> O UE BE' | ϵ                                                 ///
+///                   /* primary nodes */                                                        ///
+/// [x] * UnaryExpr    * UE  -> O    PE                                                          ///
+/// [x] * BinaryExpr   * BE  -> UE   BE'                                                         ///
+///                      BE' -> O UE BE' | ϵ                                                     ///
 ///                                                                                              ///
-///                           /* core single associative */                                      ///
-/// [x] * IdentExpr * ID -> T                                                         ///
-/// [x] * LiteralExpr    * LE -> L                                                         ///
+///                     /* core single associative */                                            ///
+/// [x] * IdentExpr      * ID -> T                                                               ///
+/// [x] * LiteralExpr    * LE -> L                                                               ///
 ///                                                                                              ///
-///                             /* multi-associative */                                          ///
-/// [x] * ScopePathExpr  * SA -> ID '::' ID                                              ///
-/// [x] * DotPathExpr    * DE -> PE '.'  ID                                              ///
-/// [x] * PathExpr         * PA -> SA | DE                                                 ///
+///                       /* multi-associative */                                                ///
+/// [x] * ScopePathExpr    * SA -> ID '::' ID                                                    ///
+/// [x] * DotPathExpr      * DE -> PE '.'  ID                                                    ///
+/// [x] * PathExpr         * PA -> SA | DE                                                       ///
 ///                                                                                              ///
-/// [x] * TernaryExpr      * TE -> PE '?' E ':' E | PE 'if' E 'else' E                     ///
-/// [x] * InstOfExpr   * IE -> PE ( 'has' | 'derives' ) ID                             ///
-/// [x] * CastExpr         * CE -> PE 'as' E                                               ///
+/// [x] * TernaryExpr      * TE -> PE '?' E ':' E | PE 'if' E 'else' E                           ///
+/// [x] * InstOfExpr       * IE -> PE ( 'has' | 'derives' ) ID                                   ///
+/// [x] * CastExpr         * CE -> PE 'as' E                                                     ///
 ///                                                                                              ///
-/// [x] * ArrayAccessExpr  * AA -> PE '[' E ']'                                            ///
-/// [x] * FunctionCallExpr * FC -> PA GI? AL                                               ///
+/// [x] * ArrayAccessExpr  * AA -> PE '[' E ']'                                                  ///
+/// [x] * FunctionCallExpr * FC -> PA GI? AL                                                     ///
 ///                                                                                              ///
-///                                  /* right associative recursive */                           ///
-/// [x] * ObjInitExpr * OI -> '{' ( KA ( ',' KA )* )? '}'                        ///
-/// [x] * SetLiteralExpr        * SE -> '{' E ( ',' E )* '}'                               ///
-/// [x] * TupleLiteralExpr      * TL -> '(' E ( ',' E )* ')'                               ///
-/// [x] * ArrayLiteralExpr      * AE -> '[' E ( ',' E )* ']'                               ///
-/// [x] * ParenthesizedExpr     * PAE -> '(' E? ')'                                        ///
+///                            /* right associative recursive */                                 ///
+/// [x] * ObjInitExpr           * OI -> '{' ( KA ( ',' KA )* )? '}'                              ///
+/// [x] * SetLiteralExpr        * SE -> '{' E ( ',' E )* '}'                                     ///
+/// [x] * TupleLiteralExpr      * TL -> '(' E ( ',' E )* ')'                                     ///
+/// [x] * ArrayLiteralExpr      * AE -> '[' E ( ',' E )* ']'                                     ///
+/// [x] * ParenthesizedExpr     * PAE -> '(' E? ')'                                              ///
 ///                                                                                              ///
-///                                      /* generics */                                          ///
-/// [ ] * GenericInvokeExpr     * GI -> '<' GAE? ( ',' GAE )* '>'                      ///
-/// [ ] * GenericArgumentExpr       * GAE -> E | ID '=' E                                  ///
-/// [ ] * GenericInvokePathExpr * PGE -> PE GI                                         ///
+///                                /* generics */                                                ///
+/// [ ] * GenericInvokeExpr         * GI -> '<' GAE? ( ',' GAE )* '>'                            ///
+/// [ ] * GenericArgumentExpr       * GAE -> E | ID '=' E                                        ///
+/// [ ] * GenericInvokePathExpr     * PGE -> PE GI                                               ///
+///                                                                                              ///
+/// [ ] * AsyncExpr                 * AS -> ('spawn' | 'thread') E                               ///
+/// [ ] * AwaitExpr                 * AS -> 'await' E                                            ///
 ///                                                                                              ///
 /// [ ] * Type    * TY -> ID | PT                                                                ///
 ///                                                                                              ///
@@ -98,7 +102,7 @@
 ///       @endcode                                                                               ///
 ///                                                                                              ///
 ///       this is a valid expression, but how do we parse it?                                    ///
-///          how can we parse the `PI<int>` and not confuse it with a BinaryExpr like      ///
+///          how can we parse the `PI<int>` and not confuse it with a BinaryExpr like            ///
 ///          `PI < int`? and the > becoming a syntax error?                                      ///
 ///                                                                                              ///
 //===-----------------------------------------------------------------------------------------====//
@@ -296,7 +300,7 @@ AST_BASE_IMPL(Expression, parse) {  // NOLINT(readability-function-cognitive-com
 
 // ---------------------------------------------------------------------------------------------- //
 
-AST_NODE_IMPL(LiteralExpr) {
+AST_NODE_IMPL(Expression, LiteralExpr) {
     if (iter.remaining_n() == 0) {
         return std::unexpected(PARSE_ERROR_MSG("expected a literal expression, but found nothing"));
     }
@@ -340,7 +344,7 @@ AST_NODE_IMPL_VISITOR(Jsonify, LiteralExpr) {
 
 // ---------------------------------------------------------------------------------------------- //
 
-AST_NODE_IMPL(BinaryExpr, ParseResult<> lhs, int min_precedence) {
+AST_NODE_IMPL(Expression, BinaryExpr, ParseResult<> lhs, int min_precedence) {
     IS_NOT_EMPTY;
 
     // := E op E
@@ -380,7 +384,7 @@ AST_NODE_IMPL_VISITOR(Jsonify, BinaryExpr) {
 
 // ---------------------------------------------------------------------------------------------- //
 
-AST_NODE_IMPL(UnaryExpr) {
+AST_NODE_IMPL(Expression, UnaryExpr) {
     IS_NOT_EMPTY;
 
     // := op E
@@ -404,7 +408,7 @@ AST_NODE_IMPL_VISITOR(Jsonify, UnaryExpr) {
 
 // ---------------------------------------------------------------------------------------------- //
 
-AST_NODE_IMPL(IdentExpr) {
+AST_NODE_IMPL(Expression, IdentExpr) {
     IS_NOT_EMPTY;
 
     // verify the current token is an identifier
@@ -483,7 +487,7 @@ AST_NODE_IMPL_VISITOR(Jsonify, IdentExpr) { json.section("IdentExpr").add("name"
 
 /* FIXME: use this method, if unused remove */
 // should not be called by `parse` directly as it is a helper function
-AST_NODE_IMPL(NamedArgumentExpr) {
+AST_NODE_IMPL(Expression, NamedArgumentExpr) {
     IS_NOT_EMPTY;
 
     // := '.' IdentExpr '=' E
@@ -520,7 +524,7 @@ AST_NODE_IMPL_VISITOR(Jsonify, NamedArgumentExpr) {
 // ---------------------------------------------------------------------------------------------- //
 
 // should not be called by `parse` directly as it is a helper function
-AST_NODE_IMPL(ArgumentExpr) {
+AST_NODE_IMPL(Expression, ArgumentExpr) {
     IS_NOT_EMPTY;
 
     NodeT<ArgumentExpr> result;
@@ -560,7 +564,7 @@ AST_NODE_IMPL_VISITOR(Jsonify, ArgumentExpr) {
 
 // ---------------------------------------------------------------------------------------------- //
 
-AST_NODE_IMPL(ArgumentListExpr) {
+AST_NODE_IMPL(Expression, ArgumentListExpr) {
     IS_NOT_EMPTY;
 
     // := '(' ArgumentExpr (',' ArgumentExpr)* ')'
@@ -613,28 +617,28 @@ AST_NODE_IMPL_VISITOR(Jsonify, ArgumentListExpr) {
 
 // ---------------------------------------------------------------------------------------------- //
 
-AST_NODE_IMPL(GenericArgumentExpr) {
+AST_NODE_IMPL(Expression, GenericArgumentExpr) {
     IS_NOT_EMPTY;
     NOT_IMPLEMENTED;
 }
 
 // ---------------------------------------------------------------------------------------------- //
 
-AST_NODE_IMPL(GenericInvokeExpr) {
+AST_NODE_IMPL(Expression, GenericInvokeExpr) {
     IS_NOT_EMPTY;
     NOT_IMPLEMENTED;
 }
 
 // ---------------------------------------------------------------------------------------------- //
 
-AST_NODE_IMPL(GenericInvokePathExpr) {
+AST_NODE_IMPL(Expression, GenericInvokePathExpr) {
     IS_NOT_EMPTY;
     NOT_IMPLEMENTED;
 }
 
 // ---------------------------------------------------------------------------------------------- //
 
-AST_NODE_IMPL(ScopePathExpr, ParseResult<> lhs) {
+AST_NODE_IMPL(Expression, ScopePathExpr, ParseResult<> lhs) {
     IS_NOT_EMPTY;
 
     // := E '::' E
@@ -665,7 +669,7 @@ AST_NODE_IMPL_VISITOR(Jsonify, ScopePathExpr) {
 
 // ---------------------------------------------------------------------------------------------- //
 
-AST_NODE_IMPL(DotPathExpr, ParseResult<> lhs) {
+AST_NODE_IMPL(Expression, DotPathExpr, ParseResult<> lhs) {
     IS_NOT_EMPTY;
 
     // := E '.' E
@@ -696,7 +700,7 @@ AST_NODE_IMPL_VISITOR(Jsonify, DotPathExpr) {
 
 // ---------------------------------------------------------------------------------------------- //
 
-AST_NODE_IMPL(ArrayAccessExpr, ParseResult<> lhs) {
+AST_NODE_IMPL(Expression, ArrayAccessExpr, ParseResult<> lhs) {
     IS_NOT_EMPTY;
 
     // := E '[' E ']'
@@ -734,7 +738,7 @@ AST_NODE_IMPL_VISITOR(Jsonify, ArrayAccessExpr) {
 
 // ---------------------------------------------------------------------------------------------- //
 
-AST_NODE_IMPL(PathExpr, ParseResult<> simple_path) {
+AST_NODE_IMPL(Expression, PathExpr, ParseResult<> simple_path) {
     IS_NOT_EMPTY;
 
     if (simple_path != nullptr && simple_path.has_value()) {
@@ -770,7 +774,7 @@ AST_NODE_IMPL_VISITOR(Jsonify, PathExpr) {
 
 // ---------------------------------------------------------------------------------------------- //
 
-AST_NODE_IMPL(FunctionCallExpr, ParseResult<> lhs, ParseResult<> gens) {
+AST_NODE_IMPL(Expression, FunctionCallExpr, ParseResult<> lhs, ParseResult<> gens) {
     IS_NOT_EMPTY;
 
     /*
@@ -814,7 +818,7 @@ AST_NODE_IMPL_VISITOR(Jsonify, FunctionCallExpr) {
 
 // ---------------------------------------------------------------------------------------------- //
 
-AST_NODE_IMPL(ArrayLiteralExpr) {
+AST_NODE_IMPL(Expression, ArrayLiteralExpr) {
     IS_NOT_EMPTY;
     // := '[' E (',' E)* ']'
 
@@ -872,7 +876,7 @@ AST_NODE_IMPL_VISITOR(Jsonify, ArrayLiteralExpr) {
 
 // ---------------------------------------------------------------------------------------------- //
 
-AST_NODE_IMPL(TupleLiteralExpr, ParseResult<> starting_element) {
+AST_NODE_IMPL(Expression, TupleLiteralExpr, ParseResult<> starting_element) {
     IS_NOT_EMPTY;
 
     // := '(' E (',' E)* ')'
@@ -942,7 +946,7 @@ AST_NODE_IMPL_VISITOR(Jsonify, TupleLiteralExpr) {
 
 // ---------------------------------------------------------------------------------------------- //
 
-AST_NODE_IMPL(SetLiteralExpr, ParseResult<> starting_value) {
+AST_NODE_IMPL(Expression, SetLiteralExpr, ParseResult<> starting_value) {
     IS_NOT_EMPTY;
 
     // := '{' E (',' E)* '}'
@@ -1015,7 +1019,7 @@ AST_NODE_IMPL_VISITOR(Jsonify, SetLiteralExpr) {
 
 // ---------------------------------------------------------------------------------------------- //
 
-AST_NODE_IMPL(MapPairExpr) {
+AST_NODE_IMPL(Expression, MapPairExpr) {
     IS_NOT_EMPTY;
 
     // := E ':' E
@@ -1046,7 +1050,7 @@ AST_NODE_IMPL_VISITOR(Jsonify, MapPairExpr) {
 
 // ---------------------------------------------------------------------------------------------- //
 
-AST_NODE_IMPL(MapLiteralExpr, ParseResult<> starting_key) {
+AST_NODE_IMPL(Expression, MapLiteralExpr, ParseResult<> starting_key) {
     IS_NOT_EMPTY;
 
     // := '{' E (':' E)* '}'
@@ -1120,7 +1124,7 @@ AST_NODE_IMPL_VISITOR(Jsonify, MapLiteralExpr) {
 
 // ---------------------------------------------------------------------------------------------- //
 
-AST_NODE_IMPL(ObjInitExpr, bool skip_start_brace) {
+AST_NODE_IMPL(Expression, ObjInitExpr, bool skip_start_brace) {
     IS_NOT_EMPTY;
 
     // := '{' (NamedArgumentExpr (',' NamedArgumentExpr)*)? '}'
@@ -1179,7 +1183,7 @@ AST_NODE_IMPL_VISITOR(Jsonify, ObjInitExpr) {
 // ---------------------------------------------------------------------------------------------- //
 
 /* TODO: after Suite can be parsed */
-AST_NODE_IMPL(LambdaExpr) {
+AST_NODE_IMPL(Expression, LambdaExpr) {
     IS_NOT_EMPTY;
     NOT_IMPLEMENTED;
 }
@@ -1188,7 +1192,7 @@ AST_NODE_IMPL_VISITOR(Jsonify, LambdaExpr) { json.section("LambdaExpr"); }
 
 // ---------------------------------------------------------------------------------------------- //
 
-AST_NODE_IMPL(TernaryExpr, ParseResult<> E1) {
+AST_NODE_IMPL(Expression, TernaryExpr, ParseResult<> E1) {
     IS_NOT_EMPTY;
 
     // := (E '?' E ':' E) | (E 'if' E 'else' E)
@@ -1250,7 +1254,7 @@ AST_NODE_IMPL_VISITOR(Jsonify, TernaryExpr) {
 
 // ---------------------------------------------------------------------------------------------- //
 
-AST_NODE_IMPL(ParenthesizedExpr, ParseResult<> expr) {
+AST_NODE_IMPL(Expression, ParenthesizedExpr, ParseResult<> expr) {
     IS_NOT_EMPTY;
 
     // := '(' E ')'
@@ -1294,7 +1298,7 @@ AST_NODE_IMPL_VISITOR(Jsonify, ParenthesizedExpr) {
 
 // ---------------------------------------------------------------------------------------------- //
 
-AST_NODE_IMPL(CastExpr, ParseResult<> lhs) {
+AST_NODE_IMPL(Expression, CastExpr, ParseResult<> lhs) {
     IS_NOT_EMPTY;
 
     // := E 'as' E
@@ -1325,7 +1329,7 @@ AST_NODE_IMPL_VISITOR(Jsonify, CastExpr) {
 
 // ---------------------------------------------------------------------------------------------- //
 
-AST_NODE_IMPL(InstOfExpr, ParseResult<> lhs) {
+AST_NODE_IMPL(Expression, InstOfExpr, ParseResult<> lhs) {
     IS_NOT_EMPTY;
 
     // := E 'has' E | E 'derives' E
@@ -1364,7 +1368,7 @@ AST_NODE_IMPL_VISITOR(Jsonify, InstOfExpr) {
 // ---------------------------------------------------------------------------------------------- //
 
 /* DEPRECATED: a Type is deduced from context and at this stage is considered a Expression */
-AST_NODE_IMPL(Type) {
+AST_NODE_IMPL(Expression, Type) {
     // if E(2) does not exist, check if its a & | * token, since if it is,
     // then return a unary expression since its a pointer or reference type
     IS_NOT_EMPTY;

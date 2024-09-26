@@ -24,8 +24,8 @@
 #define __AST_NODE parser::ast::node
 #define __AST_VISITOR parser::ast::visitor
 
-#define AST_NODE_IMPL(name, ...) \
-    __AST_N::ParseResult<__AST_NODE::name> __AST_NODE::Expression::parse_##name(__VA_ARGS__)
+#define AST_NODE_IMPL(base, name, ...) \
+    __AST_N::ParseResult<__AST_NODE::name> __AST_NODE::base::parse_##name(__VA_ARGS__)
 
 #define AST_BASE_IMPL(name, fn) __AST_N::ParseResult<> __AST_NODE::name::fn()
 

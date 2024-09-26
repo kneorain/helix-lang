@@ -259,95 +259,95 @@ class Type:
 
 // ----------------------------------------- Statements ----------------------------------------- //
 
-class CreateIdentifiers_HelperNode:
+class NamedVarSpecifier:
     := (class VariableCreation | class VariableDeclaration)$1
     value = $1
 
 class ForPyStatementCore:
-    := (class CreateIdentifiers_HelperNode)$1 + ((tokens::PUNCTUATION_COMMA + (class CreateIdentifiers_HelperNode)$1)*)? + tokens::KEYWORD_IN + (class Expression)$2
+    := (class NamedVarSpecifier)$1 + ((tokens::PUNCTUATION_COMMA + (class NamedVarSpecifier)$1)*)? + tokens::KEYWORD_IN + (class Expression)$2
     identifiers[] = $1
     iterable = $2
 
 class ForCStatementCore:
-    := ((class CreateIdentifiers_HelperNode)$1 + ((tokens::PUNCTUATION_COMMA + (class CreateIdentifiers_HelperNode)$1)*)?)? + tokens::PUNCTUATION_SEMICOLON + (class Expression?)$2 + tokens::PUNCTUATION_SEMICOLON + (class Expression?)$2
+    := ((class NamedVarSpecifier)$1 + ((tokens::PUNCTUATION_COMMA + (class NamedVarSpecifier)$1)*)?)? + tokens::PUNCTUATION_SEMICOLON + (class Expression?)$2 + tokens::PUNCTUATION_SEMICOLON + (class Expression?)$2
     identifiers[] = $1
     condition = $2
     increment = $3
 
-class ForStatement:
+class ForState:
     := tokens::KEYWORD_FOR + ((tokens::PUNCTUATION_OPEN_PAREN + (class ForPyStatementCore | class ForCStatementCore)$1 + tokens::PUNCTUATION_CLOSE_PAREN) | (class ForPyStatementCore | class ForCStatementCore)$1) + (class Suite)$2
     core = $1
     body = $2
     type = 'py' | 'c'
 
-class WhileStatement:
+class WhileState:
     := tokens::KEYWORD_WHILE + (class Expression)$1 + (class Suite)$2
     condition = $1
     body = $2
 
-class ElseStatement:
+class ElseState:
     := (tokens::KEYWORD_ELSE + tokens::KEYWORD_IF + (class Expression)$1 + (class Suite)$2) | (tokens::KEYWORD_ELSE + (class Suite)$1)
     body = $1
     condition = $2
     type = 'else-if' | 'else'
 
-class IfStatement
-    := tokens::KEYWORD_IF + (class Expression)$1 + (class Suite)$2 + ((class ElseStatement)$1)*
+class IfState
+    := tokens::KEYWORD_IF + (class Expression)$1 + (class Suite)$2 + ((class ElseState)$1)*
     condition = $1
     body = $2
     else = $3
 
-class SwitchCaseStatement:
+class SwitchCaseState:
     := tokens::KEYWORD_CASE + (class Expression)$1 + (class Suite)$2 + tokens::PUNCTUATION_SEMICOLON
     condition = $1
     body = $2
 
-class SwitchStatement:
-    := tokens::KEYWORD_SWITCH + (class Expression)$1 + tokens::PUNCTUATION_OPEN_BRACE + ((class SwitchCaseStatement)$1)* + tokens::PUNCTUATION_CLOSE_BRACE
+class SwitchState:
+    := tokens::KEYWORD_SWITCH + (class Expression)$1 + tokens::PUNCTUATION_OPEN_BRACE + ((class SwitchCaseState)$1)* + tokens::PUNCTUATION_CLOSE_BRACE
     condition = $1
     cases[] = $2
 
-class YieldStatement:
+class YieldState:
     := tokens::KEYWORD_YIELD + (class Expression)$1 + tokens::PUNCTUATION_SEMICOLON
     value = $1
 
-class AliasStatement:
+class AliasState:
     := tokens::KEYWORD_AS + (class QualifiedPathExpression)$1
     path = $1
 
-class SingleImportStatement:
-    := (class QualifiedPathExpression)$1 + (class AliasStatement)$2?
+class SingleImportState:
+    := (class QualifiedPathExpression)$1 + (class AliasState)$2?
     module = $1
     alias = $2
 
-class GroupedStatement:
+class MultiImportState:
     := tokens::PUNCTUATION_OPEN_BRACE + ((class SingleImport)$1) + ((tokens::PUNCTUATION_COMMA + (class SingleImport)$1)*)? + tokens::PUNCTUATION_CLOSE_BRACE
     imports[] = $1
 
-class ImportStatement:
-    := tokens::KEYWORD_IMPORT + (class SingleImport)$1 + ((class GroupedStatement)$2)? + tokens::PUNCTUATION_SEMICOLON
+class ImportState:
+    := tokens::KEYWORD_IMPORT + (class SingleImport)$1 + ((class MultiImportState)$2)? + tokens::PUNCTUATION_SEMICOLON
     module = $1
     imports = $2
  
-class ReturnStatement:
+class ReturnState:
     := tokens::KEYWORD_RETURN + (class Expression)$1 + tokens::PUNCTUATION_SEMICOLON
     value = $1
 
-class BreakStatement:
+class BreakState:
     := tokens::KEYWORD_BREAK + tokens::PUNCTUATION_SEMICOLON
 
-class ContinueStatement:
+class ContinueState:
     := tokens::KEYWORD_CONTINUE + tokens::PUNCTUATION_SEMICOLON
 
-class ExpressionStatement:
+class ExprState:
     := (class Expression)$1 + tokens::PUNCTUATION_SEMICOLON
     expression = $1
 
 class Statement:
-    := (class ImportStatement)$1   | (class ReturnStatement)$1     | (class BreakStatement)$1
-     | (class ContinueStatement)$1 | (class ExpressionStatement)$1 | (class IfStatement)$1
-     | (class SwitchStatement)$1   | (class WhileStatement)$1      | (class ForStatement)$1
-     | (class YieldStatement)$1    | (class Suite)$1
+    := (class ImportState)$1   | (class ReturnState)$1     | (class BreakState)$1
+     | (class ContinueState)$1 | (class ExprState)$1       | (class IfState)$1
+     | (class SwitchState)$1   | (class WhileState)$1      | (class ForState)$1
+     | (class YieldState)$1    | (class Suite)$1
     value = $1
     type = 'import' | 'return' | 'break' | 'continue' | 'expression' | 'if' | 'switch' | 'while' | 'for' | 'yield' | 'suite'
 

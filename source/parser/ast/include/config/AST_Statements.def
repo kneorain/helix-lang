@@ -14,23 +14,25 @@
 #define __AST_STATEMENTS_DEF__
 
 #define STATES(MACRO)                   \
-    MACRO(CreateIdentifiers_HelperNode) \
+    MACRO(NamedVarSpecifier) \
     MACRO(ForPyStatementCore)           \
     MACRO(ForCStatementCore)            \
-    MACRO(ForStatement)                 \
-    MACRO(WhileStatement)               \
-    MACRO(ElseStatement)                \
-    MACRO(IfStatement)                  \
-    MACRO(SwitchCaseStatement)          \
-    MACRO(SwitchStatement)              \
-    MACRO(YieldStatement)               \
-    MACRO(AliasStatement)               \
-    MACRO(SingleImportStatement)        \
-    MACRO(GroupedStatement)             \
-    MACRO(ImportStatement)              \
-    MACRO(ReturnStatement)              \
-    MACRO(BreakStatement)               \
-    MACRO(ContinueStatement)            \
-    MACRO(ExpressionStatement)
+    MACRO(ForState)                     \
+    MACRO(WhileState)                   \
+    MACRO(ElseState)                    \
+    MACRO(IfState)                      \
+    MACRO(SwitchCaseState)              \
+    MACRO(SwitchState)                  \
+    MACRO(YieldState)                   \
+    MACRO(AliasState)                   \
+    MACRO(SingleImportState)            \
+    MACRO(MultiImportState)             \
+    MACRO(ImportState)                  \
+    MACRO(ReturnState)                  \
+    MACRO(BreakState)                   \
+    MACRO(BlockState)                   \
+    MACRO(SuiteState)                   \
+    MACRO(ContinueState)                \
+    MACRO(ExprState)
 
 #endif  // __AST_STATEMENTS_DEF__

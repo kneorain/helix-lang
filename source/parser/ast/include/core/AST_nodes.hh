@@ -19,6 +19,7 @@
 #define __AST_NODES_H__
 
 #include "parser/ast/include/config/AST_config.def"
+#include "parser/ast/include/config/AST_generate.def"
 #include "parser/ast/include/config/AST_generate.hh"
 #include "parser/ast/include/types/AST_types.hh"
 #include "parser/ast/include/types/AST_visitor.hh"
@@ -67,10 +68,10 @@ __AST_NODE_BEGIN {
             : iter(iter) {}
         Expression()                              = delete;
         Expression(const Expression &)            = default;
-        Expression &operator=(const Expression &) = default;
+        Expression &operator=(const Expression &) = delete;
         Expression(Expression &&)                 = default;
-        Expression &operator=(Expression &&)      = default;
-        virtual ~Expression()                     = default;
+        Expression &operator=(Expression &&)      = delete;
+        ~Expression()                             = default;
 
         p_r<NamedArgumentExpr>     parse_NamedArgumentExpr();
         p_r<PathExpr>              parse_PathExpr(p_r<> simple_path);
@@ -110,7 +111,80 @@ __AST_NODE_BEGIN {
 
       private:
         token::TokenList::TokenListIter &iter;
-        std::vector<ParseResult<>>       parse_stack;
+        std::vector<p_r<>>               parse_stack;
+    };
+
+    /*
+     *  Statement class
+     *
+     *  This class is responsible for parsing the statement grammar.
+     *  It is a recursive descent parser that uses the token list
+     *  to parse the statement grammar.
+     *
+     *  (its very bad quality but will be improved when written in helix)
+     *
+     *  usage:
+     *     Statement state(tokens);
+     *     NodeT<> node = state.parse();
+     *
+     *     // or
+     *
+     *     NodeT<...> node = state.parse<...>();
+     */
+    class Statement {  // THIS IS NOT A NODE
+        template <typename T = Node>
+        using p_r = parser::ast::ParseResult<T>;
+
+      public:
+        explicit Statement(token::TokenList::TokenListIter &iter)
+            : iter(iter) {}
+        Statement()                             = delete;
+        Statement(const Statement &)            = default;
+        Statement &operator=(const Statement &) = delete;
+        Statement(Statement &&)                 = default;
+        Statement &operator=(Statement &&)      = delete;
+        ~Statement()                            = default;
+
+        p_r<NamedVarSpecifier> parse_NamedVarSpecifier();
+        p_r<ForPyStatementCore>           parse_ForPyStatementCore();
+        p_r<ForCStatementCore>            parse_ForCStatementCore();
+
+        p_r<ForState>   parse_ForState();
+        p_r<WhileState> parse_WhileState();
+        p_r<IfState>    parse_IfState();
+        p_r<ElseState>  parse_ElseState();
+
+        p_r<SwitchState>     parse_SwitchState();
+        p_r<SwitchCaseState> parse_SwitchCaseState();
+
+        p_r<ImportState>       parse_ImportState();
+        p_r<SingleImportState> parse_SingleImportState();
+        p_r<MultiImportState>  parse_MultiImportState();
+        p_r<AliasState>        parse_AliasState();
+
+        p_r<YieldState>  parse_YieldState();
+        p_r<ReturnState> parse_ReturnState();
+
+        p_r<BreakState>    parse_BreakState();
+        p_r<ContinueState> parse_ContinueState();
+
+        p_r<ExprState>  parse_ExprState();
+        p_r<BlockState> parse_BlockState();
+
+        // TODO: verify if this is all the statements
+        //       and add more if needed
+
+        template <typename T>
+        p_r<T> parse() {
+            return std::dynamic_pointer_cast<T>(parse());
+        }
+
+        p_r<> parse();
+        p_r<> parse_primary();
+
+      private:
+        token::TokenList::TokenListIter &iter;
+        std::vector<p_r<>>               parse_stack;
     };
 }  // namespace __AST_BEGIN
 

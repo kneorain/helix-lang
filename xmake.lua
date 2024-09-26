@@ -105,7 +105,7 @@ function setup_debug()
 	set_symbols ("debug") -- Generate debug symbols
 	set_optimize("none")  -- Disable optimization
 	add_defines ("DEBUG") -- Define DEBUG macro
-    set_warnings("all")
+    set_warnings("all", "extra")
 end
 
 function setup_release()
