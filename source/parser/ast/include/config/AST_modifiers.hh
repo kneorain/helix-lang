@@ -25,26 +25,23 @@ __AST_BEGIN {
         Static,                  ///< 'static'
         FFI,                     ///< 'ffi'
         /* TODO */ ThreadLocal,  ///< 'thread_local'
-        /* TODO */ Mutable,      ///< 'mutable'
     };
 
     enum class TypeQualifier : char {
         Const,               ///< 'const'
         Volatile,            ///< 'volatile'
         /* TODO */ Atomic,   ///< 'atomic'
-        /* TODO */ Mutable,  ///< 'mutable'
     };
 
     enum class AccessSpecifier : char {
-        Public,              ///< 'pub' - default = exposed by linkage and visibility
-        Private,             ///< 'priv'          = not exposed by linkage and visibility
-        Protected,           ///< 'prot'          = not exposed by linkage but by visibility
-        /* TODO */ Internal  ///< 'internal'      = exposed by linkage but not visibility
+        Public,     ///< 'pub' - default = exposed by linkage and visibility
+        Private,    ///< 'priv'          = not exposed by linkage and visibility
+        Protected,  ///< 'prot'          = not exposed by linkage but by visibility
+        Internal    ///< 'intl'          = exposed by linkage but not visibility
     };
 
     enum class FunctionSpecifier : char {
         Inline,    ///< 'inline'
-        Abstract,  ///< 'abstract'
         Const,     ///< 'const' - in functions this is 'const' but for classes its 'final'
         Override,  ///< '#[override]' - compiler directive
         Eval       ///< 'eval' - eval in the case of functions default to 'constinit' for
@@ -60,7 +57,7 @@ __AST_BEGIN {
         /* TODO */ Default,                ///< 'default'
         Delete,                            ///< 'delete'
         Const,                             ///< 'const'
-        Override                           ///< 'override'
+        Override                           ///< '#[override]' - compiler directive
 
         /// ONLY allowed in the scope of a UDT:
         /// 'const'

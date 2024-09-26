@@ -15,7 +15,7 @@
 #ifndef __KEYWORDS_DEF__
 #define __KEYWORDS_DEF__
 
-#define KEYWORD_TOKENS_COUNT 49
+#define KEYWORD_TOKENS_COUNT 50
 
 /* TODO determine if is needs to be removed */
 
@@ -30,7 +30,6 @@
     GENERATE(KEYWORD_INLINE,    "inline"   ) \
     GENERATE(KEYWORD_STATIC,    "static"   ) \
     GENERATE(KEYWORD_RETURN,    "return"   ) \
-    GENERATE(KEYWORD_ENCLOSING, "enclosing") \
     GENERATE(KEYWORD_ASYNC,     "async"    ) \
     GENERATE(KEYWORD_SPAWN,     "spawn"    ) \
     GENERATE(KEYWORD_AWAIT,     "await"    ) \
@@ -45,12 +44,12 @@
     GENERATE(KEYWORD_DEFAULT,   "default"  ) \
     GENERATE(KEYWORD_ENUM,      "enum"     ) \
     GENERATE(KEYWORD_TYPE,      "type"     ) \
+    GENERATE(KEYWORD_EVAL,      "eval"     ) \
     GENERATE(KEYWORD_CLASS,     "class"    ) \
     GENERATE(KEYWORD_UNION,     "union"    ) \
     GENERATE(KEYWORD_STRUCT,    "struct"   ) \
     GENERATE(KEYWORD_ABSTRACT,  "abstract" ) \
     GENERATE(KEYWORD_INTERFACE, "interface") \
-    GENERATE(KEYWORD_IS,        "is"       ) \
     GENERATE(KEYWORD_HAS,       "has"      ) \
     GENERATE(KEYWORD_TRY,       "try"      ) \
     GENERATE(KEYWORD_PANIC,     "panic"    ) \
@@ -58,13 +57,15 @@
     GENERATE(KEYWORD_FINALLY,   "finally"  ) \
     GENERATE(KEYWORD_LET,       "let"      ) \
     GENERATE(KEYWORD_PRIVATE,   "priv"     ) \
-    GENERATE(KEYWORD_AUTO,      "auto"     ) \
+    GENERATE(KEYWORD_PUBLIC,    "pub"      ) \
+    GENERATE(KEYWORD_PROTECTED, "prot"     ) \
+    GENERATE(KEYWORD_INTERNAL,  "intl"     ) \
     GENERATE(KEYWORD_CONST,     "const"    ) \
     GENERATE(KEYWORD_GLOBAL,    "global"   ) \
-    GENERATE(KEYWORD_FROM,      "from"     ) \
     GENERATE(KEYWORD_FFI,       "ffi"      ) \
     GENERATE(KEYWORD_IMPORT,    "import"   ) \
     GENERATE(KEYWORD_YIELD,     "yield"    ) \
+    GENERATE(KEYWORD_DELETE,    "delete"    ) \
     GENERATE(KEYWORD_AS,        "as"       ) \
     GENERATE(KEYWORD_DERIVES,   "derives"  ) \
     GENERATE(KEYWORD_MODULE,    "module"   ) \

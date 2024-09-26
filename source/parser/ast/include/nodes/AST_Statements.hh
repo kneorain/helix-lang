@@ -28,7 +28,7 @@ __AST_NODE_BEGIN {
 
         // := Ident (':' E)?
 
-        explicit NamedVarSpecifier(NodeT<PathExpr> path, const NodeT<>& type = nullptr)
+        explicit NamedVarSpecifier(NodeT<PathExpr> path, const NodeT<> &type = nullptr)
             : path(std::move(path))
             , type(type) {
             if (type != nullptr) {
@@ -68,9 +68,9 @@ __AST_NODE_BEGIN {
             , update(std::move(update))
             , body(std::move(body)) {}
 
-        NodeT<> init;
-        NodeT<> condition;
-        NodeT<> update;
+        NodeT<>           init;
+        NodeT<>           condition;
+        NodeT<>           update;
         NodeT<SuiteState> body;
     };
 
@@ -85,17 +85,16 @@ __AST_NODE_BEGIN {
         };
 
         explicit ForState(NodeT<> core)
-            : core(std::move(core))
-            {
-                if (core->getNodeName() == "ForPyStatementCore") {
-                    type = ForType::Python;
-                } else if (core->getNodeName() == "ForCStatementCore") {
-                    type = ForType::C;
-                } else {
-                    // error
-                    throw std::runtime_error(GET_DEBUG_INFO + "Invalid for loop type");
-                }
+            : core(std::move(core)) {
+            if (core->getNodeName() == "ForPyStatementCore") {
+                type = ForType::Python;
+            } else if (core->getNodeName() == "ForCStatementCore") {
+                type = ForType::C;
+            } else {
+                // error
+                throw std::runtime_error(GET_DEBUG_INFO + "Invalid for loop type");
             }
+        }
 
         NodeT<> core;
         ForType type;
@@ -110,7 +109,7 @@ __AST_NODE_BEGIN {
             : condition(std::move(condition))
             , body(std::move(body)) {}
 
-        NodeT<> condition;
+        NodeT<>           condition;
         NodeT<SuiteState> body;
     };
 
@@ -124,9 +123,9 @@ __AST_NODE_BEGIN {
             , body(std::move(body))
             , else_body(std::move(else_body)) {}
 
-        NodeT<> condition;
+        NodeT<>           condition;
         NodeT<SuiteState> body;
-        NodeT<> else_body;
+        NodeT<>           else_body;
     };
 
     class ElseState final : public Node {
@@ -149,7 +148,7 @@ __AST_NODE_BEGIN {
             : condition(std::move(condition))
             , cases(std::move(cases)) {}
 
-        NodeT<>            condition;
+        NodeT<>                condition;
         NodeV<SwitchCaseState> cases;
     };
 
@@ -168,9 +167,9 @@ __AST_NODE_BEGIN {
             , body(std::move(body))
             , type(type) {}
 
-        NodeT<>  condition;
-        NodeT<SuiteState>  body;
-        CaseType type;
+        NodeT<>           condition;
+        NodeT<SuiteState> body;
+        CaseType          type;
     };
 
     class ImportState final : public Node {
@@ -200,6 +199,17 @@ __AST_NODE_BEGIN {
         NodeT<> value;
     };
 
+    class DeleteState final : public Node {
+        BASE_CORE_METHODS(DeleteState);
+
+        // := 'yield' expr ';'
+
+        explicit DeleteState(NodeT<> value)
+            : value(std::move(value)) {}
+
+        NodeT<> value;
+    };
+
     class ReturnState final : public Node {
         BASE_CORE_METHODS(ReturnState);
 
@@ -212,10 +222,10 @@ __AST_NODE_BEGIN {
     };
 
     class BreakState final : public Node {
-            // := 'break' ';'
+        // := 'break' ';'
 
       public:
-        BreakState() = default;
+        BreakState()                              = default;
         ~BreakState() override                    = default;
         BreakState(const BreakState &)            = default;
         BreakState &operator=(const BreakState &) = default;
@@ -265,18 +275,69 @@ __AST_NODE_BEGIN {
         NodeV<> body;
     };
 
-
     class SuiteState final : public Node {
         BASE_CORE_METHODS(SuiteState);
 
         // := BlockState | (':' Statement)
-        // the suite parser will either make a block node if theres a { or a single statement with the :
+        // the suite parser will either make a block node if theres a { or a single statement with
+        // the :
 
         explicit SuiteState(NodeT<BlockState> body)
             : body(std::move(body)) {}
 
         NodeT<BlockState> body;
     };
+
+    class CatchState final : public Node {
+        BASE_CORE_METHODS(CatchState);
+
+        // := 'catch' (NamedVarSpecifier ((',' NamedVarSpecifier)*)?)? SuiteState
+
+        CatchState(NodeV<NamedVarSpecifier> catches, NodeT<SuiteState> body)
+            : catches(std::move(catches))
+            , body(std::move(body)) {}
+
+        NodeV<NamedVarSpecifier> catches;
+        NodeT<SuiteState>        body;
+    };
+
+    class FinallyState final : public Node {
+        BASE_CORE_METHODS(FinallyState);
+
+        // := 'finally' SuiteState
+
+        explicit FinallyState(NodeT<SuiteState> body)
+            : body(std::move(body)) {}
+
+        NodeT<SuiteState> body;
+    };
+
+    class TryState final : public Node {
+        BASE_CORE_METHODS(TryState);
+
+        // := 'try' E SuiteState (CatchState*)?
+
+        TryState(NodeT<> expr, NodeT<SuiteState> body, NodeV<CatchState> catches)
+            : expr(std::move(expr))
+            , body(std::move(body))
+            , catches(std::move(catches)) {}
+
+        NodeT<>           expr;
+        NodeT<SuiteState> body;
+        NodeV<CatchState> catches;
+    };
+
+    class PanicState final : public Node {
+        BASE_CORE_METHODS(PanicState);
+
+        // := 'panic' E ';'
+
+        explicit PanicState(NodeT<> expr)
+            : expr(std::move(expr)) {}
+
+        NodeT<> expr;
+    };
+
 }  // namespace __AST_NODE_BEGIN
 
 #endif  // __AST_STATEMENTS_H__

@@ -105,6 +105,9 @@
 ///          how can we parse the `PI<int>` and not confuse it with a BinaryExpr like            ///
 ///          `PI < int`? and the > becoming a syntax error?                                      ///
 ///                                                                                              ///
+/// TODO: add support for async keywords, 'await', 'spawn', 'thread'                             ///
+/// TODO: add support for 'match' expressions                                                    ///
+///                                                                                              ///
 //===-----------------------------------------------------------------------------------------====//
 
 #include <cstddef>
@@ -273,6 +276,11 @@ AST_BASE_IMPL(Expression, parse) {  // NOLINT(readability-function-cognitive-com
                 expr = parse_CastExpr(expr);
                 RETURN_IF_ERROR(expr);
                 break;
+
+            case token::KEYWORD_SPAWN:
+            case token::KEYWORD_AWAIT:
+            case token::KEYWORD_THREAD:
+
 
             default:
                 if (is_excepted(tok, IS_BINARY_OPERATOR)) {

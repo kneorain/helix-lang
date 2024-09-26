@@ -75,4 +75,28 @@
 #define PARSE_ERROR(tok, msg) ParseError(tok, GET_DEBUG_INFO + msg)
 #define PARSE_ERROR_MSG(msg) ParseError(CURRENT_TOK, GET_DEBUG_INFO + msg)
 
+#define AST_CLASS_BASE(name)                             \
+    template <typename T = Node>                         \
+    using p_r = parser::ast::ParseResult<T>;             \
+                                                         \
+    token::TokenList::TokenListIter &iter;  /* NOLINT */ \
+    std::vector<p_r<>>               parse_stack;        \
+                                                         \
+  public:                                                \
+    explicit name(token::TokenList::TokenListIter &iter) \
+        : iter(iter) {}                                  \
+    name()                        = delete;              \
+    name(const name &)            = default;             \
+    name &operator=(const name &) = delete;              \
+    name(name &&)                 = default;             \
+    name &operator=(name &&)      = delete;              \
+    ~name()                       = default;             \
+                                                         \
+    template <typename T>                                \
+    p_r<T> parse() {                                     \
+        return std::dynamic_pointer_cast<T>(parse());    \
+    }                                                    \
+                                                         \
+    p_r<> parse()
+
 #endif  // __AST_CONFIG_DEF__
