@@ -67,23 +67,23 @@
 #include "neo-pprint/include/ansi_colors.hh"
 #define GET_DEBUG_INFO                                                                          \
     std::string(colors::fg16::green) + std::string(__FILE__) + ":" + std::to_string(__LINE__) + \
-        colors::reset + " - "
+        colors::reset + std::string(" - ")
 #else
-#define GET_DEBUG_INFO ""
+#define GET_DEBUG_INFO std::string("")
 #endif
 
 #define PARSE_ERROR(tok, msg) ParseError(tok, GET_DEBUG_INFO + msg)
 #define PARSE_ERROR_MSG(msg) ParseError(CURRENT_TOK, GET_DEBUG_INFO + msg)
-#define IF_EMPTY_ERROR(msg) \
-    if (iter.remaining_n() == 0) { \
-    return std::unexpected(ParseError(iter.peek_back().value(), GET_DEBUG_INFO + msg)); \
+#define IF_EMPTY_ERROR(msg)                                                                 \
+    if (iter.remaining_n() == 0) {                                                          \
+        return std::unexpected(ParseError(iter.peek_back().value(), GET_DEBUG_INFO + msg)); \
     }
 
-#define AST_CLASS_BASE(name)                             \
+#define AST_CLASS_BASE(name, MACRO)                      \
     template <typename T = Node>                         \
     using p_r = parser::ast::ParseResult<T>;             \
                                                          \
-    token::TokenList::TokenListIter &iter;  /* NOLINT */ \
+    token::TokenList::TokenListIter &iter; /* NOLINT */  \
     std::vector<p_r<>>               parse_stack;        \
                                                          \
   public:                                                \
@@ -96,11 +96,11 @@
     name &operator=(name &&)      = delete;              \
     ~name()                       = default;             \
                                                          \
-    template <typename T>                                \
-    p_r<T> parse() {                                     \
-        return std::dynamic_pointer_cast<T>(parse());    \
-    }                                                    \
-                                                         \
-    p_r<> parse()
+    p_r<> parse();
+
+// template <typename T, typename... Args>
+// p_r<T> parse(Args &&...args) { /* NOLINT */
+//     MACRO(GENERATE_IF_STATEMENTS);
+// }
 
 #endif  // __AST_CONFIG_DEF__

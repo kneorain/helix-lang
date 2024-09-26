@@ -26,6 +26,10 @@
 #include "token/include/token_list.hh"
 
 #define null nullptr
+#define GENERATE_IF_STATEMENTS(name)                      \
+    if constexpr (std::is_same_v<T, name>) {              \
+        return parse_##name(std::forward<Args>(args)...); \
+    }
 
 __AST_NODE_BEGIN {
     class Node {  // base node
@@ -60,8 +64,69 @@ __AST_NODE_BEGIN {
      *     NodeT<...> node = expr.parse<...>();
      */
     class Expression {  // THIS IS NOT A NODE
-        AST_CLASS_BASE(Expression);
+        AST_CLASS_BASE(Expression, EXPRS);
 
+        p_r<> parse_primary();
+        template <typename T, typename... Args>
+        p_r<T> parse(Args &&...args) { /* NOLINT */
+            if constexpr (std ::is_same_v<T, LiteralExpr>) {
+                return parse_LiteralExpr(std ::forward<Args>(args)...);
+            } else if constexpr (std ::is_same_v<T, BinaryExpr>) {
+                return parse_BinaryExpr(std ::forward<Args>(args)...);
+            } else if constexpr (std ::is_same_v<T, UnaryExpr>) {
+                return parse_UnaryExpr(std ::forward<Args>(args)...);
+            } else if constexpr (std ::is_same_v<T, IdentExpr>) {
+                return parse_IdentExpr(std ::forward<Args>(args)...);
+            } else if constexpr (std ::is_same_v<T, NamedArgumentExpr>) {
+                return parse_NamedArgumentExpr(std ::forward<Args>(args)...);
+            } else if constexpr (std ::is_same_v<T, ArgumentExpr>) {
+                return parse_ArgumentExpr(std ::forward<Args>(args)...);
+            } else if constexpr (std ::is_same_v<T, ArgumentListExpr>) {
+                return parse_ArgumentListExpr(std ::forward<Args>(args)...);
+            } else if constexpr (std ::is_same_v<T, GenericArgumentExpr>) {
+                return parse_GenericArgumentExpr(std ::forward<Args>(args)...);
+            } else if constexpr (std ::is_same_v<T, GenericInvokeExpr>) {
+                return parse_GenericInvokeExpr(std ::forward<Args>(args)...);
+            } else if constexpr (std ::is_same_v<T, GenericInvokePathExpr>) {
+                return parse_GenericInvokePathExpr(std ::forward<Args>(args)...);
+            } else if constexpr (std ::is_same_v<T, ScopePathExpr>) {
+                return parse_ScopePathExpr(std ::forward<Args>(args)...);
+            } else if constexpr (std ::is_same_v<T, DotPathExpr>) {
+                return parse_DotPathExpr(std ::forward<Args>(args)...);
+            } else if constexpr (std ::is_same_v<T, ArrayAccessExpr>) {
+                return parse_ArrayAccessExpr(std ::forward<Args>(args)...);
+            } else if constexpr (std ::is_same_v<T, PathExpr>) {
+                return parse_PathExpr(std ::forward<Args>(args)...);
+            } else if constexpr (std ::is_same_v<T, FunctionCallExpr>) {
+                return parse_FunctionCallExpr(std ::forward<Args>(args)...);
+            } else if constexpr (std ::is_same_v<T, ArrayLiteralExpr>) {
+                return parse_ArrayLiteralExpr(std ::forward<Args>(args)...);
+            } else if constexpr (std ::is_same_v<T, TupleLiteralExpr>) {
+                return parse_TupleLiteralExpr(std ::forward<Args>(args)...);
+            } else if constexpr (std ::is_same_v<T, SetLiteralExpr>) {
+                return parse_SetLiteralExpr(std ::forward<Args>(args)...);
+            } else if constexpr (std ::is_same_v<T, MapPairExpr>) {
+                return parse_MapPairExpr(std ::forward<Args>(args)...);
+            } else if constexpr (std ::is_same_v<T, MapLiteralExpr>) {
+                return parse_MapLiteralExpr(std ::forward<Args>(args)...);
+            } else if constexpr (std ::is_same_v<T, ObjInitExpr>) {
+                return parse_ObjInitExpr(std ::forward<Args>(args)...);
+            } else if constexpr (std ::is_same_v<T, LambdaExpr>) {
+                return parse_LambdaExpr(std ::forward<Args>(args)...);
+            } else if constexpr (std ::is_same_v<T, TernaryExpr>) {
+                return parse_TernaryExpr(std ::forward<Args>(args)...);
+            } else if constexpr (std ::is_same_v<T, ParenthesizedExpr>) {
+                return parse_ParenthesizedExpr(std ::forward<Args>(args)...);
+            } else if constexpr (std ::is_same_v<T, CastExpr>) {
+                return parse_CastExpr(std ::forward<Args>(args)...);
+            } else if constexpr (std ::is_same_v<T, InstOfExpr>) {
+                return parse_InstOfExpr(std ::forward<Args>(args)...);
+            } else if constexpr (std ::is_same_v<T, Type>) {
+                return parse_Type(std ::forward<Args>(args)...);
+            };
+        };
+
+      private:
         p_r<NamedArgumentExpr>     parse_NamedArgumentExpr();
         p_r<PathExpr>              parse_PathExpr(p_r<> simple_path);
         p_r<UnaryExpr>             parse_UnaryExpr();
@@ -89,8 +154,6 @@ __AST_NODE_BEGIN {
         p_r<InstOfExpr>            parse_InstOfExpr(p_r<> lhs = null);
         p_r<Type>                  parse_Type();
         p_r<FunctionCallExpr>      parse_FunctionCallExpr(p_r<> lhs = null, p_r<> gens = null);
-
-        p_r<> parse_primary();
     };
 
     /*
@@ -111,7 +174,65 @@ __AST_NODE_BEGIN {
      *     NodeT<...> node = state.parse<...>();
      */
     class Statement {  // THIS IS NOT A NODE
-        AST_CLASS_BASE(Statement);
+        AST_CLASS_BASE(Statement, STATES);
+
+        template <typename T, typename... Args>
+        p_r<T> parse(Args &&...args) { /* NOLINT */
+            if constexpr (std ::is_same_v<T, NamedVarSpecifier>) {
+                return parse_NamedVarSpecifier(std ::forward<Args>(args)...);
+            } else if constexpr (std ::is_same_v<T, ForPyStatementCore>) {
+                return parse_ForPyStatementCore(std ::forward<Args>(args)...);
+            } else if constexpr (std ::is_same_v<T, ForCStatementCore>) {
+                return parse_ForCStatementCore(std ::forward<Args>(args)...);
+            } else if constexpr (std ::is_same_v<T, ForState>) {
+                return parse_ForState(std ::forward<Args>(args)...);
+            } else if constexpr (std ::is_same_v<T, WhileState>) {
+                return parse_WhileState(std ::forward<Args>(args)...);
+            } else if constexpr (std ::is_same_v<T, ElseState>) {
+                return parse_ElseState(std ::forward<Args>(args)...);
+            } else if constexpr (std ::is_same_v<T, IfState>) {
+                return parse_IfState(std ::forward<Args>(args)...);
+            } else if constexpr (std ::is_same_v<T, SwitchCaseState>) {
+                return parse_SwitchCaseState(std ::forward<Args>(args)...);
+            } else if constexpr (std ::is_same_v<T, SwitchState>) {
+                return parse_SwitchState(std ::forward<Args>(args)...);
+            } else if constexpr (std ::is_same_v<T, YieldState>) {
+                return parse_YieldState(std ::forward<Args>(args)...);
+            } else if constexpr (std ::is_same_v<T, DeleteState>) {
+                return parse_DeleteState(std ::forward<Args>(args)...);
+            } else if constexpr (std ::is_same_v<T, AliasState>) {
+                return parse_AliasState(std ::forward<Args>(args)...);
+            } else if constexpr (std ::is_same_v<T, SingleImportState>) {
+                return parse_SingleImportState(std ::forward<Args>(args)...);
+            } else if constexpr (std ::is_same_v<T, MultiImportState>) {
+                return parse_MultiImportState(std ::forward<Args>(args)...);
+            } else if constexpr (std ::is_same_v<T, ImportState>) {
+                return parse_ImportState(std ::forward<Args>(args)...);
+            } else if constexpr (std ::is_same_v<T, ReturnState>) {
+                return parse_ReturnState(std ::forward<Args>(args)...);
+            } else if constexpr (std ::is_same_v<T, BreakState>) {
+                return parse_BreakState(std ::forward<Args>(args)...);
+            } else if constexpr (std ::is_same_v<T, BlockState>) {
+                return parse_BlockState(std ::forward<Args>(args)...);
+            } else if constexpr (std ::is_same_v<T, SuiteState>) {
+                return parse_SuiteState(std ::forward<Args>(args)...);
+            } else if constexpr (std ::is_same_v<T, ContinueState>) {
+                return parse_ContinueState(std ::forward<Args>(args)...);
+            } else if constexpr (std ::is_same_v<T, CatchState>) {
+                return parse_CatchState(std ::forward<Args>(args)...);
+            } else if constexpr (std ::is_same_v<T, FinallyState>) {
+                return parse_FinallyState(std ::forward<Args>(args)...);
+            } else if constexpr (std ::is_same_v<T, TryState>) {
+                return parse_TryState(std ::forward<Args>(args)...);
+            } else if constexpr (std ::is_same_v<T, PanicState>) {
+                return parse_PanicState(std ::forward<Args>(args)...);
+            } else if constexpr (std ::is_same_v<T, ExprState>) {
+                return parse_ExprState(std ::forward<Args>(args)...);
+            };
+        };
+
+      private:
+        std::vector<token::Token> modifiers;
 
         p_r<NamedVarSpecifier>  parse_NamedVarSpecifier();
         p_r<ForPyStatementCore> parse_ForPyStatementCore();
@@ -138,16 +259,6 @@ __AST_NODE_BEGIN {
         p_r<FinallyState>       parse_FinallyState();
         p_r<PanicState>         parse_PanicState();
         p_r<SuiteState>         parse_SuiteState();
-
-        template <typename T>
-        p_r<T> parse_special() {
-            if constexpr (std::is_same_v<T, FinallyState>) {
-
-            }
-        }
-
-      private:
-        std::vector<token::Token> modifiers;
     };
 }  // namespace __AST_BEGIN
 

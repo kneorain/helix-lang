@@ -139,11 +139,11 @@ AST_BASE_IMPL(Expression, parse_primary) {  // NOLINT(readability-function-cogni
     ParseResult<> node;
 
     if (is_excepted(tok, IS_LITERAL)) {
-        node = parse_LiteralExpr();
+        node = parse<LiteralExpr>();
     } else if (is_excepted(tok, IS_IDENTIFIER)) {
-        node = parse_IdentExpr();
+        node = parse<IdentExpr>();
     } else if (is_excepted(tok, IS_UNARY_OPERATOR)) {
-        node = parse_UnaryExpr();
+        node = parse<UnaryExpr>();
     } else if (is_excepted(tok, IS_PUNCTUATION)) {
         if (tok.token_kind() ==
             token::tokens::PUNCTUATION_OPEN_PAREN) {  /// at this point we either have a tuple or a
@@ -156,12 +156,12 @@ AST_BASE_IMPL(Expression, parse_primary) {  // NOLINT(readability-function-cogni
 
             if (CURRENT_TOK == token::tokens::PUNCTUATION_COMMA) {  /// if the next token is a
                                                                     /// comma, then its a tuple
-                node = parse_TupleLiteralExpr(expr);
+                node = parse<TupleLiteralExpr>(expr);
             } else {
-                node = parse_ParenthesizedExpr(expr);
+                node = parse<ParenthesizedExpr>(expr);
             }
         } else if (tok.token_kind() == token::tokens::PUNCTUATION_OPEN_BRACKET) {
-            node = parse_ArrayLiteralExpr();
+            node = parse<ArrayLiteralExpr>();
         } else if (tok.token_kind() == token::tokens::PUNCTUATION_OPEN_BRACE) {
             /// heres its either a set, a map or an object
             /// initializer, to determine which one it is, its
@@ -174,15 +174,15 @@ AST_BASE_IMPL(Expression, parse_primary) {  // NOLINT(readability-function-cogni
             iter.advance();  // skip '{'
 
             if (CURRENT_TOK == token::tokens::PUNCTUATION_DOT) {
-                node = parse_ObjInitExpr(true);
+                node = parse<ObjInitExpr>(true);
             } else {
                 ParseResult<> first = parse();
                 RETURN_IF_ERROR(first);
 
                 if (CURRENT_TOK == token::tokens::PUNCTUATION_COLON) {
-                    node = parse_MapLiteralExpr(first);
+                    node = parse<MapLiteralExpr>(first);
                 } else {
-                    node = parse_SetLiteralExpr(first);
+                    node = parse<SetLiteralExpr>(first);
                 }
             }
         } else {
@@ -234,46 +234,46 @@ AST_BASE_IMPL(Expression, parse) {  // NOLINT(readability-function-cognitive-com
                                                          /// binary expression may god help me
                 NOT_IMPLEMENTED;
             case token::tokens::PUNCTUATION_OPEN_PAREN:
-                expr = parse_FunctionCallExpr(expr);
+                expr = parse<FunctionCallExpr>(expr);
                 RETURN_IF_ERROR(expr);
                 break;
 
             case token::tokens::PUNCTUATION_OPEN_BRACKET:
-                expr = parse_ArrayAccessExpr(expr);
+                expr = parse<ArrayAccessExpr>(expr);
                 RETURN_IF_ERROR(expr);
                 break;
 
             case token::tokens::PUNCTUATION_DOT:
-                expr = parse_DotPathExpr(expr);
+                expr = parse<DotPathExpr>(expr);
                 RETURN_IF_ERROR(expr);
                 break;
 
             case token::tokens::OPERATOR_SCOPE:
-                expr = parse_ScopePathExpr(expr);
+                expr = parse<ScopePathExpr>(expr);
                 RETURN_IF_ERROR(expr);
                 break;
 
             case token::tokens::PUNCTUATION_OPEN_BRACE:
-                expr = parse_ObjInitExpr();
+                expr = parse<ObjInitExpr>();
                 RETURN_IF_ERROR(expr);
                 break;
 
             case token::tokens::KEYWORD_HAS:
                 [[fallthrough]];
             case token::tokens::KEYWORD_DERIVES:
-                expr = parse_InstOfExpr(expr);
+                expr = parse<InstOfExpr>(expr);
                 RETURN_IF_ERROR(expr);
                 break;
 
             case token::tokens::PUNCTUATION_QUESTION_MARK:
                 [[fallthrough]];
             case token::tokens::KEYWORD_IF:
-                expr = parse_TernaryExpr(expr);
+                expr = parse<TernaryExpr>(expr);
                 RETURN_IF_ERROR(expr);
                 break;
 
             case token::tokens::KEYWORD_AS:
-                expr = parse_CastExpr(expr);
+                expr = parse<CastExpr>(expr);
                 RETURN_IF_ERROR(expr);
                 break;
 
@@ -284,11 +284,11 @@ AST_BASE_IMPL(Expression, parse) {  // NOLINT(readability-function-cognitive-com
 
             default:
                 if (is_excepted(tok, IS_BINARY_OPERATOR)) {
-                    expr = parse_BinaryExpr(expr, get_precedence(tok));
+                    expr = parse<BinaryExpr>(expr, get_precedence(tok));
                     RETURN_IF_ERROR(expr);
                 } else if (tok == token::tokens::PUNCTUATION_OPEN_PAREN) {
                     iter.advance();                        // skip '('
-                    expr = parse_ParenthesizedExpr(expr);  /// im not sure why this works, but
+                    expr = parse<ParenthesizedExpr>(expr);  /// im not sure why this works, but
                                                            /// based on small tests, it seems
                                                            /// to work fine i'll find out soon
                                                            /// enough if it doesn't
@@ -372,7 +372,7 @@ AST_NODE_IMPL(Expression, BinaryExpr, ParseResult<> lhs, int min_precedence) {
 
         tok = CURRENT_TOK;
         while (is_excepted(tok, IS_BINARY_OPERATOR) && get_precedence(tok) > precedence) {
-            rhs = parse_BinaryExpr(rhs, get_precedence(tok));
+            rhs = parse<BinaryExpr>(rhs, get_precedence(tok));
             RETURN_IF_ERROR(rhs);
             tok = CURRENT_TOK;
         }
@@ -507,7 +507,7 @@ AST_NODE_IMPL(Expression, NamedArgumentExpr) {
 
     iter.advance();  // skip '.'
 
-    ParseResult<IdentExpr> name = parse_IdentExpr();
+    ParseResult<IdentExpr> name = parse<IdentExpr>();
     RETURN_IF_ERROR(name);
 
     if ((CURRENT_TOK != token::tokens::OPERATOR_ASSIGN)) {
@@ -590,7 +590,7 @@ AST_NODE_IMPL(Expression, ArgumentListExpr) {
         return make_node<ArgumentListExpr>(nullptr);
     }
 
-    ParseResult<ArgumentExpr> first = parse_ArgumentExpr();
+    ParseResult<ArgumentExpr> first = parse<ArgumentExpr>();
 
     RETURN_IF_ERROR(first);
 
@@ -598,7 +598,7 @@ AST_NODE_IMPL(Expression, ArgumentListExpr) {
 
     while (CURRENT_TOK == token::tokens::PUNCTUATION_COMMA) {
         iter.advance();  // skip ','
-        ParseResult<ArgumentExpr> arg = parse_ArgumentExpr();
+        ParseResult<ArgumentExpr> arg = parse<ArgumentExpr>();
         RETURN_IF_ERROR(arg);
         args->args.push_back(arg.value());
     }
@@ -798,11 +798,11 @@ AST_NODE_IMPL(Expression, FunctionCallExpr, ParseResult<> lhs, ParseResult<> gen
     // ParseResult<GenericInvokeExpr> generics;
 
     if (lhs != nullptr && lhs.has_value()) {
-        path = parse_PathExpr(lhs.value());
+        path = parse<PathExpr>(lhs.value());
     } else {
         lhs = parse();
         RETURN_IF_ERROR(lhs);
-        path = parse_PathExpr(lhs.value());
+        path = parse<PathExpr>(lhs.value());
     }
 
     RETURN_IF_ERROR(path);
@@ -811,7 +811,7 @@ AST_NODE_IMPL(Expression, FunctionCallExpr, ParseResult<> lhs, ParseResult<> gen
 
     IS_NOT_EMPTY;
 
-    ParseResult<ArgumentListExpr> args = parse_ArgumentListExpr();
+    ParseResult<ArgumentListExpr> args = parse<ArgumentListExpr>();
 
     RETURN_IF_ERROR(args);
 
@@ -1086,7 +1086,7 @@ AST_NODE_IMPL(Expression, MapLiteralExpr, ParseResult<> starting_key) {
 
         iter.advance();  // skip '{'
 
-        ParseResult<MapPairExpr> tmp_pair = parse_MapPairExpr();
+        ParseResult<MapPairExpr> tmp_pair = parse<MapPairExpr>();
         RETURN_IF_ERROR(tmp_pair);
 
         pair = tmp_pair.value();
@@ -1104,7 +1104,7 @@ AST_NODE_IMPL(Expression, MapLiteralExpr, ParseResult<> starting_key) {
             break;
         }
 
-        ParseResult<MapPairExpr> next_pair = parse_MapPairExpr();
+        ParseResult<MapPairExpr> next_pair = parse<MapPairExpr>();
         RETURN_IF_ERROR(next_pair);
 
         map->values.push_back(next_pair.value());
@@ -1151,7 +1151,7 @@ AST_NODE_IMPL(Expression, ObjInitExpr, bool skip_start_brace) {
             CURRENT_TOK, "expected a keyword argument, but got an empty object initializer"));
     }
 
-    ParseResult<NamedArgumentExpr> first = parse_NamedArgumentExpr();
+    ParseResult<NamedArgumentExpr> first = parse<NamedArgumentExpr>();
     RETURN_IF_ERROR(first);
 
     NodeT<ObjInitExpr> obj = make_node<ObjInitExpr>(first.value());
@@ -1163,7 +1163,7 @@ AST_NODE_IMPL(Expression, ObjInitExpr, bool skip_start_brace) {
             break;
         }
 
-        ParseResult<NamedArgumentExpr> next = parse_NamedArgumentExpr();
+        ParseResult<NamedArgumentExpr> next = parse<NamedArgumentExpr>();
         RETURN_IF_ERROR(next);
         obj->kwargs.push_back(next.value());
     }
