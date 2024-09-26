@@ -71,8 +71,9 @@ int compile(int argc, char **argv) {
     if (parsed_args.emit_ast) {
         // generate ast from the given tokens : stage 2
         auto iter = tokens.begin();
-        auto ast  = parser::ast::node::Expression(iter);
+        auto ast  = parser::ast::node::Statement(iter);
         auto expr = ast.parse();
+
 
         parser::ast::visitor::Jsonify json_visitor;
 

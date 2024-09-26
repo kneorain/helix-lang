@@ -74,6 +74,10 @@
 
 #define PARSE_ERROR(tok, msg) ParseError(tok, GET_DEBUG_INFO + msg)
 #define PARSE_ERROR_MSG(msg) ParseError(CURRENT_TOK, GET_DEBUG_INFO + msg)
+#define IF_EMPTY_ERROR(msg) \
+    if (iter.remaining_n() == 0) { \
+    return std::unexpected(ParseError(iter.peek_back().value(), GET_DEBUG_INFO + msg)); \
+    }
 
 #define AST_CLASS_BASE(name)                             \
     template <typename T = Node>                         \

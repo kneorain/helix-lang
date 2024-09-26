@@ -1395,37 +1395,47 @@ int get_precedence(const token::Token &tok) {
         case token::OPERATOR_DIV:
         case token::OPERATOR_MOD:
         case token::OPERATOR_POW:
-            return 5;
+            return 12;
 
         case token::OPERATOR_ADD:
         case token::OPERATOR_SUB:
-            return 4;
+            return 11;
 
-        case token::OPERATOR_BITWISE_AND:
-        case token::OPERATOR_BITWISE_OR:
-        case token::OPERATOR_BITWISE_XOR:
         case token::OPERATOR_BITWISE_L_SHIFT:
         case token::OPERATOR_BITWISE_R_SHIFT:
-            return 3;
+            return 10;
 
-        case token::OPERATOR_EQUAL:
-        case token::OPERATOR_NOT_EQUAL:
         case token::OPERATOR_GREATER_THAN_EQUALS:
         case token::OPERATOR_LESS_THAN_EQUALS:
         case token::PUNCTUATION_OPEN_ANGLE:
         case token::PUNCTUATION_CLOSE_ANGLE:
-            return 2;
+            return 9;
 
-        case token::OPERATOR_ASSIGN:
+        case token::OPERATOR_EQUAL:
+        case token::OPERATOR_NOT_EQUAL:
+            return 8;
+
+        case token::OPERATOR_BITWISE_AND:
+            return 7;
+        case token::OPERATOR_BITWISE_XOR:
+            return 6;
+        case token::OPERATOR_BITWISE_OR:
+            return 5;
+        case token::OPERATOR_LOGICAL_AND:
+            return 4;
+        case token::OPERATOR_LOGICAL_OR:
+        // MISSING ?:
+            return 3;
+        case token::OPERATOR_RANGE_INCLUSIVE:
+        case token::OPERATOR_RANGE:
+            return 2;
+        
         case token::OPERATOR_ADD_ASSIGN:
         case token::OPERATOR_SUB_ASSIGN:
         case token::OPERATOR_MUL_ASSIGN:
         case token::OPERATOR_DIV_ASSIGN:
         case token::OPERATOR_MOD_ASSIGN:
-        case token::OPERATOR_LOGICAL_AND:
-        case token::OPERATOR_LOGICAL_OR:
-        case token::OPERATOR_RANGE:
-        case token::OPERATOR_RANGE_INCLUSIVE:
+        case token::OPERATOR_ASSIGN:
             return 1;
 
         default:

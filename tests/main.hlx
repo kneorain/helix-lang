@@ -46,4 +46,7 @@
     Namespace::Class::method().chain().property[0],
     x as int,
     y as *float,
+
+    x * y / x,
+    x * (y / x),
 }

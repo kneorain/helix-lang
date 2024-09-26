@@ -222,35 +222,25 @@ __AST_NODE_BEGIN {
     };
 
     class BreakState final : public Node {
-        // := 'break' ';'
+        BASE_CORE_METHODS(BreakState);
 
-      public:
-        BreakState()                              = default;
-        ~BreakState() override                    = default;
-        BreakState(const BreakState &)            = default;
-        BreakState &operator=(const BreakState &) = default;
-        BreakState(BreakState &&)                 = default;
-        BreakState &operator=(BreakState &&)      = default;
-        void        accept(parser ::ast ::visitor ::Visitor &visitor) const override {
-            visitor.visit(*this);
-        }
-        [[nodiscard]] nodes        getNodeType() const override { return nodes ::BreakState; }
-        [[nodiscard]] std ::string getNodeName() const override { return "BreakState"; };
+        // := 'break' ';'
+        
+        explicit BreakState(token::Token marker)
+            : marker(std::move(marker)) {}
+
+        token::Token marker;
     };
 
     class ContinueState final : public Node {
-      public:
-        ContinueState()                                 = default;
-        ~ContinueState() override                       = default;
-        ContinueState(const ContinueState &)            = default;
-        ContinueState &operator=(const ContinueState &) = default;
-        ContinueState(ContinueState &&)                 = default;
-        ContinueState &operator=(ContinueState &&)      = default;
-        void           accept(parser ::ast ::visitor ::Visitor &visitor) const override {
-            visitor.visit(*this);
-        }
-        [[nodiscard]] nodes        getNodeType() const override { return nodes ::ContinueState; }
-        [[nodiscard]] std ::string getNodeName() const override { return "ContinueState"; };
+        BASE_CORE_METHODS(ContinueState);
+
+        // := 'continue' ';'
+
+        explicit ContinueState(token::Token marker)
+            : marker(std::move(marker)) {}
+
+        token::Token marker;
     };
 
     class ExprState final : public Node {

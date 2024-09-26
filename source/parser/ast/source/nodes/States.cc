@@ -79,6 +79,7 @@
 #include <unordered_set>
 #include <vector>
 
+#include "neo-pprint/include/hxpprint.hh"
 #include "parser/ast/include/config/AST_config.def"
 #include "parser/ast/include/config/AST_generate.hh"
 #include "parser/ast/include/config/case_types.def"
@@ -110,20 +111,14 @@ AST_BASE_IMPL(Statement, parse) {  // NOLINT(readability-function-cognitive-comp
     IS_NOT_EMPTY;                  /// simple macro to check if the iterator is empty, expands to:
                                    /// if(iter.remaining_n() == 0) { return std::unexpected(...); }
 
-    token::Token tok = CURRENT_TOK;  /// get the current token from the iterator
-
-    modifiers = get_modifiers(iter);  /// get the modifiers for the statement
+    token::Token tok = CURRENT_TOK;          /// get the current token from the iterator
+    modifiers        = get_modifiers(iter);  /// get the modifiers for the statement
 
     switch (tok.token_kind()) {
-            // TODO: case token::KEYWORD_IMPORT
-
+        // TODO: case token::KEYWORD_IMPORT
         case token::KEYWORD_IF:
         case token::KEYWORD_UNLESS:
             return parse_IfState();
-
-        case token::KEYWORD_ELSE:
-            return std::unexpected(PARSE_ERROR(
-                CURRENT_TOK, "found dangling 'else' without a matching 'if' or 'unless'"));
 
         case token::KEYWORD_RETURN:
             return parse_ReturnState();
@@ -143,14 +138,6 @@ AST_BASE_IMPL(Statement, parse) {  // NOLINT(readability-function-cognitive-comp
         case token::KEYWORD_SWITCH:
             return parse_SwitchState();
 
-        case token::KEYWORD_CASE:
-            return std::unexpected(
-                PARSE_ERROR(CURRENT_TOK, "found dangling 'case' without a matching 'switch'"));
-
-        case token::KEYWORD_DEFAULT:
-            return std::unexpected(
-                PARSE_ERROR(CURRENT_TOK, "found dangling 'default' without a matching 'switch'"));
-
         case token::KEYWORD_TRY:
             return parse_TryState();
 
@@ -159,10 +146,6 @@ AST_BASE_IMPL(Statement, parse) {  // NOLINT(readability-function-cognitive-comp
 
         case token::KEYWORD_FINALLY:
             return parse_FinallyState();
-            
-        case token::KEYWORD_CATCH:
-            return std::unexpected(
-                PARSE_ERROR(CURRENT_TOK, "found dangling 'catch' without a matching 'try'"));
 
         case token::KEYWORD_YIELD:
             return parse_YieldState();
@@ -170,8 +153,21 @@ AST_BASE_IMPL(Statement, parse) {  // NOLINT(readability-function-cognitive-comp
         case token::KEYWORD_DELETE:
             return parse_DeleteState();
 
-        case token::PUNCTUATION_OPEN_BRACE:
-            return parse_BlockState();
+        case token::KEYWORD_ELSE:
+            return std::unexpected(PARSE_ERROR(
+                CURRENT_TOK, "found dangling 'else' without a matching 'if' or 'unless'"));
+
+        case token::KEYWORD_CASE:
+            return std::unexpected(
+                PARSE_ERROR(CURRENT_TOK, "found dangling 'case' without a matching 'switch'"));
+
+        case token::KEYWORD_DEFAULT:
+            return std::unexpected(
+                PARSE_ERROR(CURRENT_TOK, "found dangling 'default' without a matching 'switch'"));
+
+        case token::KEYWORD_CATCH:
+            return std::unexpected(
+                PARSE_ERROR(CURRENT_TOK, "found dangling 'catch' without a matching 'try'"));
 
         default:
             return parse_ExprState();
@@ -263,19 +259,55 @@ AST_NODE_IMPL_VISITOR(Jsonify, SwitchState) { json.section("SwitchState"); }
 
 AST_NODE_IMPL(Statement, YieldState) {
     IS_NOT_EMPTY;
-    NOT_IMPLEMENTED;
+
+    if (CURRENT_TOK != token::KEYWORD_YIELD) {
+        return std::unexpected(PARSE_ERROR(CURRENT_TOK, "expected 'yield' keyword"));
+    }
+
+    iter.advance();
+
+    auto expr = Expression(iter).parse();
+    RETURN_IF_ERROR(expr);
+
+    if (CURRENT_TOK != token::PUNCTUATION_SEMICOLON) {
+        return std::unexpected(PARSE_ERROR(CURRENT_TOK, "expected ';'"));
+    }
+
+    iter.advance();
+
+    return make_node<YieldState>(expr.value());
 }
 
-AST_NODE_IMPL_VISITOR(Jsonify, YieldState) { json.section("YieldState"); }
+AST_NODE_IMPL_VISITOR(Jsonify, YieldState) {
+    json.section("YieldState").add("expr", get_node_json(node.value));
+}
 
 // ---------------------------------------------------------------------------------------------- //
 
 AST_NODE_IMPL(Statement, DeleteState) {
     IS_NOT_EMPTY;
-    NOT_IMPLEMENTED;
+
+    if (CURRENT_TOK != token::KEYWORD_DELETE) {
+        return std::unexpected(PARSE_ERROR(CURRENT_TOK, "expected 'delete' keyword"));
+    }
+
+    iter.advance();
+
+    auto expr = Expression(iter).parse();
+    RETURN_IF_ERROR(expr);
+
+    if (CURRENT_TOK != token::PUNCTUATION_SEMICOLON) {
+        return std::unexpected(PARSE_ERROR(CURRENT_TOK, "expected ';'"));
+    }
+
+    iter.advance();
+
+    return make_node<DeleteState>(expr.value());
 }
 
-AST_NODE_IMPL_VISITOR(Jsonify, DeleteState) { json.section("DeleteState"); }
+AST_NODE_IMPL_VISITOR(Jsonify, DeleteState) {
+    json.section("DeleteState").add("expr", get_node_json(node.value));
+}
 
 // ---------------------------------------------------------------------------------------------- //
 
@@ -317,37 +349,104 @@ AST_NODE_IMPL_VISITOR(Jsonify, ImportState) { json.section("ImportState"); }
 
 AST_NODE_IMPL(Statement, ReturnState) {
     IS_NOT_EMPTY;
-    NOT_IMPLEMENTED;
+
+    if (CURRENT_TOK != token::KEYWORD_RETURN) {
+        return std::unexpected(PARSE_ERROR(CURRENT_TOK, "expected 'return' keyword"));
+    }
+
+    iter.advance();  // skip 'return'
+
+    auto expr = Expression(iter).parse();
+    RETURN_IF_ERROR(expr);
+
+    if (CURRENT_TOK != token::PUNCTUATION_SEMICOLON) {
+        return std::unexpected(PARSE_ERROR(CURRENT_TOK, "expected ';'"));
+    }
+
+    iter.advance();  // skip ';'
+
+    return make_node<ReturnState>(expr.value());
 }
 
-AST_NODE_IMPL_VISITOR(Jsonify, ReturnState) { json.section("ReturnState"); }
+AST_NODE_IMPL_VISITOR(Jsonify, ReturnState) {
+    json.section("ReturnState").add("value", get_node_json(node.value));
+}
 
 // ---------------------------------------------------------------------------------------------- //
 
 AST_NODE_IMPL(Statement, BreakState) {
     IS_NOT_EMPTY;
-    NOT_IMPLEMENTED;
+
+    if (CURRENT_TOK != token::KEYWORD_BREAK) {
+        return std::unexpected(PARSE_ERROR(CURRENT_TOK, "expected 'break' keyword"));
+    }
+
+    auto node = make_node<BreakState>(CURRENT_TOK);
+
+    iter.advance();
+
+    if (CURRENT_TOK != token::PUNCTUATION_SEMICOLON) {
+        return std::unexpected(PARSE_ERROR(CURRENT_TOK, "expected ';'"));
+    }
+
+    iter.advance();
+
+    return node;
 }
 
-AST_NODE_IMPL_VISITOR(Jsonify, BreakState) { json.section("BreakState"); }
+AST_NODE_IMPL_VISITOR(Jsonify, BreakState) {
+    json.section("BreakState").add("marker", node.marker);
+}
 
 // ---------------------------------------------------------------------------------------------- //
 
 AST_NODE_IMPL(Statement, ContinueState) {
     IS_NOT_EMPTY;
-    NOT_IMPLEMENTED;
+
+    if (CURRENT_TOK != token::KEYWORD_CONTINUE) {
+        return std::unexpected(PARSE_ERROR(CURRENT_TOK, "expected 'continue' keyword"));
+    }
+
+    auto node = make_node<ContinueState>(CURRENT_TOK);
+
+    iter.advance();
+
+    if (CURRENT_TOK != token::PUNCTUATION_SEMICOLON) {
+        return std::unexpected(PARSE_ERROR(CURRENT_TOK, "expected ';'"));
+    }
+
+    iter.advance();
+
+    return node;
 }
 
-AST_NODE_IMPL_VISITOR(Jsonify, ContinueState) { json.section("ContinueState"); }
+AST_NODE_IMPL_VISITOR(Jsonify, ContinueState) {
+    json.section("ContinueState").add("marker", node.marker);
+}
 
 // ---------------------------------------------------------------------------------------------- //
 
 AST_NODE_IMPL(Statement, ExprState) {
     IS_NOT_EMPTY;
-    NOT_IMPLEMENTED;
+
+
+    auto expr = Expression(iter).parse();
+    RETURN_IF_ERROR(expr);
+
+    IF_EMPTY_ERROR("expected ;");
+
+    if (CURRENT_TOK != token::PUNCTUATION_SEMICOLON) {
+        return std::unexpected(PARSE_ERROR(CURRENT_TOK, "expected ';'"));
+    }
+
+    iter.advance();
+
+    return make_node<ExprState>(expr.value());
 }
 
-AST_NODE_IMPL_VISITOR(Jsonify, ExprState) { json.section("ExprState"); }
+AST_NODE_IMPL_VISITOR(Jsonify, ExprState) {
+    json.section("ExprState").add("expr", get_node_json(node.value));
+}
 
 // ---------------------------------------------------------------------------------------------- //
 
