@@ -17,7 +17,6 @@
 #include "parser/ast/include/core/AST_nodes.hh"
 #include "parser/ast/include/types/AST_types.hh"
 
-
 __AST_NODE_BEGIN {
     class LiteralExpr final : public Node {  // := LITERAL
         BASE_CORE_METHODS(LiteralExpr);
@@ -333,6 +332,33 @@ __AST_NODE_BEGIN {
             Pointer,
             Reference,
         };
+    };
+
+    class AsyncThreading final : public Node {  // := IdentExpr
+        BASE_CORE_METHODS(AsyncThreading);
+
+        enum class AsyncThreadingType { Await, Spawn, Thread, Other };
+
+        explicit AsyncThreading(NodeT<> value, const token::Token &type)
+            : value(std::move(value)) {
+            switch (type.token_kind()) {
+                case token::KEYWORD_AWAIT:
+                    this->type = AsyncThreadingType::Await;
+                    break;
+                case token::KEYWORD_SPAWN:
+                    this->type = AsyncThreadingType::Spawn;
+                    break;
+                case token::KEYWORD_THREAD:
+                    this->type = AsyncThreadingType::Thread;
+                    break;
+                default:
+                    this->type = AsyncThreadingType::Other;
+                    break;
+            }
+        }
+
+        NodeT<>            value;
+        AsyncThreadingType type;
     };
 }
 

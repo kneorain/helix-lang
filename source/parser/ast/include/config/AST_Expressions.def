@@ -40,6 +40,7 @@
     MACRO(ParenthesizedExpr)     \
     MACRO(CastExpr)              \
     MACRO(InstOfExpr)            \
+    MACRO(AsyncThreading)        \
     MACRO(Type)
 
 #endif  // __AST_EXPRESSIONS_DEF__

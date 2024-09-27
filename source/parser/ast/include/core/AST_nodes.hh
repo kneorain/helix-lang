@@ -123,7 +123,9 @@ __AST_NODE_BEGIN {
                 return parse_InstOfExpr(std ::forward<Args>(args)...);
             } else if constexpr (std ::is_same_v<T, Type>) {
                 return parse_Type(std ::forward<Args>(args)...);
-            };
+            } else if constexpr (std ::is_same_v<T, AsyncThreading>) {
+                return parse_AsyncThreading(std ::forward<Args>(args)...);
+            }
         };
 
       private:
@@ -153,6 +155,7 @@ __AST_NODE_BEGIN {
         p_r<CastExpr>              parse_CastExpr(p_r<> lhs);
         p_r<InstOfExpr>            parse_InstOfExpr(p_r<> lhs = null);
         p_r<Type>                  parse_Type();
+        p_r<AsyncThreading>        parse_AsyncThreading();
         p_r<FunctionCallExpr>      parse_FunctionCallExpr(p_r<> lhs = null, p_r<> gens = null);
     };
 

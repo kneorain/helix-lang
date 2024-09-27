@@ -49,4 +49,6 @@
 
     x * y / x,
     x * (y / x),
-}
+
+    spawn spawn spawn spawn spawn thread await f,
+};
