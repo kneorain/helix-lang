@@ -78,13 +78,16 @@
 /// [x] * ArrayLiteralExpr      * AE -> '[' E ( ',' E )* ']'                                     ///
 /// [x] * ParenthesizedExpr     * PAE -> '(' E? ')'                                              ///
 ///                                                                                              ///
+/// [x] * AsyncExpr                 * AS -> ('spawn' | 'thread') E                               ///
+/// [x] * AwaitExpr                 * AS -> 'await' E                                            ///
+/// [ ] * ContextManagerExpr        * CM -> E 'as' ID Suite                                      ///
+/// [ ] * LambdaExpr                * LE -> 'fn' TODO                                            ///
+///                                                                                              ///
 ///                                /* generics */                                                ///
 /// [ ] * GenericInvokeExpr         * GI -> '<' GAE? ( ',' GAE )* '>'                            ///
 /// [ ] * GenericArgumentExpr       * GAE -> E | ID '=' E                                        ///
 /// [ ] * GenericInvokePathExpr     * PGE -> PE GI                                               ///
 ///                                                                                              ///
-/// [ ] * AsyncExpr                 * AS -> ('spawn' | 'thread') E                               ///
-/// [ ] * AwaitExpr                 * AS -> 'await' E                                            ///
 ///                                                                                              ///
 /// [ ] * Type    * TY -> ID | PT                                                                ///
 ///                                                                                              ///
@@ -124,6 +127,7 @@
 #include "parser/ast/include/nodes/AST_Expressions.hh"
 #include "parser/ast/include/types/AST_jsonify_visitor.hh"
 #include "parser/ast/include/types/AST_types.hh"
+#include "token/include/generate.hh"
 
 // ---------------------------------------------------------------------------------------------- //
 
@@ -311,9 +315,7 @@ AST_BASE_IMPL(Expression, parse) {  // NOLINT(readability-function-cognitive-com
 // ---------------------------------------------------------------------------------------------- //
 
 AST_NODE_IMPL(Expression, LiteralExpr) {
-    if (iter.remaining_n() == 0) {
-        return std::unexpected(PARSE_ERROR_MSG("expected a literal expression, but found nothing"));
-    }
+    IS_NOT_EMPTY;
 
     token::Token tok = CURRENT_TOK;  // get tokens[0]
     iter.advance();                  // pop tokens[0]
@@ -382,7 +384,7 @@ AST_NODE_IMPL(Expression, BinaryExpr, ParseResult<> lhs, int min_precedence) {
         lhs = make_node<BinaryExpr>(lhs.value(), rhs.value(), op);
     }
 
-    return std::dynamic_pointer_cast<BinaryExpr>(lhs.value());
+    return std::static_pointer_cast<BinaryExpr>(lhs.value());
 }
 
 AST_NODE_IMPL_VISITOR(Jsonify, BinaryExpr) {
@@ -398,13 +400,9 @@ AST_NODE_IMPL(Expression, UnaryExpr) {
     IS_NOT_EMPTY;
 
     // := op E
-    if (!is_excepted(CURRENT_TOK, IS_UNARY_OPERATOR)) {
-        return std::unexpected(PARSE_ERROR(
-            CURRENT_TOK, "expected a unary operator, but found: " + CURRENT_TOK.token_kind_repr()));
-    }
-
+    IS_IN_EXCEPTED_TOKENS(IS_UNARY_OPERATOR);
     token::Token op = CURRENT_TOK;
-    iter.advance();  // pop the token
+    iter.advance();
 
     ParseResult<> rhs = parse();
     RETURN_IF_ERROR(rhs);
@@ -424,69 +422,14 @@ AST_NODE_IMPL(Expression, IdentExpr) {
     // verify the current token is an identifier
     token::Token tok                   = CURRENT_TOK;
     bool         is_reserved_primitive = false;
-
-    switch (tok.token_kind()) {
-        case token::PRIMITIVE_VOID:
-            [[fallthrough]];
-        case token::PRIMITIVE_BOOL:
-            [[fallthrough]];
-        case token::PRIMITIVE_BYTE:
-            [[fallthrough]];
-        case token::PRIMITIVE_CHAR:
-            [[fallthrough]];
-        case token::PRIMITIVE_POINTER:
-            [[fallthrough]];
-        case token::PRIMITIVE_I8:
-            [[fallthrough]];
-        case token::PRIMITIVE_U8:
-            [[fallthrough]];
-        case token::PRIMITIVE_I16:
-            [[fallthrough]];
-        case token::PRIMITIVE_U16:
-            [[fallthrough]];
-        case token::PRIMITIVE_I32:
-            [[fallthrough]];
-        case token::PRIMITIVE_U32:
-            [[fallthrough]];
-        case token::PRIMITIVE_F32:
-            [[fallthrough]];
-        case token::PRIMITIVE_I64:
-            [[fallthrough]];
-        case token::PRIMITIVE_U64:
-            [[fallthrough]];
-        case token::PRIMITIVE_F64:
-            [[fallthrough]];
-        case token::PRIMITIVE_FLOAT:
-            [[fallthrough]];
-        case token::PRIMITIVE_I128:
-            [[fallthrough]];
-        case token::PRIMITIVE_U128:
-            [[fallthrough]];
-        case token::PRIMITIVE_INT:
-            [[fallthrough]];
-        case token::PRIMITIVE_DECIMAL:
-            [[fallthrough]];
-        case token::PRIMITIVE_STRING:
-            [[fallthrough]];
-        case token::PRIMITIVE_LIST:
-            [[fallthrough]];
-        case token::PRIMITIVE_TUPLE:
-            [[fallthrough]];
-        case token::PRIMITIVE_SET:
-            [[fallthrough]];
-        case token::PRIMITIVE_MAP:
-            [[fallthrough]];
-        case token::PRIMITIVE_ANY:
-            is_reserved_primitive = true;
-            break;
-        case token::IDENTIFIER:
-            break;
-        default:
-            return std::unexpected(
-                PARSE_ERROR(tok, +"expected an identifier, but found: " + tok.token_kind_repr()));
+    
+    IS_IN_EXCEPTED_TOKENS(IS_IDENTIFIER);
+    
+    if (tok.token_kind() != token::IDENTIFIER) {
+        is_reserved_primitive = true;
     }
 
-    iter.advance();  // pop the token
+    iter.advance();
 
     return make_node<IdentExpr>(tok, is_reserved_primitive);
 }
@@ -501,22 +444,13 @@ AST_NODE_IMPL(Expression, NamedArgumentExpr) {
     IS_NOT_EMPTY;
 
     // := '.' IdentExpr '=' E
-
-    if ((CURRENT_TOK != token::PUNCTUATION_DOT)) {
-        return std::unexpected(
-            PARSE_ERROR(CURRENT_TOK, "expected '.', but found: " + CURRENT_TOK.token_kind_repr()));
-    }
-
+    IS_EXCEPTED_TOKEN(token::PUNCTUATION_DOT);
     iter.advance();  // skip '.'
 
     ParseResult<IdentExpr> name = parse<IdentExpr>();
     RETURN_IF_ERROR(name);
 
-    if ((CURRENT_TOK != token::OPERATOR_ASSIGN)) {
-        return std::unexpected(
-            PARSE_ERROR(CURRENT_TOK, "expected '=', but found: " + CURRENT_TOK.token_kind_repr()));
-    }
-
+    IS_EXCEPTED_TOKEN(token::OPERATOR_ASSIGN);
     iter.advance();  // skip '='
 
     ParseResult<> value = parse();
@@ -580,36 +514,29 @@ AST_NODE_IMPL(Expression, ArgumentListExpr) {
     // := '(' ArgumentExpr (',' ArgumentExpr)* ')'
     // in typical recursive descent fashion, we parse the first argument expression
 
-    if ((CURRENT_TOK != token::PUNCTUATION_OPEN_PAREN)) {
-        return std::unexpected(
-            PARSE_ERROR(CURRENT_TOK, "expected '(', but found: " + CURRENT_TOK.token_kind_repr()));
-    }
-
+    IS_EXCEPTED_TOKEN(token::PUNCTUATION_OPEN_PAREN);
     iter.advance();  // skip '('
 
-    if (CURRENT_TOK == token::PUNCTUATION_CLOSE_PAREN) {
+    if CURRENT_TOKEN_IS(token::PUNCTUATION_CLOSE_PAREN) {
         iter.advance();  // skip ')'
         return make_node<ArgumentListExpr>(nullptr);
     }
 
     ParseResult<ArgumentExpr> first = parse<ArgumentExpr>();
-
     RETURN_IF_ERROR(first);
 
     NodeT<ArgumentListExpr> args = make_node<ArgumentListExpr>(first.value());
 
-    while (CURRENT_TOK == token::PUNCTUATION_COMMA) {
+    while CURRENT_TOKEN_IS(token::PUNCTUATION_COMMA) {
         iter.advance();  // skip ','
+        
         ParseResult<ArgumentExpr> arg = parse<ArgumentExpr>();
         RETURN_IF_ERROR(arg);
+        
         args->args.push_back(arg.value());
     }
 
-    if ((CURRENT_TOK != token::PUNCTUATION_CLOSE_PAREN)) {
-        return std::unexpected(
-            PARSE_ERROR(CURRENT_TOK, "expected ')', but found: " + CURRENT_TOK.token_kind_repr()));
-    }
-
+    IS_EXCEPTED_TOKEN(token::PUNCTUATION_CLOSE_PAREN);
     iter.advance();  // skip ')'
 
     return args;
@@ -653,16 +580,12 @@ AST_NODE_IMPL(Expression, ScopePathExpr, ParseResult<> lhs) {
 
     // := E '::' E
 
-    if (lhs == nullptr || !lhs.has_value()) {
+    IS_NULL_RESULT(lhs) {
         lhs = parse();
         RETURN_IF_ERROR(lhs);
     }
 
-    if ((CURRENT_TOK != token::OPERATOR_SCOPE)) {
-        return std::unexpected(
-            PARSE_ERROR(CURRENT_TOK, "expected '::', but found: " + CURRENT_TOK.token_kind_repr()));
-    }
-
+    IS_EXCEPTED_TOKEN(token::OPERATOR_SCOPE);
     iter.advance();  // skip '::'
 
     ParseResult<> rhs = parse();
@@ -684,16 +607,12 @@ AST_NODE_IMPL(Expression, DotPathExpr, ParseResult<> lhs) {
 
     // := E '.' E
 
-    if (lhs == nullptr || !lhs.has_value()) {
+    IS_NULL_RESULT(lhs) {
         lhs = parse();
         RETURN_IF_ERROR(lhs);
     }
 
-    if ((CURRENT_TOK != token::PUNCTUATION_DOT)) {
-        return std::unexpected(
-            PARSE_ERROR(CURRENT_TOK, "expected '.', but found: " + CURRENT_TOK.token_kind_repr()));
-    }
-
+    IS_EXCEPTED_TOKEN(token::PUNCTUATION_DOT);
     iter.advance();  // skip '.'
 
     ParseResult<> rhs = parse();
@@ -715,26 +634,18 @@ AST_NODE_IMPL(Expression, ArrayAccessExpr, ParseResult<> lhs) {
 
     // := E '[' E ']'
 
-    if (lhs == nullptr || !lhs.has_value()) {
+    IS_NULL_RESULT(lhs) {
         lhs = parse();
         RETURN_IF_ERROR(lhs);
     }
 
-    if ((CURRENT_TOK != token::PUNCTUATION_OPEN_BRACKET)) {
-        return std::unexpected(
-            PARSE_ERROR(CURRENT_TOK, "expected '[', but found: " + CURRENT_TOK.token_kind_repr()));
-    }
-
+    IS_EXCEPTED_TOKEN(token::PUNCTUATION_OPEN_BRACKET);
     iter.advance();  // skip '['
 
     ParseResult<> index = parse();
     RETURN_IF_ERROR(index);
 
-    if ((CURRENT_TOK != token::PUNCTUATION_CLOSE_BRACKET)) {
-        return std::unexpected(
-            PARSE_ERROR(CURRENT_TOK, "expected ']', but found: " + CURRENT_TOK.token_kind_repr()));
-    }
-
+    IS_EXCEPTED_TOKEN(token::PUNCTUATION_CLOSE_BRACKET);
     iter.advance();  // skip ']'
 
     return make_node<ArrayAccessExpr>(lhs.value(), index.value());
@@ -751,31 +662,31 @@ AST_NODE_IMPL_VISITOR(Jsonify, ArrayAccessExpr) {
 AST_NODE_IMPL(Expression, PathExpr, ParseResult<> simple_path) {
     IS_NOT_EMPTY;
 
-    if (simple_path != nullptr && simple_path.has_value()) {
-        NodeT<PathExpr> path = make_node<PathExpr>(simple_path.value());
+    // := IdentExpr | ScopePathExpr | DotPathExpr
 
-        switch (simple_path.value()->getNodeType()) {
-            case parser::ast::node::nodes::IdentExpr:
-                path->type = PathExpr::PathType::Identifier;
-                break;
-
-            case parser::ast::node::nodes::ScopePathExpr:
-                path->type = PathExpr::PathType::Scope;
-                break;
-
-            case parser::ast::node::nodes::DotPathExpr:
-                path->type = PathExpr::PathType::Dot;
-                break;
-
-            default:
-                return std::unexpected(PARSE_ERROR_MSG("expected a path expression, but found '" +
-                                                       simple_path.value()->getNodeName() + "'"));
-        }
-
-        return path;
+    IS_NULL_RESULT(simple_path) {
+        return std::unexpected(PARSE_ERROR_MSG("expected a simple path expression, but found nothing"));
     }
 
-    return std::unexpected(PARSE_ERROR_MSG("expected a simple path expression, but found nothing"));
+    NodeT<PathExpr> path = make_node<PathExpr>(simple_path.value());
+    switch (simple_path.value()->getNodeType()) {
+        case parser::ast::node::nodes::IdentExpr:
+            path->type = PathExpr::PathType::Identifier;
+            break;
+
+        case parser::ast::node::nodes::ScopePathExpr:
+            path->type = PathExpr::PathType::Scope;
+            break;
+
+        case parser::ast::node::nodes::DotPathExpr:
+            path->type = PathExpr::PathType::Dot;
+            break;
+
+        default:
+            return std::unexpected(PARSE_ERROR_MSG("expected a simple path expression, but found nothing"));
+    }
+
+    return path;
 }
 
 AST_NODE_IMPL_VISITOR(Jsonify, PathExpr) {
@@ -799,22 +710,17 @@ AST_NODE_IMPL(Expression, FunctionCallExpr, ParseResult<> lhs, ParseResult<> gen
     ParseResult<PathExpr> path;
     // ParseResult<GenericInvokeExpr> generics;
 
-    if (lhs != nullptr && lhs.has_value()) {
-        path = parse<PathExpr>(lhs.value());
-    } else {
+    IS_NULL_RESULT(lhs) {
         lhs = parse();
         RETURN_IF_ERROR(lhs);
-        path = parse<PathExpr>(lhs.value());
     }
 
+    path = parse<PathExpr>(lhs.value());
     RETURN_IF_ERROR(path);
 
     // TODO: add support for generics
 
-    IS_NOT_EMPTY;
-
     ParseResult<ArgumentListExpr> args = parse<ArgumentListExpr>();
-
     RETURN_IF_ERROR(args);
 
     return make_node<FunctionCallExpr>(path.value(), args.value());
@@ -834,14 +740,10 @@ AST_NODE_IMPL(Expression, ArrayLiteralExpr) {
 
     // [1, 2, 3, ]
 
-    if ((CURRENT_TOK != token::PUNCTUATION_OPEN_BRACKET)) {
-        return std::unexpected(
-            PARSE_ERROR(CURRENT_TOK, "expected '[', but found: " + CURRENT_TOK.token_kind_repr()));
-    }
-
+    IS_EXCEPTED_TOKEN(token::PUNCTUATION_OPEN_BRACKET);
     iter.advance();  // skip '['
 
-    if (CURRENT_TOK == token::PUNCTUATION_CLOSE_BRACKET) {
+    if CURRENT_TOKEN_IS(token::PUNCTUATION_CLOSE_BRACKET) {
         iter.advance();  // skip ']'
         return std::unexpected(PARSE_ERROR_MSG("array literals must have at least one element"));
     }
@@ -852,23 +754,20 @@ AST_NODE_IMPL(Expression, ArrayLiteralExpr) {
 
     NodeT<ArrayLiteralExpr> array = make_node<ArrayLiteralExpr>(first.value());
 
-    while (CURRENT_TOK == token::PUNCTUATION_COMMA) {
+    while CURRENT_TOKEN_IS(token::PUNCTUATION_COMMA) {
         iter.advance();  // skip ','
 
-        if (CURRENT_TOK == token::PUNCTUATION_CLOSE_BRACKET) {
+        if CURRENT_TOKEN_IS(token::PUNCTUATION_CLOSE_BRACKET) {
             break;
         }
 
         ParseResult<> next = parse();
         RETURN_IF_ERROR(next);
+        
         array->values.push_back(next.value());
     }
 
-    if ((CURRENT_TOK != token::PUNCTUATION_CLOSE_BRACKET)) {
-        return std::unexpected(
-            PARSE_ERROR(CURRENT_TOK, "expected ']', but found: " + CURRENT_TOK.token_kind_repr()));
-    }
-
+    IS_EXCEPTED_TOKEN(token::PUNCTUATION_CLOSE_BRACKET);
     iter.advance();  // skip ']'
 
     return array;
@@ -888,57 +787,46 @@ AST_NODE_IMPL_VISITOR(Jsonify, ArrayLiteralExpr) {
 
 AST_NODE_IMPL(Expression, TupleLiteralExpr, ParseResult<> starting_element) {
     IS_NOT_EMPTY;
-
     // := '(' E (',' E)* ')'
 
     ParseResult<> first;
 
-    if (starting_element != nullptr && starting_element.has_value()) {
-        first = starting_element;  // we have a starting element
-        // the current token is ',' the '(' has already been parsed
-    } else {
-        if ((CURRENT_TOK != token::PUNCTUATION_OPEN_PAREN)) {
-            return std::unexpected(PARSE_ERROR(
-                CURRENT_TOK, "expected '(', but found: " + CURRENT_TOK.token_kind_repr()));
-        }
-
+    IS_NULL_RESULT(starting_element) { // we dont have a starting element in this case
+        IS_EXCEPTED_TOKEN(token::PUNCTUATION_OPEN_PAREN);
         iter.advance();  // skip '('
 
-        if (CURRENT_TOK == token::PUNCTUATION_CLOSE_PAREN) {
+        if CURRENT_TOKEN_IS(token::PUNCTUATION_CLOSE_PAREN) {
             iter.advance();  // skip ')'
             return std::unexpected(
                 PARSE_ERROR_MSG("tuple literals must have at least one element"));
         }
 
         first = parse();
-
         RETURN_IF_ERROR(first);
+    } else {
+        first = starting_element;
     }
 
-    if (CURRENT_TOK == token::PUNCTUATION_CLOSE_PAREN) {
+    if CURRENT_TOKEN_IS(token::PUNCTUATION_CLOSE_PAREN) {
         iter.advance();  // skip ')'
         return std::unexpected(PARSE_ERROR_MSG("tuple literals must have at least one element"));
     }
 
     NodeT<TupleLiteralExpr> tuple = make_node<TupleLiteralExpr>(first.value());
-
-    while (CURRENT_TOK == token::PUNCTUATION_COMMA) {
+    while CURRENT_TOKEN_IS(token::PUNCTUATION_COMMA) {
         iter.advance();  // skip ','
 
-        if (CURRENT_TOK == token::PUNCTUATION_CLOSE_PAREN) {
+        if CURRENT_TOKEN_IS(token::PUNCTUATION_CLOSE_PAREN) {
             break;
         }
 
         ParseResult<> next = parse();
         RETURN_IF_ERROR(next);
+
         tuple->values.push_back(next.value());
     }
 
-    if ((CURRENT_TOK != token::PUNCTUATION_CLOSE_PAREN)) {
-        return std::unexpected(
-            PARSE_ERROR(CURRENT_TOK, "expected ')', but found: " + CURRENT_TOK.token_kind_repr()));
-    }
-
+    IS_EXCEPTED_TOKEN(token::PUNCTUATION_CLOSE_PAREN);
     iter.advance();  // skip ')'
 
     return tuple;
@@ -956,62 +844,46 @@ AST_NODE_IMPL_VISITOR(Jsonify, TupleLiteralExpr) {
 
 // ---------------------------------------------------------------------------------------------- //
 
-AST_NODE_IMPL(Expression, SetLiteralExpr, ParseResult<> starting_value) {
+AST_NODE_IMPL(Expression, SetLiteralExpr, ParseResult<> first) {
     IS_NOT_EMPTY;
-
     // := '{' E (',' E)* '}'
     // {1}
     // {1, 2, 3, }
 
     NodeT<SetLiteralExpr> set;
 
-    if (starting_value != nullptr && starting_value.has_value()) {
-        // we have parsed the '{' and the first E, so we need to check if the current token is ','
-        if (CURRENT_TOK == token::PUNCTUATION_CLOSE_BRACE) {
-            set = make_node<SetLiteralExpr>(starting_value.value());
-
-            iter.advance();  // skip '}'
-            return set;
-        }
-
-        if ((CURRENT_TOK != token::PUNCTUATION_COMMA)) {
-            return std::unexpected(PARSE_ERROR(
-                CURRENT_TOK, "expected ',', but found: " + CURRENT_TOK.token_kind_repr()));
-        }
-
-        set = make_node<SetLiteralExpr>(starting_value.value());
-    } else {
-        if ((CURRENT_TOK != token::PUNCTUATION_OPEN_BRACE)) {
-            return std::unexpected(PARSE_ERROR(
-                CURRENT_TOK, "expected '{', but found: " + CURRENT_TOK.token_kind_repr()));
-        }
-
+    IS_NULL_RESULT(first) {
+        IS_EXCEPTED_TOKEN(token::PUNCTUATION_OPEN_BRACE);
         iter.advance();  // skip '{'
 
-        ParseResult<> first = parse();
-
+        first = parse();
         RETURN_IF_ERROR(first);
-
-        set = make_node<SetLiteralExpr>(first.value());
     }
 
-    while (CURRENT_TOK == token::PUNCTUATION_COMMA) {
+    set = make_node<SetLiteralExpr>(first.value());
+
+    // we have parsed the '{' and the first E, so we need to check if the current token is ','
+    if CURRENT_TOKEN_IS(token::PUNCTUATION_CLOSE_BRACE) {
+        iter.advance();  // skip '}'
+        return set;
+    }
+
+    IS_EXCEPTED_TOKEN(token::PUNCTUATION_COMMA); // we expect a comma here
+
+    while CURRENT_TOKEN_IS(token::PUNCTUATION_COMMA) {
         iter.advance();  // skip ','
 
-        if (CURRENT_TOK == token::PUNCTUATION_CLOSE_BRACE) {
+        if CURRENT_TOKEN_IS(token::PUNCTUATION_CLOSE_BRACE) {
             break;
         }
 
         ParseResult<> next = parse();
         RETURN_IF_ERROR(next);
+
         set->values.push_back(next.value());
     }
 
-    if ((CURRENT_TOK != token::PUNCTUATION_CLOSE_BRACE)) {
-        return std::unexpected(
-            PARSE_ERROR(CURRENT_TOK, "expected '}', but found: " + CURRENT_TOK.token_kind_repr()));
-    }
-
+    IS_EXCEPTED_TOKEN(token::PUNCTUATION_CLOSE_BRACE);
     iter.advance();  // skip '}'
 
     return set;
@@ -1031,22 +903,15 @@ AST_NODE_IMPL_VISITOR(Jsonify, SetLiteralExpr) {
 
 AST_NODE_IMPL(Expression, MapPairExpr) {
     IS_NOT_EMPTY;
-
     // := E ':' E
 
     ParseResult<> key = parse();
-
     RETURN_IF_ERROR(key);
 
-    if ((CURRENT_TOK != token::PUNCTUATION_COLON)) {
-        return std::unexpected(
-            PARSE_ERROR(CURRENT_TOK, "expected ':', but found: " + CURRENT_TOK.token_kind_repr()));
-    }
-
+    IS_EXCEPTED_TOKEN(token::PUNCTUATION_COLON);
     iter.advance();  // skip ':'
 
     ParseResult<> value = parse();
-
     RETURN_IF_ERROR(value);
 
     return make_node<MapPairExpr>(key.value(), value.value());
@@ -1060,38 +925,30 @@ AST_NODE_IMPL_VISITOR(Jsonify, MapPairExpr) {
 
 // ---------------------------------------------------------------------------------------------- //
 
-AST_NODE_IMPL(Expression, MapLiteralExpr, ParseResult<> starting_key) {
+AST_NODE_IMPL(Expression, MapLiteralExpr, ParseResult<> key) {
     IS_NOT_EMPTY;
 
     // := '{' E (':' E)* '}'
 
     NodeT<MapPairExpr> pair;
 
-    if (starting_key != nullptr && starting_key.has_value()) {
+    IS_NULL_RESULT(key) {
+        IS_EXCEPTED_TOKEN(token::PUNCTUATION_OPEN_BRACE);
+        iter.advance();  // skip '{'
+
+        ParseResult<MapPairExpr> pair = parse<MapPairExpr>();
+        RETURN_IF_ERROR(pair);
+
+        pair = pair.value();
+    } else {
         // we have parsed the '{' and the first E, so we need to check if the current token is ':'
-        if ((CURRENT_TOK != token::PUNCTUATION_COLON)) {
-            return std::unexpected(PARSE_ERROR(
-                CURRENT_TOK, "expected ':', but found: " + CURRENT_TOK.token_kind_repr()));
-        }
-
+        IS_EXCEPTED_TOKEN(token::PUNCTUATION_COLON);
         iter.advance();  // skip ':'
-
+        
         ParseResult<> value = parse();
         RETURN_IF_ERROR(value);
 
-        pair = make_node<MapPairExpr>(starting_key.value(), value.value());
-    } else {
-        if ((CURRENT_TOK != token::PUNCTUATION_OPEN_BRACE)) {
-            return std::unexpected(PARSE_ERROR(
-                CURRENT_TOK, "expected '{', but found: " + CURRENT_TOK.token_kind_repr()));
-        }
-
-        iter.advance();  // skip '{'
-
-        ParseResult<MapPairExpr> tmp_pair = parse<MapPairExpr>();
-        RETURN_IF_ERROR(tmp_pair);
-
-        pair = tmp_pair.value();
+        pair = make_node<MapPairExpr>(key.value(), value.value());
     }
 
     // := (',' E)* '}' is the remaining part of the map literal expression (there could be a
@@ -1099,10 +956,10 @@ AST_NODE_IMPL(Expression, MapLiteralExpr, ParseResult<> starting_key) {
 
     NodeT<MapLiteralExpr> map = make_node<MapLiteralExpr>(pair);
 
-    while (CURRENT_TOK == token::PUNCTUATION_COMMA) {
+    while CURRENT_TOKEN_IS(token::PUNCTUATION_COMMA) {
         iter.advance();  // skip ','
 
-        if (CURRENT_TOK == token::PUNCTUATION_CLOSE_BRACE) {
+        if CURRENT_TOKEN_IS(token::PUNCTUATION_CLOSE_BRACE) {
             break;
         }
 
@@ -1112,11 +969,7 @@ AST_NODE_IMPL(Expression, MapLiteralExpr, ParseResult<> starting_key) {
         map->values.push_back(next_pair.value());
     }
 
-    if ((CURRENT_TOK != token::PUNCTUATION_CLOSE_BRACE)) {
-        return std::unexpected(
-            PARSE_ERROR(CURRENT_TOK, "expected '}', but found: " + CURRENT_TOK.token_kind_repr()));
-    }
-
+    IS_EXCEPTED_TOKEN(token::PUNCTUATION_CLOSE_BRACE);
     iter.advance();  // skip '}'
 
     return map;
@@ -1140,17 +993,12 @@ AST_NODE_IMPL(Expression, ObjInitExpr, bool skip_start_brace) {
     // := '{' (NamedArgumentExpr (',' NamedArgumentExpr)*)? '}'
 
     if (!skip_start_brace) {
-        if ((CURRENT_TOK != token::PUNCTUATION_OPEN_BRACE)) {
-            return std::unexpected(PARSE_ERROR(
-                CURRENT_TOK, "expected '{', but found: " + CURRENT_TOK.token_kind_repr()));
-        }
-
+        IS_EXCEPTED_TOKEN(token::PUNCTUATION_OPEN_BRACE);
         iter.advance();  // skip '{'
     }
 
-    if (CURRENT_TOK == token::PUNCTUATION_CLOSE_BRACE) {
-        return std::unexpected(PARSE_ERROR(
-            CURRENT_TOK, "expected a keyword argument, but got an empty object initializer"));
+    if CURRENT_TOKEN_IS(token::PUNCTUATION_CLOSE_BRACE) {
+        return std::unexpected(PARSE_ERROR(CURRENT_TOK, "expected a keyword argument, but got an empty object initializer"));
     }
 
     ParseResult<NamedArgumentExpr> first = parse<NamedArgumentExpr>();
@@ -1158,23 +1006,20 @@ AST_NODE_IMPL(Expression, ObjInitExpr, bool skip_start_brace) {
 
     NodeT<ObjInitExpr> obj = make_node<ObjInitExpr>(first.value());
 
-    while (CURRENT_TOK == token::PUNCTUATION_COMMA) {
+    while CURRENT_TOKEN_IS(token::PUNCTUATION_COMMA) {
         iter.advance();  // skip ','
 
-        if (CURRENT_TOK == token::PUNCTUATION_CLOSE_BRACE) {
+        if CURRENT_TOKEN_IS(token::PUNCTUATION_CLOSE_BRACE) {
             break;
         }
 
         ParseResult<NamedArgumentExpr> next = parse<NamedArgumentExpr>();
         RETURN_IF_ERROR(next);
+
         obj->kwargs.push_back(next.value());
     }
 
-    if ((CURRENT_TOK != token::PUNCTUATION_CLOSE_BRACE)) {
-        return std::unexpected(
-            PARSE_ERROR(CURRENT_TOK, "expected '}', but found: " + CURRENT_TOK.token_kind_repr()));
-    }
-
+    IS_EXCEPTED_TOKEN(token::PUNCTUATION_CLOSE_BRACE);
     iter.advance();  // skip '}'
 
     return obj;
@@ -1208,22 +1053,18 @@ AST_NODE_IMPL(Expression, TernaryExpr, ParseResult<> E1) {
     // := (E '?' E ':' E) | (E 'if' E 'else' E)
     // true ? 1 : 0 | 1 if true else 0
 
-    if (E1 == nullptr || !E1.has_value()) {
+    IS_NULL_RESULT(E1) {
         E1 = parse();
         RETURN_IF_ERROR(E1);
     }
 
-    if (CURRENT_TOK == token::PUNCTUATION_QUESTION_MARK) {
+    if CURRENT_TOKEN_IS(token::PUNCTUATION_QUESTION_MARK) {
         iter.advance();  // skip '?'
 
         ParseResult<> E2 = parse();
         RETURN_IF_ERROR(E2);
 
-        if ((CURRENT_TOK != token::PUNCTUATION_COLON)) {
-            return std::unexpected(PARSE_ERROR(
-                CURRENT_TOK, "expected ':', but found: " + CURRENT_TOK.token_kind_repr()));
-        }
-
+        IS_EXCEPTED_TOKEN(token::PUNCTUATION_COLON);
         iter.advance();  // skip ':'
 
         ParseResult<> E3 = parse();
@@ -1232,17 +1073,13 @@ AST_NODE_IMPL(Expression, TernaryExpr, ParseResult<> E1) {
         return make_node<TernaryExpr>(E1.value(), E2.value(), E3.value());
     }
 
-    if (CURRENT_TOK == token::KEYWORD_IF) {
+    if CURRENT_TOKEN_IS(token::KEYWORD_IF) {
         iter.advance();  // skip 'if'
 
         ParseResult<> E2 = parse();
         RETURN_IF_ERROR(E2);
 
-        if ((CURRENT_TOK != token::KEYWORD_ELSE)) {
-            return std::unexpected(PARSE_ERROR(
-                CURRENT_TOK, "expected 'else', but found: " + CURRENT_TOK.token_kind_repr()));
-        }
-
+        IS_EXCEPTED_TOKEN(token::KEYWORD_ELSE);
         iter.advance();  // skip 'else'
 
         ParseResult<> E3 = parse();
@@ -1268,35 +1105,22 @@ AST_NODE_IMPL(Expression, ParenthesizedExpr, ParseResult<> expr) {
     IS_NOT_EMPTY;
 
     // := '(' E ')'
-
-    if (expr != nullptr && expr.has_value()) {
+    
+    IS_NOT_NULL_RESULT(expr) {
         // check if the current token is a ')'
-        if ((CURRENT_TOK != token::PUNCTUATION_CLOSE_PAREN)) {
-            return std::unexpected(PARSE_ERROR(
-                CURRENT_TOK, "expected ')', but found: " + CURRENT_TOK.token_kind_repr()));
-        }
-
+        IS_EXCEPTED_TOKEN(token::PUNCTUATION_CLOSE_PAREN);
         iter.advance();  // skip ')'
 
         return make_node<ParenthesizedExpr>(expr.value());
     }
 
-    if ((CURRENT_TOK != token::PUNCTUATION_OPEN_PAREN)) {
-        return std::unexpected(
-            PARSE_ERROR(CURRENT_TOK, "expected '(', but found: " + CURRENT_TOK.token_kind_repr()));
-    }
-
+    IS_EXCEPTED_TOKEN(token::PUNCTUATION_OPEN_PAREN);
     iter.advance();  // skip '('
 
     ParseResult<> inner = parse();
-
     RETURN_IF_ERROR(inner);
 
-    if ((CURRENT_TOK != token::PUNCTUATION_CLOSE_PAREN)) {
-        return std::unexpected(
-            PARSE_ERROR(CURRENT_TOK, "expected ')', but found: " + CURRENT_TOK.token_kind_repr()));
-    }
-
+    IS_EXCEPTED_TOKEN(token::PUNCTUATION_CLOSE_PAREN);
     iter.advance();  // skip ')'
 
     return make_node<ParenthesizedExpr>(inner.value());
@@ -1313,16 +1137,12 @@ AST_NODE_IMPL(Expression, CastExpr, ParseResult<> lhs) {
 
     // := E 'as' E
 
-    if (lhs == nullptr || !lhs.has_value()) {
+    IS_NULL_RESULT(lhs) {
         lhs = parse();
         RETURN_IF_ERROR(lhs);
     }
 
-    if ((CURRENT_TOK != token::KEYWORD_AS)) {
-        return std::unexpected(
-            PARSE_ERROR(CURRENT_TOK, "expected 'as', but found: " + CURRENT_TOK.token_kind_repr()));
-    }
-
+    IS_EXCEPTED_TOKEN(token::KEYWORD_AS);
     iter.advance();  // skip 'as'
 
     ParseResult<> rhs = parse();
@@ -1341,24 +1161,21 @@ AST_NODE_IMPL_VISITOR(Jsonify, CastExpr) {
 
 AST_NODE_IMPL(Expression, InstOfExpr, ParseResult<> lhs) {
     IS_NOT_EMPTY;
-
     // := E 'has' E | E 'derives' E
 
-    if (lhs == nullptr || !lhs.has_value()) {
+    InstOfExpr::InstanceType op = InstOfExpr::InstanceType::Derives;
+
+    IS_NULL_RESULT(lhs) {
         lhs = parse();
         RETURN_IF_ERROR(lhs);
     }
 
-    if ((CURRENT_TOK != token::KEYWORD_HAS || CURRENT_TOK == token::KEYWORD_DERIVES)) {
-        return std::unexpected(PARSE_ERROR(CURRENT_TOK,
-                                           "expected 'has' or 'derives', but found: " +
-                                               CURRENT_TOK.token_kind_repr()));
-    }
-
-    InstOfExpr::InstanceType op = (CURRENT_TOK == token::KEYWORD_HAS)
-                                      ? InstOfExpr::InstanceType::Has
-                                      : InstOfExpr::InstanceType::Derives;
-
+    #define INST_OF_OPS {token::KEYWORD_HAS, token::KEYWORD_DERIVES}
+    IS_IN_EXCEPTED_TOKENS(INST_OF_OPS);
+    #undef INST_OF_OPS
+     
+    
+    if CURRENT_TOKEN_IS(token::KEYWORD_HAS) op = InstOfExpr::InstanceType::Has;
     iter.advance();  // skip 'has' or 'derives'
 
     ParseResult<> rhs = parse();
@@ -1377,9 +1194,22 @@ AST_NODE_IMPL_VISITOR(Jsonify, InstOfExpr) {
 // ---------------------------------------------------------------------------------------------- //
 
 /* DEPRECATED: a Type is deduced from context and at this stage is considered a Expression */
-AST_NODE_IMPL(Expression, Type) {
+AST_NODE_IMPL(Expression, Type) { // TODO
     // if E(2) does not exist, check if its a & | * token, since if it is,
     // then return a unary expression since its a pointer or reference type
+    
+    // types are quite complex in helix since this is the gammer:
+    // AccessSpecifiers := ('priv' | 'pub' | 'prot' | 'intl')
+    // FunctionSpecifiers := ('inline')
+
+    // ContextualKeywords := ('yield' | 'op')
+    // TypeQualifiers := ('const' | 'abstract' | 'ffi')
+    // TypeConstructs := ('class' | 'interface' | 'struct' | 'enum' | 'union' | 'type' | 'module')
+
+    // TypePrefixes := (TypeQualifiers | TypeConstructs | ContextualKeywords)
+
+    // Type := ('fn' '(' (Type ((',' Type)*)?)? ')' ('->' Type)?)
+    //      | (TypePrefixes ((',' TypePrefixes)*)?)? PathExpr GenericInvocationExpr?
     IS_NOT_EMPTY;
     NOT_IMPLEMENTED;
 }
@@ -1388,21 +1218,18 @@ AST_NODE_IMPL(Expression, Type) {
 
 AST_NODE_IMPL(Expression, AsyncThreading) {
     IS_NOT_EMPTY;
-
     // := ('await' | 'spawn' | 'thread') E
 
     token::Token tok = CURRENT_TOK;
 
-    if (tok != token::KEYWORD_AWAIT && tok != token::KEYWORD_SPAWN &&
-        tok != token::KEYWORD_THREAD) {
-        return std::unexpected(PARSE_ERROR(
-            tok, "expected 'await', 'spawn' or 'thread', but found: " + tok.token_kind_repr()));
-    }
+    #define ASYNC_THREADING_OPS {token::KEYWORD_AWAIT, token::KEYWORD_SPAWN, token::KEYWORD_THREAD}
 
+    IS_IN_EXCEPTED_TOKENS(ASYNC_THREADING_OPS);
     iter.advance();  // skip 'await', 'spawn' or 'thread'
 
-    ParseResult<> expr = parse();
+    #undef ASYNC_THREADING_OPS
 
+    ParseResult<> expr = parse();
     RETURN_IF_ERROR(expr);
 
     return make_node<AsyncThreading>(expr.value(), tok);
