@@ -28,9 +28,9 @@ __AST_NODE_BEGIN {
 
         // := Ident (':' E)?
 
-        explicit NamedVarSpecifier(NodeT<PathExpr> path, const NodeT<> &type = nullptr)
+        explicit NamedVarSpecifier(NodeT<PathExpr> path,  NodeT<> type = nullptr)
             : path(std::move(path))
-            , type(type) {
+            , type(std::move(type)) {
             if (type != nullptr) {
                 has_type = true;
             }

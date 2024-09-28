@@ -85,6 +85,64 @@ const for i in 0:10 {
 }
 
 
+class Point {
+    let static n_points = 0;
+
+    static const fn get_n_points() -> int {
+        return Point::n_points;
+    }
+
+
+    static fn add_point() {
+        Point::n_points += 1;
+    }
+}
+
+
+// HARD ERROR
+inline const async panic fn div_by_0_hard_a(a: int, b: int = 0) -> int { // force try catch handling
+    return a / b;
+}
+
+// HARD ERROR - Not forced to handle
+fn div_by_0_hard_b(a: int, b: int = 0) -> int {
+    return a / b;
+}
+
+// Error as value
+fn div_by_0_soft(a: int, b: int = 0) -> Result<int, DivByZeroError> {
+    if b == 0 {
+        return DivByZeroError();
+    }
+    
+    return a / b;
+}
+
+fn main() {
+    // SOFT ERROR
+    let const a = div_by_0_soft(10, 0);
+
+    if a.is_err() {
+        print("DivByZeroError");
+    } else {
+        let a = a.unwrap();
+    }
+    
+    // HARD ERROR
+    try {
+        let b = div_by_0_hard_a(10, 0);
+    } catch (err: DivByZeroError) {
+        print("DivByZeroError");
+    }
+
+    // or
+
+    let b = try div_by_0_hard_a(10, 0) catch (err: DivByZeroError) 10 catch (err: BaseError) 9;
+    
+    let c = div_by_0_hard_b(10, 0); // not forced to handle but you can if you want
+}
+
+
 
 
 
@@ -208,7 +266,12 @@ module idk_something_else {
     let inst = Foo();
 
     inst.add();
+
+
+    try { errorable_fn_returns_result() } catch (err:Err) { };
 }
+
+
 
 
 

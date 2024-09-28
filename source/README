@@ -1,0 +1,57 @@
+# Helix Programming Language - Source Directory
+
+Welcome to the source directory of the **Helix Programming Language**. This directory contains all the essential components that power the Helix compiler. Below is an overview of each subdirectory and its purpose within the project.
+
+## 1. Directory Structure Overview
+
+### [source/cli](cli)
+This directory contains the source code for the **Command Line Interface (CLI)** of Helix. It handles user input and serves as the entry point for running the compiler from the command line.
+
+- `include`: Header files for CLI functionality.
+- `source`: Implementation of the CLI logic.
+
+### [source/core](core)
+This directory contains utility functions and classes used across the Helix project. **Note:** This module is planned to be removed in future updates as its functionality is being refactored or replaced.
+
+- `utils`: Common utility functions shared across the compiler.
+
+### [source/driver](driver)
+The **driver** manages the compilation process by handling I/O and orchestrating the various stages of compilation. While originally planned as the compilation manager, it primarily focuses on handling I/O calls.
+
+- `include`: Header files for the driver.
+- `lib`: Driver libraries.
+- `source`: Core logic of the driver.
+
+### [source/generator](generator)
+This directory holds the code for **code generation (codegen)** in Helix. It converts Helix AST into intermediate representations (CIR and LLVM-IR) and eventually into optimized machine code.
+
+- `CC-IR`: Code generation to Helix's custom CIR (Compiler Intermediate Representation).
+- `LLVM-IR`: Code generation to LLVM-IR for backend compilation.
+- `include`: Header files for the generator.
+
+### [source/include](include)
+Contains the **public-facing API** for Helix. This interface allows external tools and libraries to interact with Helix's backend and compiler toolchain.
+
+- `api`: Public API headers for integration and extension.
+
+### [source/lexer](lexer)
+The **lexer** converts source code into a stream of tokens, which serve as the building blocks for the parser. It defines how Helix understands its syntax.
+
+- `include`: Lexer-related header files.
+- `source`: Tokenization logic implementation.
+
+### [source/parser](parser)
+The **parser** transforms tokens into an Abstract Syntax Tree (AST) and Concrete Syntax Tree (CST). It also converts C++ AST symbols into Helix AST symbols using the Clang Frontend.
+
+- `ast`: AST-related code and visitors for node traversal.
+- `cpp`: Integration with C++ AST.
+- `cst`: CST generation.
+- `preprocessor`: Handles preprocessor logic, such as macro expansion.
+
+### [source/token](token)
+This directory defines the **token** types used by the lexer. Tokens represent the smallest units of meaning (such as keywords, operators, and literals) in Helix source code.
+
+- `enums`: Enumerations for token types.
+- `types`: Definitions of token-related types.
+- `include`: Token headers.
+- `source`: Tokenization logic and token classes.

@@ -12,12 +12,15 @@
 //===------------------------------------------------------------------------------------------===//
 
 // if DEBUG and is windows
+
 #include "parser/ast/include/core/AST_nodes.hh"
 #include "parser/ast/include/types/AST_jsonify_visitor.hh"
 #include "parser/ast/include/types/AST_types.hh"
 #define _SILENCE_CXX23_ALIGNED_UNION_DEPRECATION_WARNING
 #define _SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING
 #define _SILENCE_ALL_CXX17_DEPRECATION_WARNINGS
+#pragma comment(linker, "/STACK:2000000000") // Set stack size to 2MB
+#pragma comment(linker, "/HEAP:2000000000") // Set heap size to 2MB
 
 #include <chrono>
 #include <cstdio>
@@ -50,11 +53,13 @@ int compile(int argc, char **argv) {
     auto start = std::chrono::high_resolution_clock::now();
 
     // read the file and tokenize its contents : stage 0
+    print("Tokenizing...", sysIO::endl('\r'));
     TokenList tokens = Lexer(file_system::read_file(parsed_args.file), parsed_args.file).tokenize();
 
     std::vector<string> pkg_paths = {"/Volumes/Container/Projects/Helix/helix-lang/helix/pkgs"};
 
     // preprocess the tokens with optional module import paths : stage 1
+    print("Preprocessing...", sysIO::endl('\r'));
     Preprocessor(tokens, "main", pkg_paths).parse();
 
     // preprocessor::import_tree->print_tree(preprocessor::import_tree->get_root());
@@ -68,30 +73,48 @@ int compile(int argc, char **argv) {
         print_tokens(tokens);
     }
 
-    if (parsed_args.emit_ast) {
-        // generate ast from the given tokens : stage 2
-        auto iter = tokens.begin();
-        auto ast  = parser::ast::node::Statement(iter);
-        auto expr = ast.parse();
+    // generate ast from the given tokens : stage 2
+    auto iter = tokens.begin();
 
+    print("Parsing...         ", sysIO::endl('\r'));
 
-        parser::ast::visitor::Jsonify json_visitor;
+    parser::ast::NodeV<> ast;
 
-        if (expr.has_value()) {
-            expr.value()->accept(json_visitor);
+    while (iter.remaining_n() != 0) {
+        auto statement  = parser::ast::node::Statement(iter);
+        auto expr = statement.parse();
 
-            print(json_visitor.json);
-        } else {
+        if (!expr.has_value()) {
             expr.error().panic();
             print(expr.error().what());
+
+            break;
         }
+
+        ast.emplace_back(expr.value());
     }
+
+    if (parsed_args.emit_ast) {
+        std::vector<neo::json> node_json;
+
+
+        for (auto &node : ast) {
+            parser::ast::visitor::Jsonify json_visitor;
+            node->accept(json_visitor);
+            node_json.push_back(json_visitor.json);
+        }
+
+        print(neo::json("ast").add("Statements", node_json).to_string());
+    }
+
 
     std::chrono::duration<double> diff = end - start;
 
-    // Print the time taken in nanoseconds and milliseconds
-    // print("time taken: ", diff.count() * 1e+9, " ns");
-    // print("            ", diff.count() * 1000, " ms");
+    if (parsed_args.verbose) {
+        //Print the time taken in nanoseconds and milliseconds
+        print("time taken: ", diff.count() * 1e+9, " ns");
+        print("            ", diff.count() * 1000, " ms");
+    }
 
     return 0;
 }

@@ -260,19 +260,13 @@ AST_NODE_IMPL_VISITOR(Jsonify, SwitchState) { json.section("SwitchState"); }
 AST_NODE_IMPL(Statement, YieldState) {
     IS_NOT_EMPTY;
 
-    if (CURRENT_TOK != token::KEYWORD_YIELD) {
-        return std::unexpected(PARSE_ERROR(CURRENT_TOK, "expected 'yield' keyword"));
-    }
-
+    IS_EXCEPTED_TOKEN(token::KEYWORD_YIELD);
     iter.advance();
 
     auto expr = Expression(iter).parse();
     RETURN_IF_ERROR(expr);
 
-    if (CURRENT_TOK != token::PUNCTUATION_SEMICOLON) {
-        return std::unexpected(PARSE_ERROR(CURRENT_TOK, "expected ';'"));
-    }
-
+    IS_EXCEPTED_TOKEN(token::PUNCTUATION_SEMICOLON);
     iter.advance();
 
     return make_node<YieldState>(expr.value());
@@ -287,19 +281,13 @@ AST_NODE_IMPL_VISITOR(Jsonify, YieldState) {
 AST_NODE_IMPL(Statement, DeleteState) {
     IS_NOT_EMPTY;
 
-    if (CURRENT_TOK != token::KEYWORD_DELETE) {
-        return std::unexpected(PARSE_ERROR(CURRENT_TOK, "expected 'delete' keyword"));
-    }
-
+    IS_EXCEPTED_TOKEN(token::KEYWORD_DELETE);
     iter.advance();
 
     auto expr = Expression(iter).parse();
     RETURN_IF_ERROR(expr);
 
-    if (CURRENT_TOK != token::PUNCTUATION_SEMICOLON) {
-        return std::unexpected(PARSE_ERROR(CURRENT_TOK, "expected ';'"));
-    }
-
+    IS_EXCEPTED_TOKEN(token::PUNCTUATION_SEMICOLON);
     iter.advance();
 
     return make_node<DeleteState>(expr.value());
@@ -350,19 +338,13 @@ AST_NODE_IMPL_VISITOR(Jsonify, ImportState) { json.section("ImportState"); }
 AST_NODE_IMPL(Statement, ReturnState) {
     IS_NOT_EMPTY;
 
-    if (CURRENT_TOK != token::KEYWORD_RETURN) {
-        return std::unexpected(PARSE_ERROR(CURRENT_TOK, "expected 'return' keyword"));
-    }
-
+    IS_EXCEPTED_TOKEN(token::KEYWORD_RETURN);
     iter.advance();  // skip 'return'
 
     auto expr = Expression(iter).parse();
     RETURN_IF_ERROR(expr);
 
-    if (CURRENT_TOK != token::PUNCTUATION_SEMICOLON) {
-        return std::unexpected(PARSE_ERROR(CURRENT_TOK, "expected ';'"));
-    }
-
+    IS_EXCEPTED_TOKEN(token::PUNCTUATION_SEMICOLON);
     iter.advance();  // skip ';'
 
     return make_node<ReturnState>(expr.value());
@@ -377,18 +359,12 @@ AST_NODE_IMPL_VISITOR(Jsonify, ReturnState) {
 AST_NODE_IMPL(Statement, BreakState) {
     IS_NOT_EMPTY;
 
-    if (CURRENT_TOK != token::KEYWORD_BREAK) {
-        return std::unexpected(PARSE_ERROR(CURRENT_TOK, "expected 'break' keyword"));
-    }
-
+    IS_EXCEPTED_TOKEN(token::KEYWORD_BREAK);
     auto node = make_node<BreakState>(CURRENT_TOK);
 
     iter.advance();
 
-    if (CURRENT_TOK != token::PUNCTUATION_SEMICOLON) {
-        return std::unexpected(PARSE_ERROR(CURRENT_TOK, "expected ';'"));
-    }
-
+    IS_EXCEPTED_TOKEN(token::PUNCTUATION_SEMICOLON);
     iter.advance();
 
     return node;
@@ -403,18 +379,12 @@ AST_NODE_IMPL_VISITOR(Jsonify, BreakState) {
 AST_NODE_IMPL(Statement, ContinueState) {
     IS_NOT_EMPTY;
 
-    if (CURRENT_TOK != token::KEYWORD_CONTINUE) {
-        return std::unexpected(PARSE_ERROR(CURRENT_TOK, "expected 'continue' keyword"));
-    }
-
+    IS_EXCEPTED_TOKEN(token::KEYWORD_CONTINUE);
     auto node = make_node<ContinueState>(CURRENT_TOK);
 
     iter.advance();
 
-    if (CURRENT_TOK != token::PUNCTUATION_SEMICOLON) {
-        return std::unexpected(PARSE_ERROR(CURRENT_TOK, "expected ';'"));
-    }
-
+    IS_EXCEPTED_TOKEN(token::PUNCTUATION_SEMICOLON);
     iter.advance();
 
     return node;
@@ -429,16 +399,10 @@ AST_NODE_IMPL_VISITOR(Jsonify, ContinueState) {
 AST_NODE_IMPL(Statement, ExprState) {
     IS_NOT_EMPTY;
 
-
     auto expr = Expression(iter).parse();
     RETURN_IF_ERROR(expr);
 
-    IF_EMPTY_ERROR("expected ;");
-
-    if (CURRENT_TOK != token::PUNCTUATION_SEMICOLON) {
-        return std::unexpected(PARSE_ERROR(CURRENT_TOK, "expected ';'"));
-    }
-
+    IS_EXCEPTED_TOKEN(token::PUNCTUATION_SEMICOLON);
     iter.advance();
 
     return make_node<ExprState>(expr.value());

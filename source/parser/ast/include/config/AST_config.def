@@ -74,10 +74,48 @@
 
 #define PARSE_ERROR(tok, msg) ParseError(tok, GET_DEBUG_INFO + msg)
 #define PARSE_ERROR_MSG(msg) ParseError(CURRENT_TOK, GET_DEBUG_INFO + msg)
-#define IF_EMPTY_ERROR(msg)                                                                 \
-    if (iter.remaining_n() == 0) {                                                          \
-        return std::unexpected(ParseError(iter.peek_back().value(), GET_DEBUG_INFO + msg)); \
+#define IS_EXCEPTED_TOKEN(tok)                                                           \
+    if (iter.remaining_n() == 0) {                                                       \
+        return std::unexpected(                                                          \
+            ParseError(iter.peek_back().value(),                                         \
+                       GET_DEBUG_INFO + "expected a " +                                  \
+                           std::string(token::tokens_map.at(tok).value_or("unknown")) +  \
+                           " token, but found nothing"));                                \
+    }                                                                                    \
+    if (CURRENT_TOK != tok) {                                                            \
+        iter.advance();                                                                  \
+        return std::unexpected(PARSE_ERROR(                                              \
+            CURRENT_TOK,                                                                 \
+            "expected a " + std::string(token::tokens_map.at(tok).value_or("unknown")) + \
+                " token, but found: " + CURRENT_TOK.token_kind_repr()));                 \
     }
+
+#define IS_IN_EXCEPTED_TOKENS(toks)                                                        \
+    if (iter.remaining_n() == 0) {                                                         \
+        auto        tokens = toks;                                                         \
+        std::string tokens_str;                                                            \
+        for (auto &t : tokens) {                                                           \
+            tokens_str += std::string(token::tokens_map.at(t).value_or("unknown")) + ", "; \
+        }                                                                                  \
+        return std::unexpected(PARSE_ERROR_MSG(                                            \
+            "expected one of the following tokens: " + tokens_str + "but found nothing")); \
+    }                                                                                      \
+    if (!is_excepted(CURRENT_TOK, toks)) {                                                  \
+        auto        tokens = toks;                                                         \
+        std::string tokens_str;                                                            \
+        for (auto &t : tokens) {                                                           \
+            tokens_str += std::string(token::tokens_map.at(t).value_or("unknown")) + ", "; \
+        }                                                                                  \
+        iter.advance();                                                                    \
+        return std::unexpected(                                                            \
+            PARSE_ERROR(CURRENT_TOK,                                                       \
+                        "expected one of the following tokens: " + tokens_str +            \
+                            "but found: " + std::string(CURRENT_TOK.token_kind_repr())));  \
+    }
+
+#define CURRENT_TOKEN_IS(x) (iter.remaining_n() != 0 && CURRENT_TOK == x)
+#define IS_NULL_RESULT(x) if (x == nullptr || !x.has_value())
+#define IS_NOT_NULL_RESULT(x) if (x != nullptr && x.has_value())
 
 #define AST_CLASS_BASE(name, MACRO)                      \
     template <typename T = Node>                         \
