@@ -22,15 +22,29 @@
 
 __AST_BEGIN {
     enum class StorageSpecifier : char {
-        Static,                  ///< 'static'
-        FFI,                     ///< 'ffi'
-        /* TODO */ ThreadLocal,  ///< 'thread_local'
+        Ffi,     ///< 'ffi'
+        Static,  ///< 'static'
+        Async,   ///< 'async'
+        Eval,    ///< 'eval'
+    };
+
+    enum class FFISpecifier : char {
+        Class,     ///< 'class'
+        Interface, ///< 'interface'
+        Struct,    ///< 'struct'
+        Enum,      ///< 'enum'
+        Union,     ///< 'union'
+        Type,      ///< 'type'
     };
 
     enum class TypeQualifier : char {
-        Const,               ///< 'const'
-        Volatile,            ///< 'volatile'
-        /* TODO */ Atomic,   ///< 'atomic'
+        Const,     ///< 'const'
+        Module,    ///< 'module'
+        Yield,     ///< 'yield'
+        Async,     ///< 'async'
+        Ffi,       ///< 'ffi'
+        Static,    ///< 'static'
+        Macro,     ///< 'macro'
     };
 
     enum class AccessSpecifier : char {
@@ -42,27 +56,22 @@ __AST_BEGIN {
 
     enum class FunctionSpecifier : char {
         Inline,    ///< 'inline'
+        Async,     ///< 'async'
+        Static,    ///< 'static'
         Const,     ///< 'const' - in functions this is 'const' but for classes its 'final'
-        Override,  ///< '#[override]' - compiler directive
-        Eval       ///< 'eval' - eval in the case of functions default to 'constinit' for
+        Eval,      ///< 'eval' - eval in the case of functions default to 'constinit' for
                    ///           'constexpr' or 'consteval' use 'const eval'
+        Other,     ///< 'other' - for any other function specifier
 
         /// ONLY the following are allowed in UDTs (User Defined Types):
         /// 'const'
     };
 
     enum class FunctionQualifier : char {  // the part after the function signature
-        /* TODO */ NoExcept,               ///< 'noexcept'
-        /* TODO */ Abstract,               ///< 'abstract'
-        /* TODO */ Default,                ///< 'default'
-        Delete,                            ///< 'delete'
-        Const,                             ///< 'const'
-        Override                           ///< '#[override]' - compiler directive
-
-        /// ONLY allowed in the scope of a UDT:
-        /// 'const'
-        /// 'abstract'
-        /// 'override'
+        Default, ///< 'default'
+        Panic,   ///< 'panic'
+        Delete,  ///< 'delete'
+        Const,   ///< 'const'
     };
 }
 

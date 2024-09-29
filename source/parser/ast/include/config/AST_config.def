@@ -62,6 +62,8 @@
     }
 
 #define CURRENT_TOK iter.current().get()
+#define PREVIOUS_TOK iter.peek_back().value().get()
+#define NEXT_TOK iter.peek().value().get()
 
 #ifdef DEBUG
 #include "neo-pprint/include/ansi_colors.hh"
@@ -77,7 +79,7 @@
 #define IS_EXCEPTED_TOKEN(tok)                                                           \
     if (iter.remaining_n() == 0) {                                                       \
         return std::unexpected(                                                          \
-            ParseError(iter.peek_back().value(),                                         \
+            ParseError(PREVIOUS_TOK,                                                     \
                        GET_DEBUG_INFO + "expected a " +                                  \
                            std::string(token::tokens_map.at(tok).value_or("unknown")) +  \
                            " token, but found nothing"));                                \
@@ -85,35 +87,37 @@
     if (CURRENT_TOK != tok) {                                                            \
         iter.advance();                                                                  \
         return std::unexpected(PARSE_ERROR(                                              \
-            CURRENT_TOK,                                                                 \
+            PREVIOUS_TOK,                                                                \
             "expected a " + std::string(token::tokens_map.at(tok).value_or("unknown")) + \
-                " token, but found: " + CURRENT_TOK.token_kind_repr()));                 \
+                " token, but found: " + PREVIOUS_TOK.token_kind_repr()));                \
     }
 
-#define IS_IN_EXCEPTED_TOKENS(toks)                                                        \
-    if (iter.remaining_n() == 0) {                                                         \
-        auto        tokens = toks;                                                         \
-        std::string tokens_str;                                                            \
-        for (auto &t : tokens) {                                                           \
-            tokens_str += std::string(token::tokens_map.at(t).value_or("unknown")) + ", "; \
-        }                                                                                  \
-        return std::unexpected(PARSE_ERROR_MSG(                                            \
-            "expected one of the following tokens: " + tokens_str + "but found nothing")); \
-    }                                                                                      \
-    if (!is_excepted(CURRENT_TOK, toks)) {                                                  \
-        auto        tokens = toks;                                                         \
-        std::string tokens_str;                                                            \
-        for (auto &t : tokens) {                                                           \
-            tokens_str += std::string(token::tokens_map.at(t).value_or("unknown")) + ", "; \
-        }                                                                                  \
-        iter.advance();                                                                    \
-        return std::unexpected(                                                            \
-            PARSE_ERROR(CURRENT_TOK,                                                       \
-                        "expected one of the following tokens: " + tokens_str +            \
-                            "but found: " + std::string(CURRENT_TOK.token_kind_repr())));  \
+#define IS_IN_EXCEPTED_TOKENS(toks)                                                                \
+    if (iter.remaining_n() == 0) {                                                                 \
+        auto        tokens = toks;                                                                 \
+        std::string tokens_str;                                                                    \
+        for (auto &t : tokens) {                                                                   \
+            tokens_str += std::string(token::tokens_map.at(t).value_or("unknown")) + ", ";         \
+        }                                                                                          \
+        return std::unexpected(PARSE_ERROR(PREVIOUS_TOK,                                           \
+                                           "expected one of the following tokens: " + tokens_str + \
+                                               "but found nothing"));                              \
+    }                                                                                              \
+    if (!is_excepted(CURRENT_TOK, toks)) {                                                         \
+        auto        tokens = toks;                                                                 \
+        std::string tokens_str;                                                                    \
+        for (auto &t : tokens) {                                                                   \
+            tokens_str += std::string(token::tokens_map.at(t).value_or("unknown")) + ", ";         \
+        }                                                                                          \
+        iter.advance();                                                                            \
+        return std::unexpected(                                                                    \
+            PARSE_ERROR(PREVIOUS_TOK,                                                              \
+                        "expected one of the following tokens: " + tokens_str +                    \
+                            "but found: " + std::string(PREVIOUS_TOK.token_kind_repr())));         \
     }
 
 #define CURRENT_TOKEN_IS(x) (iter.remaining_n() != 0 && CURRENT_TOK == x)
+#define CURRENT_TOKEN_IS_NOT(x) (iter.remaining_n() == 0 || CURRENT_TOK != x)
 #define IS_NULL_RESULT(x) if (x == nullptr || !x.has_value())
 #define IS_NOT_NULL_RESULT(x) if (x != nullptr && x.has_value())
 
