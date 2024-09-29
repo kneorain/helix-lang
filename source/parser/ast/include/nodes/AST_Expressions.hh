@@ -130,9 +130,12 @@ __AST_NODE_BEGIN {
         : public Node {  // := '<' GenericArgumentExpr ((',' GenericArgumentExpr)*)? '>'
         BASE_CORE_METHODS(GenericInvokeExpr);
 
-        explicit GenericInvokeExpr(NodeT<> args);
-        GenericInvokeExpr(NodeT<GenericInvokeExpr> args, NodeT<> next);
-
+        explicit GenericInvokeExpr(NodeT<> args) {
+            if (args != nullptr) {
+                (this->args).emplace_back(std::move(args));
+            }
+        }
+        
         NodeV<> args;
     };
 
@@ -266,6 +269,14 @@ __AST_NODE_BEGIN {
 
     class LambdaExpr final : public Node {  // TODO
         BASE_CORE_METHODS(LambdaExpr);
+        
+        explicit LambdaExpr(token::Token marker)
+            : marker(std::move(marker)) {}
+
+        NodeV<> args;
+        NodeT<> body;
+        NodeT<> ret;
+        token::Token marker;
     };
 
     class TernaryExpr final : public Node {  // := (E '?' E ':' E) | (E 'if' E 'else' E)
@@ -323,15 +334,18 @@ __AST_NODE_BEGIN {
     class Type final : public Node {  // := IdentExpr
         BASE_CORE_METHODS(Type);
 
-        explicit Type(NodeT<> value);
-
-        NodeT<> value;
-
         enum class TypeType {
             Identifier,
             Pointer,
             Reference,
+            Lambda,
         };
+
+        explicit Type(NodeT<> value) : value(std::move(value)), type(TypeType::Identifier) {}
+        explicit Type(NodeT<LambdaExpr> value) : value(std::move(value)), type(TypeType::Lambda) {}
+
+        NodeT<> value;
+        TypeType type;
     };
 
     class AsyncThreading final : public Node {  // := IdentExpr

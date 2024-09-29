@@ -46,15 +46,15 @@
 /// [x] * Statement  * E                                                                         ///
 ///                                                                                              ///
 /// STS *               /* statement types */                                                    ///
-/// [ ] * BreakState     * 'break' ';'                                                           ///
-/// [ ] * ContinueState  * 'continue' ';'                                                        ///
-/// [ ] * ExprState      * E ';'                                                                 ///
-/// [ ] * BlockState     * '{' Statement* '}'                                                    ///
-/// [ ] * SuiteState     * BlockState | (':' Statement)                                          ///
-/// [ ] * ReturnState    * 'return' E? ';'                                                       ///
+/// [x] * BreakState     * 'break' ';'                                                           ///
+/// [x] * ContinueState  * 'continue' ';'                                                        ///
+/// [x] * ExprState      * E ';'                                                                 ///
+/// [x] * BlockState     * '{' Statement* '}'                                                    ///
+/// [x] * SuiteState     * BlockState | (':' Statement)                                          ///
+/// [x] * ReturnState    * 'return' E? ';'                                                       ///
 ///                                                                                              ///
-/// [ ] * YieldState         * 'yield' E ';'                                                     ///
-/// [ ] * DeleteState        * 'delete' E ';'                                                    ///
+/// [x] * YieldState         * 'yield' E ';'                                                     ///
+/// [x] * DeleteState        * 'delete' E ';'                                                    ///
 /// [ ] * SwitchState        * 'switch' '(' E ')' '{' SwitchCaseState* '}'                       ///
 /// [ ] * IfState            * ('if' | 'unless') '(' E ')' SuiteState (ElseState)?               ///
 /// [ ] * ElseState          * 'else' SuiteState                                                 ///
@@ -64,6 +64,10 @@
 /// [ ] * ForCStatementCore  * (E)? ';' (E)? ';' (E)? SuiteState                                 ///
 /// [ ] * NamedVarSpecifier  * Ident (':' E)?                                                    ///
 /// [ ] * SwitchCaseState    * 'case' E SuiteState | 'default' SuiteState                        ///
+/// [ ] * TryState           * 'try' SuiteState (CatchState) (FinallyState)?                     ///
+/// [ ] * CatchState         * 'catch' (NamedVarSpecifier (',' NamedVarSpecifier)*)? SuiteState
+/// (CatchState | FinallyState)? /// [ ] * FinallyState       * 'finally' SuiteState /// [x] *
+/// PanicState         * 'panic' ';'                                                       ///
 ///                                                                                              ///
 /// [ ] * ImportState        * 'import' (SingleImportState | MultiImportState)                   ///
 /// [ ] * AliasState         * Ident 'as' Ident ';'                                              ///
@@ -96,6 +100,12 @@
 
 bool is_excepted(const token::Token &tok, const std::unordered_set<token::tokens> &tokens);
 std::vector<token::Token> get_modifiers(token::TokenList::TokenListIter &iter);
+bool                      is_ffi_specifier(const token::Token &tok);
+bool                      is_type_qualifier(const token::Token &tok);
+bool                      is_access_specifier(const token::Token &tok);
+bool                      is_function_specifier(const token::Token &tok);
+bool                      is_function_qualifier(const token::Token &tok);
+bool                      is_storage_specifier(const token::Token &tok);
 
 // ---------------------------------------------------------------------------------------------- //
 
@@ -178,10 +188,31 @@ AST_BASE_IMPL(Statement, parse) {  // NOLINT(readability-function-cognitive-comp
 
 AST_NODE_IMPL(Statement, NamedVarSpecifier) {
     IS_NOT_EMPTY;
-    NOT_IMPLEMENTED;
+
+    // := Ident (':' E)?
+
+    Expression expr_parser(iter);
+
+    ParseResult<PathExpr> path = expr_parser.parse<PathExpr>();
+    RETURN_IF_ERROR(path);
+
+    if (CURRENT_TOKEN_IS(token::PUNCTUATION_COLON)) {
+        iter.advance();  // skip ':'
+
+        ParseResult<> type = expr_parser.parse();
+        RETURN_IF_ERROR(type);
+
+        return make_node<NamedVarSpecifier>(path.value(), type.value());
+    }
+
+    return make_node<NamedVarSpecifier>(path.value());
 }
 
-AST_NODE_IMPL_VISITOR(Jsonify, NamedVarSpecifier) { json.section("NamedVarSpecifier"); }
+AST_NODE_IMPL_VISITOR(Jsonify, NamedVarSpecifier) {
+    json.section("NamedVarSpecifier")
+        .add("path", get_node_json(node.path))
+        .add("type", get_node_json(node.type));
+}
 
 // ---------------------------------------------------------------------------------------------- //
 
@@ -416,55 +447,205 @@ AST_NODE_IMPL_VISITOR(Jsonify, ExprState) {
 
 AST_NODE_IMPL(Statement, SuiteState) {
     IS_NOT_EMPTY;
-    NOT_IMPLEMENTED;
+
+    // := BlockState | (':' Statement)
+
+    if CURRENT_TOKEN_IS (token::PUNCTUATION_OPEN_BRACE) {
+        ParseResult<BlockState> block = parse<BlockState>();
+        RETURN_IF_ERROR(block);
+
+        return make_node<SuiteState>(block.value());
+    }
+
+    if CURRENT_TOKEN_IS (token::PUNCTUATION_COLON) {
+        iter.advance();  // skip ':'
+
+        ParseResult<> stmt = parse();
+        RETURN_IF_ERROR(stmt);
+
+        NodeT<BlockState> block = make_node<BlockState>(NodeV<>{stmt.value()});
+        return make_node<SuiteState>(block);
+    }
+
+    return std::unexpected(
+        PARSE_ERROR(CURRENT_TOK,
+                    "expected a suite block or a single statement, '{' or ':', but found: " +
+                        CURRENT_TOK.token_kind_repr()));
 }
 
-AST_NODE_IMPL_VISITOR(Jsonify, SuiteState) { json.section("SuiteState"); }
+AST_NODE_IMPL_VISITOR(Jsonify, SuiteState) {
+    json.section("SuiteState").add("body", get_node_json(node.body));
+}
 
 // ---------------------------------------------------------------------------------------------- //
 
 AST_NODE_IMPL(Statement, BlockState) {
     IS_NOT_EMPTY;
-    NOT_IMPLEMENTED;
+
+    // := '{' Statement* '}'
+
+    IS_EXCEPTED_TOKEN(token::PUNCTUATION_OPEN_BRACE);
+    iter.advance();  // skip '{'
+
+    NodeV<> body;
+
+    while (!(CURRENT_TOKEN_IS(token::PUNCTUATION_CLOSE_BRACE))) {
+        ParseResult<> stmt = parse();
+        RETURN_IF_ERROR(stmt);
+
+        body.push_back(stmt.value());
+    }
+
+    if (iter.remaining_n() == 0) {
+        return std::unexpected(
+            PARSE_ERROR(CURRENT_TOK, "expected '}' to close the block, but found EOF"));
+    }
+
+    iter.advance();  // skip '}'
+    return make_node<BlockState>(body);
 }
 
-AST_NODE_IMPL_VISITOR(Jsonify, BlockState) { json.section("BlockState"); }
+AST_NODE_IMPL_VISITOR(Jsonify, BlockState) {
+    std::vector<neo::json> body_json;
+
+    for (const auto &node : node.body) {
+        body_json.push_back(get_node_json(node));
+    }
+
+    json.section("BlockState").add("body", body_json);
+}
 
 // ---------------------------------------------------------------------------------------------- //
 
 AST_NODE_IMPL(Statement, TryState) {
     IS_NOT_EMPTY;
-    NOT_IMPLEMENTED;
+
+    // := 'try' SuiteState (CatchState)* (FinallyState)?
+
+    NodeT<TryState> node;
+
+    IS_EXCEPTED_TOKEN(token::KEYWORD_TRY);
+    iter.advance();  // skip 'try'
+
+    ParseResult<SuiteState> body = parse<SuiteState>();
+    RETURN_IF_ERROR(body);
+
+    node = make_node<TryState>(body.value());
+
+    if CURRENT_TOKEN_IS_NOT (token::KEYWORD_CATCH) {
+        return std::unexpected(
+            PARSE_ERROR(PREVIOUS_TOK, "expected 'catch' or 'finally' after 'try' block"));
+    }
+
+    ParseResult<CatchState> catch_state = parse<CatchState>();
+    RETURN_IF_ERROR(catch_state);
+
+    node->catch_states.emplace_back(catch_state.value());
+
+    while
+        CURRENT_TOKEN_IS(token::KEYWORD_CATCH) {
+            ParseResult<CatchState> next_catch = parse<CatchState>();
+            RETURN_IF_ERROR(next_catch);
+
+            node->catch_states.emplace_back(next_catch.value());
+        }
+
+    if CURRENT_TOKEN_IS (token::KEYWORD_FINALLY) {
+        ParseResult<FinallyState> finally_state = parse<FinallyState>();
+        RETURN_IF_ERROR(finally_state);
+
+        node->finally_state = finally_state.value();
+    }
+
+    return node;
 }
 
-AST_NODE_IMPL_VISITOR(Jsonify, TryState) { json.section("TryState"); }
+AST_NODE_IMPL_VISITOR(Jsonify, TryState) {
+    std::vector<neo::json> catch_states;
+
+    for (const auto &catch_state : node.catch_states) {
+        catch_states.push_back(get_node_json(catch_state));
+    }
+
+    json.section("TryState")
+        .add("body", get_node_json(node.body))
+        .add("catches", catch_states)
+        .add("finally", get_node_json(node.finally_state));
+}
 
 // ---------------------------------------------------------------------------------------------- //
 
 AST_NODE_IMPL(Statement, CatchState) {
     IS_NOT_EMPTY;
-    NOT_IMPLEMENTED;
+
+    // := 'catch' (NamedVarSpecifier) SuiteState (CatchState)?
+
+    IS_EXCEPTED_TOKEN(token::KEYWORD_CATCH);
+    iter.advance();  // skip 'catch'
+
+    IS_EXCEPTED_TOKEN(token::PUNCTUATION_OPEN_PAREN);
+    iter.advance();  // skip '('
+
+    ParseResult<NamedVarSpecifier> catch_state = parse<NamedVarSpecifier>();
+    RETURN_IF_ERROR(catch_state);
+
+    IS_EXCEPTED_TOKEN(token::PUNCTUATION_CLOSE_PAREN);
+    iter.advance();  // skip ')'
+
+    ParseResult<SuiteState> body = parse<SuiteState>();
+    RETURN_IF_ERROR(body);
+
+    return make_node<CatchState>(catch_state.value(), body.value());
 }
 
-AST_NODE_IMPL_VISITOR(Jsonify, CatchState) { json.section("CatchState"); }
+AST_NODE_IMPL_VISITOR(Jsonify, CatchState) {
+    json.section("CatchState")
+        .add("catch", get_node_json(node.catch_state))
+        .add("body", get_node_json(node.body));
+}
 
 // ---------------------------------------------------------------------------------------------- //
 
 AST_NODE_IMPL(Statement, PanicState) {
     IS_NOT_EMPTY;
-    NOT_IMPLEMENTED;
+
+    // := 'panic' E ';'
+
+    IS_EXCEPTED_TOKEN(token::KEYWORD_PANIC);
+    iter.advance();  // skip 'panic'
+
+    auto expr = Expression(iter).parse();
+    RETURN_IF_ERROR(expr);
+
+    IS_EXCEPTED_TOKEN(token::PUNCTUATION_SEMICOLON);
+    iter.advance();  // skip ';'
+
+    return make_node<PanicState>(expr.value());
 }
 
-AST_NODE_IMPL_VISITOR(Jsonify, PanicState) { json.section("PanicState"); }
+AST_NODE_IMPL_VISITOR(Jsonify, PanicState) {
+    json.section("PanicState").add("expr", get_node_json(node.expr));
+}
 
 // ---------------------------------------------------------------------------------------------- //
 
 AST_NODE_IMPL(Statement, FinallyState) {
     IS_NOT_EMPTY;
-    NOT_IMPLEMENTED;
+
+    // := 'finally' SuiteState
+
+    IS_EXCEPTED_TOKEN(token::KEYWORD_FINALLY);
+    iter.advance();  // skip 'finally'
+
+    auto body = parse<SuiteState>();
+    RETURN_IF_ERROR(body);
+
+    return make_node<FinallyState>(body.value());
 }
 
-AST_NODE_IMPL_VISITOR(Jsonify, FinallyState) { json.section("FinallyState"); }
+AST_NODE_IMPL_VISITOR(Jsonify, FinallyState) {
+    json.section("FinallyState").add("body", get_node_json(node.body));
+}
 
 // ---------------------------------------------------------------------------------------------- //
 

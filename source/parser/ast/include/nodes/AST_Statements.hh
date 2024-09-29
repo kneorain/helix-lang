@@ -281,13 +281,13 @@ __AST_NODE_BEGIN {
     class CatchState final : public Node {
         BASE_CORE_METHODS(CatchState);
 
-        // := 'catch' (NamedVarSpecifier ((',' NamedVarSpecifier)*)?)? SuiteState
+        // := 'catch' (NamedVarSpecifier ((',' NamedVarSpecifier)*)?)? SuiteState (CatchState | FinallyState)?
 
-        CatchState(NodeV<NamedVarSpecifier> catches, NodeT<SuiteState> body)
-            : catches(std::move(catches))
+        CatchState(NodeT<NamedVarSpecifier> catch_state, NodeT<SuiteState> body)
+            : catch_state(std::move(catch_state))
             , body(std::move(body)) {}
 
-        NodeV<NamedVarSpecifier> catches;
+        NodeT<NamedVarSpecifier> catch_state;
         NodeT<SuiteState>        body;
     };
 
@@ -305,16 +305,18 @@ __AST_NODE_BEGIN {
     class TryState final : public Node {
         BASE_CORE_METHODS(TryState);
 
-        // := 'try' E SuiteState (CatchState*)?
+        // := 'try' SuiteState (CatchState*) (FinallyState)?
 
-        TryState(NodeT<> expr, NodeT<SuiteState> body, NodeV<CatchState> catches)
-            : expr(std::move(expr))
-            , body(std::move(body))
-            , catches(std::move(catches)) {}
+        explicit TryState(NodeT<SuiteState> body) : body(std::move(body)) {}
 
-        NodeT<>           expr;
-        NodeT<SuiteState> body;
-        NodeV<CatchState> catches;
+        TryState(NodeT<SuiteState> body, NodeV<CatchState> catch_states, NodeT<FinallyState> finally_state = nullptr)
+            : body(std::move(body))
+            , catch_states(std::move(catch_states))
+            , finally_state(std::move(finally_state)) {}
+
+        NodeT<SuiteState>    body;
+        NodeV<CatchState>    catch_states;
+        NodeT<FinallyState>  finally_state;
     };
 
     class PanicState final : public Node {

@@ -130,10 +130,10 @@ __AST_NODE_BEGIN {
 
       private:
         p_r<NamedArgumentExpr>     parse_NamedArgumentExpr();
-        p_r<PathExpr>              parse_PathExpr(p_r<> simple_path);
+        p_r<PathExpr>              parse_PathExpr(p_r<> simple_path = null);
         p_r<UnaryExpr>             parse_UnaryExpr();
         p_r<BinaryExpr>            parse_BinaryExpr(p_r<> lhs, int min_precedence);
-        p_r<LiteralExpr>           parse_LiteralExpr();
+        p_r<LiteralExpr>           parse_LiteralExpr(p_r<> str_concat = null);
         p_r<ArgumentExpr>          parse_ArgumentExpr();
         p_r<DotPathExpr>           parse_DotPathExpr(p_r<> lhs = null);
         p_r<IdentExpr>             parse_IdentExpr();
