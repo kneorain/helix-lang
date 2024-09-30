@@ -214,13 +214,13 @@ inline Token Lexer::parse_compiler_directive() {
               offset,
               source.substr(start + 2, (currentPos - start) - 3),
               file_name,
-              "<complier_directive>"};
+              "/* complier_directive */"};
 
     throw error::Panic(error::CodeError{.pof = &tok, .err_code = 0.7007});
 }
 
 inline Token Lexer::process_whitespace() {
-    auto result = Token{line, column, 1, offset, source.substr(currentPos, 1), file_name, "< >"};
+    auto result = Token{line, column, 1, offset, source.substr(currentPos, 1), file_name, "/*   */"};
     bare_advance();
     return result;
 }
@@ -261,7 +261,7 @@ inline Token Lexer::parse_alpha_numeric() {
             offset,
             source.substr(start, currentPos - start),
             file_name,
-            "<id>"};
+            "_"};
 }
 
 inline Token Lexer::parse_numeric() {
@@ -305,7 +305,7 @@ inline Token Lexer::parse_numeric() {
                                    offset,
                                    source.substr(start, currentPos - start),
                                    file_name,
-                                   "<float>"};
+                                   "/* float */"};
 
             throw error::Panic(error::create_old_CodeError(&bad_token, 0.0003));
         }
@@ -315,7 +315,7 @@ inline Token Lexer::parse_numeric() {
                 offset,
                 source.substr(start, currentPos - start),
                 file_name,
-                "<float>"};
+                "/* float */"};
     }
     return {line,
             column - (currentPos - start),
@@ -323,7 +323,7 @@ inline Token Lexer::parse_numeric() {
             offset,
             source.substr(start, currentPos - start),
             file_name,
-            "<int>"};
+            "/* int */"};
 }
 
 inline Token Lexer::parse_string() {
@@ -366,10 +366,10 @@ inline Token Lexer::parse_string() {
 
     switch (quote) {
         case '"':
-            token_type = "<string>";
+            token_type = "/* string */";
             break;
         case '\'':
-            token_type = "<char>";
+            token_type = "/* char */";
             break;
     }
 

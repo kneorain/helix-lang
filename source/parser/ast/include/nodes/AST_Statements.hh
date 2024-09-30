@@ -28,7 +28,7 @@ __AST_NODE_BEGIN {
 
         // := Ident (':' E)?
 
-        explicit NamedVarSpecifier(NodeT<PathExpr> path,  NodeT<> type = nullptr)
+        explicit NamedVarSpecifier(NodeT<IdentExpr> path, NodeT<Type> type = nullptr)
             : path(std::move(path))
             , type(std::move(type)) {
             if (type != nullptr) {
@@ -36,8 +36,8 @@ __AST_NODE_BEGIN {
             }
         }
 
-        NodeT<PathExpr> path;
-        NodeT<>         type;
+        NodeT<IdentExpr> path;
+        NodeT<Type>      type;
 
         bool has_type;
     };
@@ -118,25 +118,36 @@ __AST_NODE_BEGIN {
 
         // := 'if' expr Suite (ElseState)?
 
-        IfState(NodeT<> condition, NodeT<SuiteState> body, NodeT<> else_body = nullptr)
-            : condition(std::move(condition))
-            , body(std::move(body))
-            , else_body(std::move(else_body)) {}
+        enum class IfType {
+            If,
+            Unless,
+        };
+
+        explicit IfState(NodeT<> condition)
+            : condition(std::move(condition)) {}
 
         NodeT<>           condition;
         NodeT<SuiteState> body;
-        NodeT<>           else_body;
+        NodeV<ElseState>  else_body;
+        IfType            type = IfType::If;
     };
 
     class ElseState final : public Node {
         BASE_CORE_METHODS(ElseState);
 
-        // := 'else' Suite
+        // := 'else' Suite | 'else' ('if' | 'unless') E Suite
 
-        explicit ElseState(NodeT<SuiteState> body)
-            : body(std::move(body)) {}
+        enum class ElseType {
+            Else,
+            ElseIf,
+            ElseUnless,
+        };
 
+        explicit ElseState(bool /* unused */) {}
+
+        NodeT<>           condition;
         NodeT<SuiteState> body;
+        ElseType          type = ElseType::Else;
     };
 
     class SwitchState final : public Node {
@@ -225,7 +236,7 @@ __AST_NODE_BEGIN {
         BASE_CORE_METHODS(BreakState);
 
         // := 'break' ';'
-        
+
         explicit BreakState(token::Token marker)
             : marker(std::move(marker)) {}
 
@@ -281,7 +292,8 @@ __AST_NODE_BEGIN {
     class CatchState final : public Node {
         BASE_CORE_METHODS(CatchState);
 
-        // := 'catch' (NamedVarSpecifier ((',' NamedVarSpecifier)*)?)? SuiteState (CatchState | FinallyState)?
+        // := 'catch' (NamedVarSpecifier ((',' NamedVarSpecifier)*)?)? SuiteState (CatchState |
+        // FinallyState)?
 
         CatchState(NodeT<NamedVarSpecifier> catch_state, NodeT<SuiteState> body)
             : catch_state(std::move(catch_state))
@@ -307,16 +319,21 @@ __AST_NODE_BEGIN {
 
         // := 'try' SuiteState (CatchState*) (FinallyState)?
 
-        explicit TryState(NodeT<SuiteState> body) : body(std::move(body)) {}
+        explicit TryState(NodeT<SuiteState> body)
+            : body(std::move(body)) {}
 
-        TryState(NodeT<SuiteState> body, NodeV<CatchState> catch_states, NodeT<FinallyState> finally_state = nullptr)
+        TryState(NodeT<SuiteState>   body,
+                 NodeV<CatchState>   catch_states,
+                 NodeT<FinallyState> finally_state = nullptr)
             : body(std::move(body))
             , catch_states(std::move(catch_states))
             , finally_state(std::move(finally_state)) {}
 
-        NodeT<SuiteState>    body;
-        NodeV<CatchState>    catch_states;
-        NodeT<FinallyState>  finally_state;
+        NodeT<SuiteState>   body;
+        NodeV<CatchState>   catch_states;
+        NodeT<FinallyState> finally_state;
+
+        bool no_catch;
     };
 
     class PanicState final : public Node {

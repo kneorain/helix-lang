@@ -64,6 +64,7 @@
 #define CURRENT_TOK iter.current().get()
 #define PREVIOUS_TOK iter.peek_back().value().get()
 #define NEXT_TOK iter.peek().value().get()
+#define HAS_NEXT_TOK iter.peek().has_value()
 
 #ifdef DEBUG
 #include "neo-pprint/include/ansi_colors.hh"
@@ -116,8 +117,10 @@
                             "but found: " + std::string(PREVIOUS_TOK.token_kind_repr())));         \
     }
 
+/* TODO: change the ';' add from prev tok to ++; */
+
 #define CURRENT_TOKEN_IS(x) (iter.remaining_n() != 0 && CURRENT_TOK == x)
-#define CURRENT_TOKEN_IS_NOT(x) (iter.remaining_n() == 0 || CURRENT_TOK != x)
+#define CURRENT_TOKEN_IS_NOT(x) (iter.remaining_n() != 0 && CURRENT_TOK != x)
 #define IS_NULL_RESULT(x) if (x == nullptr || !x.has_value())
 #define IS_NOT_NULL_RESULT(x) if (x != nullptr && x.has_value())
 

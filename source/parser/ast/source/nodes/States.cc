@@ -55,11 +55,11 @@
 ///                                                                                              ///
 /// [x] * YieldState         * 'yield' E ';'                                                     ///
 /// [x] * DeleteState        * 'delete' E ';'                                                    ///
-/// [ ] * SwitchState        * 'switch' '(' E ')' '{' SwitchCaseState* '}'                       ///
-/// [ ] * IfState            * ('if' | 'unless') '(' E ')' SuiteState (ElseState)?               ///
+/// [ ] * SwitchState        * 'switch' E '{' SwitchCaseState* '}'                       ///
+/// [ ] * IfState            * ('if' | 'unless') E SuiteState (ElseState)?               ///
 /// [ ] * ElseState          * 'else' SuiteState                                                 ///
-/// [ ] * WhileState         * 'while' '(' E ')' SuiteState                                      ///
-/// [ ] * ForState           * 'for' '(' ForPyStatementCore | ForCStatementCore ')' SuiteState   ///
+/// [ ] * WhileState         * 'while' E SuiteState                                      ///
+/// [ ] * ForState           * 'for' ForPyStatementCore | ForCStatementCore SuiteState   ///
 /// [ ] * ForPyStatementCore * NamedVarSpecifier 'in' E SuiteState                               ///
 /// [ ] * ForCStatementCore  * (E)? ';' (E)? ';' (E)? SuiteState                                 ///
 /// [ ] * NamedVarSpecifier  * Ident (':' E)?                                                    ///
@@ -75,6 +75,8 @@
 /// [ ] * MultiImportState   * Ident 'as' Ident (',' Ident 'as' Ident)*                          ///
 ///                                                                                              ///
 //===-----------------------------------------------------------------------------------------====//
+
+#include <__expected/unexpected.h>
 
 #include <cstddef>
 #include <expected>
@@ -186,20 +188,24 @@ AST_BASE_IMPL(Statement, parse) {  // NOLINT(readability-function-cognitive-comp
 
 // ---------------------------------------------------------------------------------------------- //
 
-AST_NODE_IMPL(Statement, NamedVarSpecifier) {
+AST_NODE_IMPL(Statement, NamedVarSpecifier, bool force_type) {
     IS_NOT_EMPTY;
 
-    // := Ident (':' E)?
+    // := Ident (':' Type)?
 
     Expression expr_parser(iter);
 
-    ParseResult<PathExpr> path = expr_parser.parse<PathExpr>();
+    ParseResult<IdentExpr> path = expr_parser.parse<IdentExpr>();
     RETURN_IF_ERROR(path);
+
+    if (force_type) {
+        IS_EXCEPTED_TOKEN(token::PUNCTUATION_COLON);
+    }
 
     if (CURRENT_TOKEN_IS(token::PUNCTUATION_COLON)) {
         iter.advance();  // skip ':'
 
-        ParseResult<> type = expr_parser.parse();
+        ParseResult<Type> type = expr_parser.parse<Type>();
         RETURN_IF_ERROR(type);
 
         return make_node<NamedVarSpecifier>(path.value(), type.value());
@@ -245,28 +251,150 @@ AST_NODE_IMPL_VISITOR(Jsonify, ForState) { json.section("ForState"); }
 
 AST_NODE_IMPL(Statement, WhileState) {
     IS_NOT_EMPTY;
-    NOT_IMPLEMENTED;
+    // := 'while' E SuiteState
+
+    Expression expr_parser(iter);
+
+    IS_EXCEPTED_TOKEN(token::KEYWORD_WHILE);
+    iter.advance();  // skip 'while'
+
+    ParseResult<> condition = expr_parser.parse();
+    RETURN_IF_ERROR(condition);
+
+    ParseResult<SuiteState> body = parse<SuiteState>();
+    RETURN_IF_ERROR(body);
+
+    return make_node<WhileState>(condition.value(), body.value());
 }
 
-AST_NODE_IMPL_VISITOR(Jsonify, WhileState) { json.section("WhileState"); }
+AST_NODE_IMPL_VISITOR(Jsonify, WhileState) {
+    json.section("WhileState")
+        .add("condition", get_node_json(node.condition))
+        .add("body", get_node_json(node.body));
+}
 
 // ---------------------------------------------------------------------------------------------- //
 
-AST_NODE_IMPL(Statement, ElseState) {
+/* TODO: REFACTOR */
+AST_NODE_IMPL(Statement, ElseState, Expression &expr_parser) {
     IS_NOT_EMPTY;
-    NOT_IMPLEMENTED;
+
+    // := ('else' Suite) | ('else' ('if' | 'unless') E Suite)
+
+    NodeT<ElseState> node = make_node<ElseState>(true);
+
+    IS_EXCEPTED_TOKEN(token::KEYWORD_ELSE);
+    iter.advance();  // skip 'else'
+
+    if (CURRENT_TOKEN_IS(token::KEYWORD_IF) || CURRENT_TOKEN_IS(token::KEYWORD_UNLESS)) {
+        node->type = CURRENT_TOKEN_IS(token::KEYWORD_IF) ? ElseState::ElseType::ElseIf
+                                                         : ElseState::ElseType::ElseUnless;
+        iter.advance();  // skip 'if' | 'unless'
+
+        ParseResult<> expr = expr_parser.parse();
+        RETURN_IF_ERROR(expr);
+
+        node->condition = expr.value();
+    }
+
+    ParseResult<SuiteState> body = parse<SuiteState>();
+    RETURN_IF_ERROR(body);
+
+    node->body = body.value();
+
+    return node;
 }
 
-AST_NODE_IMPL_VISITOR(Jsonify, ElseState) { json.section("ElseState"); }
+AST_NODE_IMPL_VISITOR(Jsonify, ElseState) {
+    json.section("ElseState")
+        .add("condition", get_node_json(node.condition))
+        .add("body", get_node_json(node.body))
+        .add("type", (int)node.type);
+}
 
 // ---------------------------------------------------------------------------------------------- //
 
+/* TODO: REFACTOR */
 AST_NODE_IMPL(Statement, IfState) {
     IS_NOT_EMPTY;
-    NOT_IMPLEMENTED;
+
+    // := ('if' | 'unless') E SuiteState (ElseState*)?
+
+    Expression     expr_parser(iter);
+    bool           is_unless = false;
+    NodeT<IfState> node;
+
+#define IF_UNLESS_TOKENS {token::KEYWORD_IF, token::KEYWORD_UNLESS}
+    IS_IN_EXCEPTED_TOKENS(IF_UNLESS_TOKENS);
+    if (CURRENT_TOKEN_IS(token::KEYWORD_UNLESS)) {
+        is_unless = true;
+    }
+
+    iter.advance();  // skip 'if' or 'unless'
+#undef IF_UNLESS_TOKENS
+
+    auto condition = expr_parser.parse();
+    RETURN_IF_ERROR(condition);
+
+    node = make_node<IfState>(condition.value());
+
+    if (is_unless) {
+        node->type = IfState::IfType::Unless;
+    }
+
+    ParseResult<SuiteState> body = parse<SuiteState>();
+    RETURN_IF_ERROR(body);
+
+    node->body = body.value();
+
+    if CURRENT_TOKEN_IS (token::KEYWORD_ELSE) {
+        bool         captured_final_else = false;
+        token::Token starting_else;
+
+        ParseResult<ElseState> else_body = parse<ElseState>(expr_parser);
+        RETURN_IF_ERROR(else_body);
+
+        node->else_body.emplace_back(else_body.value());
+
+        if (else_body.value()->type == ElseState::ElseType::Else) {
+            captured_final_else = true;
+        }
+
+        while (CURRENT_TOKEN_IS(token::KEYWORD_ELSE)) {
+            starting_else = CURRENT_TOK;
+
+            else_body = parse<ElseState>(expr_parser);
+            RETURN_IF_ERROR(else_body);
+
+            node->else_body.emplace_back(else_body.value());
+
+            if (else_body.value()->type == ElseState::ElseType::Else) {
+                if (captured_final_else) {
+                    return std::unexpected(
+                        PARSE_ERROR(starting_else, "redefinition of captured else block"));
+                }
+
+                captured_final_else = true;
+            }
+        }
+    }
+
+    return node;
 }
 
-AST_NODE_IMPL_VISITOR(Jsonify, IfState) { json.section("IfState"); }
+AST_NODE_IMPL_VISITOR(Jsonify, IfState) {
+    std::vector<neo::json> else_body;
+
+    for (const auto &else_state : node.else_body) {
+        else_body.push_back(get_node_json(else_state));
+    }
+
+    json.section("IfState")
+        .add("condition", get_node_json(node.condition))
+        .add("body", get_node_json(node.body))
+        .add("else_body", else_body)
+        .add("type", (int)node.type);
+}
 
 // ---------------------------------------------------------------------------------------------- //
 
@@ -481,15 +609,18 @@ AST_NODE_IMPL_VISITOR(Jsonify, SuiteState) {
 
 AST_NODE_IMPL(Statement, BlockState) {
     IS_NOT_EMPTY;
-
     // := '{' Statement* '}'
 
+    NodeV<>      body;
+    token::Token starting_tok;
+
     IS_EXCEPTED_TOKEN(token::PUNCTUATION_OPEN_BRACE);
+    starting_tok = CURRENT_TOK;
     iter.advance();  // skip '{'
 
-    NodeV<> body;
-
-    while (!(CURRENT_TOKEN_IS(token::PUNCTUATION_CLOSE_BRACE))) {
+    while (CURRENT_TOKEN_IS_NOT(
+        token::PUNCTUATION_CLOSE_BRACE)) {  // TODO: implement this kind of bounds checks for all
+                                            // the pair token parsers '(', '[', '{'.
         ParseResult<> stmt = parse();
         RETURN_IF_ERROR(stmt);
 
@@ -498,7 +629,7 @@ AST_NODE_IMPL(Statement, BlockState) {
 
     if (iter.remaining_n() == 0) {
         return std::unexpected(
-            PARSE_ERROR(CURRENT_TOK, "expected '}' to close the block, but found EOF"));
+            PARSE_ERROR(starting_tok, "expected '}' to close the block, but found EOF"));
     }
 
     iter.advance();  // skip '}'
@@ -532,10 +663,17 @@ AST_NODE_IMPL(Statement, TryState) {
 
     node = make_node<TryState>(body.value());
 
-    if CURRENT_TOKEN_IS_NOT (token::KEYWORD_CATCH) {
-        return std::unexpected(
-            PARSE_ERROR(PREVIOUS_TOK, "expected 'catch' or 'finally' after 'try' block"));
+    if CURRENT_TOKEN_IS (token::KEYWORD_FINALLY) {
+        ParseResult<FinallyState> finally_state = parse<FinallyState>();
+        RETURN_IF_ERROR(finally_state);
+
+        node->no_catch      = true;
+        node->finally_state = finally_state.value();
+
+        return node;
     }
+
+    IS_EXCEPTED_TOKEN(token::KEYWORD_CATCH);
 
     ParseResult<CatchState> catch_state = parse<CatchState>();
     RETURN_IF_ERROR(catch_state);
@@ -570,7 +708,8 @@ AST_NODE_IMPL_VISITOR(Jsonify, TryState) {
     json.section("TryState")
         .add("body", get_node_json(node.body))
         .add("catches", catch_states)
-        .add("finally", get_node_json(node.finally_state));
+        .add("finally", get_node_json(node.finally_state))
+        .add("no_catch", (int)node.no_catch);
 }
 
 // ---------------------------------------------------------------------------------------------- //
@@ -586,7 +725,7 @@ AST_NODE_IMPL(Statement, CatchState) {
     IS_EXCEPTED_TOKEN(token::PUNCTUATION_OPEN_PAREN);
     iter.advance();  // skip '('
 
-    ParseResult<NamedVarSpecifier> catch_state = parse<NamedVarSpecifier>();
+    ParseResult<NamedVarSpecifier> catch_state = parse<NamedVarSpecifier>(true);
     RETURN_IF_ERROR(catch_state);
 
     IS_EXCEPTED_TOKEN(token::PUNCTUATION_CLOSE_PAREN);

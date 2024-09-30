@@ -119,6 +119,7 @@
 #include <unordered_set>
 #include <vector>
 
+#include "neo-pprint/include/hxpprint.hh"
 #include "parser/ast/include/config/AST_config.def"
 #include "parser/ast/include/config/AST_generate.hh"
 #include "parser/ast/include/config/case_types.def"
@@ -267,6 +268,18 @@ AST_BASE_IMPL(Expression, parse) {  // NOLINT(readability-function-cognitive-com
                 break;
 
             case token::PUNCTUATION_OPEN_BRACE:
+                if (iter.peek().has_value() &&
+                    iter.peek().value().get().token_kind() != token::tokens::IDENTIFIER) {
+                    continue_loop = false;
+                    break;
+                }
+
+                if (iter.peek(2).has_value() &&
+                    iter.peek(2).value().get().token_kind() != token::tokens::OPERATOR_ASSIGN) {
+                    continue_loop = false;
+                    break;
+                }
+
                 expr = parse<ObjInitExpr>();
                 RETURN_IF_ERROR(expr);
                 break;
@@ -454,8 +467,7 @@ AST_NODE_IMPL(Expression, IdentExpr) {
         is_reserved_primitive = true;
     }
 
-    iter.advance();
-
+    iter.advance();  // pop the token
     return make_node<IdentExpr>(tok, is_reserved_primitive);
 }
 
@@ -751,7 +763,10 @@ AST_NODE_IMPL_VISITOR(Jsonify, PathExpr) {
 
 // ---------------------------------------------------------------------------------------------- //
 
-AST_NODE_IMPL(Expression, FunctionCallExpr, ParseResult<> lhs, ParseResult<> gens) {
+AST_NODE_IMPL(Expression,
+              FunctionCallExpr,
+              ParseResult<> lhs,
+              ParseResult<> gens /* FIXME: unused */) {
     IS_NOT_EMPTY;
 
     /*

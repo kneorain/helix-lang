@@ -237,13 +237,13 @@ __AST_NODE_BEGIN {
       private:
         std::vector<token::Token> modifiers;
 
-        p_r<NamedVarSpecifier>  parse_NamedVarSpecifier();
+        p_r<NamedVarSpecifier>  parse_NamedVarSpecifier(bool force_type = false);
         p_r<ForPyStatementCore> parse_ForPyStatementCore();
         p_r<ForCStatementCore>  parse_ForCStatementCore();
         p_r<ForState>           parse_ForState();
         p_r<WhileState>         parse_WhileState();
         p_r<IfState>            parse_IfState();
-        p_r<ElseState>          parse_ElseState();
+        p_r<ElseState>          parse_ElseState(Expression &expr_parser);
         p_r<SwitchState>        parse_SwitchState();
         p_r<SwitchCaseState>    parse_SwitchCaseState();
         p_r<ImportState>        parse_ImportState();
