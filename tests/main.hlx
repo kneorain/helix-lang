@@ -1,11 +1,24 @@
- /// test cases for primitive values
+ /// literal expressions
  1;
  3.14;
+ 0x10;
+ 0b1010;
+ 0o123;
+ 1.2e3;
+ 1.2e-3;
  "hello";
+ f"hello {name}";
+ r"hello";
+ b"hello";
+ u"hello";
  true;
  false;
  null;
  'c';
+ r'c';
+ b'c';
+ u'c';
+ f'{v}';
  
  /// unary expressions
  -5;
@@ -125,10 +138,10 @@
  foo * (bar / baz);
  
  /// concurrency and control flow
- spawn some_function;
- await some_function;
+ spawn  some_function;
+ await  some_function;
  thread another_function;
- yield result;
+ yield  result;
  delete foo;
  return 1;
  
@@ -210,6 +223,9 @@
      finalize();
  }
  
+ finally:
+     finalize();
+
  panic RuntimeError("error message");
  
  /// advanced expressions and mixed control flow
@@ -241,8 +257,8 @@
  }
  
  /// Complex arithmetic with type casting and precedence
- /* let complex_result = */   ((foo * bar + 3) as float) / ((baz - qux) * 2);
- /* let logical_expr = */     (foo && bar) || !(baz || qux);
+ /* let logical_expr     = */ (foo && bar) || !(baz || qux);
+ /* let complex_result   = */ ((foo * bar + 3) as float) / ((baz - qux) * 2);
  /* let mixed_operations = */ (foo * 2 + (bar - 1)) / ((baz % 5) * (qux / 4));
  
  /// Logical expressions with multiple conditions

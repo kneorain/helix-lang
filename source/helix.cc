@@ -20,8 +20,11 @@
 #define _SILENCE_CXX23_ALIGNED_UNION_DEPRECATION_WARNING
 #define _SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING
 #define _SILENCE_ALL_CXX17_DEPRECATION_WARNINGS
-#pragma comment(linker, "/STACK:2000000000") // Set stack size to 2MB
-#pragma comment(linker, "/HEAP:2000000000") // Set heap size to 2MB
+
+#ifdef MSVC
+#pragma comment(linker, "/STACK:2000000000")  // Set stack size to 2MB
+#pragma comment(linker, "/HEAP:2000000000")   // Set heap size to 2MB
+#endif
 
 #include <chrono>
 #include <cstdio>
@@ -66,7 +69,6 @@ int compile(int argc, char **argv) {
     // preprocessor::import_tree->print_tree(preprocessor::import_tree->get_root());
 
     // print the preprocessed tokens
-    auto end = std::chrono::high_resolution_clock::now();
 
     if (parsed_args.emit_tokens) {
         // print(tokens.to_json());
@@ -74,32 +76,31 @@ int compile(int argc, char **argv) {
         print_tokens(tokens);
     }
 
-    { // remove all comments form `tokens`
+    {  // remove all comments form `tokens`
         TokenList new_tokens;
 
         for (auto &token : tokens) {
-            if (token->token_kind() != token::PUNCTUATION_SINGLE_LINE_COMMENT
-                && token->token_kind() != token::PUNCTUATION_MULTI_LINE_COMMENT) {
+            if (token->token_kind() != token::PUNCTUATION_SINGLE_LINE_COMMENT &&
+                token->token_kind() != token::PUNCTUATION_MULTI_LINE_COMMENT) {
                 new_tokens.push_back(token.current().get());
             }
         }
 
-        tokens = new_tokens; // FIXME: integrate this into the parser
+        tokens = new_tokens;  // FIXME: integrate this into the parser
     }
-
 
     // generate ast from the given tokens : stage 2
     auto iter = tokens.begin();
 
     print("parsing...         ", sysIO::endl('\r'));
 
-    parser::ast::NodeV<> ast;
+    parser::ast::NodeV<>       ast;
     parser::ast::ParseResult<> expr;
 
     while (iter.remaining_n() != 0) {
         print("parsing.. ", sysIO::endl('\r'));
-        auto statement  = parser::ast::node::Statement(iter);
-        expr = statement.parse();
+        auto statement = parser::ast::node::Statement(iter);
+        expr           = statement.parse();
 
         print("parsing.  ", sysIO::endl('\r'));
         if (!expr.has_value()) {
@@ -131,11 +132,11 @@ int compile(int argc, char **argv) {
         print(neo::json("ast").add("Statements", node_json).to_string());
     }
 
-
+    auto                          end  = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double> diff = end - start;
 
     if (parsed_args.verbose) {
-        //Print the time taken in nanoseconds and milliseconds
+        // Print the time taken in nanoseconds and milliseconds
         print("time taken: ", diff.count() * 1e+9, " ns");
         print("            ", diff.count() * 1000, " ms");
     }
