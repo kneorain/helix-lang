@@ -16,6 +16,7 @@
 #include "parser/ast/include/core/AST_nodes.hh"
 #include "parser/ast/include/types/AST_jsonify_visitor.hh"
 #include "parser/ast/include/types/AST_types.hh"
+#include "token/include/generate.hh"
 #define _SILENCE_CXX23_ALIGNED_UNION_DEPRECATION_WARNING
 #define _SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING
 #define _SILENCE_ALL_CXX17_DEPRECATION_WARNINGS
@@ -53,13 +54,13 @@ int compile(int argc, char **argv) {
     auto start = std::chrono::high_resolution_clock::now();
 
     // read the file and tokenize its contents : stage 0
-    print("Tokenizing...", sysIO::endl('\r'));
+    print("tokenizing...", sysIO::endl('\r'));
     TokenList tokens = Lexer(file_system::read_file(parsed_args.file), parsed_args.file).tokenize();
 
     std::vector<string> pkg_paths = {"/Volumes/Container/Projects/Helix/helix-lang/helix/pkgs"};
 
     // preprocess the tokens with optional module import paths : stage 1
-    print("Preprocessing...", sysIO::endl('\r'));
+    print("preprocessing...", sysIO::endl('\r'));
     Preprocessor(tokens, "main", pkg_paths).parse();
 
     // preprocessor::import_tree->print_tree(preprocessor::import_tree->get_root());
@@ -73,17 +74,34 @@ int compile(int argc, char **argv) {
         print_tokens(tokens);
     }
 
+    { // remove all comments form `tokens`
+        TokenList new_tokens;
+
+        for (auto &token : tokens) {
+            if (token->token_kind() != token::PUNCTUATION_SINGLE_LINE_COMMENT
+                && token->token_kind() != token::PUNCTUATION_MULTI_LINE_COMMENT) {
+                new_tokens.push_back(token.current().get());
+            }
+        }
+
+        tokens = new_tokens; // FIXME: integrate this into the parser
+    }
+
+
     // generate ast from the given tokens : stage 2
     auto iter = tokens.begin();
 
-    print("Parsing...         ", sysIO::endl('\r'));
+    print("parsing...         ", sysIO::endl('\r'));
 
     parser::ast::NodeV<> ast;
+    parser::ast::ParseResult<> expr;
 
     while (iter.remaining_n() != 0) {
+        print("parsing.. ", sysIO::endl('\r'));
         auto statement  = parser::ast::node::Statement(iter);
-        auto expr = statement.parse();
+        expr = statement.parse();
 
+        print("parsing.  ", sysIO::endl('\r'));
         if (!expr.has_value()) {
             expr.error().panic();
             print(expr.error().what());
@@ -92,11 +110,17 @@ int compile(int argc, char **argv) {
         }
 
         ast.emplace_back(expr.value());
+        print("Parsing...", sysIO::endl('\r'));
+    }
+
+    if (!expr.has_value()) {
+        print("aborting...", sysIO::endl('\r'));
+    } else {
+        print("parsed     ", sysIO::endl('\r'));
     }
 
     if (parsed_args.emit_ast) {
         std::vector<neo::json> node_json;
-
 
         for (auto &node : ast) {
             parser::ast::visitor::Jsonify json_visitor;

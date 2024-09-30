@@ -237,7 +237,7 @@
  
  /// Combining ternary expressions and loops
  for i = 0; i < 10; i++ {
-     print((i % 2 == 0) ? "EdoveN";
+     print((i % 2 == 0) ? "even" : "odd");
  }
  
  /// Complex arithmetic with type casting and precedence
