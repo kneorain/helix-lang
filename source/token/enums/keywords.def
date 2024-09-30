@@ -15,7 +15,7 @@
 #ifndef __KEYWORDS_DEF__
 #define __KEYWORDS_DEF__
 
-#define KEYWORD_TOKENS_COUNT 50
+#define KEYWORD_TOKENS_COUNT 51
 
 /* TODO determine if is needs to be removed */
 
@@ -65,12 +65,13 @@
     GENERATE(KEYWORD_FFI,       "ffi"      ) \
     GENERATE(KEYWORD_IMPORT,    "import"   ) \
     GENERATE(KEYWORD_YIELD,     "yield"    ) \
-    GENERATE(KEYWORD_DELETE,    "delete"    ) \
+    GENERATE(KEYWORD_DELETE,    "delete"   ) \
     GENERATE(KEYWORD_AS,        "as"       ) \
+    GENERATE(KEYWORD_IN,        "in"       ) \
     GENERATE(KEYWORD_DERIVES,   "derives"  ) \
     GENERATE(KEYWORD_MODULE,    "module"   ) \
     GENERATE(KEYWORD_UNSAFE,    "unsafe"   ) \
 
 // NOTE: IF THIS GENERATION IS CHANGED DO NOT FORGET TO UPDATE COUNT
-
+// TODO: change 'in' to a operator
 #endif  // __KEYWORDS_DEF__

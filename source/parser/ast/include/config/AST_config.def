@@ -93,6 +93,16 @@
                 " token, but found: " + PREVIOUS_TOK.token_kind_repr()));                \
     }
 
+#define IS_NOT_EXCEPTED_TOKEN(tok)                                                            \
+    if (iter.remaining_n() == 0) {                                                            \
+        return std::unexpected(                                                               \
+            ParseError(PREVIOUS_TOK, GET_DEBUG_INFO + "did not expect this token here."));    \
+    }                                                                                         \
+    if (CURRENT_TOK == tok) {                                                                 \
+        iter.advance();                                                                       \
+        return std::unexpected(PARSE_ERROR(PREVIOUS_TOK, "did not expect this token here.")); \
+    }
+
 #define IS_IN_EXCEPTED_TOKENS(toks)                                                                \
     if (iter.remaining_n() == 0) {                                                                 \
         auto        tokens = toks;                                                                 \

@@ -54,12 +54,16 @@ __AST_NODE_BEGIN {
     class UnaryExpr final : public Node {  // := op E
         BASE_CORE_METHODS(UnaryExpr);
 
-        UnaryExpr(NodeT<> rhs, token::Token op)
-            : rhs(std::move(rhs))
-            , op(std::move(op)) {}
+        enum class PosType { PreFix, PostFix };
 
-        NodeT<>      rhs;
+        UnaryExpr(NodeT<> opd, token::Token op, PosType type)
+            : opd(std::move(opd))
+            , op(std::move(op))
+            , type(type) {}
+
+        NodeT<>      opd;
         token::Token op;
+        PosType      type = PosType::PreFix;
     };
 
     class IdentExpr final : public Node {  // := T
@@ -135,7 +139,7 @@ __AST_NODE_BEGIN {
                 (this->args).emplace_back(std::move(args));
             }
         }
-        
+
         NodeV<> args;
     };
 
@@ -265,17 +269,18 @@ __AST_NODE_BEGIN {
         }
 
         NodeV<NamedArgumentExpr> kwargs;
+        NodeT<>          path;
     };
 
     class LambdaExpr final : public Node {  // TODO
         BASE_CORE_METHODS(LambdaExpr);
-        
+
         explicit LambdaExpr(token::Token marker)
             : marker(std::move(marker)) {}
 
-        NodeV<> args;
-        NodeT<> body;
-        NodeT<> ret;
+        NodeV<>      args;
+        NodeT<>      body;
+        NodeT<>      ret;
         token::Token marker;
     };
 
@@ -341,10 +346,14 @@ __AST_NODE_BEGIN {
             Lambda,
         };
 
-        explicit Type(NodeT<> value) : value(std::move(value)), type(TypeType::Identifier) {}
-        explicit Type(NodeT<LambdaExpr> value) : value(std::move(value)), type(TypeType::Lambda) {}
+        explicit Type(NodeT<> value)
+            : value(std::move(value))
+            , type(TypeType::Identifier) {}
+        explicit Type(NodeT<LambdaExpr> value)
+            : value(std::move(value))
+            , type(TypeType::Lambda) {}
 
-        NodeT<> value;
+        NodeT<>  value;
         TypeType type;
     };
 

@@ -197,7 +197,10 @@ AST_BASE_IMPL(Expression, parse_primary) {  // NOLINT(readability-function-cogni
                 }
             }
         } else {
-            return std::unexpected(PARSE_ERROR_MSG("Expected an expression, but found nothing"));
+            if (tok.token_kind() != token::PUNCTUATION_SEMICOLON) {
+                return std::unexpected(
+                    PARSE_ERROR_MSG("Expected an expression, but found nothing"));
+            }
         }
     } else if (is_excepted(tok,
                            {token::KEYWORD_THREAD, token::KEYWORD_SPAWN, token::KEYWORD_AWAIT})) {
@@ -242,11 +245,12 @@ AST_BASE_IMPL(Expression, parse) {  // NOLINT(readability-function-cognitive-com
                             /// CURRENT_TOK
 
         switch (tok.token_kind()) {
-            case token::PUNCTUATION_OPEN_ANGLE:  /// what to do if its ident '<' parms
-                                                 /// '>' '(' args ')' its now either a
-                                                 /// function call w a generic or its a
-                                                 /// binary expression may god help me
-                NOT_IMPLEMENTED;
+            // case token::PUNCTUATION_OPEN_ANGLE:  /// what to do if its ident '<' parms
+            //                                      /// '>' '(' args ')' its now either a
+            //                                      /// function call w a generic or its a
+            //                                      /// binary expression may god help me
+            //     NOT_IMPLEMENTED;
+            // SOLUTION: 2 pass compiler
             case token::PUNCTUATION_OPEN_PAREN:
                 expr = parse<FunctionCallExpr>(expr);
                 RETURN_IF_ERROR(expr);
@@ -280,7 +284,7 @@ AST_BASE_IMPL(Expression, parse) {  // NOLINT(readability-function-cognitive-com
                     break;
                 }
 
-                expr = parse<ObjInitExpr>();
+                expr = parse<ObjInitExpr>(false, expr);
                 RETURN_IF_ERROR(expr);
                 break;
 
@@ -312,6 +316,9 @@ AST_BASE_IMPL(Expression, parse) {  // NOLINT(readability-function-cognitive-com
             default:
                 if (is_excepted(tok, IS_BINARY_OPERATOR)) {
                     expr = parse<BinaryExpr>(expr, get_precedence(tok));
+                    RETURN_IF_ERROR(expr);
+                } else if (is_excepted(tok, IS_UNARY_OPERATOR)) {
+                    expr = parse<UnaryExpr>(expr);
                     RETURN_IF_ERROR(expr);
                 } else if (tok == token::PUNCTUATION_OPEN_PAREN) {
                     iter.advance();                         // skip '('
@@ -434,22 +441,30 @@ AST_NODE_IMPL_VISITOR(Jsonify, BinaryExpr) {
 
 // ---------------------------------------------------------------------------------------------- //
 
-AST_NODE_IMPL(Expression, UnaryExpr) {
+AST_NODE_IMPL(Expression, UnaryExpr, ParseResult<> lhs) {
     IS_NOT_EMPTY;
 
-    // := op E
+    // := op E | E op
+
     IS_IN_EXCEPTED_TOKENS(IS_UNARY_OPERATOR);
     token::Token op = CURRENT_TOK;
     iter.advance();
 
-    ParseResult<> rhs = parse();
-    RETURN_IF_ERROR(rhs);
+    IS_NULL_RESULT(lhs) {
+        ParseResult<> rhs = parse();
+        RETURN_IF_ERROR(rhs);
 
-    return make_node<UnaryExpr>(rhs.value(), op);
+        return make_node<UnaryExpr>(rhs.value(), op, UnaryExpr::PosType::PreFix);
+    }
+
+    return make_node<UnaryExpr>(lhs.value(), op, UnaryExpr::PosType::PostFix);
 }
 
 AST_NODE_IMPL_VISITOR(Jsonify, UnaryExpr) {
-    json.section("UnaryExpr").add("rhs", get_node_json(node.rhs)).add("op", node.op);
+    json.section("UnaryExpr")
+        .add("operand", get_node_json(node.opd))
+        .add("op", node.op)
+        .add("type", (int)node.type);
 }
 
 // ---------------------------------------------------------------------------------------------- //
@@ -477,12 +492,16 @@ AST_NODE_IMPL_VISITOR(Jsonify, IdentExpr) { json.section("IdentExpr").add("name"
 
 /* FIXME: use this method, if unused remove */
 // should not be called by `parse` directly as it is a helper function
-AST_NODE_IMPL(Expression, NamedArgumentExpr) {
+AST_NODE_IMPL(Expression, NamedArgumentExpr, bool is_anonymous) {
     IS_NOT_EMPTY;
 
-    // := '.' IdentExpr '=' E
-    IS_EXCEPTED_TOKEN(token::PUNCTUATION_DOT);
-    iter.advance();  // skip '.'
+    // := '.'? IdentExpr '=' E
+    if (is_anonymous) {
+        IS_EXCEPTED_TOKEN(token::PUNCTUATION_DOT);
+        iter.advance();  // skip '.'
+    } else {
+        IS_NOT_EXCEPTED_TOKEN(token::PUNCTUATION_DOT);
+    }
 
     ParseResult<IdentExpr> name = parse<IdentExpr>();
     RETURN_IF_ERROR(name);
@@ -1063,10 +1082,16 @@ AST_NODE_IMPL_VISITOR(Jsonify, MapLiteralExpr) {
 
 // ---------------------------------------------------------------------------------------------- //
 
-AST_NODE_IMPL(Expression, ObjInitExpr, bool skip_start_brace) {
+AST_NODE_IMPL(Expression, ObjInitExpr, bool skip_start_brace, ParseResult<> obj_path) {
     IS_NOT_EMPTY;
 
-    // := '{' (NamedArgumentExpr (',' NamedArgumentExpr)*)? '}'
+    // := PATH? '{' (NamedArgumentExpr (',' NamedArgumentExpr)*)? '}'
+
+    bool is_anonymous = true;
+
+    IS_NOT_NULL_RESULT(obj_path) {
+        is_anonymous = false;
+    }
 
     if (!skip_start_brace) {
         IS_EXCEPTED_TOKEN(token::PUNCTUATION_OPEN_BRACE);
@@ -1078,7 +1103,7 @@ AST_NODE_IMPL(Expression, ObjInitExpr, bool skip_start_brace) {
             CURRENT_TOK, "expected a keyword argument, but got an empty object initializer"));
     }
 
-    ParseResult<NamedArgumentExpr> first = parse<NamedArgumentExpr>();
+    ParseResult<NamedArgumentExpr> first = parse<NamedArgumentExpr>(is_anonymous);
     RETURN_IF_ERROR(first);
 
     NodeT<ObjInitExpr> obj = make_node<ObjInitExpr>(first.value());
@@ -1091,11 +1116,16 @@ AST_NODE_IMPL(Expression, ObjInitExpr, bool skip_start_brace) {
                 break;
             }
 
-            ParseResult<NamedArgumentExpr> next = parse<NamedArgumentExpr>();
+            ParseResult<NamedArgumentExpr> next = parse<NamedArgumentExpr>(is_anonymous);
             RETURN_IF_ERROR(next);
 
             obj->kwargs.push_back(next.value());
         }
+
+
+    if (is_anonymous) {
+        obj->path = obj_path.value();
+    }
 
     IS_EXCEPTED_TOKEN(token::PUNCTUATION_CLOSE_BRACE);
     iter.advance();  // skip '}'
@@ -1110,7 +1140,8 @@ AST_NODE_IMPL_VISITOR(Jsonify, ObjInitExpr) {
         kwargs.push_back(get_node_json(kwarg));
     }
 
-    json.section("ObjInitExpr").add("keyword_args", kwargs);
+    json.section("ObjInitExpr").add("keyword_args", kwargs)
+        .add("path", get_node_json(node.path));
 }
 
 // ---------------------------------------------------------------------------------------------- //

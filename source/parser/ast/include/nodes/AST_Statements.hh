@@ -42,19 +42,27 @@ __AST_NODE_BEGIN {
         bool has_type;
     };
 
+    class NamedVarSpecifierList final : public Node {
+        BASE_CORE_METHODS(NamedVarSpecifierList);
+
+        // := NamedVarSpecifier (',' NamedVarSpecifier)*
+
+        explicit NamedVarSpecifierList(bool /* unused */) {}
+
+        NodeV<NamedVarSpecifier> vars;
+    };
+
     class ForPyStatementCore final : public Node {
         BASE_CORE_METHODS(ForPyStatementCore);
 
         // := NamedVarSpecifier 'in 'expr' Suite
 
-        ForPyStatementCore(NodeT<NamedVarSpecifier> vars, NodeT<> range, NodeT<> body)
-            : vars(std::move(vars))
-            , range(std::move(range))
-            , body(std::move(body)) {}
+        explicit ForPyStatementCore(bool /* unused */) {}
 
-        NodeT<NamedVarSpecifier> vars;
-        NodeT<>                  range;
-        NodeT<>                  body;
+        token::Token                 in_marker;
+        NodeT<NamedVarSpecifierList> vars;
+        NodeT<>                      range;
+        NodeT<>                      body;
     };
 
     class ForCStatementCore final : public Node {
@@ -62,11 +70,7 @@ __AST_NODE_BEGIN {
 
         // := (expr)? ';' (expr)? ';' (expr)? Suite
 
-        ForCStatementCore(NodeT<> init, NodeT<> condition, NodeT<> update, NodeT<SuiteState> body)
-            : init(std::move(init))
-            , condition(std::move(condition))
-            , update(std::move(update))
-            , body(std::move(body)) {}
+        explicit ForCStatementCore(bool /* unused */) {}
 
         NodeT<>           init;
         NodeT<>           condition;
@@ -84,17 +88,9 @@ __AST_NODE_BEGIN {
             C,
         };
 
-        explicit ForState(NodeT<> core)
-            : core(std::move(core)) {
-            if (core->getNodeName() == "ForPyStatementCore") {
-                type = ForType::Python;
-            } else if (core->getNodeName() == "ForCStatementCore") {
-                type = ForType::C;
-            } else {
-                // error
-                throw std::runtime_error(GET_DEBUG_INFO + "Invalid for loop type");
-            }
-        }
+        ForState(NodeT<> core, ForType type)
+            : core(std::move(core))
+            , type(type) {}
 
         NodeT<> core;
         ForType type;
@@ -155,9 +151,8 @@ __AST_NODE_BEGIN {
 
         // := 'switch' expr '{' SwitchCaseState* '}'
 
-        SwitchState(NodeT<> condition, NodeV<SwitchCaseState> cases)
-            : condition(std::move(condition))
-            , cases(std::move(cases)) {}
+        SwitchState(NodeT<> condition)
+            : condition(std::move(condition)) {}
 
         NodeT<>                condition;
         NodeV<SwitchCaseState> cases;
@@ -171,16 +166,19 @@ __AST_NODE_BEGIN {
         enum class CaseType {
             Case,
             Default,
+            Fallthrough,
         };
 
-        SwitchCaseState(NodeT<> condition, NodeT<SuiteState> body, CaseType type)
+        SwitchCaseState(NodeT<> condition, NodeT<SuiteState> body, CaseType type, token::Token marker)
             : condition(std::move(condition))
             , body(std::move(body))
-            , type(type) {}
+            , type(type)
+            , marker(std::move(marker)) {}
 
         NodeT<>           condition;
         NodeT<SuiteState> body;
         CaseType          type;
+        token::Token      marker;
     };
 
     class ImportState final : public Node {

@@ -129,9 +129,9 @@ __AST_NODE_BEGIN {
         };
 
       private:
-        p_r<NamedArgumentExpr>     parse_NamedArgumentExpr();
+        p_r<NamedArgumentExpr>     parse_NamedArgumentExpr(bool is_anonymous = false);
         p_r<PathExpr>              parse_PathExpr(p_r<> simple_path = null);
-        p_r<UnaryExpr>             parse_UnaryExpr();
+        p_r<UnaryExpr>             parse_UnaryExpr(p_r<> lhs = null);
         p_r<BinaryExpr>            parse_BinaryExpr(p_r<> lhs, int min_precedence);
         p_r<LiteralExpr>           parse_LiteralExpr(p_r<> str_concat = null);
         p_r<ArgumentExpr>          parse_ArgumentExpr();
@@ -148,7 +148,7 @@ __AST_NODE_BEGIN {
         p_r<SetLiteralExpr>        parse_SetLiteralExpr(p_r<> starting_value);
         p_r<MapPairExpr>           parse_MapPairExpr();
         p_r<MapLiteralExpr>        parse_MapLiteralExpr(p_r<> starting_value);
-        p_r<ObjInitExpr>           parse_ObjInitExpr(bool skip_start_brace = false);
+        p_r<ObjInitExpr>           parse_ObjInitExpr(bool skip_start_brace = false, p_r<> obj_path = null);
         p_r<LambdaExpr>            parse_LambdaExpr();
         p_r<TernaryExpr>           parse_TernaryExpr(p_r<> lhs = null);
         p_r<ParenthesizedExpr>     parse_ParenthesizedExpr(p_r<> expr = null);
@@ -183,6 +183,8 @@ __AST_NODE_BEGIN {
         p_r<T> parse(Args &&...args) { /* NOLINT */
             if constexpr (std ::is_same_v<T, NamedVarSpecifier>) {
                 return parse_NamedVarSpecifier(std ::forward<Args>(args)...);
+            } else if constexpr (std ::is_same_v<T, NamedVarSpecifierList>) {
+                return parse_NamedVarSpecifierList(std ::forward<Args>(args)...);
             } else if constexpr (std ::is_same_v<T, ForPyStatementCore>) {
                 return parse_ForPyStatementCore(std ::forward<Args>(args)...);
             } else if constexpr (std ::is_same_v<T, ForCStatementCore>) {
@@ -237,31 +239,32 @@ __AST_NODE_BEGIN {
       private:
         std::vector<token::Token> modifiers;
 
-        p_r<NamedVarSpecifier>  parse_NamedVarSpecifier(bool force_type = false);
-        p_r<ForPyStatementCore> parse_ForPyStatementCore();
-        p_r<ForCStatementCore>  parse_ForCStatementCore();
-        p_r<ForState>           parse_ForState();
-        p_r<WhileState>         parse_WhileState();
-        p_r<IfState>            parse_IfState();
-        p_r<ElseState>          parse_ElseState(Expression &expr_parser);
-        p_r<SwitchState>        parse_SwitchState();
-        p_r<SwitchCaseState>    parse_SwitchCaseState();
-        p_r<ImportState>        parse_ImportState();
-        p_r<SingleImportState>  parse_SingleImportState();
-        p_r<MultiImportState>   parse_MultiImportState();
-        p_r<AliasState>         parse_AliasState();
-        p_r<YieldState>         parse_YieldState();
-        p_r<DeleteState>        parse_DeleteState();
-        p_r<ReturnState>        parse_ReturnState();
-        p_r<BreakState>         parse_BreakState();
-        p_r<ContinueState>      parse_ContinueState();
-        p_r<ExprState>          parse_ExprState();
-        p_r<BlockState>         parse_BlockState();
-        p_r<TryState>           parse_TryState();
-        p_r<CatchState>         parse_CatchState();
-        p_r<FinallyState>       parse_FinallyState();
-        p_r<PanicState>         parse_PanicState();
-        p_r<SuiteState>         parse_SuiteState();
+        p_r<NamedVarSpecifier>     parse_NamedVarSpecifier(bool force_type = false);
+        p_r<NamedVarSpecifierList> parse_NamedVarSpecifierList(bool force_types = false);
+        p_r<ForPyStatementCore>    parse_ForPyStatementCore(bool skip_start = false);
+        p_r<ForCStatementCore>     parse_ForCStatementCore(bool skip_start = false);
+        p_r<ForState>              parse_ForState();
+        p_r<WhileState>            parse_WhileState();
+        p_r<IfState>               parse_IfState();
+        p_r<ElseState>             parse_ElseState(Expression &expr_parser);
+        p_r<SwitchState>           parse_SwitchState();
+        p_r<SwitchCaseState>       parse_SwitchCaseState();
+        p_r<ImportState>           parse_ImportState();
+        p_r<SingleImportState>     parse_SingleImportState();
+        p_r<MultiImportState>      parse_MultiImportState();
+        p_r<AliasState>            parse_AliasState();
+        p_r<YieldState>            parse_YieldState();
+        p_r<DeleteState>           parse_DeleteState();
+        p_r<ReturnState>           parse_ReturnState();
+        p_r<BreakState>            parse_BreakState();
+        p_r<ContinueState>         parse_ContinueState();
+        p_r<ExprState>             parse_ExprState();
+        p_r<BlockState>            parse_BlockState();
+        p_r<TryState>              parse_TryState();
+        p_r<CatchState>            parse_CatchState();
+        p_r<FinallyState>          parse_FinallyState();
+        p_r<PanicState>            parse_PanicState();
+        p_r<SuiteState>            parse_SuiteState();
     };
 }  // namespace __AST_BEGIN
 

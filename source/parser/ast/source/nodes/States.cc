@@ -53,21 +53,23 @@
 /// [x] * SuiteState     * BlockState | (':' Statement)                                          ///
 /// [x] * ReturnState    * 'return' E? ';'                                                       ///
 ///                                                                                              ///
-/// [x] * YieldState         * 'yield' E ';'                                                     ///
-/// [x] * DeleteState        * 'delete' E ';'                                                    ///
-/// [ ] * SwitchState        * 'switch' E '{' SwitchCaseState* '}'                       ///
-/// [ ] * IfState            * ('if' | 'unless') E SuiteState (ElseState)?               ///
-/// [ ] * ElseState          * 'else' SuiteState                                                 ///
-/// [ ] * WhileState         * 'while' E SuiteState                                      ///
-/// [ ] * ForState           * 'for' ForPyStatementCore | ForCStatementCore SuiteState   ///
-/// [ ] * ForPyStatementCore * NamedVarSpecifier 'in' E SuiteState                               ///
-/// [ ] * ForCStatementCore  * (E)? ';' (E)? ';' (E)? SuiteState                                 ///
-/// [ ] * NamedVarSpecifier  * Ident (':' E)?                                                    ///
-/// [ ] * SwitchCaseState    * 'case' E SuiteState | 'default' SuiteState                        ///
-/// [ ] * TryState           * 'try' SuiteState (CatchState) (FinallyState)?                     ///
-/// [ ] * CatchState         * 'catch' (NamedVarSpecifier (',' NamedVarSpecifier)*)? SuiteState
-/// (CatchState | FinallyState)? /// [ ] * FinallyState       * 'finally' SuiteState /// [x] *
-/// PanicState         * 'panic' ';'                                                       ///
+/// [x] * YieldState            * 'yield' E ';'                                                  ///
+/// [x] * DeleteState           * 'delete' E ';'                                                 ///
+/// [x] * IfState               * ('if' | 'unless') E SuiteState (ElseState)?                    ///
+/// [x] * ElseState             * 'else' SuiteState                                              ///
+/// [x] * WhileState            * 'while' E SuiteState                                           ///
+/// [x] * ForState              * 'for' ForPyStatementCore | ForCStatementCore SuiteState        ///
+/// [x] * ForPyStatementCore    * NamedVarSpecifier 'in' E SuiteState                            ///
+/// [x] * ForCStatementCore     * (E)? ';' (E)? ';' (E)? SuiteState                              ///
+/// [x] * NamedVarSpecifier     * Ident (':' E)?                                                 ///
+/// [x] * NamedVarSpecifierList * NamedVarSpecifier (',' NamedVarSpecifier)*                     ///
+/// [x] * SwitchState           * 'switch' E '{' SwitchCaseState* '}'                            ///
+/// [x] * SwitchCaseState    * 'case' E SuiteState | 'default' SuiteState                        ///
+/// [x] * TryState           * 'try' SuiteState (CatchState) (FinallyState)?                     ///
+/// [x] * CatchState         * 'catch' (NamedVarSpecifier (',' NamedVarSpecifier)*)? SuiteState  ///
+///                            (CatchState | FinallyState)?                                      ///
+/// [x] * FinallyState       * 'finally' SuiteState                                              ///
+/// [x] * PanicState         * 'panic' ';'                                                       ///
 ///                                                                                              ///
 /// [ ] * ImportState        * 'import' (SingleImportState | MultiImportState)                   ///
 /// [ ] * AliasState         * Ident 'as' Ident ';'                                              ///
@@ -76,7 +78,108 @@
 ///                                                                                              ///
 //===-----------------------------------------------------------------------------------------====//
 
-#include <__expected/unexpected.h>
+// if import is passed, as soon as its been parsed spwan a new thread to parse the import ast and
+// get symbols store symbols to to global symbols vec, while parsing set 'found import ...' (so if
+// the parser comes accross the same import it can skip it) and also set 'being parsed to true' so
+// that when we get to symbol resolution we can wait for the thread to finish or timeout
+
+/** GPT response for the above comment:
+### Objective:
+- When an `import` statement is encountered during parsing, you want to process it in a separate
+thread to:
+  1. Parse the AST (Abstract Syntax Tree) of the imported module.
+  2. Extract the symbols (e.g., functions, variables, types) from the imported module.
+  3. Store the imported symbols in a global symbol table for use in the main parsing process.
+
+- The system needs to handle the import efficiently by tracking which imports have already been
+processed and managing potential race conditions with symbol resolution.
+
+### Detailed Explanation:
+
+1. **Import Parsing**:
+   - When the parser encounters an `import` statement, it immediately spawns a new thread to process
+that import.
+   - This separate thread will:
+     1. Parse the imported module's source code into its own AST.
+     2. Extract the relevant symbols (functions, variables, etc.) from the AST.
+     3. Add those symbols to a global symbol table so the main parser can reference them.
+
+2. **Global Symbol Table**:
+   - The global symbol table is a shared resource that stores symbols from all imported modules.
+   - This table will help avoid redundant imports (i.e., if the same module is imported multiple
+times, it is parsed only once).
+   - The symbols from the import need to be safely added to this global table by the thread handling
+the import.
+
+3. **Handling Duplicates**:
+   - You want to keep track of imports that are in progress or already completed:
+     - **Tracking Imports**: When an `import` statement is encountered, the parser checks a list (or
+map) of imports to see if the module has already been imported.
+     - **Skipping Duplicate Imports**: If the module has already been imported or is currently being
+processed in another thread, the parser can skip creating a new thread and move on.
+     - **Marking Imports**: As soon as an import starts processing, mark it as `being parsed` to
+prevent other threads or the main parser from redundantly processing the same import.
+
+4. **Concurrency with Threads**:
+   - Since the parsing of imports is done in parallel (in separate threads), it's crucial to manage
+these threads:
+     - **Waiting for Threads**: When the main parser reaches the symbol resolution stage (i.e., when
+it needs to use symbols from the imported module), it should check if the thread parsing the import
+has finished. If not, it waits for the thread to finish or times out after a certain period.
+     - **Timeout Mechanism**: The timeout ensures that if an import takes too long to parse (due to
+errors or large files), the main parser doesn’t hang indefinitely.
+
+### Steps Summary:
+
+1. **Encounter Import**:
+   - When an `import` statement is found, check if this module is already in the global symbol
+     table.
+   - If it is, skip it.
+   - If not, spawn a new thread to:
+     1. Parse the module.
+     2. Extract the symbols.
+     3. Add those symbols to the global symbol table.
+
+2. **Track Import Status**:
+   - Maintain a data structure that tracks the status of each import:
+     - **Not Found**: The module hasn’t been parsed yet.
+     - **Being Parsed**: A thread is currently parsing the module.
+     - **Parsed**: The module has been fully parsed, and its symbols are available.
+
+3. **Symbol Resolution**:
+   - When the main parser needs to resolve symbols from an imported module, it checks if the parsing
+     thread for that module has finished:
+     - If the thread is still running, wait for it to finish or use a timeout to prevent deadlocks.
+     - If the thread has finished, use the symbols it has added to the global symbol table.
+
+### Example Scenario:
+
+- **Step 1**: The parser encounters `import my_module`.
+- **Step 2**: It checks if `my_module` is already in the global symbol table or currently being
+              parsed.
+  - If it’s not being parsed, spawn a new thread to parse `my_module`.
+  - Mark `my_module` as `being parsed`.
+- **Step 3**: The thread for `my_module` parses the module and extracts symbols like `my_func` and
+              `my_var`.
+  - These symbols are added to the global symbol table.
+  - Mark `my_module` as `parsed`.
+- **Step 4**: When the parser later encounters a reference to `my_func` from `my_module`, it checks
+              the symbol table:
+  - If the `my_module` thread is still running, the parser waits or times out.
+  - If the thread has completed, the parser resolves `my_func` from the global symbol table.
+
+### Important Considerations:
+- **Concurrency**: Since multiple threads may be accessing and modifying the global symbol table,
+                   ensure thread-safe operations (e.g., using mutexes or locks).
+- **Timeout**: You need to decide how long the main parser will wait for an import thread before
+               timing out.
+- **Error Handling**: If the import thread fails (e.g., due to a syntax error in the imported
+                      module), ensure that the parser can handle this gracefully, perhaps by
+                      skipping the faulty module or logging an error.
+
+This design improves parsing performance by handling imports concurrently but also ensures that the
+symbols from the imports are available when needed for resolution.
+ */
 
 #include <cstddef>
 #include <expected>
@@ -222,30 +325,247 @@ AST_NODE_IMPL_VISITOR(Jsonify, NamedVarSpecifier) {
 
 // ---------------------------------------------------------------------------------------------- //
 
-AST_NODE_IMPL(Statement, ForPyStatementCore) {
+AST_NODE_IMPL(Statement, NamedVarSpecifierList, bool force_type) {
     IS_NOT_EMPTY;
-    NOT_IMPLEMENTED;
+
+    // := NamedVarSpecifier (',' NamedVarSpecifier)*
+
+    NodeT<NamedVarSpecifierList> node = make_node<NamedVarSpecifierList>(true);
+
+    if (CURRENT_TOKEN_IS_NOT(token::IDENTIFIER)) {
+        return std::unexpected(
+            PARSE_ERROR(CURRENT_TOK,
+                        "expected an identifier for the variable name, but found: " +
+                            CURRENT_TOK.token_kind_repr()));
+    }
+
+    ParseResult<NamedVarSpecifier> var = parse<NamedVarSpecifier>(force_type);
+    RETURN_IF_ERROR(var);
+
+    node->vars.emplace_back(var.value());
+
+    while (CURRENT_TOKEN_IS(token::PUNCTUATION_COMMA)) {
+        iter.advance();  // skip ','
+
+        ParseResult<NamedVarSpecifier> next_var = parse<NamedVarSpecifier>(force_type);
+        RETURN_IF_ERROR(next_var);
+
+        node->vars.emplace_back(next_var.value());
+    }
+
+    return node;
 }
 
-AST_NODE_IMPL_VISITOR(Jsonify, ForPyStatementCore) { json.section("ForPyStatementCore"); }
+AST_NODE_IMPL_VISITOR(Jsonify, NamedVarSpecifierList) {
+    std::vector<neo::json> vars;
+
+    for (const auto &var : node.vars) {
+        vars.push_back(get_node_json(var));
+    }
+
+    json.section("NamedVarSpecifierList").add("vars", vars);
+}
 
 // ---------------------------------------------------------------------------------------------- //
 
-AST_NODE_IMPL(Statement, ForCStatementCore) {
+AST_NODE_IMPL(Statement, ForPyStatementCore, bool skip_start) {
     IS_NOT_EMPTY;
-    NOT_IMPLEMENTED;
+    // := NamedVarSpecifier* 'in' E SuiteState
+
+    bool                      except_closing_paren = false;
+    token::Token              starting_tok;
+    Expression                expr_parser(iter);
+    NodeT<ForPyStatementCore> node = make_node<ForPyStatementCore>(true);
+
+    if (!skip_start) {
+        IS_EXCEPTED_TOKEN(token::KEYWORD_FOR);
+        iter.advance();  // skip 'for'
+    }
+
+    if (CURRENT_TOKEN_IS(token::PUNCTUATION_OPEN_PAREN)) {
+        except_closing_paren = true;
+        starting_tok         = CURRENT_TOK;
+        iter.advance();  // skip '('
+    }
+
+    // vars can be untyped
+    ParseResult<NamedVarSpecifierList> vars = parse<NamedVarSpecifierList>(false);
+    RETURN_IF_ERROR(vars);
+
+    node->vars = vars.value();
+
+    IS_EXCEPTED_TOKEN(token::KEYWORD_IN);
+    node->in_marker = CURRENT_TOK;
+    iter.advance();  // skip 'in'
+
+    ParseResult<> range = expr_parser.parse();
+    RETURN_IF_ERROR(range);
+
+    if (except_closing_paren) {
+        if (CURRENT_TOKEN_IS_NOT(token::PUNCTUATION_CLOSE_PAREN)) {
+            return std::unexpected(PARSE_ERROR(starting_tok,
+                                               "expected ')' to close the for loop, but found: " +
+                                                   CURRENT_TOK.token_kind_repr()));
+        }
+
+        iter.advance();  // skip ')'
+    }
+
+    ParseResult<SuiteState> body = parse<SuiteState>();
+    RETURN_IF_ERROR(body);
+
+    node->range = range.value();
+    node->body  = body.value();
+
+    return node;
 }
 
-AST_NODE_IMPL_VISITOR(Jsonify, ForCStatementCore) { json.section("ForCStatementCore"); }
+AST_NODE_IMPL_VISITOR(Jsonify, ForPyStatementCore) {
+
+    json.section("ForPyStatementCore")
+        .add("range", get_node_json(node.range))
+        .add("body", get_node_json(node.body))
+        .add("in_marker", node.in_marker)
+        .add("vars", get_node_json(node.vars));
+}
+
+// ---------------------------------------------------------------------------------------------- //
+
+AST_NODE_IMPL(Statement, ForCStatementCore, bool skip_start) {
+    IS_NOT_EMPTY;
+    // := (S)? ';' (E)? ';' (E)? SuiteState
+
+    bool except_closing_paren = false;
+
+    Expression               expr_parser(iter);
+    token::Token             starting_tok;
+    NodeT<ForCStatementCore> node = make_node<ForCStatementCore>(true);
+
+    if (!skip_start) {
+        if (CURRENT_TOKEN_IS(token::KEYWORD_FOR)) {
+            iter.advance();  // skip 'for'
+        }
+    }
+
+    if (CURRENT_TOKEN_IS(token::PUNCTUATION_OPEN_PAREN)) {  // '('
+        except_closing_paren = true;
+        starting_tok         = CURRENT_TOK;
+        iter.advance();  // skip '('
+    }
+
+    if (CURRENT_TOKEN_IS_NOT(token::PUNCTUATION_SEMICOLON)) {
+        ParseResult<> init = parse();
+        RETURN_IF_ERROR(init);
+
+        node->init = init.value();  // next semi colon has been skipped
+    } else {
+        IS_EXCEPTED_TOKEN(token::PUNCTUATION_SEMICOLON);
+        iter.advance();  // skip ';'
+    }
+
+    // first semi colon is skipped
+
+    if (CURRENT_TOKEN_IS_NOT(token::PUNCTUATION_SEMICOLON)) {
+        ParseResult<> condition = expr_parser.parse();
+        RETURN_IF_ERROR(condition);
+
+        node->condition = condition.value();
+
+        IS_EXCEPTED_TOKEN(token::PUNCTUATION_SEMICOLON);
+        iter.advance();  // skip ';' - 2
+    } else {
+        IS_EXCEPTED_TOKEN(token::PUNCTUATION_SEMICOLON);
+        iter.advance();  // skip ';' - 2
+    }
+
+    if (CURRENT_TOKEN_IS_NOT(token::PUNCTUATION_OPEN_BRACE) &&
+        CURRENT_TOKEN_IS_NOT(token::PUNCTUATION_COLON)) {
+        // update condition
+        ParseResult<> update = expr_parser.parse();
+        RETURN_IF_ERROR(update);
+
+        node->update = update.value();
+    }  // no semicolon after this
+
+    if (except_closing_paren) {
+        if (CURRENT_TOKEN_IS_NOT(token::PUNCTUATION_CLOSE_PAREN)) {
+            return std::unexpected(PARSE_ERROR(starting_tok,
+                                               "expected ')' to close the for loop, but found: " +
+                                                   CURRENT_TOK.token_kind_repr()));
+        }
+
+        iter.advance();  // skip ')'
+    }
+
+    ParseResult<SuiteState> body = parse<SuiteState>();
+    RETURN_IF_ERROR(body);
+
+    node->body = body.value();
+    return node;
+}
+
+AST_NODE_IMPL_VISITOR(Jsonify, ForCStatementCore) {
+    json.section("ForCStatementCore")
+        .add("init", get_node_json(node.init))
+        .add("condition", get_node_json(node.condition))
+        .add("update", get_node_json(node.update))
+        .add("body", get_node_json(node.body));
+}
 
 // ---------------------------------------------------------------------------------------------- //
 
 AST_NODE_IMPL(Statement, ForState) {
     IS_NOT_EMPTY;
-    NOT_IMPLEMENTED;
+
+    // := 'for' ForPyStatementCore | ForCStatementCore SuiteState
+
+    bool except_closing_paren = false;
+
+    IS_EXCEPTED_TOKEN(token::KEYWORD_FOR);
+    iter.advance();  // skip 'for'
+
+    if (CURRENT_TOKEN_IS(token::PUNCTUATION_OPEN_PAREN)) {
+        except_closing_paren = true;
+        iter.advance();  // skip '('
+    }
+
+    /// here we can do a few checs now to see if we are parsing a python or c style for loop
+    /// if the curent token is not a ident we are in a c style loop
+    /// if the token is a ident then parse a NamedVarSpecifier* then if theres 'in' then its a
+    /// python style loop
+
+    if (CURRENT_TOKEN_IS_NOT(token::IDENTIFIER)) {
+    c_style_for:
+        if (except_closing_paren) {
+            iter.reverse();  // go back to the '('
+        }
+
+        ParseResult<ForCStatementCore> c_for = parse<ForCStatementCore>(true);
+        RETURN_IF_ERROR(c_for);
+
+        return make_node<ForState>(c_for.value(), ForState::ForType::C);
+    }
+
+    // if we dont have (',' | ':' | 'in') then we are in a c style loop
+    if (iter.peek().has_value() && (NEXT_TOK.token_kind() != token::PUNCTUATION_COMMA &&
+                                    NEXT_TOK.token_kind() != token::PUNCTUATION_COLON &&
+                                    NEXT_TOK.token_kind() != token::KEYWORD_IN)) {
+        goto c_style_for;
+    }
+
+    if (except_closing_paren) {
+        iter.reverse();  // go back to the '('
+    }
+
+    ParseResult<ForPyStatementCore> py_for = parse<ForPyStatementCore>(true);
+    RETURN_IF_ERROR(py_for);
+
+    return make_node<ForState>(py_for.value(), ForState::ForType::Python);
 }
 
-AST_NODE_IMPL_VISITOR(Jsonify, ForState) { json.section("ForState"); }
+AST_NODE_IMPL_VISITOR(Jsonify, ForState) {
+    json.section("ForState").add("core", get_node_json(node.core)).add("type", (int)node.type);
+}
 
 // ---------------------------------------------------------------------------------------------- //
 
@@ -400,19 +720,148 @@ AST_NODE_IMPL_VISITOR(Jsonify, IfState) {
 
 AST_NODE_IMPL(Statement, SwitchCaseState) {
     IS_NOT_EMPTY;
-    NOT_IMPLEMENTED;
+    // := ('case' E SuiteState) | 'default' SuiteState
+
+    token::Token marker;
+
+    if (CURRENT_TOKEN_IS(token::KEYWORD_CASE)) {
+        marker = CURRENT_TOK;
+        iter.advance();  // skip 'case'
+
+        Expression expr_parser(iter);
+
+        ParseResult<> expr = expr_parser.parse();
+        RETURN_IF_ERROR(expr);
+
+        // if thres a fallthorugh
+        if (CURRENT_TOKEN_IS(token::PUNCTUATION_COLON)) {
+            if (iter.peek().has_value() && NEXT_TOK.token_kind() == token::KEYWORD_CASE) {
+                iter.advance();  // skip ':'
+                return make_node<SwitchCaseState>(
+                    expr.value(), nullptr, SwitchCaseState::CaseType::Fallthrough, marker);
+            }
+        }
+
+        if (CURRENT_TOKEN_IS(token::PUNCTUATION_OPEN_BRACE)) {
+            if (iter.peek().has_value() && NEXT_TOK.token_kind() == token::PUNCTUATION_CLOSE_BRACE) {
+                return std::unexpected(PARSE_ERROR(
+                    CURRENT_TOK, "mssing statement, if you want to fallthrough use ':'"));
+            }
+        }
+
+        ParseResult<SuiteState> body = parse<SuiteState>();
+        RETURN_IF_ERROR(body);
+
+        return make_node<SwitchCaseState>(
+            expr.value(), body.value(), SwitchCaseState::CaseType::Case, marker);
+    }
+
+    if (CURRENT_TOKEN_IS(token::KEYWORD_DEFAULT)) {
+        marker = CURRENT_TOK;
+        iter.advance();  // skip 'default'
+
+        ParseResult<SuiteState> body = parse<SuiteState>();
+        RETURN_IF_ERROR(body);
+
+        return make_node<SwitchCaseState>(
+            nullptr, body.value(), SwitchCaseState::CaseType::Default, marker);
+    }
+
+#define DEFAULT_CASE_TOKENS {token::KEYWORD_CASE, token::KEYWORD_DEFAULT}
+    IS_IN_EXCEPTED_TOKENS(DEFAULT_CASE_TOKENS);
+#undef DEFAULT_CASE_TOKENS
+
+    return std::unexpected(PARSE_ERROR(CURRENT_TOK,
+                                       "should have never gotten this error, something is fucked." +
+                                           CURRENT_TOK.token_kind_repr()));
 }
 
-AST_NODE_IMPL_VISITOR(Jsonify, SwitchCaseState) { json.section("SwitchCaseState"); }
+AST_NODE_IMPL_VISITOR(Jsonify, SwitchCaseState) {
+    json.section("SwitchCaseState")
+        .add("condition", get_node_json(node.condition))
+        .add("body", get_node_json(node.body))
+        .add("type", (int)node.type)
+        .add("marker", node.marker);
+}
 
 // ---------------------------------------------------------------------------------------------- //
 
 AST_NODE_IMPL(Statement, SwitchState) {
     IS_NOT_EMPTY;
-    NOT_IMPLEMENTED;
+    // := 'switch' expr (('{' SwitchCaseState* '}') | (':' SwitchCaseState*))
+
+    IS_EXCEPTED_TOKEN(token::KEYWORD_SWITCH);
+    iter.advance();  // skip 'switch'
+
+    Expression   expr_parser(iter);
+    token::Token starting_token;  // '(', ')'
+    token::Token first_token;     // 'default'
+    bool         expecting_brace_close = false;
+    bool         found_default         = false;
+
+    ParseResult<> expr = expr_parser.parse();
+    RETURN_IF_ERROR(expr);
+
+#define SUITE_TOKENS {token::PUNCTUATION_OPEN_BRACE, token::PUNCTUATION_COLON}
+    IS_IN_EXCEPTED_TOKENS(SUITE_TOKENS)
+#undef SUITE_TOKENS
+
+    if CURRENT_TOKEN_IS (token::PUNCTUATION_OPEN_BRACE) {
+        expecting_brace_close = true;
+        starting_token        = CURRENT_TOK;
+    }
+
+    iter.advance();  // skip '{' | ':'
+
+    NodeT<SwitchState> node = make_node<SwitchState>(expr.value());
+
+    ParseResult<SwitchCaseState> case_state = parse<SwitchCaseState>();
+    RETURN_IF_ERROR(case_state);
+
+    node->cases.emplace_back(case_state.value());
+
+    if (case_state.value()->type == SwitchCaseState::CaseType::Default) {
+        found_default = true;
+        first_token   = case_state.value()->marker;
+    }
+
+    while (CURRENT_TOKEN_IS(token::KEYWORD_CASE) || CURRENT_TOKEN_IS(token::KEYWORD_DEFAULT)) {
+        case_state = parse<SwitchCaseState>();
+        RETURN_IF_ERROR(case_state);
+
+        if (case_state.value()->type == SwitchCaseState::CaseType::Default) {
+            if (found_default) {
+                return std::unexpected(PARSE_ERROR(
+                    case_state.value()->marker, "redefinition of default case" /* TODO: INCLUDE PREV LOC TOO */));
+            }
+
+            found_default = true;
+        }
+
+        node->cases.emplace_back(case_state.value());
+    }
+
+    if (expecting_brace_close) {
+        if (iter.remaining_n() == 0 || iter.current().get() != token::PUNCTUATION_CLOSE_BRACE) {
+            return std::unexpected(
+                PARSE_ERROR(starting_token, "expected '}' to close the switch block"));
+        }
+
+        iter.advance();  // skip '}'
+    }
+
+    return node;
 }
 
-AST_NODE_IMPL_VISITOR(Jsonify, SwitchState) { json.section("SwitchState"); }
+AST_NODE_IMPL_VISITOR(Jsonify, SwitchState) {
+    std::vector<neo::json> cases;
+
+    for (const auto &case_state : node.cases) {
+        cases.push_back(get_node_json(case_state));
+    }
+
+    json.section("SwitchState").add("condition", get_node_json(node.condition)).add("cases", cases);
+}
 
 // ---------------------------------------------------------------------------------------------- //
 
@@ -719,17 +1168,31 @@ AST_NODE_IMPL(Statement, CatchState) {
 
     // := 'catch' (NamedVarSpecifier) SuiteState (CatchState)?
 
+    token::Token starting_tok;
+    bool         except_closing_paren = false;
+
     IS_EXCEPTED_TOKEN(token::KEYWORD_CATCH);
     iter.advance();  // skip 'catch'
 
-    IS_EXCEPTED_TOKEN(token::PUNCTUATION_OPEN_PAREN);
-    iter.advance();  // skip '('
+    if (CURRENT_TOKEN_IS(token::PUNCTUATION_OPEN_PAREN)) {
+        except_closing_paren = true;
+        starting_tok         = CURRENT_TOK;
+        iter.advance();  // skip '('
+    }
 
     ParseResult<NamedVarSpecifier> catch_state = parse<NamedVarSpecifier>(true);
     RETURN_IF_ERROR(catch_state);
 
-    IS_EXCEPTED_TOKEN(token::PUNCTUATION_CLOSE_PAREN);
-    iter.advance();  // skip ')'
+    if (except_closing_paren) {
+        if (CURRENT_TOKEN_IS_NOT(token::PUNCTUATION_CLOSE_PAREN)) {
+            return std::unexpected(
+                PARSE_ERROR(starting_tok,
+                            "expected ')' to close the catch block, but found: " +
+                                CURRENT_TOK.token_kind_repr()));
+        }
+
+        iter.advance();  // skip ')'
+    }
 
     ParseResult<SuiteState> body = parse<SuiteState>();
     RETURN_IF_ERROR(body);

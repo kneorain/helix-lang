@@ -13,31 +13,32 @@
 #ifndef __AST_STATEMENTS_DEF__
 #define __AST_STATEMENTS_DEF__
 
-#define STATES(MACRO)         \
-    MACRO(NamedVarSpecifier)  \
-    MACRO(ForPyStatementCore) \
-    MACRO(ForCStatementCore)  \
-    MACRO(ForState)           \
-    MACRO(WhileState)         \
-    MACRO(ElseState)          \
-    MACRO(IfState)            \
-    MACRO(SwitchCaseState)    \
-    MACRO(SwitchState)        \
-    MACRO(YieldState)         \
-    MACRO(DeleteState)        \
-    MACRO(AliasState)         \
-    MACRO(SingleImportState)  \
-    MACRO(MultiImportState)   \
-    MACRO(ImportState)        \
-    MACRO(ReturnState)        \
-    MACRO(BreakState)         \
-    MACRO(BlockState)         \
-    MACRO(SuiteState)         \
-    MACRO(ContinueState)      \
-    MACRO(CatchState)      \
-    MACRO(FinallyState)      \
-    MACRO(TryState)      \
-    MACRO(PanicState)      \
+#define STATES(MACRO)            \
+    MACRO(NamedVarSpecifier)     \
+    MACRO(NamedVarSpecifierList) \
+    MACRO(ForPyStatementCore)    \
+    MACRO(ForCStatementCore)     \
+    MACRO(ForState)              \
+    MACRO(WhileState)            \
+    MACRO(ElseState)             \
+    MACRO(IfState)               \
+    MACRO(SwitchCaseState)       \
+    MACRO(SwitchState)           \
+    MACRO(YieldState)            \
+    MACRO(DeleteState)           \
+    MACRO(AliasState)            \
+    MACRO(SingleImportState)     \
+    MACRO(MultiImportState)      \
+    MACRO(ImportState)           \
+    MACRO(ReturnState)           \
+    MACRO(BreakState)            \
+    MACRO(BlockState)            \
+    MACRO(SuiteState)            \
+    MACRO(ContinueState)         \
+    MACRO(CatchState)            \
+    MACRO(FinallyState)          \
+    MACRO(TryState)              \
+    MACRO(PanicState)            \
     MACRO(ExprState)
 
 #endif  // __AST_STATEMENTS_DEF__
