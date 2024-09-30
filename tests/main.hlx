@@ -225,7 +225,7 @@
  object.method1().method2(foo ? "foo_value" : "bar_value").method3();
  
  /// Nested conditional expressions
- if (foo == bar) {
+ if foo == bar {
      return (baz > qux) ? "baz is greater" : "qux is greater";
  } else if (baz < 10) {
      return "baz is less than 10";
@@ -246,8 +246,8 @@
  /* let mixed_operations = */ (foo * 2 + (bar - 1)) / ((baz % 5) * (qux / 4));
  
  /// Logical expressions with multiple conditions
- if (foo && bar || baz) {
+ if foo && bar || baz {
      print("Complex logical condition met");
- } else unless (foo || qux) {
+ } else unless foo || qux {
      print("Alternative condition met");
  }
