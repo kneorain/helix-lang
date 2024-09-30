@@ -2,32 +2,342 @@
     "ast": {
         "Statements": [
             {
-                "SuiteState": {
+                "TryState": {
                     "body": {
-                        "BlockState": {
-                            "body": [
-                                {
-                                    "ExprState": {
-                                        "expr": {
+                        "SuiteState": {
+                            "body": {
+                                "BlockState": {
+                                    "body": [
+                                        {
+                                            "ExprState": {
+                                                "expr": {
+                                                    "ArrayAccessExpr": {
+                                                        "array": {
+                                                            "IdentExpr": {
+                                                                "name": {
+                                                                    "kind": "byte",
+                                                                    "length": 4,
+                                                                    "loc": {
+                                                                        "column_number": 4,
+                                                                        "filename": "tests/main.hlx",
+                                                                        "line_number": 2,
+                                                                        "offset": 13
+                                                                    },
+                                                                    "value": "byte"
+                                                                }
+                                                            }
+                                                        },
+                                                        "index": {
+                                                            "LiteralExpr": {
+                                                                "type": 0,
+                                                                "value": {
+                                                                    "kind": "/* int */",
+                                                                    "length": 1,
+                                                                    "loc": {
+                                                                        "column_number": 9,
+                                                                        "filename": "tests/main.hlx",
+                                                                        "line_number": 2,
+                                                                        "offset": 15
+                                                                    },
+                                                                    "value": "2"
+                                                                }
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "catches": [
+                        {
+                            "CatchState": {
+                                "body": {
+                                    "SuiteState": {
+                                        "body": {
+                                            "BlockState": {
+                                                "body": [
+                                                    {
+                                                        "ExprState": {
+                                                            "expr": {
+                                                                "FunctionCallExpr": {
+                                                                    "args": {
+                                                                        "ArgumentListExpr": {
+                                                                            "args": [
+                                                                                {
+                                                                                    "ArgumentExpr": {
+                                                                                        "type": 0,
+                                                                                        "value": {
+                                                                                            "IdentExpr": {
+                                                                                                "name": {
+                                                                                                    "kind": "_",
+                                                                                                    "length": 1,
+                                                                                                    "loc": {
+                                                                                                        "column_number": 10,
+                                                                                                        "filename": "tests/main.hlx",
+                                                                                                        "line_number": 4,
+                                                                                                        "offset": 48
+                                                                                                    },
+                                                                                                    "value": "e"
+                                                                                                }
+                                                                                            }
+                                                                                        }
+                                                                                    }
+                                                                                }
+                                                                            ]
+                                                                        }
+                                                                    },
+                                                                    "path": {
+                                                                        "PathExpr": {
+                                                                            "path": {
+                                                                                "IdentExpr": {
+                                                                                    "name": {
+                                                                                        "kind": "_",
+                                                                                        "length": 5,
+                                                                                        "loc": {
+                                                                                            "column_number": 4,
+                                                                                            "filename": "tests/main.hlx",
+                                                                                            "line_number": 4,
+                                                                                            "offset": 46
+                                                                                        },
+                                                                                        "value": "print"
+                                                                                    }
+                                                                                }
+                                                                            },
+                                                                            "type": 2
+                                                                        }
+                                                                    }
+                                                                }
+                                                            }
+                                                        }
+                                                    }
+                                                ]
+                                            }
+                                        }
+                                    }
+                                },
+                                "catch": {
+                                    "NamedVarSpecifier": {
+                                        "path": {
                                             "IdentExpr": {
                                                 "name": {
-                                                    "kind": "<id>",
-                                                    "length": 5,
+                                                    "kind": "_",
+                                                    "length": 1,
                                                     "loc": {
-                                                        "column_number": 4,
+                                                        "column_number": 9,
                                                         "filename": "tests/main.hlx",
-                                                        "line_number": 2,
-                                                        "offset": 11
+                                                        "line_number": 3,
+                                                        "offset": 27
                                                     },
-                                                    "value": "hello"
+                                                    "value": "e"
+                                                }
+                                            }
+                                        },
+                                        "type": {
+                                            "Type": {
+                                                "type": 0,
+                                                "value": {
+                                                    "IdentExpr": {
+                                                        "name": {
+                                                            "kind": "_",
+                                                            "length": 5,
+                                                            "loc": {
+                                                                "column_number": 12,
+                                                                "filename": "tests/main.hlx",
+                                                                "line_number": 3,
+                                                                "offset": 34
+                                                            },
+                                                            "value": "Error"
+                                                        }
+                                                    }
                                                 }
                                             }
                                         }
                                     }
                                 }
-                            ]
+                            }
+                        },
+                        {
+                            "CatchState": {
+                                "body": {
+                                    "SuiteState": {
+                                        "body": {
+                                            "BlockState": {
+                                                "body": [
+                                                    {
+                                                        "ExprState": {
+                                                            "expr": {
+                                                                "FunctionCallExpr": {
+                                                                    "args": {
+                                                                        "ArgumentListExpr": {
+                                                                            "args": [
+                                                                                {
+                                                                                    "ArgumentExpr": {
+                                                                                        "type": 0,
+                                                                                        "value": {
+                                                                                            "IdentExpr": {
+                                                                                                "name": {
+                                                                                                    "kind": "_",
+                                                                                                    "length": 1,
+                                                                                                    "loc": {
+                                                                                                        "column_number": 10,
+                                                                                                        "filename": "tests/main.hlx",
+                                                                                                        "line_number": 6,
+                                                                                                        "offset": 99
+                                                                                                    },
+                                                                                                    "value": "i"
+                                                                                                }
+                                                                                            }
+                                                                                        }
+                                                                                    }
+                                                                                }
+                                                                            ]
+                                                                        }
+                                                                    },
+                                                                    "path": {
+                                                                        "PathExpr": {
+                                                                            "path": {
+                                                                                "IdentExpr": {
+                                                                                    "name": {
+                                                                                        "kind": "_",
+                                                                                        "length": 5,
+                                                                                        "loc": {
+                                                                                            "column_number": 4,
+                                                                                            "filename": "tests/main.hlx",
+                                                                                            "line_number": 6,
+                                                                                            "offset": 97
+                                                                                        },
+                                                                                        "value": "print"
+                                                                                    }
+                                                                                }
+                                                                            },
+                                                                            "type": 2
+                                                                        }
+                                                                    }
+                                                                }
+                                                            }
+                                                        }
+                                                    }
+                                                ]
+                                            }
+                                        }
+                                    }
+                                },
+                                "catch": {
+                                    "NamedVarSpecifier": {
+                                        "path": {
+                                            "IdentExpr": {
+                                                "name": {
+                                                    "kind": "_",
+                                                    "length": 1,
+                                                    "loc": {
+                                                        "column_number": 9,
+                                                        "filename": "tests/main.hlx",
+                                                        "line_number": 5,
+                                                        "offset": 60
+                                                    },
+                                                    "value": "i"
+                                                }
+                                            }
+                                        },
+                                        "type": {
+                                            "Type": {
+                                                "type": 0,
+                                                "value": {
+                                                    "IdentExpr": {
+                                                        "name": {
+                                                            "kind": "_",
+                                                            "length": 23,
+                                                            "loc": {
+                                                                "column_number": 12,
+                                                                "filename": "tests/main.hlx",
+                                                                "line_number": 5,
+                                                                "offset": 85
+                                                            },
+                                                            "value": "InvalidArrayLengthError"
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
                         }
-                    }
+                    ],
+                    "finally": {
+                        "FinallyState": {
+                            "body": {
+                                "SuiteState": {
+                                    "body": {
+                                        "BlockState": {
+                                            "body": [
+                                                {
+                                                    "ExprState": {
+                                                        "expr": {
+                                                            "FunctionCallExpr": {
+                                                                "args": {
+                                                                    "ArgumentListExpr": {
+                                                                        "args": [
+                                                                            {
+                                                                                "ArgumentExpr": {
+                                                                                    "type": 0,
+                                                                                    "value": {
+                                                                                        "LiteralExpr": {
+                                                                                            "type": 0,
+                                                                                            "value": {
+                                                                                                "kind": "/* string */",
+                                                                                                "length": 9,
+                                                                                                "loc": {
+                                                                                                    "column_number": 10,
+                                                                                                    "filename": "tests/main.hlx",
+                                                                                                    "line_number": 8,
+                                                                                                    "offset": 131
+                                                                                                },
+                                                                                                "value": "\"finally\""
+                                                                                            }
+                                                                                        }
+                                                                                    }
+                                                                                }
+                                                                            }
+                                                                        ]
+                                                                    }
+                                                                },
+                                                                "path": {
+                                                                    "PathExpr": {
+                                                                        "path": {
+                                                                            "IdentExpr": {
+                                                                                "name": {
+                                                                                    "kind": "_",
+                                                                                    "length": 5,
+                                                                                    "loc": {
+                                                                                        "column_number": 4,
+                                                                                        "filename": "tests/main.hlx",
+                                                                                        "line_number": 8,
+                                                                                        "offset": 121
+                                                                                    },
+                                                                                    "value": "print"
+                                                                                }
+                                                                            }
+                                                                        },
+                                                                        "type": 2
+                                                                    }
+                                                                }
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            ]
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "no_catch": 0
                 }
             }
         ]
