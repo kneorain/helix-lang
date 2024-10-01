@@ -267,3 +267,5 @@
  } else unless foo || qux {
      print("Alternative condition met");
  }
+
+ let x: int = 12, y: int = 12, z: int = 12;

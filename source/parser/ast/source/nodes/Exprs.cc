@@ -89,7 +89,7 @@
 /// [ ] * GenericInvokePathExpr     * PGE -> PE GI                                               ///
 ///                                                                                              ///
 ///                                                                                              ///
-/// [ ] * Type    * TY -> ID | PT                                                                ///
+/// [x] * Type    * TY -> ID | PT                                                                ///
 ///                                                                                              ///
 ///    /* complete parser */                                                                     ///
 /// [x] * PE -> LE | ID | AE | SE | TL | OI | PA | PAE                                           ///
@@ -113,13 +113,11 @@
 ///                                                                                              ///
 //===-----------------------------------------------------------------------------------------====//
 
-#include <cstddef>
 #include <expected>
 #include <memory>
 #include <unordered_set>
 #include <vector>
 
-#include "neo-pprint/include/hxpprint.hh"
 #include "parser/ast/include/config/AST_config.def"
 #include "parser/ast/include/config/AST_generate.hh"
 #include "parser/ast/include/config/case_types.def"
@@ -206,7 +204,9 @@ AST_BASE_IMPL(Expression, parse_primary) {  // NOLINT(readability-function-cogni
                            {token::KEYWORD_THREAD, token::KEYWORD_SPAWN, token::KEYWORD_AWAIT})) {
         node = parse<AsyncThreading>();
     } else {
-        return std::unexpected(PARSE_ERROR_MSG("Expected an expression, but found nothing"));
+        return std::unexpected(
+            PARSE_ERROR_MSG("Expected an expression, but found an unexpected token '" +
+                            CURRENT_TOK.token_kind_repr() + "'"));
     }
 
     return node;
@@ -227,7 +227,7 @@ AST_BASE_IMPL(Expression, parse) {  // NOLINT(readability-function-cognitive-com
                                              /// memory exhaustion
     bool          continue_loop = true;
     ParseResult<> expr = parse_primary();  /// E(1) - this is always the first expression in the
-                                           /// expression, we then build coumpound expressions from
+                                           /// expression, we then build compound expressions from
                                            /// this
 
     RETURN_IF_ERROR(expr);  /// simple macro to return if the expression is an error expands to:
@@ -1089,9 +1089,7 @@ AST_NODE_IMPL(Expression, ObjInitExpr, bool skip_start_brace, ParseResult<> obj_
 
     bool is_anonymous = true;
 
-    IS_NOT_NULL_RESULT(obj_path) {
-        is_anonymous = false;
-    }
+    IS_NOT_NULL_RESULT(obj_path) { is_anonymous = false; }
 
     if (!skip_start_brace) {
         IS_EXCEPTED_TOKEN(token::PUNCTUATION_OPEN_BRACE);
@@ -1122,7 +1120,6 @@ AST_NODE_IMPL(Expression, ObjInitExpr, bool skip_start_brace, ParseResult<> obj_
             obj->kwargs.push_back(next.value());
         }
 
-
     if (is_anonymous) {
         obj->path = obj_path.value();
     }
@@ -1140,8 +1137,7 @@ AST_NODE_IMPL_VISITOR(Jsonify, ObjInitExpr) {
         kwargs.push_back(get_node_json(kwarg));
     }
 
-    json.section("ObjInitExpr").add("keyword_args", kwargs)
-        .add("path", get_node_json(node.path));
+    json.section("ObjInitExpr").add("keyword_args", kwargs).add("path", get_node_json(node.path));
 }
 
 // ---------------------------------------------------------------------------------------------- //
@@ -1327,6 +1323,8 @@ AST_NODE_IMPL(Expression, Type) {  // TODO
     IS_NOT_EMPTY;
 
     std::vector<token::Token> type_prefixes;
+
+    // TODO: all fucntion specifiers can be applied to lambda types
 
     auto is_type_prefix = [&](const token::Token &tok) {
         return is_type_qualifier(tok) || is_ffi_specifier(tok);

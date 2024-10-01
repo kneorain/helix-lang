@@ -421,7 +421,6 @@ AST_NODE_IMPL(Statement, ForPyStatementCore, bool skip_start) {
 }
 
 AST_NODE_IMPL_VISITOR(Jsonify, ForPyStatementCore) {
-
     json.section("ForPyStatementCore")
         .add("range", get_node_json(node.range))
         .add("body", get_node_json(node.body))
@@ -743,7 +742,8 @@ AST_NODE_IMPL(Statement, SwitchCaseState) {
         }
 
         if (CURRENT_TOKEN_IS(token::PUNCTUATION_OPEN_BRACE)) {
-            if (iter.peek().has_value() && NEXT_TOK.token_kind() == token::PUNCTUATION_CLOSE_BRACE) {
+            if (iter.peek().has_value() &&
+                NEXT_TOK.token_kind() == token::PUNCTUATION_CLOSE_BRACE) {
                 return std::unexpected(PARSE_ERROR(
                     CURRENT_TOK, "mssing statement, if you want to fallthrough use ':'"));
             }
@@ -831,8 +831,9 @@ AST_NODE_IMPL(Statement, SwitchState) {
 
         if (case_state.value()->type == SwitchCaseState::CaseType::Default) {
             if (found_default) {
-                return std::unexpected(PARSE_ERROR(
-                    case_state.value()->marker, "redefinition of default case" /* TODO: INCLUDE PREV LOC TOO */));
+                return std::unexpected(
+                    PARSE_ERROR(case_state.value()->marker,
+                                "redefinition of default case" /* TODO: INCLUDE PREV LOC TOO */));
             }
 
             found_default = true;

@@ -13,24 +13,24 @@
 #ifndef __AST_DECLARATIONS_DEF__
 #define __AST_DECLARATIONS_DEF__
 
-#define DECL(MACRO)              \
-    MACRO(VariableDeclaration)   \
-    MACRO(FFIDeclaration)        \
-    MACRO(GenericBound)          \
-    MACRO(ConstGenericParameter) \
-    MACRO(GenericParameter)      \
-    MACRO(GenericParameterList)  \
-    MACRO(GenericDeclaration)    \
-    MACRO(VariableCreation)      \
-    MACRO(ArgumentsDeclaration)  \
-    MACRO(FunctionDeclaration)   \
-    MACRO(EnumValueDeclaration)  \
-    MACRO(EnumDeclaration)       \
-    MACRO(TypeDeclaration)       \
-    MACRO(StructDeclaration)     \
-    MACRO(ClassDeclaration)      \
-    MACRO(AbstractDeclaration)   \
-    MACRO(InterfaceDeclaration)  \
-    MACRO(UnionDeclaration)
+#define DECLS(MACRO)          \
+    MACRO(RequiresParamDecl) \
+    MACRO(RequiresParamList) \
+    MACRO(EnumMemberDecl)    \
+    MACRO(UDTDeriveDecl)     \
+    MACRO(TypeBoundList)     \
+    MACRO(TypeBoundDecl)     \
+    MACRO(RequiresDecl)      \
+    MACRO(StructDecl)        \
+    MACRO(ConstDecl)         \
+    MACRO(ClassDecl)         \
+    MACRO(InterDecl)         \
+    MACRO(EnumDecl)          \
+    MACRO(TypeDecl)          \
+    MACRO(FuncDecl)          \
+    MACRO(VarDecl)           \
+    MACRO(FFIDecl)           \
+    MACRO(LetDecl)           \
+    MACRO(OpDecl)            \
 
 #endif  // __AST_DECLARATIONS_DEF__

@@ -148,15 +148,15 @@ __AST_NODE_BEGIN {
         p_r<SetLiteralExpr>        parse_SetLiteralExpr(p_r<> starting_value);
         p_r<MapPairExpr>           parse_MapPairExpr();
         p_r<MapLiteralExpr>        parse_MapLiteralExpr(p_r<> starting_value);
-        p_r<ObjInitExpr>           parse_ObjInitExpr(bool skip_start_brace = false, p_r<> obj_path = null);
-        p_r<LambdaExpr>            parse_LambdaExpr();
-        p_r<TernaryExpr>           parse_TernaryExpr(p_r<> lhs = null);
-        p_r<ParenthesizedExpr>     parse_ParenthesizedExpr(p_r<> expr = null);
-        p_r<CastExpr>              parse_CastExpr(p_r<> lhs);
-        p_r<InstOfExpr>            parse_InstOfExpr(p_r<> lhs = null);
-        p_r<Type>                  parse_Type();
-        p_r<AsyncThreading>        parse_AsyncThreading();
-        p_r<FunctionCallExpr>      parse_FunctionCallExpr(p_r<> lhs = null, p_r<> gens = null);
+        p_r<ObjInitExpr> parse_ObjInitExpr(bool skip_start_brace = false, p_r<> obj_path = null);
+        p_r<LambdaExpr>  parse_LambdaExpr();
+        p_r<TernaryExpr> parse_TernaryExpr(p_r<> lhs = null);
+        p_r<ParenthesizedExpr> parse_ParenthesizedExpr(p_r<> expr = null);
+        p_r<CastExpr>          parse_CastExpr(p_r<> lhs);
+        p_r<InstOfExpr>        parse_InstOfExpr(p_r<> lhs = null);
+        p_r<Type>              parse_Type();
+        p_r<AsyncThreading>    parse_AsyncThreading();
+        p_r<FunctionCallExpr>  parse_FunctionCallExpr(p_r<> lhs = null, p_r<> gens = null);
     };
 
     /*
@@ -265,6 +265,90 @@ __AST_NODE_BEGIN {
         p_r<FinallyState>          parse_FinallyState();
         p_r<PanicState>            parse_PanicState();
         p_r<SuiteState>            parse_SuiteState();
+    };
+
+    /*
+     *  Declaration class
+     *
+     *  This class is responsible for parsing the declaration grammar.
+     *  It is a recursive descent parser that uses the token list
+     *  to parse the declaration grammar.
+     *
+     *  (its very bad quality but will be improved when written in helix)
+     *
+     *  usage:
+     *     Declaration decl(tokens);
+     *     NodeT<> node = decl.parse();
+     *
+     *     // or
+     *
+     *     NodeT<...> node = decl.parse<...>();
+     */
+    class Declaration {
+        AST_CLASS_BASE(Declaration, STATES);
+
+        template <typename T, typename... Args>
+        p_r<T> parse(Args &&...args) { /* NOLINT */
+            if constexpr (std ::is_same_v<T, RequiresParamDecl>) {
+                return parse_RequiresParamDecl(std ::forward<Args>(args)...);
+            } else if constexpr (std ::is_same_v<T, RequiresParamList>) {
+                return parse_RequiresParamList(std ::forward<Args>(args)...);
+            } else if constexpr (std ::is_same_v<T, EnumMemberDecl>) {
+                return parse_EnumMemberDecl(std ::forward<Args>(args)...);
+            } else if constexpr (std ::is_same_v<T, UDTDeriveDecl>) {
+                return parse_UDTDeriveDecl(std ::forward<Args>(args)...);
+            } else if constexpr (std ::is_same_v<T, TypeBoundList>) {
+                return parse_TypeBoundList(std ::forward<Args>(args)...);
+            } else if constexpr (std ::is_same_v<T, TypeBoundDecl>) {
+                return parse_TypeBoundDecl(std ::forward<Args>(args)...);
+            } else if constexpr (std ::is_same_v<T, RequiresDecl>) {
+                return parse_RequiresDecl(std ::forward<Args>(args)...);
+            } else if constexpr (std ::is_same_v<T, StructDecl>) {
+                return parse_StructDecl(std ::forward<Args>(args)...);
+            } else if constexpr (std ::is_same_v<T, ConstDecl>) {
+                return parse_ConstDecl(std ::forward<Args>(args)...);
+            } else if constexpr (std ::is_same_v<T, ClassDecl>) {
+                return parse_ClassDecl(std ::forward<Args>(args)...);
+            } else if constexpr (std ::is_same_v<T, InterDecl>) {
+                return parse_InterDecl(std ::forward<Args>(args)...);
+            } else if constexpr (std ::is_same_v<T, EnumDecl>) {
+                return parse_EnumDecl(std ::forward<Args>(args)...);
+            } else if constexpr (std ::is_same_v<T, TypeDecl>) {
+                return parse_TypeDecl(std ::forward<Args>(args)...);
+            } else if constexpr (std ::is_same_v<T, FuncDecl>) {
+                return parse_FuncDecl(std ::forward<Args>(args)...);
+            } else if constexpr (std ::is_same_v<T, VarDecl>) {
+                return parse_VarDecl(std ::forward<Args>(args)...);
+            } else if constexpr (std ::is_same_v<T, FFIDecl>) {
+                return parse_FFIDecl(std ::forward<Args>(args)...);
+            } else if constexpr (std ::is_same_v<T, LetDecl>) {
+                return parse_LetDecl(std ::forward<Args>(args)...);
+            } else if constexpr (std ::is_same_v<T, OpDecl>) {
+                return parse_OpDecl(std ::forward<Args>(args)...);
+            };
+        }
+
+      private:
+        std::vector<token::Token> modifiers;
+
+        p_r<RequiresParamDecl> parse_RequiresParamDecl();
+        p_r<RequiresParamList> parse_RequiresParamList();
+        p_r<EnumMemberDecl>    parse_EnumMemberDecl();
+        p_r<UDTDeriveDecl>     parse_UDTDeriveDecl();
+        p_r<TypeBoundList>     parse_TypeBoundList();
+        p_r<TypeBoundDecl>     parse_TypeBoundDecl();
+        p_r<RequiresDecl>      parse_RequiresDecl();
+        p_r<StructDecl>        parse_StructDecl();
+        p_r<ConstDecl>         parse_ConstDecl();
+        p_r<ClassDecl>         parse_ClassDecl();
+        p_r<InterDecl>         parse_InterDecl();
+        p_r<EnumDecl>          parse_EnumDecl();
+        p_r<TypeDecl>          parse_TypeDecl();
+        p_r<FuncDecl>          parse_FuncDecl();
+        p_r<VarDecl>           parse_VarDecl();
+        p_r<FFIDecl>           parse_FFIDecl();
+        p_r<LetDecl>           parse_LetDecl();
+        p_r<OpDecl>            parse_OpDecl();
     };
 }  // namespace __AST_BEGIN
 
