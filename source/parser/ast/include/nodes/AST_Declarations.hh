@@ -19,6 +19,7 @@
 #include "parser/ast/include/config/AST_config.def"
 #include "parser/ast/include/config/AST_modifiers.hh"
 #include "parser/ast/include/core/AST_nodes.hh"
+#include "parser/ast/include/nodes/AST_Expressions.hh"
 #include "parser/ast/include/types/AST_types.hh"
 
 __AST_NODE_BEGIN {
@@ -85,15 +86,14 @@ __AST_NODE_BEGIN {
     class StructDecl final : public Node {
         BASE_CORE_METHODS(StructDecl);
         
-        // StructDecl := 'const'? VisDecl? 'struct'    E.IdentExpr UDTDeriveDecl? RequiresDecl? S.Suite
+        // StructDecl := 'const'? VisDecl? 'struct' E.IdentExpr UDTDeriveDecl? RequiresDecl? S.Suite
 
         NodeT<IdentExpr>     name;
         NodeT<UDTDeriveDecl> derives;
         NodeT<RequiresDecl>  generics;
         NodeT<SuiteState>    body;
 
-        AccessSpecifier vis;
-        bool            is_const;
+        Modifiers modifiers = Modifiers(Modifiers::ExpectedModifier::FuncSpec);
     };
 
     class ConstDecl final : public Node {
@@ -101,9 +101,8 @@ __AST_NODE_BEGIN {
         
         // ConstDecl :=  VisDecl? 'const' SharedModifiers VarDecl* ';'
 
-        AccessSpecifier vis;
         NodeV<VarDecl> vars;
-        std::vector<FunctionSpecifier> modifiers;
+        Modifiers modifiers = Modifiers(Modifiers::ExpectedModifier::FuncSpec);
     };
 
     class ClassDecl final : public Node {
@@ -111,7 +110,11 @@ __AST_NODE_BEGIN {
         
         // ClassDecl := 'const'? VisDecl? 'class'     E.IdentExpr UDTDeriveDecl? RequiresDecl? S.Suite
 
-
+        Modifiers modifiers = Modifiers(Modifiers::ExpectedModifier::FuncSpec);
+        NodeT<IdentExpr>     name;
+        NodeT<UDTDeriveDecl> derives;
+        NodeT<RequiresDecl>  generics;
+        NodeT<SuiteState>    body;
     };
 
     class InterDecl final : public Node {
@@ -119,7 +122,11 @@ __AST_NODE_BEGIN {
         
         // InterDecl := 'const'? VisDecl? 'interface' E.IdentExpr UDTDeriveDecl? RequiresDecl? S.Suite
 
-
+        Modifiers modifiers = Modifiers(Modifiers::ExpectedModifier::FuncSpec);
+        NodeT<IdentExpr>     name;
+        NodeT<UDTDeriveDecl> derives;
+        NodeT<RequiresDecl>  generics;
+        NodeT<SuiteState>    body;
     };
 
     class EnumDecl final : public Node {
@@ -127,7 +134,10 @@ __AST_NODE_BEGIN {
         
         // EnumDecl :=  VisDecl? 'enum' ('derives' E.Type)? E.ObjInitExpr
 
-
+        AccessSpecifier    vis;
+        NodeT<IdentExpr>   name;
+        NodeT<Type>        derives;
+        NodeT<ObjInitExpr> body;
     };
 
     class TypeDecl final : public Node {
@@ -135,15 +145,25 @@ __AST_NODE_BEGIN {
         
         // TypeDecl :=  VisDecl? 'type'  E.IdentExpr RequiresDecl? '=' E ';'
 
-
+        AccessSpecifier     vis;
+        NodeT<IdentExpr>    name;
+        NodeT<RequiresDecl> generics;
+        NodeT<>             value;
     };
 
     class FuncDecl final : public Node {
         BASE_CORE_METHODS(FuncDecl);
         
-        // FuncDecl :=  SharedModifiers? 'fn' E.PathExpr '(' VarDecl[true]* ')' RequiresDecl? S.Suite
+        // FuncDecl :=  SharedModifiers? 'fn' E.PathExpr '(' VarDecl[true]* ')' RequiresDecl? ('->' E.TypeExpr)? (S.Suite | ';' | '=' ('default' | 'delete'))
 
+        Modifiers modifiers = Modifiers(Modifiers::ExpectedModifier::FuncSpec);
+        Modifiers qualifiers = Modifiers(Modifiers::ExpectedModifier::FuncQual);
 
+        NodeT<PathExpr>     name;
+        NodeV<VarDecl>      params;
+        NodeT<RequiresDecl> generics;
+        NodeT<Type>         returns;
+        NodeT<SuiteState>   body;
     };
 
     class VarDecl final : public Node {
@@ -151,7 +171,8 @@ __AST_NODE_BEGIN {
         
         // VarDecl := S.NamedVarSpecifier ('=' E)? ~ also pass in a bool to force type need
 
-
+        NodeT<NamedVarSpecifier> var;
+        NodeT<> value;
     };
 
     class FFIDecl final : public Node {
@@ -159,7 +180,9 @@ __AST_NODE_BEGIN {
         
         // FFIDecl :=  VisDecl? 'ffi' L.StringLiteral D
 
-
+        AccessSpecifier    vis;
+        NodeT<LiteralExpr> name;
+        NodeT<>            value;
     };
 
     class LetDecl final : public Node {
@@ -167,7 +190,8 @@ __AST_NODE_BEGIN {
         
         // LetDecl :=  VisDecl? 'let'   SharedModifiers VarDecl* ';'
 
-
+        Modifiers modifiers = Modifiers(Modifiers::ExpectedModifier::FuncSpec);
+        NodeV<VarDecl> vars;
     };
 
     class OpDecl final : public Node {
@@ -175,7 +199,9 @@ __AST_NODE_BEGIN {
         
         // OpDecl :=  SharedModifiers? 'op' T FuncDecl[no_SharedModifiers=true]
 
-
+        Modifiers modifiers = Modifiers(Modifiers::ExpectedModifier::FuncSpec);
+        token::Token    op;
+        NodeT<FuncDecl> func;
     };
 
 }  // namespace __AST_NODE_BEGIN

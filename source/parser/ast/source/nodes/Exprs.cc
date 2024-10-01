@@ -289,14 +289,12 @@ AST_BASE_IMPL(Expression, parse) {  // NOLINT(readability-function-cognitive-com
                 break;
 
             case token::KEYWORD_HAS:
-                [[fallthrough]];
             case token::KEYWORD_DERIVES:
                 expr = parse<InstOfExpr>(expr);
                 RETURN_IF_ERROR(expr);
                 break;
 
             case token::PUNCTUATION_QUESTION_MARK:
-                [[fallthrough]];
             case token::KEYWORD_IF:
                 expr = parse<TernaryExpr>(expr);
                 RETURN_IF_ERROR(expr);

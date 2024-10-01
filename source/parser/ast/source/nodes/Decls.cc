@@ -149,7 +149,10 @@ AST_NODE_IMPL(Declaration, TypeBoundList) {
     IS_NOT_EMPTY;
     // TypeBoundList := TypeBoundDecl (',' TypeBoundDecl)*)?
 
-    NOT_IMPLEMENTED;
+    ParseResult<TypeBoundDecl> bound = parse<TypeBoundDecl>();
+    RETURN_IF_ERROR(bound);
+
+    
 }
 
 AST_NODE_IMPL_VISITOR(Jsonify, TypeBoundList) { json.section("TypeBoundList"); }
