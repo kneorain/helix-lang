@@ -128,6 +128,12 @@ inline namespace _json {
             return *this;
         }
 
+        template <typename T>
+        Json &add(const T &val) {
+            _array.push_back(get(val));
+            return *this;
+        }
+
         Json &section(const string &key) {
             if (_data.contains(key)) {
                 if (auto *sub_json = std::get_if<Json>(&_data[key])) {

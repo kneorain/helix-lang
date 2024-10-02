@@ -89,6 +89,7 @@
 #include <expected>
 #include <memory>
 #include <unordered_set>
+#include <utility>
 #include <vector>
 
 #include "neo-pprint/include/hxpprint.hh"
@@ -105,10 +106,37 @@ AST_NODE_IMPL(Declaration, RequiresParamDecl) {
     IS_NOT_EMPTY;
     // RequiresParamDecl := const'? (S.NamedVarSpecifier) ('=' E)?
 
-    NOT_IMPLEMENTED;
+    NodeT<RequiresParamDecl>       node = make_node<RequiresParamDecl>(true);
+    ParseResult<NamedVarSpecifier> var;
+
+    if CURRENT_TOKEN_IS (token::KEYWORD_CONST) {
+        iter.advance();  // skip 'const'
+        node->is_const = true;
+    }
+
+    var = state_parser.parse<NamedVarSpecifier>(node->is_const);  // force type if is_const is true
+    RETURN_IF_ERROR(var);
+
+    node->var = var.value();
+
+    if CURRENT_TOKEN_IS (token::OPERATOR_ASSIGN) {
+        iter.advance();  // skip '='
+
+        ParseResult<> value = expr_parser.parse();
+        RETURN_IF_ERROR(value);
+
+        node->value = value.value();
+    }
+
+    return node;
 }
 
-AST_NODE_IMPL_VISITOR(Jsonify, RequiresParamDecl) { json.section("RequiresParamDecl"); }
+AST_NODE_IMPL_VISITOR(Jsonify, RequiresParamDecl) {
+    json.section("RequiresParamDecl")
+        .add("is_const", node.is_const ? "true" : "false")
+        .add("var", get_node_json(node.var))
+        .add("value", get_node_json(node.value));
+}
 
 // ---------------------------------------------------------------------------------------------- //
 
@@ -116,53 +144,155 @@ AST_NODE_IMPL(Declaration, RequiresParamList) {
     IS_NOT_EMPTY;
     // RequiresParamList := RequiresParamDecl (',' RequiresParamDecl)*)?
 
-    NOT_IMPLEMENTED;
+#define TOKENS_REQUIRED {token::KEYWORD_CONST, token::IDENTIFIER}
+    IS_IN_EXCEPTED_TOKENS(TOKENS_REQUIRED);
+#undef TOKENS_REQUIRED
+
+    ParseResult<RequiresParamDecl> first = parse<RequiresParamDecl>();
+    RETURN_IF_ERROR(first);
+
+    NodeT<RequiresParamList> node = make_node<RequiresParamList>(first.value());
+
+    while (CURRENT_TOKEN_IS(token::PUNCTUATION_COMMA)) {
+        iter.advance();  // skip ','
+
+        ParseResult<RequiresParamDecl> next = parse<RequiresParamDecl>();
+        RETURN_IF_ERROR(next);
+
+        node->params.emplace_back(next.value());
+    }
+
+    return node;
 }
 
-AST_NODE_IMPL_VISITOR(Jsonify, RequiresParamList) { json.section("RequiresParamList"); }
+AST_NODE_IMPL_VISITOR(Jsonify, RequiresParamList) {
+    std::vector<neo::json> params;
+
+    for (const auto &param : node.params) {
+        params.push_back(get_node_json(param));
+    }
+
+    json.section("RequiresParamList").add("params", params);
+}
 
 // ---------------------------------------------------------------------------------------------- //
 
 AST_NODE_IMPL(Declaration, EnumMemberDecl) {
     IS_NOT_EMPTY;
     // EnumMemberDecl := E.IdentExpr ('=' E)?
+    IS_EXCEPTED_TOKEN(token::IDENTIFIER);
 
-    NOT_IMPLEMENTED;
+    ParseResult<IdentExpr> name = expr_parser.parse<IdentExpr>();
+    RETURN_IF_ERROR(name);
+
+    NodeT<EnumMemberDecl> node = make_node<EnumMemberDecl>(name.value());
+
+    if (CURRENT_TOKEN_IS(token::OPERATOR_ASSIGN)) {
+        iter.advance();  // skip '='
+
+        ParseResult<> value = expr_parser.parse();
+        RETURN_IF_ERROR(value);
+
+        node->value = value.value();
+    }
+
+    return node;
 }
 
-AST_NODE_IMPL_VISITOR(Jsonify, EnumMemberDecl) { json.section("EnumMemberDecl"); }
+AST_NODE_IMPL_VISITOR(Jsonify, EnumMemberDecl) {
+    json.section("EnumMemberDecl")
+        .add("name", get_node_json(node.name))
+        .add("value", get_node_json(node.value));
+}
 
 // ---------------------------------------------------------------------------------------------- //
 
 AST_NODE_IMPL(Declaration, UDTDeriveDecl) {
     IS_NOT_EMPTY;
-    // UDTDeriveDecl := derives' (E.Type (',' E.Type)*)?
+    // UDTDeriveDecl := 'derives' (VisDecl? E.Type (',' VisDecl? E.Type)*)?
 
-    NOT_IMPLEMENTED;
+    IS_EXCEPTED_TOKEN(token::KEYWORD_DERIVES);
+
+    iter.advance();  // skip 'derives'
+
+    AccessSpecifier access = AccessSpecifier(
+        token::Token(token::KEYWORD_PUBLIC, "HZL_CMPILER_INL.ACCESS_SPECIFIER__.tmp"));
+    if (AccessSpecifier::is_access_specifier(CURRENT_TOK)) {
+        access = AccessSpecifier(CURRENT_TOK);
+    }
+
+    ParseResult<Type> type = expr_parser.parse<Type>();
+    RETURN_IF_ERROR(type);
+
+    NodeT<UDTDeriveDecl> node = make_node<UDTDeriveDecl>(std::make_pair(type.value(), access));
+
+    while (CURRENT_TOKEN_IS(token::PUNCTUATION_COMMA)) {
+        iter.advance();  // skip ','
+
+        AccessSpecifier access = AccessSpecifier(
+            token::Token(token::KEYWORD_PUBLIC, "HZL_CMPILER_INL.ACCESS_SPECIFIER__.tmp"));
+        if (AccessSpecifier::is_access_specifier(CURRENT_TOK)) {
+            access = AccessSpecifier(CURRENT_TOK);
+        }
+
+        ParseResult<Type> next = expr_parser.parse<Type>();
+        RETURN_IF_ERROR(next);
+
+        node->derives.emplace_back(next.value(), access);
+    }
+
+    return node;
 }
 
-AST_NODE_IMPL_VISITOR(Jsonify, UDTDeriveDecl) { json.section("UDTDeriveDecl"); }
+AST_NODE_IMPL_VISITOR(Jsonify, UDTDeriveDecl) {
+    std::vector<neo::json> derives;
+
+    for (const auto &derive : node.derives) {
+        derives.push_back(get_node_json(derive.first));
+        derives.push_back(derive.second.to_json());
+    }
+
+    json.section("UDTDeriveDecl").add("derives", derives);
+}
 
 // ---------------------------------------------------------------------------------------------- //
 
 AST_NODE_IMPL(Declaration, TypeBoundList) {
     IS_NOT_EMPTY;
-    // TypeBoundList := TypeBoundDecl (',' TypeBoundDecl)*)?
+    // TypeBoundList := InstOfExpr (',' InstOfExpr)*)?
 
-    ParseResult<TypeBoundDecl> bound = parse<TypeBoundDecl>();
+    ParseResult<InstOfExpr> bound = expr_parser.parse<InstOfExpr>(expr_parser.parse_primary());
     RETURN_IF_ERROR(bound);
 
-    
+    NodeT<TypeBoundList> node = make_node<TypeBoundList>(bound.value());
+
+    while (CURRENT_TOKEN_IS(token::PUNCTUATION_COMMA)) {
+        iter.advance();  // skip ','
+
+        ParseResult<InstOfExpr> next = expr_parser.parse<InstOfExpr>(expr_parser.parse_primary());
+        RETURN_IF_ERROR(next);
+
+        node->bounds.emplace_back(next.value());
+    }
+
+    return node;
 }
 
-AST_NODE_IMPL_VISITOR(Jsonify, TypeBoundList) { json.section("TypeBoundList"); }
+AST_NODE_IMPL_VISITOR(Jsonify, TypeBoundList) {
+    std::vector<neo::json> bounds;
+
+    for (const auto &bound : node.bounds) {
+        bounds.push_back(get_node_json(bound));
+    }
+
+    json.section("TypeBoundList").add("bounds", bounds);
+}
 
 // ---------------------------------------------------------------------------------------------- //
 
+/* TODO: DEPRECATE MERGED WITH LIST*/
 AST_NODE_IMPL(Declaration, TypeBoundDecl) {
     IS_NOT_EMPTY;
-    // TypeBoundDecl := if' InstOfExpr
-
     NOT_IMPLEMENTED;
 }
 
@@ -172,23 +302,89 @@ AST_NODE_IMPL_VISITOR(Jsonify, TypeBoundDecl) { json.section("TypeBoundDecl"); }
 
 AST_NODE_IMPL(Declaration, RequiresDecl) {
     IS_NOT_EMPTY;
-    // RequiresDecl := requires' '<' RequiresParamList '>' TypeBoundList?
+    // RequiresDecl := requires' '<' RequiresParamList '>' ('if' TypeBoundList)?
 
-    NOT_IMPLEMENTED;
+    IS_EXCEPTED_TOKEN(token::KEYWORD_REQUIRES);
+    iter.advance();  // skip 'requires
+
+    IS_EXCEPTED_TOKEN(token::PUNCTUATION_OPEN_ANGLE);
+    iter.advance();  // skip '<'
+
+    ParseResult<RequiresParamList> params = parse<RequiresParamList>();
+    RETURN_IF_ERROR(params);
+
+    NodeT<RequiresDecl> node = make_node<RequiresDecl>(params.value());
+
+    IS_EXCEPTED_TOKEN(token::PUNCTUATION_CLOSE_ANGLE);
+    iter.advance();  // skip '>'
+
+    if (CURRENT_TOKEN_IS(token::KEYWORD_IF)) {
+        iter.advance();  // skip 'if'
+
+        ParseResult<TypeBoundList> bounds = parse<TypeBoundList>();
+        RETURN_IF_ERROR(bounds);
+
+        node->bounds = bounds.value();
+    }
+
+    return node;
 }
 
-AST_NODE_IMPL_VISITOR(Jsonify, RequiresDecl) { json.section("RequiresDecl"); }
+AST_NODE_IMPL_VISITOR(Jsonify, RequiresDecl) {
+    json.section("RequiresDecl")
+        .add("params", get_node_json(node.params))
+        .add("bounds", get_node_json(node.bounds));
+}
 
 // ---------------------------------------------------------------------------------------------- //
 
 AST_NODE_IMPL(Declaration, StructDecl) {
     IS_NOT_EMPTY;
-    // StructDecl := const'? VisDecl? 'struct'    E.IdentExpr UDTDeriveDecl? RequiresDecl? S.Suite
+    // StructDecl := Modifiers 'struct'    E.IdentExpr UDTDeriveDecl? RequiresDecl? S.Suite
 
-    NOT_IMPLEMENTED;
+    NodeT<StructDecl> node = make_node<StructDecl>(true);
+
+    while (node->modifiers.find_add(CURRENT_TOK)) {
+        iter.advance();  // skip modifier
+    }
+
+    IS_EXCEPTED_TOKEN(token::KEYWORD_STRUCT);
+    iter.advance();  // skip 'struct'
+
+    ParseResult<IdentExpr> name = expr_parser.parse<IdentExpr>();
+    RETURN_IF_ERROR(name);
+
+    node->name = name.value();
+
+    if (CURRENT_TOKEN_IS(token::KEYWORD_DERIVES)) {
+        ParseResult<UDTDeriveDecl> derives = parse<UDTDeriveDecl>();
+        RETURN_IF_ERROR(derives);
+
+        node->derives = derives.value();
+    }
+
+    if (CURRENT_TOKEN_IS(token::KEYWORD_REQUIRES)) {
+        ParseResult<RequiresDecl> generics = parse<RequiresDecl>();
+        RETURN_IF_ERROR(generics);
+
+        node->generics = generics.value();
+    }
+
+    ParseResult<SuiteState> body = state_parser.parse<SuiteState>();
+    RETURN_IF_ERROR(body);
+
+    node->body = body.value();
+
+    return node;
 }
 
-AST_NODE_IMPL_VISITOR(Jsonify, StructDecl) { json.section("StructDecl"); }
+AST_NODE_IMPL_VISITOR(Jsonify, StructDecl) { json.section("StructDecl")
+        .add("name", get_node_json(node.name))
+        .add("derives", get_node_json(node.derives))
+        .add("generics", get_node_json(node.generics))
+        .add("body", get_node_json(node.body))
+        .add("modifiers", node.modifiers.to_json());
+}
 
 // ---------------------------------------------------------------------------------------------- //
 
@@ -296,9 +492,21 @@ AST_NODE_IMPL(Declaration, OpDecl) {
     // OpDecl := SharedModifiers? 'op' T FuncDecl[no_SharedModifiers=true]
 
     NOT_IMPLEMENTED;
-
 }
 
 AST_NODE_IMPL_VISITOR(Jsonify, OpDecl) { json.section("OpDecl"); }
 
 // ---------------------------------------------------------------------------------------------- //
+
+AST_BASE_IMPL(Declaration, parse) {
+    IS_NOT_EMPTY;
+
+    token::Token tok = CURRENT_TOK;          /// get the current token from the iterator
+
+    switch (tok.token_kind()) {
+        case token::KEYWORD_STRUCT:
+            return parse<StructDecl>();
+        default:
+            return state_parser.parse();
+    }
+}

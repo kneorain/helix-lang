@@ -142,16 +142,16 @@
     std::vector<p_r<>>               parse_stack;        \
                                                          \
   public:                                                \
-    explicit name(token::TokenList::TokenListIter &iter) \
-        : iter(iter) {}                                  \
     name()                        = delete;              \
     name(const name &)            = default;             \
     name &operator=(const name &) = delete;              \
     name(name &&)                 = default;             \
     name &operator=(name &&)      = delete;              \
     ~name()                       = default;             \
+    p_r<> parse();                                       \
                                                          \
-    p_r<> parse();
+    explicit name(token::TokenList::TokenListIter &iter) \
+        : iter(iter)
 
 // template <typename T, typename... Args>
 // p_r<T> parse(Args &&...args) { /* NOLINT */

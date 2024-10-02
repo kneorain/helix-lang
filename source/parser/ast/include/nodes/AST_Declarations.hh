@@ -27,17 +27,19 @@ __AST_NODE_BEGIN {
         BASE_CORE_METHODS(RequiresParamDecl);
         
         // RequiresParamDecl := 'const'? (S.NamedVarSpecifier) ('=' E)?
+        explicit RequiresParamDecl(bool /* unused */) {}
 
         NodeT<NamedVarSpecifier> var;
         NodeT<> value;
-        bool is_const;
+        bool is_const = false;
     };
 
     class RequiresParamList final : public Node {
         BASE_CORE_METHODS(RequiresParamList);
         
         // RequiresParamList := (RequiresParamDecl (',' RequiresParamDecl)*)?
-
+        explicit RequiresParamList(NodeT<RequiresParamDecl> first) { (this->params).emplace_back(std::move(first)); }
+    
         NodeV<RequiresParamDecl> params;
     };
 
@@ -45,6 +47,7 @@ __AST_NODE_BEGIN {
         BASE_CORE_METHODS(EnumMemberDecl);
         
         // EnumMemberDecl := E.IdentExpr ('=' E)?
+        explicit EnumMemberDecl(NodeT<IdentExpr> name) : name(std::move(name)) {}
 
         NodeT<IdentExpr> name;
         NodeT<> value;
@@ -54,7 +57,8 @@ __AST_NODE_BEGIN {
         BASE_CORE_METHODS(UDTDeriveDecl);
         
         // UDTDeriveDecl := 'derives' (VisDecl? E.Type (',' VisDecl? E.Type)*)?
-
+        explicit UDTDeriveDecl(std::pair<NodeT<Type>, AccessSpecifier> first) { (this->derives).emplace_back(std::move(first)); }
+        
         std::vector<std::pair<NodeT<Type>, AccessSpecifier>> derives;
     };
 
@@ -62,14 +66,16 @@ __AST_NODE_BEGIN {
         BASE_CORE_METHODS(TypeBoundList);
         
         // TypeBoundList := (TypeBoundDecl (',' TypeBoundDecl)*)?
+        explicit TypeBoundList(NodeT<InstOfExpr> bound) { (this->bounds).emplace_back(std::move(bound)); }
 
-        NodeV<TypeBoundDecl> bounds;
+        NodeV<InstOfExpr> bounds;
     };
 
     class TypeBoundDecl final : public Node {
         BASE_CORE_METHODS(TypeBoundDecl);
         
-        // TypeBoundDecl := 'if' InstOfExpr
+        // TypeBoundDecl := InstOfExpr
+
 
         NodeT<InstOfExpr> bound;
     };
@@ -77,7 +83,8 @@ __AST_NODE_BEGIN {
     class RequiresDecl final : public Node {
         BASE_CORE_METHODS(RequiresDecl);
         
-        // RequiresDecl := 'requires' '<' RequiresParamList '>' TypeBoundList?
+        // RequiresDecl := 'requires' '<' RequiresParamList '>' ('if' TypeBoundList)?
+        explicit RequiresDecl(NodeT<RequiresParamList> params) : params(std::move(params)) {}
 
         NodeT<RequiresParamList> params;
         NodeT<TypeBoundList>     bounds;
@@ -87,13 +94,14 @@ __AST_NODE_BEGIN {
         BASE_CORE_METHODS(StructDecl);
         
         // StructDecl := 'const'? VisDecl? 'struct' E.IdentExpr UDTDeriveDecl? RequiresDecl? S.Suite
+        explicit StructDecl(bool /* unused */) {}
 
         NodeT<IdentExpr>     name;
         NodeT<UDTDeriveDecl> derives;
         NodeT<RequiresDecl>  generics;
         NodeT<SuiteState>    body;
 
-        Modifiers modifiers = Modifiers(Modifiers::ExpectedModifier::FuncSpec);
+        Modifiers modifiers = Modifiers(Modifiers::ExpectedModifier::AccessSpec, Modifiers::ExpectedModifier::ClassSpec);
     };
 
     class ConstDecl final : public Node {

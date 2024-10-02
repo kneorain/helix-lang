@@ -13,6 +13,7 @@
 
 // if DEBUG and is windows
 
+#include "parser/ast/include/config/AST_modifiers.hh"
 #include "parser/ast/include/core/AST_nodes.hh"
 #include "parser/ast/include/types/AST_jsonify_visitor.hh"
 #include "parser/ast/include/types/AST_types.hh"
@@ -99,8 +100,8 @@ int compile(int argc, char **argv) {
 
     while (iter.remaining_n() != 0) {
         print("parsing.. ", sysIO::endl('\r'));
-        auto statement = parser::ast::node::Statement(iter);
-        expr           = statement.parse();
+        auto decl = parser::ast::node::Declaration(iter);
+        expr           = decl.parse();
 
         print("parsing.  ", sysIO::endl('\r'));
         if (!expr.has_value()) {
@@ -129,7 +130,7 @@ int compile(int argc, char **argv) {
             node_json.push_back(json_visitor.json);
         }
 
-        print(neo::json("ast").add("Statements", node_json).to_string());
+        print(neo::json("ast").add("Decls", node_json).to_string());
     }
 
     auto                          end  = std::chrono::high_resolution_clock::now();

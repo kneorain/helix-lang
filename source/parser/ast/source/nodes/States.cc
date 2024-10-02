@@ -296,8 +296,6 @@ AST_NODE_IMPL(Statement, NamedVarSpecifier, bool force_type) {
 
     // := Ident (':' Type)?
 
-    Expression expr_parser(iter);
-
     ParseResult<IdentExpr> path = expr_parser.parse<IdentExpr>();
     RETURN_IF_ERROR(path);
 
@@ -374,7 +372,6 @@ AST_NODE_IMPL(Statement, ForPyStatementCore, bool skip_start) {
 
     bool                      except_closing_paren = false;
     token::Token              starting_tok;
-    Expression                expr_parser(iter);
     NodeT<ForPyStatementCore> node = make_node<ForPyStatementCore>(true);
 
     if (!skip_start) {
@@ -436,7 +433,6 @@ AST_NODE_IMPL(Statement, ForCStatementCore, bool skip_start) {
 
     bool except_closing_paren = false;
 
-    Expression               expr_parser(iter);
     token::Token             starting_tok;
     NodeT<ForCStatementCore> node = make_node<ForCStatementCore>(true);
 
@@ -572,8 +568,6 @@ AST_NODE_IMPL(Statement, WhileState) {
     IS_NOT_EMPTY;
     // := 'while' E SuiteState
 
-    Expression expr_parser(iter);
-
     IS_EXCEPTED_TOKEN(token::KEYWORD_WHILE);
     iter.advance();  // skip 'while'
 
@@ -595,7 +589,7 @@ AST_NODE_IMPL_VISITOR(Jsonify, WhileState) {
 // ---------------------------------------------------------------------------------------------- //
 
 /* TODO: REFACTOR */
-AST_NODE_IMPL(Statement, ElseState, Expression &expr_parser) {
+AST_NODE_IMPL(Statement, ElseState) {
     IS_NOT_EMPTY;
 
     // := ('else' Suite) | ('else' ('if' | 'unless') E Suite)
@@ -639,9 +633,8 @@ AST_NODE_IMPL(Statement, IfState) {
 
     // := ('if' | 'unless') E SuiteState (ElseState*)?
 
-    Expression     expr_parser(iter);
-    bool           is_unless = false;
     NodeT<IfState> node;
+    bool           is_unless = false;
 
 #define IF_UNLESS_TOKENS {token::KEYWORD_IF, token::KEYWORD_UNLESS}
     IS_IN_EXCEPTED_TOKENS(IF_UNLESS_TOKENS);
@@ -652,7 +645,7 @@ AST_NODE_IMPL(Statement, IfState) {
     iter.advance();  // skip 'if' or 'unless'
 #undef IF_UNLESS_TOKENS
 
-    auto condition = expr_parser.parse();
+    ParseResult<> condition = expr_parser.parse();
     RETURN_IF_ERROR(condition);
 
     node = make_node<IfState>(condition.value());
@@ -670,7 +663,7 @@ AST_NODE_IMPL(Statement, IfState) {
         bool         captured_final_else = false;
         token::Token starting_else;
 
-        ParseResult<ElseState> else_body = parse<ElseState>(expr_parser);
+        ParseResult<ElseState> else_body = parse<ElseState>();
         RETURN_IF_ERROR(else_body);
 
         node->else_body.emplace_back(else_body.value());
@@ -682,7 +675,7 @@ AST_NODE_IMPL(Statement, IfState) {
         while (CURRENT_TOKEN_IS(token::KEYWORD_ELSE)) {
             starting_else = CURRENT_TOK;
 
-            else_body = parse<ElseState>(expr_parser);
+            else_body = parse<ElseState>();
             RETURN_IF_ERROR(else_body);
 
             node->else_body.emplace_back(else_body.value());
@@ -726,8 +719,6 @@ AST_NODE_IMPL(Statement, SwitchCaseState) {
     if (CURRENT_TOKEN_IS(token::KEYWORD_CASE)) {
         marker = CURRENT_TOK;
         iter.advance();  // skip 'case'
-
-        Expression expr_parser(iter);
 
         ParseResult<> expr = expr_parser.parse();
         RETURN_IF_ERROR(expr);
@@ -793,7 +784,6 @@ AST_NODE_IMPL(Statement, SwitchState) {
     IS_EXCEPTED_TOKEN(token::KEYWORD_SWITCH);
     iter.advance();  // skip 'switch'
 
-    Expression   expr_parser(iter);
     token::Token starting_token;  // '(', ')'
     token::Token first_token;     // 'default'
     bool         expecting_brace_close = false;
@@ -872,7 +862,7 @@ AST_NODE_IMPL(Statement, YieldState) {
     IS_EXCEPTED_TOKEN(token::KEYWORD_YIELD);
     iter.advance();
 
-    auto expr = Expression(iter).parse();
+    ParseResult<> expr = expr_parser.parse();
     RETURN_IF_ERROR(expr);
 
     IS_EXCEPTED_TOKEN(token::PUNCTUATION_SEMICOLON);
@@ -893,7 +883,7 @@ AST_NODE_IMPL(Statement, DeleteState) {
     IS_EXCEPTED_TOKEN(token::KEYWORD_DELETE);
     iter.advance();
 
-    auto expr = Expression(iter).parse();
+    ParseResult<> expr = expr_parser.parse();
     RETURN_IF_ERROR(expr);
 
     IS_EXCEPTED_TOKEN(token::PUNCTUATION_SEMICOLON);
@@ -950,7 +940,7 @@ AST_NODE_IMPL(Statement, ReturnState) {
     IS_EXCEPTED_TOKEN(token::KEYWORD_RETURN);
     iter.advance();  // skip 'return'
 
-    auto expr = Expression(iter).parse();
+    ParseResult<> expr = expr_parser.parse();
     RETURN_IF_ERROR(expr);
 
     IS_EXCEPTED_TOKEN(token::PUNCTUATION_SEMICOLON);
@@ -969,7 +959,7 @@ AST_NODE_IMPL(Statement, BreakState) {
     IS_NOT_EMPTY;
 
     IS_EXCEPTED_TOKEN(token::KEYWORD_BREAK);
-    auto node = make_node<BreakState>(CURRENT_TOK);
+    NodeT<BreakState> node = make_node<BreakState>(CURRENT_TOK);
 
     iter.advance();
 
@@ -989,7 +979,7 @@ AST_NODE_IMPL(Statement, ContinueState) {
     IS_NOT_EMPTY;
 
     IS_EXCEPTED_TOKEN(token::KEYWORD_CONTINUE);
-    auto node = make_node<ContinueState>(CURRENT_TOK);
+    NodeT<ContinueState> node = make_node<ContinueState>(CURRENT_TOK);
 
     iter.advance();
 
@@ -1008,7 +998,7 @@ AST_NODE_IMPL_VISITOR(Jsonify, ContinueState) {
 AST_NODE_IMPL(Statement, ExprState) {
     IS_NOT_EMPTY;
 
-    auto expr = Expression(iter).parse();
+    ParseResult<> expr = expr_parser.parse();
     RETURN_IF_ERROR(expr);
 
     IS_EXCEPTED_TOKEN(token::PUNCTUATION_SEMICOLON);
@@ -1217,7 +1207,7 @@ AST_NODE_IMPL(Statement, PanicState) {
     IS_EXCEPTED_TOKEN(token::KEYWORD_PANIC);
     iter.advance();  // skip 'panic'
 
-    auto expr = Expression(iter).parse();
+    ParseResult<> expr = expr_parser.parse();
     RETURN_IF_ERROR(expr);
 
     IS_EXCEPTED_TOKEN(token::PUNCTUATION_SEMICOLON);
@@ -1240,7 +1230,7 @@ AST_NODE_IMPL(Statement, FinallyState) {
     IS_EXCEPTED_TOKEN(token::KEYWORD_FINALLY);
     iter.advance();  // skip 'finally'
 
-    auto body = parse<SuiteState>();
+    ParseResult<SuiteState> body = parse<SuiteState>();
     RETURN_IF_ERROR(body);
 
     return make_node<FinallyState>(body.value());

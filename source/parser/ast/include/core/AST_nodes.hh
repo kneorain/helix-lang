@@ -64,7 +64,7 @@ __AST_NODE_BEGIN {
      *     NodeT<...> node = expr.parse<...>();
      */
     class Expression {  // THIS IS NOT A NODE
-        AST_CLASS_BASE(Expression, EXPRS);
+        AST_CLASS_BASE(Expression, EXPRS){};
 
         p_r<> parse_primary();
         template <typename T, typename... Args>
@@ -148,9 +148,9 @@ __AST_NODE_BEGIN {
         p_r<SetLiteralExpr>        parse_SetLiteralExpr(p_r<> starting_value);
         p_r<MapPairExpr>           parse_MapPairExpr();
         p_r<MapLiteralExpr>        parse_MapLiteralExpr(p_r<> starting_value);
-        p_r<ObjInitExpr> parse_ObjInitExpr(bool skip_start_brace = false, p_r<> obj_path = null);
-        p_r<LambdaExpr>  parse_LambdaExpr();
-        p_r<TernaryExpr> parse_TernaryExpr(p_r<> lhs = null);
+        p_r<ObjInitExpr>       parse_ObjInitExpr(bool skip_start_brace = false, p_r<> obj_path = null);
+        p_r<LambdaExpr>        parse_LambdaExpr();
+        p_r<TernaryExpr>       parse_TernaryExpr(p_r<> lhs = null);
         p_r<ParenthesizedExpr> parse_ParenthesizedExpr(p_r<> expr = null);
         p_r<CastExpr>          parse_CastExpr(p_r<> lhs);
         p_r<InstOfExpr>        parse_InstOfExpr(p_r<> lhs = null);
@@ -177,7 +177,7 @@ __AST_NODE_BEGIN {
      *     NodeT<...> node = state.parse<...>();
      */
     class Statement {  // THIS IS NOT A NODE
-        AST_CLASS_BASE(Statement, STATES);
+        AST_CLASS_BASE(Statement, STATES), expr_parser(iter) {};
 
         template <typename T, typename... Args>
         p_r<T> parse(Args &&...args) { /* NOLINT */
@@ -238,6 +238,7 @@ __AST_NODE_BEGIN {
 
       private:
         std::vector<token::Token> modifiers;
+        Expression                expr_parser;
 
         p_r<NamedVarSpecifier>     parse_NamedVarSpecifier(bool force_type = false);
         p_r<NamedVarSpecifierList> parse_NamedVarSpecifierList(bool force_types = false);
@@ -246,7 +247,7 @@ __AST_NODE_BEGIN {
         p_r<ForState>              parse_ForState();
         p_r<WhileState>            parse_WhileState();
         p_r<IfState>               parse_IfState();
-        p_r<ElseState>             parse_ElseState(Expression &expr_parser);
+        p_r<ElseState>             parse_ElseState();
         p_r<SwitchState>           parse_SwitchState();
         p_r<SwitchCaseState>       parse_SwitchCaseState();
         p_r<ImportState>           parse_ImportState();
@@ -285,7 +286,7 @@ __AST_NODE_BEGIN {
      *     NodeT<...> node = decl.parse<...>();
      */
     class Declaration {
-        AST_CLASS_BASE(Declaration, STATES);
+        AST_CLASS_BASE(Declaration, DECLS), state_parser(iter), expr_parser(iter) {};
 
         template <typename T, typename... Args>
         p_r<T> parse(Args &&...args) { /* NOLINT */
@@ -329,7 +330,8 @@ __AST_NODE_BEGIN {
         }
 
       private:
-        std::vector<token::Token> modifiers;
+        Statement  state_parser;
+        Expression expr_parser;
 
         p_r<RequiresParamDecl> parse_RequiresParamDecl();
         p_r<RequiresParamList> parse_RequiresParamList();
