@@ -424,6 +424,10 @@ __AST_BEGIN {
             }
         }
 
+        // so if we set the modifiers to another Modifiers object
+        // we can copy the expected_modifiers and allowed_modifiers and verify if the other
+        // object has the modifiers we are looking for
+
         static bool is_modifier(const token::Token &tok, ExpectedModifier modifier) {
             switch (modifier) {
                 case ExpectedModifier::StorageSpec:
@@ -444,11 +448,17 @@ __AST_BEGIN {
                     return false;
             }
         }
+        static bool is_modifier(const token::Token &tok) {
+            return StorageSpecifier::is_storage_specifier(tok) ||
+                   AccessSpecifier::is_access_specifier(tok) ||
+                   FunctionSpecifier::is_function_specifier(tok) ||
+                   ClassSpecifier::is_class_specifier(tok);
+        }
 
         [[nodiscard]] bool find_add(const token::Token &current_token) {
 
             if (allowed_modifiers.find(current_token.token_kind()) == allowed_modifiers.end()) {
-                return false;
+                return false;  // not a modifier
             }
 
             for (const auto &modifier_type : expected_modifiers) {

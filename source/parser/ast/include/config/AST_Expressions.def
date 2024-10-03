@@ -21,7 +21,6 @@
     MACRO(NamedArgumentExpr)     \
     MACRO(ArgumentExpr)          \
     MACRO(ArgumentListExpr)      \
-    MACRO(GenericArgumentExpr)   \
     MACRO(GenericInvokeExpr)     \
     MACRO(GenericInvokePathExpr) \
     MACRO(ScopePathExpr)         \

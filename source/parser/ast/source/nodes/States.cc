@@ -227,7 +227,7 @@ AST_BASE_IMPL(Statement, parse) {  // NOLINT(readability-function-cognitive-comp
                                    /// if(iter.remaining_n() == 0) { return std::unexpected(...); }
 
     token::Token tok = CURRENT_TOK;          /// get the current token from the iterator
-    modifiers        = get_modifiers(iter);  /// get the modifiers for the statement
+    // modifiers        = get_modifiers(iter);  /// get the modifiers for the statement
 
     switch (tok.token_kind()) {
         // TODO: case token::KEYWORD_IMPORT
@@ -300,6 +300,10 @@ AST_NODE_IMPL(Statement, NamedVarSpecifier, bool force_type) {
     RETURN_IF_ERROR(path);
 
     if (force_type) {
+        if (path.value()->name.value() == "self") {
+            return make_node<NamedVarSpecifier>(path.value());
+        }
+
         IS_EXCEPTED_TOKEN(token::PUNCTUATION_COLON);
     }
 
@@ -361,7 +365,7 @@ AST_NODE_IMPL_VISITOR(Jsonify, NamedVarSpecifierList) {
         vars.push_back(get_node_json(var));
     }
 
-    json.section("NamedVarSpecifierList").add("vars", vars);
+    json.section("NamedVarSpecifierList", vars);
 }
 
 // ---------------------------------------------------------------------------------------------- //
@@ -872,7 +876,7 @@ AST_NODE_IMPL(Statement, YieldState) {
 }
 
 AST_NODE_IMPL_VISITOR(Jsonify, YieldState) {
-    json.section("YieldState").add("expr", get_node_json(node.value));
+    json.section("YieldState", get_node_json(node.value));
 }
 
 // ---------------------------------------------------------------------------------------------- //
@@ -893,7 +897,7 @@ AST_NODE_IMPL(Statement, DeleteState) {
 }
 
 AST_NODE_IMPL_VISITOR(Jsonify, DeleteState) {
-    json.section("DeleteState").add("expr", get_node_json(node.value));
+    json.section("DeleteState", get_node_json(node.value));
 }
 
 // ---------------------------------------------------------------------------------------------- //
@@ -950,7 +954,7 @@ AST_NODE_IMPL(Statement, ReturnState) {
 }
 
 AST_NODE_IMPL_VISITOR(Jsonify, ReturnState) {
-    json.section("ReturnState").add("value", get_node_json(node.value));
+    json.section("ReturnState", get_node_json(node.value));
 }
 
 // ---------------------------------------------------------------------------------------------- //
@@ -970,7 +974,7 @@ AST_NODE_IMPL(Statement, BreakState) {
 }
 
 AST_NODE_IMPL_VISITOR(Jsonify, BreakState) {
-    json.section("BreakState").add("marker", node.marker);
+    json.section("BreakState", node.marker);
 }
 
 // ---------------------------------------------------------------------------------------------- //
@@ -990,7 +994,7 @@ AST_NODE_IMPL(Statement, ContinueState) {
 }
 
 AST_NODE_IMPL_VISITOR(Jsonify, ContinueState) {
-    json.section("ContinueState").add("marker", node.marker);
+    json.section("ContinueState", node.marker);
 }
 
 // ---------------------------------------------------------------------------------------------- //
@@ -1008,7 +1012,7 @@ AST_NODE_IMPL(Statement, ExprState) {
 }
 
 AST_NODE_IMPL_VISITOR(Jsonify, ExprState) {
-    json.section("ExprState").add("expr", get_node_json(node.value));
+    json.section("ExprState", get_node_json(node.value));
 }
 
 // ---------------------------------------------------------------------------------------------- //
@@ -1028,10 +1032,13 @@ AST_NODE_IMPL(Statement, SuiteState) {
     if CURRENT_TOKEN_IS (token::PUNCTUATION_COLON) {
         iter.advance();  // skip ':'
 
-        ParseResult<> stmt = parse();
-        RETURN_IF_ERROR(stmt);
+        Declaration decl_parser(iter);
 
-        NodeT<BlockState> block = make_node<BlockState>(NodeV<>{stmt.value()});
+        ParseResult<> decl = decl_parser.parse();
+        RETURN_IF_ERROR(decl);
+
+
+        NodeT<BlockState> block = make_node<BlockState>(NodeV<>{decl.value()});
         return make_node<SuiteState>(block);
     }
 
@@ -1042,7 +1049,7 @@ AST_NODE_IMPL(Statement, SuiteState) {
 }
 
 AST_NODE_IMPL_VISITOR(Jsonify, SuiteState) {
-    json.section("SuiteState").add("body", get_node_json(node.body));
+    json.section("SuiteState", get_node_json(node.body));
 }
 
 // ---------------------------------------------------------------------------------------------- //
@@ -1053,6 +1060,7 @@ AST_NODE_IMPL(Statement, BlockState) {
 
     NodeV<>      body;
     token::Token starting_tok;
+    Declaration  decl_parser(iter);
 
     IS_EXCEPTED_TOKEN(token::PUNCTUATION_OPEN_BRACE);
     starting_tok = CURRENT_TOK;
@@ -1061,10 +1069,10 @@ AST_NODE_IMPL(Statement, BlockState) {
     while (CURRENT_TOKEN_IS_NOT(
         token::PUNCTUATION_CLOSE_BRACE)) {  // TODO: implement this kind of bounds checks for all
                                             // the pair token parsers '(', '[', '{'.
-        ParseResult<> stmt = parse();
-        RETURN_IF_ERROR(stmt);
+        ParseResult<> decl = decl_parser.parse();
+        RETURN_IF_ERROR(decl);
 
-        body.push_back(stmt.value());
+        body.push_back(decl.value());
     }
 
     if (iter.remaining_n() == 0) {
@@ -1083,7 +1091,7 @@ AST_NODE_IMPL_VISITOR(Jsonify, BlockState) {
         body_json.push_back(get_node_json(node));
     }
 
-    json.section("BlockState").add("body", body_json);
+    json.section("BlockState", body_json);
 }
 
 // ---------------------------------------------------------------------------------------------- //
@@ -1217,7 +1225,7 @@ AST_NODE_IMPL(Statement, PanicState) {
 }
 
 AST_NODE_IMPL_VISITOR(Jsonify, PanicState) {
-    json.section("PanicState").add("expr", get_node_json(node.expr));
+    json.section("PanicState",get_node_json(node.expr));
 }
 
 // ---------------------------------------------------------------------------------------------- //
@@ -1237,7 +1245,7 @@ AST_NODE_IMPL(Statement, FinallyState) {
 }
 
 AST_NODE_IMPL_VISITOR(Jsonify, FinallyState) {
-    json.section("FinallyState").add("body", get_node_json(node.body));
+    json.section("FinallyState", get_node_json(node.body));
 }
 
 // ---------------------------------------------------------------------------------------------- //

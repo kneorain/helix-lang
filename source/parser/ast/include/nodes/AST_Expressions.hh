@@ -14,6 +14,7 @@
 #define __AST_EXPRESSIONS_H__
 
 #include "parser/ast/include/config/AST_config.def"
+#include "parser/ast/include/config/AST_modifiers.hh"
 #include "parser/ast/include/core/AST_nodes.hh"
 #include "parser/ast/include/types/AST_types.hh"
 
@@ -116,22 +117,8 @@ __AST_NODE_BEGIN {
         NodeV<> args;
     };
 
-    class GenericArgumentExpr final : public Node {  // := GenericPositionalArgumentExpr
-                                                     // | GenericNamedArgumentExprExpr
-        BASE_CORE_METHODS(GenericArgumentExpr);
-
-        explicit GenericArgumentExpr(NodeT<> value);
-
-        enum class ArgumentType {
-            Positional,
-            Keyword,
-        };
-
-        NodeT<> value;
-    };
-
     class GenericInvokeExpr final
-        : public Node {  // := '<' GenericArgumentExpr ((',' GenericArgumentExpr)*)? '>'
+        : public Node {  // := '<' Type ((',' Type)*)? '>'
         BASE_CORE_METHODS(GenericInvokeExpr);
 
         explicit GenericInvokeExpr(NodeT<> args) {
@@ -339,22 +326,15 @@ __AST_NODE_BEGIN {
     class Type final : public Node {  // := IdentExpr
         BASE_CORE_METHODS(Type);
 
-        enum class TypeType {
-            Identifier,
-            Pointer,
-            Reference,
-            Lambda,
-        };
-
         explicit Type(NodeT<> value)
-            : value(std::move(value))
-            , type(TypeType::Identifier) {}
+            : value(std::move(value)) {}
         explicit Type(NodeT<LambdaExpr> value)
-            : value(std::move(value))
-            , type(TypeType::Lambda) {}
+            : value(std::move(value)) {}
+        explicit Type(bool /* unused */) {}
 
         NodeT<>  value;
-        TypeType type;
+        NodeT<GenericInvokeExpr> generics;
+        Modifiers specifiers = Modifiers(Modifiers::ExpectedModifier::TypeSpec);
     };
 
     class AsyncThreading final : public Node {  // := IdentExpr

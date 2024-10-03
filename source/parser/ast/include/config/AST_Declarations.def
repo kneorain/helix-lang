@@ -13,7 +13,7 @@
 #ifndef __AST_DECLARATIONS_DEF__
 #define __AST_DECLARATIONS_DEF__
 
-#define DECLS(MACRO)          \
+#define DECLS(MACRO)         \
     MACRO(RequiresParamDecl) \
     MACRO(RequiresParamList) \
     MACRO(EnumMemberDecl)    \
@@ -21,6 +21,7 @@
     MACRO(TypeBoundList)     \
     MACRO(TypeBoundDecl)     \
     MACRO(RequiresDecl)      \
+    MACRO(ModuleDecl)        \
     MACRO(StructDecl)        \
     MACRO(ConstDecl)         \
     MACRO(ClassDecl)         \
@@ -31,6 +32,6 @@
     MACRO(VarDecl)           \
     MACRO(FFIDecl)           \
     MACRO(LetDecl)           \
-    MACRO(OpDecl)            \
+    MACRO(OpDecl)
 
 #endif  // __AST_DECLARATIONS_DEF__

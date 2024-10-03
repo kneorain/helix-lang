@@ -83,8 +83,6 @@ __AST_NODE_BEGIN {
                 return parse_ArgumentExpr(std ::forward<Args>(args)...);
             } else if constexpr (std ::is_same_v<T, ArgumentListExpr>) {
                 return parse_ArgumentListExpr(std ::forward<Args>(args)...);
-            } else if constexpr (std ::is_same_v<T, GenericArgumentExpr>) {
-                return parse_GenericArgumentExpr(std ::forward<Args>(args)...);
             } else if constexpr (std ::is_same_v<T, GenericInvokeExpr>) {
                 return parse_GenericInvokeExpr(std ::forward<Args>(args)...);
             } else if constexpr (std ::is_same_v<T, GenericInvokePathExpr>) {
@@ -140,7 +138,6 @@ __AST_NODE_BEGIN {
         p_r<ScopePathExpr>         parse_ScopePathExpr(p_r<> lhs = null);
         p_r<ArrayAccessExpr>       parse_ArrayAccessExpr(p_r<> lhs = null);
         p_r<ArgumentListExpr>      parse_ArgumentListExpr();
-        p_r<GenericArgumentExpr>   parse_GenericArgumentExpr();
         p_r<GenericInvokeExpr>     parse_GenericInvokeExpr();
         p_r<GenericInvokePathExpr> parse_GenericInvokePathExpr();
         p_r<ArrayLiteralExpr>      parse_ArrayLiteralExpr();
@@ -156,7 +153,7 @@ __AST_NODE_BEGIN {
         p_r<InstOfExpr>        parse_InstOfExpr(p_r<> lhs = null);
         p_r<Type>              parse_Type();
         p_r<AsyncThreading>    parse_AsyncThreading();
-        p_r<FunctionCallExpr>  parse_FunctionCallExpr(p_r<> lhs = null, p_r<> gens = null);
+        p_r<FunctionCallExpr>  parse_FunctionCallExpr(p_r<> lhs = null);
     };
 
     /*
@@ -326,7 +323,9 @@ __AST_NODE_BEGIN {
                 return parse_LetDecl(std ::forward<Args>(args)...);
             } else if constexpr (std ::is_same_v<T, OpDecl>) {
                 return parse_OpDecl(std ::forward<Args>(args)...);
-            };
+            } else if constexpr (std ::is_same_v<T, ModuleDecl>) {
+                return parse_ModuleDecl(std ::forward<Args>(args)...);
+            }
         }
 
       private:
@@ -340,17 +339,18 @@ __AST_NODE_BEGIN {
         p_r<TypeBoundList>     parse_TypeBoundList();
         p_r<TypeBoundDecl>     parse_TypeBoundDecl();
         p_r<RequiresDecl>      parse_RequiresDecl();
-        p_r<StructDecl>        parse_StructDecl();
+        p_r<ModuleDecl>        parse_ModuleDecl(const std::shared_ptr<token::TokenList>& modifiers = nullptr);
+        p_r<StructDecl>        parse_StructDecl(const std::shared_ptr<token::TokenList>& modifiers = nullptr);
         p_r<ConstDecl>         parse_ConstDecl();
-        p_r<ClassDecl>         parse_ClassDecl();
-        p_r<InterDecl>         parse_InterDecl();
-        p_r<EnumDecl>          parse_EnumDecl();
-        p_r<TypeDecl>          parse_TypeDecl();
-        p_r<FuncDecl>          parse_FuncDecl();
-        p_r<VarDecl>           parse_VarDecl();
-        p_r<FFIDecl>           parse_FFIDecl();
-        p_r<LetDecl>           parse_LetDecl();
-        p_r<OpDecl>            parse_OpDecl();
+        p_r<ClassDecl>         parse_ClassDecl(const std::shared_ptr<token::TokenList>& modifiers = nullptr);
+        p_r<InterDecl>         parse_InterDecl(const std::shared_ptr<token::TokenList>& modifiers = nullptr);
+        p_r<EnumDecl>          parse_EnumDecl(const std::shared_ptr<token::TokenList>& modifiers = nullptr);
+        p_r<TypeDecl>          parse_TypeDecl(const std::shared_ptr<token::TokenList>& modifiers = nullptr);
+        p_r<FuncDecl>          parse_FuncDecl(const std::shared_ptr<token::TokenList>& modifiers = nullptr);
+        p_r<VarDecl>           parse_VarDecl(bool force_type = false, bool force_value = false);
+        p_r<FFIDecl>           parse_FFIDecl(const std::shared_ptr<token::TokenList>& modifiers = nullptr);
+        p_r<LetDecl>           parse_LetDecl(const std::shared_ptr<token::TokenList>& modifiers = nullptr);
+        p_r<OpDecl>            parse_OpDecl(const std::shared_ptr<token::TokenList>& modifiers = nullptr);
     };
 }  // namespace __AST_BEGIN
 

@@ -48,37 +48,38 @@
 /// [x] * Declaration * D                                                                        ///
 ///                                                                                              ///
 /// STS *                  /* generics and type bounds */                                        ///
-/// [ ] * RequiresParamDecl * 'const'? (S.NamedVarSpecifier) ('=' E)?                            ///
-/// [ ] * RequiresParamList * (RequiresParamDecl (',' RequiresParamDecl)*)?                      ///
-/// [ ] * TypeBoundDecl     * 'if' InstOfExpr                                                    ///
-/// [ ] * TypeBoundList     * (TypeBoundDecl (',' TypeBoundDecl)*)?                              ///
-/// [ ] * RequiresDecl      * 'requires' '<' RequiresParamList '>' TypeBoundList?                ///
-/// [ ] * EnumMemberDecl    * E.IdentExpr ('=' E)?                                               ///
-/// [ ] * UDTDeriveDecl     * 'derives' (E.Type (',' E.Type)*)?                                  ///
+/// [x] * RequiresParamDecl * 'const'? (S.NamedVarSpecifier) ('=' E)?                            ///
+/// [x] * RequiresParamList * (RequiresParamDecl (',' RequiresParamDecl)*)?                      ///
+/// [x] * TypeBoundDecl     * 'if' InstOfExpr                                                    ///
+/// [x] * TypeBoundList     * (TypeBoundDecl (',' TypeBoundDecl)*)?                              ///
+/// [x] * RequiresDecl      * 'requires' '<' RequiresParamList '>' TypeBoundList?                ///
+/// [x] * EnumMemberDecl    * E.IdentExpr ('=' E)?                                               ///
+/// [x] * UDTDeriveDecl     * 'derives' (E.Type (',' E.Type)*)?                                  ///
 ///                                                                                              ///
 ///                        /* declaration helpers */                                             ///
-/// [ ] * StorageSpecifier  * 'ffi' | 'static' | 'async' | 'eval'                                ///
-/// [ ] * FFISpecifier      * 'class' | 'interface' | 'struct' | 'enum' | 'union' | 'type'       ///
-/// [ ] * TypeQualifier     * 'const' | 'module' | 'yield' | 'async' | 'ffi' | 'static'          ///
-/// [ ] * AccessSpecifier   * 'pub' | 'priv' | 'prot' | 'intl'                                   ///
-/// [ ] * FunctionSpecifier * 'inline'  | 'async' | 'static' | 'const' | 'eval' | 'other'        ///
-/// [ ] * FunctionQualifier * 'default' | 'panic' | 'delete' | 'const'                           ///
+/// [x] * StorageSpecifier  * 'ffi' | 'static' | 'async' | 'eval'                                ///
+/// [x] * FFISpecifier      * 'class' | 'interface' | 'struct' | 'enum' | 'union' | 'type'       ///
+/// [x] * TypeQualifier     * 'const' | 'module' | 'yield' | 'async' | 'ffi' | 'static'          ///
+/// [x] * AccessSpecifier   * 'pub' | 'priv' | 'prot' | 'intl'                                   ///
+/// [x] * FunctionSpecifier * 'inline'  | 'async' | 'static' | 'const' | 'eval' | 'other'        ///
+/// [x] * FunctionQualifier * 'default' | 'panic' | 'delete' | 'const'                           ///
 ///                                                                                              ///
-/// [ ] * VisDecl         * AccessSpecifier                                                       //
-/// [ ] * VarDecl         * S.NamedVarSpecifier ('=' E)? ~ also pass in a bool to force type need //
-/// [ ] * SharedModifiers * (FunctionSpecifier)*)?                                               ///
+/// [x] * VisDecl         * AccessSpecifier                                                       //
+/// [x] * VarDecl         * S.NamedVarSpecifier ('=' E)? ~ also pass in a bool to force type need //
+/// [x] * SharedModifiers * (FunctionSpecifier)*)?                                               ///
 ///                                                                                              ///
 ///                /* declaration nodes */                                                       ///
 /// [ ] * FFIDecl   *  VisDecl? 'ffi' L.StringLiteral D                                          ///
 /// [ ] * LetDecl   *  VisDecl? 'let'   SharedModifiers VarDecl* ';'                             ///
 /// [ ] * ConstDecl *  VisDecl? 'const' SharedModifiers VarDecl* ';'                             ///
 /// [ ] * TypeDecl  *  VisDecl? 'type'  E.IdentExpr RequiresDecl? '=' E ';'                      ///
-/// [ ] * EnumDecl  *  VisDecl? 'enum' ('derives' E.Type)? E.ObjInitExpr                         ///
+/// [x] * EnumDecl  *  VisDecl? 'enum' ('derives' E.Type)? E.ObjInitExpr                         ///
 /// [ ] * OpDecl    *  SharedModifiers? 'op' T FuncDecl[no_SharedModifiers=true]                 ///
-/// [ ] * FuncDecl  *  SharedModifiers? 'fn' E.PathExpr '(' VarDecl[true]* ')' RequiresDecl? S.Suite
-/// [ ] * StructDecl* 'const'? VisDecl? 'struct'    E.IdentExpr UDTDeriveDecl? RequiresDecl? S.Suite
-/// [ ] * ClassDecl * 'const'? VisDecl? 'class'     E.IdentExpr UDTDeriveDecl? RequiresDecl? S.Suite
-/// [ ] * InterDecl * 'const'? VisDecl? 'interface' E.IdentExpr UDTDeriveDecl? RequiresDecl? S.Suite
+/// [x] * FuncDecl  *  SharedModifiers? 'fn' E.PathExpr '(' VarDecl[true]* ')' RequiresDecl? S.Suite
+/// [x] * StructDecl* 'const'? VisDecl? 'struct'    E.IdentExpr UDTDeriveDecl? RequiresDecl? S.Suite
+/// [x] * ClassDecl * 'const'? VisDecl? 'class'     E.IdentExpr UDTDeriveDecl? RequiresDecl? S.Suite
+/// [x] * InterDecl * 'const'? VisDecl? 'interface' E.IdentExpr UDTDeriveDecl? RequiresDecl? S.Suite
+/// [x] * ModuleDecl* 'inline'? 'module' E.PathExpr S.Suite                                      ///
 ///                                                                                              ///
 /// [ ] * ExtDecl   * 'extend' E.PathExpr UDTDeriveDecl? S.Suite       /* TODO: dont forget */   ///
 ///                                                                                              ///
@@ -95,12 +96,14 @@
 #include "neo-pprint/include/hxpprint.hh"
 #include "parser/ast/include/config/AST_config.def"
 #include "parser/ast/include/config/AST_generate.hh"
+#include "parser/ast/include/config/AST_modifiers.hh"
 #include "parser/ast/include/config/case_types.def"
 #include "parser/ast/include/core/AST_nodes.hh"
 #include "parser/ast/include/nodes/AST_Expressions.hh"
 #include "parser/ast/include/types/AST_jsonify_visitor.hh"
 #include "parser/ast/include/types/AST_types.hh"
 #include "token/include/generate.hh"
+#include "token/include/token_list.hh"
 
 AST_NODE_IMPL(Declaration, RequiresParamDecl) {
     IS_NOT_EMPTY;
@@ -172,7 +175,7 @@ AST_NODE_IMPL_VISITOR(Jsonify, RequiresParamList) {
         params.push_back(get_node_json(param));
     }
 
-    json.section("RequiresParamList").add("params", params);
+    json.section("RequiresParamList", params);
 }
 
 // ---------------------------------------------------------------------------------------------- //
@@ -252,7 +255,7 @@ AST_NODE_IMPL_VISITOR(Jsonify, UDTDeriveDecl) {
         derives.push_back(derive.second.to_json());
     }
 
-    json.section("UDTDeriveDecl").add("derives", derives);
+    json.section("UDTDeriveDecl", derives);
 }
 
 // ---------------------------------------------------------------------------------------------- //
@@ -285,7 +288,7 @@ AST_NODE_IMPL_VISITOR(Jsonify, TypeBoundList) {
         bounds.push_back(get_node_json(bound));
     }
 
-    json.section("TypeBoundList").add("bounds", bounds);
+    json.section("TypeBoundList", bounds);
 }
 
 // ---------------------------------------------------------------------------------------------- //
@@ -338,14 +341,23 @@ AST_NODE_IMPL_VISITOR(Jsonify, RequiresDecl) {
 
 // ---------------------------------------------------------------------------------------------- //
 
-AST_NODE_IMPL(Declaration, StructDecl) {
+AST_NODE_IMPL(Declaration, StructDecl, const std::shared_ptr<token::TokenList> &modifiers) {
     IS_NOT_EMPTY;
-    // StructDecl := Modifiers 'struct'    E.IdentExpr UDTDeriveDecl? RequiresDecl? S.Suite
+    // StructDecl := Modifiers 'struct' E.IdentExpr UDTDeriveDecl? RequiresDecl? S.Suite
 
     NodeT<StructDecl> node = make_node<StructDecl>(true);
 
-    while (node->modifiers.find_add(CURRENT_TOK)) {
-        iter.advance();  // skip modifier
+    if (modifiers != nullptr) {
+        for (auto &tok : *modifiers) {
+            if (!node->modifiers.find_add(tok.current().get())) {
+                return std::unexpected(
+                    PARSE_ERROR(tok.current().get(), "invalid modifier for struct"));
+            }
+        }
+    } else {
+        while (node->modifiers.find_add(CURRENT_TOK)) {
+            iter.advance();  // skip modifier
+        }
     }
 
     IS_EXCEPTED_TOKEN(token::KEYWORD_STRUCT);
@@ -370,6 +382,11 @@ AST_NODE_IMPL(Declaration, StructDecl) {
         node->generics = generics.value();
     }
 
+    if (CURRENT_TOKEN_IS(token::PUNCTUATION_SEMICOLON)) {  // forward declaration
+        iter.advance();                                    // skip ';'
+        return node;
+    }
+
     ParseResult<SuiteState> body = state_parser.parse<SuiteState>();
     RETURN_IF_ERROR(body);
 
@@ -378,7 +395,8 @@ AST_NODE_IMPL(Declaration, StructDecl) {
     return node;
 }
 
-AST_NODE_IMPL_VISITOR(Jsonify, StructDecl) { json.section("StructDecl")
+AST_NODE_IMPL_VISITOR(Jsonify, StructDecl) {
+    json.section("StructDecl")
         .add("name", get_node_json(node.name))
         .add("derives", get_node_json(node.derives))
         .add("generics", get_node_json(node.generics))
@@ -388,9 +406,9 @@ AST_NODE_IMPL_VISITOR(Jsonify, StructDecl) { json.section("StructDecl")
 
 // ---------------------------------------------------------------------------------------------- //
 
-AST_NODE_IMPL(Declaration, ConstDecl) {
+AST_NODE_IMPL(Declaration, ConstDecl) { /* TODO - MAYBE REMOVE */
     IS_NOT_EMPTY;
-    // ConstDecl := VisDecl? 'const' SharedModifiers VarDecl* ';'
+    // ConstDecl := Modifiers 'const' Modifiers VarDecl* ';'
 
     NOT_IMPLEMENTED;
 }
@@ -399,42 +417,233 @@ AST_NODE_IMPL_VISITOR(Jsonify, ConstDecl) { json.section("ConstDecl"); }
 
 // ---------------------------------------------------------------------------------------------- //
 
-AST_NODE_IMPL(Declaration, ClassDecl) {
+AST_NODE_IMPL(Declaration, ClassDecl, const std::shared_ptr<token::TokenList> &modifiers) {
     IS_NOT_EMPTY;
-    // ClassDecl := const'? VisDecl? 'class'     E.IdentExpr UDTDeriveDecl? RequiresDecl? S.Suite
+    // ClassDecl := Modifiers 'class'     E.IdentExpr UDTDeriveDecl? RequiresDecl? S.Suite
 
-    NOT_IMPLEMENTED;
+    NodeT<ClassDecl> node = make_node<ClassDecl>(true);
+
+    if (modifiers != nullptr) {
+        for (auto &tok : *modifiers) {
+            if (!node->modifiers.find_add(tok.current().get())) {
+                return std::unexpected(
+                    PARSE_ERROR(tok.current().get(), "invalid modifier for class"));
+            }
+        }
+    } else {
+        while (node->modifiers.find_add(CURRENT_TOK)) {
+            iter.advance();  // skip modifier
+        }
+    }
+
+    IS_EXCEPTED_TOKEN(token::KEYWORD_CLASS);
+    iter.advance();  // skip 'class'
+
+    ParseResult<IdentExpr> name = expr_parser.parse<IdentExpr>();
+    RETURN_IF_ERROR(name);
+
+    node->name = name.value();
+
+    if (CURRENT_TOKEN_IS(token::KEYWORD_DERIVES)) {
+        ParseResult<UDTDeriveDecl> derives = parse<UDTDeriveDecl>();
+        RETURN_IF_ERROR(derives);
+
+        node->derives = derives.value();
+    }
+
+    if (CURRENT_TOKEN_IS(token::KEYWORD_REQUIRES)) {
+        ParseResult<RequiresDecl> generics = parse<RequiresDecl>();
+        RETURN_IF_ERROR(generics);
+
+        node->generics = generics.value();
+    }
+
+    if (CURRENT_TOKEN_IS(token::PUNCTUATION_SEMICOLON)) {  // forward declaration
+        iter.advance();                                    // skip ';'
+        return node;
+    }
+
+    ParseResult<SuiteState> body = state_parser.parse<SuiteState>();
+    RETURN_IF_ERROR(body);
+
+    node->body = body.value();
+
+    return node;
 }
 
-AST_NODE_IMPL_VISITOR(Jsonify, ClassDecl) { json.section("ClassDecl"); }
+AST_NODE_IMPL_VISITOR(Jsonify, ClassDecl) {
+    json.section("ClassDecl")
+        .add("name", get_node_json(node.name))
+        .add("derives", get_node_json(node.derives))
+        .add("generics", get_node_json(node.generics))
+        .add("body", get_node_json(node.body))
+        .add("modifiers", node.modifiers.to_json());
+}
 
 // ---------------------------------------------------------------------------------------------- //
 
-AST_NODE_IMPL(Declaration, InterDecl) {
+AST_NODE_IMPL(Declaration, InterDecl, const std::shared_ptr<token::TokenList> &modifiers) {
     IS_NOT_EMPTY;
-    // InterDecl := const'? VisDecl? 'interface' E.IdentExpr UDTDeriveDecl? RequiresDecl? S.Suite
+    // InterDecl := Modifiers 'interface' E.IdentExpr UDTDeriveDecl? RequiresDecl? S.Suite
 
-    NOT_IMPLEMENTED;
+    NodeT<InterDecl> node = make_node<InterDecl>(true);
+
+    if (modifiers != nullptr) {
+        for (auto &tok : *modifiers) {
+            if (!node->modifiers.find_add(tok.current().get())) {
+                return std::unexpected(
+                    PARSE_ERROR(tok.current().get(), "invalid modifier for interface"));
+            }
+        }
+    } else {
+        while (node->modifiers.find_add(CURRENT_TOK)) {
+            iter.advance();  // skip modifier
+        }
+    }
+
+    IS_EXCEPTED_TOKEN(token::KEYWORD_INTERFACE);
+    iter.advance();  // skip 'interface'
+
+    ParseResult<IdentExpr> name = expr_parser.parse<IdentExpr>();
+    RETURN_IF_ERROR(name);
+
+    node->name = name.value();
+
+    if (CURRENT_TOKEN_IS(token::KEYWORD_DERIVES)) {
+        ParseResult<UDTDeriveDecl> derives = parse<UDTDeriveDecl>();
+        RETURN_IF_ERROR(derives);
+
+        node->derives = derives.value();
+    }
+
+    if (CURRENT_TOKEN_IS(token::KEYWORD_REQUIRES)) {
+        ParseResult<RequiresDecl> generics = parse<RequiresDecl>();
+        RETURN_IF_ERROR(generics);
+
+        node->generics = generics.value();
+    }
+
+    if (CURRENT_TOKEN_IS(token::PUNCTUATION_SEMICOLON)) {  // forward declaration
+        return std::unexpected(
+            PARSE_ERROR(CURRENT_TOK, "forward declaration's are not allowed for interface's"));
+    }
+
+    ParseResult<SuiteState> body = state_parser.parse<SuiteState>();
+    RETURN_IF_ERROR(body);
+
+    node->body = body.value();
+
+    return node;
 }
 
-AST_NODE_IMPL_VISITOR(Jsonify, InterDecl) { json.section("InterDecl"); }
+AST_NODE_IMPL_VISITOR(Jsonify, InterDecl) {
+    json.section("InterDecl")
+        .add("name", get_node_json(node.name))
+        .add("derives", get_node_json(node.derives))
+        .add("generics", get_node_json(node.generics))
+        .add("body", get_node_json(node.body))
+        .add("modifiers", node.modifiers.to_json());
+}
 
 // ---------------------------------------------------------------------------------------------- //
 
-AST_NODE_IMPL(Declaration, EnumDecl) {
+AST_NODE_IMPL(Declaration, EnumDecl, const std::shared_ptr<token::TokenList> &modifiers) {
     IS_NOT_EMPTY;
-    // EnumDecl := VisDecl? 'enum' ('derives' E.Type)? E.ObjInitExpr
+    // EnumDecl := Modifiers 'enum' ('derives' E.Type)? (('{' (EnumMemberDecl (','
+    // EnumMemberDecl)*)? '}') | (':' (EnumMemberDecl (',' EnumMemberDecl)*) ';'))
 
-    NOT_IMPLEMENTED;
+    NodeT<EnumDecl> node = make_node<EnumDecl>(true);
+
+    if (modifiers != nullptr) {
+        for (auto &tok : *modifiers) {
+            if (!node->vis.find_add(tok.current().get())) {
+                return std::unexpected(
+                    PARSE_ERROR(tok.current().get(), "invalid modifier for enum"));
+            }
+        }
+    } else {
+        while (node->vis.find_add(CURRENT_TOK)) {
+            iter.advance();  // skip modifier
+        }
+    }
+
+    IS_EXCEPTED_TOKEN(token::KEYWORD_ENUM);
+    iter.advance();  // skip 'enum'
+
+    ParseResult<IdentExpr> name = expr_parser.parse<IdentExpr>();
+    RETURN_IF_ERROR(name);
+
+    node->name = name.value();
+
+    if (CURRENT_TOKEN_IS(token::KEYWORD_DERIVES)) {
+        iter.advance();  // skip 'derives'
+
+        ParseResult<Type> derives = expr_parser.parse<Type>();
+        RETURN_IF_ERROR(derives);
+
+        node->derives = derives.value();
+    }
+
+    if (CURRENT_TOKEN_IS(token::PUNCTUATION_OPEN_BRACE)) {
+        iter.advance();  // skip '{'
+
+        while (CURRENT_TOKEN_IS(token::IDENTIFIER)) {
+            ParseResult<EnumMemberDecl> member = parse<EnumMemberDecl>();
+            RETURN_IF_ERROR(member);
+
+            node->members.emplace_back(member.value());
+
+            if (CURRENT_TOKEN_IS(token::PUNCTUATION_COMMA)) {
+                iter.advance();  // skip ','
+            }
+        }
+
+        IS_EXCEPTED_TOKEN(token::PUNCTUATION_CLOSE_BRACE);
+        iter.advance();  // skip '}'
+
+    } else if (CURRENT_TOKEN_IS(token::PUNCTUATION_COLON)) {
+        iter.advance();  // skip ':'
+
+        while (CURRENT_TOKEN_IS(token::IDENTIFIER)) {
+            ParseResult<EnumMemberDecl> member = parse<EnumMemberDecl>();
+            RETURN_IF_ERROR(member);
+
+            node->members.emplace_back(member.value());
+
+            if (CURRENT_TOKEN_IS(token::PUNCTUATION_COMMA)) {
+                iter.advance();  // skip ','
+            }
+        }
+
+        IS_EXCEPTED_TOKEN(token::PUNCTUATION_SEMICOLON);
+        iter.advance();  // skip ';'
+
+    } else {
+        return std::unexpected(PARSE_ERROR(CURRENT_TOK, "expected enum body"));
+    }
+
+    return node;
 }
 
-AST_NODE_IMPL_VISITOR(Jsonify, EnumDecl) { json.section("EnumDecl"); }
+AST_NODE_IMPL_VISITOR(Jsonify, EnumDecl) {
+    std::vector<neo::json> members;
+
+    for (const auto &member : node.members) {
+        members.push_back(get_node_json(member));
+    }
+
+    json.section("EnumDecl")
+        .add("derives", get_node_json(node.derives))
+        .add("members", members)
+        .add("vis", node.vis.to_json())
+        .add("name", get_node_json(node.name));
+}
 
 // ---------------------------------------------------------------------------------------------- //
 
-AST_NODE_IMPL(Declaration, TypeDecl) {
+AST_NODE_IMPL(Declaration, TypeDecl, const std::shared_ptr<token::TokenList> &modifiers) {
     IS_NOT_EMPTY;
-    // TypeDecl := VisDecl? 'type'  E.IdentExpr RequiresDecl? '=' E ';'
+    // TypeDecl := Modifiers 'type'  E.IdentExpr RequiresDecl? '=' E ';'
 
     NOT_IMPLEMENTED;
 }
@@ -443,31 +652,163 @@ AST_NODE_IMPL_VISITOR(Jsonify, TypeDecl) { json.section("TypeDecl"); }
 
 // ---------------------------------------------------------------------------------------------- //
 
-AST_NODE_IMPL(Declaration, FuncDecl) {
+AST_NODE_IMPL(Declaration, FuncDecl, const std::shared_ptr<token::TokenList> &modifiers) {
     IS_NOT_EMPTY;
-    // FuncDecl := SharedModifiers? 'fn' E.PathExpr '(' VarDecl[true]* ')' RequiresDecl? S.Suite
+    // FuncDecl :=  Modifiers 'fn' E.PathExpr '(' VarDecl[true]* ')' RequiresDecl? ('->'
+    // E.TypeExpr)? (S.Suite | ';' | '=' ('default' | 'delete'))
 
-    NOT_IMPLEMENTED;
+    // one rule to follow is we cant have keyword arguments after positional arguments
+    bool has_keyword = false;
+
+    NodeT<FuncDecl> node = make_node<FuncDecl>(true);
+
+    if (modifiers != nullptr) {
+        for (auto &tok : *modifiers) {
+            if (!node->modifiers.find_add(tok.current().get())) {
+                return std::unexpected(
+                    PARSE_ERROR(tok.current().get(), "invalid modifier for function"));
+            }
+        }
+    } else {
+        while (node->modifiers.find_add(CURRENT_TOK)) {
+            iter.advance();  // skip modifier
+        }
+    }
+
+    IS_EXCEPTED_TOKEN(token::KEYWORD_FUNCTION);
+    iter.advance();  // skip 'fn'
+
+    ParseResult<PathExpr> name = expr_parser.parse<PathExpr>();
+    RETURN_IF_ERROR(name);
+
+    if (name.value()->type == PathExpr::PathType::Dot) {
+        return std::unexpected(PARSE_ERROR(CURRENT_TOK, "invalid function name"));
+    }
+
+    node->name = name.value();
+
+    IS_EXCEPTED_TOKEN(token::PUNCTUATION_OPEN_PAREN);
+    iter.advance();  // skip '('
+
+    while (CURRENT_TOKEN_IS(token::IDENTIFIER) || CURRENT_TOKEN_IS(token::KEYWORD_CONST)) {
+        token::Token starting = CURRENT_TOK;
+
+        ParseResult<VarDecl> param = parse<VarDecl>(true);
+        RETURN_IF_ERROR(param);
+
+        if (param.value()->value != nullptr) {
+            if (has_keyword) {
+                return std::unexpected(
+                    PARSE_ERROR(starting, "positional argument after default argument"));
+            }
+
+            has_keyword = true;
+        }
+
+        node->params.emplace_back(param.value());
+
+        if (CURRENT_TOKEN_IS(token::PUNCTUATION_COMMA)) {
+            iter.advance();  // skip ','
+        }
+    }
+
+    IS_EXCEPTED_TOKEN(token::PUNCTUATION_CLOSE_PAREN);
+    iter.advance();  // skip ')'
+
+    if (CURRENT_TOKEN_IS(token::KEYWORD_REQUIRES)) {
+        ParseResult<RequiresDecl> generics = parse<RequiresDecl>();
+        RETURN_IF_ERROR(generics);
+
+        node->generics = generics.value();
+    }
+
+    if (CURRENT_TOKEN_IS(token::OPERATOR_ARROW)) {
+        iter.advance();  // skip '->'
+
+        ParseResult<Type> returns = expr_parser.parse<Type>();
+        RETURN_IF_ERROR(returns);
+
+        node->returns = returns.value();
+    }
+
+    if (CURRENT_TOKEN_IS(token::PUNCTUATION_SEMICOLON)) {
+        iter.advance();  // skip ';'
+    } else if (CURRENT_TOKEN_IS(token::OPERATOR_ASSIGN)) {
+        iter.advance();  // skip '='
+
+        while (node->qualifiers.find_add(CURRENT_TOK)) {
+            iter.advance();  // skip qualifier
+        }
+
+        IS_EXCEPTED_TOKEN(token::PUNCTUATION_SEMICOLON);
+        iter.advance();  // skip ';'
+    } else if (CURRENT_TOKEN_IS(token::PUNCTUATION_OPEN_BRACE)) {
+        ParseResult<SuiteState> body = state_parser.parse<SuiteState>();
+        RETURN_IF_ERROR(body);
+
+        node->body = body.value();
+    } else {
+        return std::unexpected(PARSE_ERROR(CURRENT_TOK, "expected function body"));
+    }
+
+    return node;
 }
 
-AST_NODE_IMPL_VISITOR(Jsonify, FuncDecl) { json.section("FuncDecl"); }
+AST_NODE_IMPL_VISITOR(Jsonify, FuncDecl) {
+    std::vector<neo::json> params;
+
+    for (const auto &param : node.params) {
+        params.push_back(get_node_json(param));
+    }
+
+    json.section("FuncDecl")
+        .add("name", get_node_json(node.name))
+        .add("params", params)
+        .add("generics", get_node_json(node.generics))
+        .add("returns", get_node_json(node.returns))
+        .add("body", get_node_json(node.body))
+        .add("modifiers", node.modifiers.to_json())
+        .add("qualifiers", node.qualifiers.to_json());
+}
 
 // ---------------------------------------------------------------------------------------------- //
 
-AST_NODE_IMPL(Declaration, VarDecl) {
+AST_NODE_IMPL(Declaration, VarDecl, bool force_type, bool force_value) {
     IS_NOT_EMPTY;
     // VarDecl := S.NamedVarSpecifier ('=' E)? ~ also pass in a bool to force type need
 
-    NOT_IMPLEMENTED;
+    ParseResult<NamedVarSpecifier> var = state_parser.parse<NamedVarSpecifier>(force_type);
+    RETURN_IF_ERROR(var);
+
+    if (CURRENT_TOKEN_IS(token::OPERATOR_ASSIGN)) {
+        iter.advance();  // skip '='
+
+        ParseResult<> value = expr_parser.parse();
+        RETURN_IF_ERROR(value);
+
+        NodeT<VarDecl> node = make_node<VarDecl>(var.value(), value.value());
+        return node;
+    }
+
+    if (force_value) {
+        return std::unexpected(PARSE_ERROR(CURRENT_TOK, "expected value for variable"));
+    }
+
+    NodeT<VarDecl> node = make_node<VarDecl>(var.value());
+    return node;
 }
 
-AST_NODE_IMPL_VISITOR(Jsonify, VarDecl) { json.section("VarDecl"); }
+AST_NODE_IMPL_VISITOR(Jsonify, VarDecl) {
+    json.section("VarDecl")
+        .add("var", get_node_json(node.var))
+        .add("value", get_node_json(node.value));
+}
 
 // ---------------------------------------------------------------------------------------------- //
 
-AST_NODE_IMPL(Declaration, FFIDecl) {
+AST_NODE_IMPL(Declaration, FFIDecl, const std::shared_ptr<token::TokenList> &modifiers) {
     IS_NOT_EMPTY;
-    // FFIDecl := VisDecl? 'ffi' L.StringLiteral D
+    // FFIDecl := Modifiers 'ffi' L.StringLiteral D
 
     NOT_IMPLEMENTED;
 }
@@ -476,20 +817,75 @@ AST_NODE_IMPL_VISITOR(Jsonify, FFIDecl) { json.section("FFIDecl"); }
 
 // ---------------------------------------------------------------------------------------------- //
 
-AST_NODE_IMPL(Declaration, LetDecl) {
+AST_NODE_IMPL(Declaration, LetDecl, const std::shared_ptr<token::TokenList> &modifiers) {
     IS_NOT_EMPTY;
-    // LetDecl := VisDecl? 'let' SharedModifiers VarDecl* ';'
+    // LetDecl := Modifiers 'let' Modifiers VarDecl* ';'
 
-    NOT_IMPLEMENTED;
+    NodeT<LetDecl> node = make_node<LetDecl>(true);
+
+    if (modifiers != nullptr) {
+        for (auto &tok : *modifiers) {
+            if (!node->vis.find_add(tok.current().get())) {
+                return std::unexpected(
+                    PARSE_ERROR(tok.current().get(), "invalid modifier for let"));
+            }
+        }
+    } else {
+        while (node->vis.find_add(CURRENT_TOK)) {
+            iter.advance();  // skip modifier
+        }
+    }
+
+    IS_EXCEPTED_TOKEN(token::KEYWORD_LET);
+    iter.advance();  // skip 'let'
+
+    while (node->modifiers.find_add(CURRENT_TOK)) {
+        iter.advance();  // skip modifier
+    }
+
+    while
+        CURRENT_TOKEN_IS(token::IDENTIFIER) {
+            ParseResult<VarDecl> var = parse<VarDecl>();
+            RETURN_IF_ERROR(var);
+
+            // if no value is provided type is required
+            if ((var.value()->value == nullptr) && (var.value()->var->type == nullptr)) {
+                return std::unexpected(
+                    PARSE_ERROR(var.value()->var->path->name, "expected a type or value for let"));
+            }
+
+            node->vars.emplace_back(var.value());
+
+            if (CURRENT_TOKEN_IS(token::PUNCTUATION_COMMA)) {
+                iter.advance();  // skip ','
+            }
+        }
+
+    IS_EXCEPTED_TOKEN(token::PUNCTUATION_SEMICOLON);
+    iter.advance();  // skip ';'
+
+    return node;
 }
 
-AST_NODE_IMPL_VISITOR(Jsonify, LetDecl) { json.section("LetDecl"); }
+AST_NODE_IMPL_VISITOR(Jsonify, LetDecl) {
+    std::vector<neo::json> vars;
+
+    for (const auto &var : node.vars) {
+        vars.push_back(get_node_json(var));
+    }
+
+    json.section("LetDecl")
+        .add("vars", vars)
+        .add("vis", node.vis.to_json())
+        .add("modifiers", node.modifiers.to_json());
+}
 
 // ---------------------------------------------------------------------------------------------- //
 
-AST_NODE_IMPL(Declaration, OpDecl) {
+/* TODO: MERGE WITH FUNCTION DECL */
+AST_NODE_IMPL(Declaration, OpDecl, const std::shared_ptr<token::TokenList> &modifiers) {
     IS_NOT_EMPTY;
-    // OpDecl := SharedModifiers? 'op' T FuncDecl[no_SharedModifiers=true]
+    // OpDecl := Modifiers 'op' T FuncDecl[no_SharedModifiers=true]
 
     NOT_IMPLEMENTED;
 }
@@ -498,14 +894,94 @@ AST_NODE_IMPL_VISITOR(Jsonify, OpDecl) { json.section("OpDecl"); }
 
 // ---------------------------------------------------------------------------------------------- //
 
+AST_NODE_IMPL(Declaration, ModuleDecl, const std::shared_ptr<token::TokenList> &modifiers) {
+    IS_NOT_EMPTY;
+    // ModuleDecl := 'inline'? 'module' E.PathExpr[scopeOnly=true] S.Suite
+
+    if (modifiers != nullptr) {
+        for (auto &tok : *modifiers) {
+            return std::unexpected(
+                PARSE_ERROR(tok.current().get(), "invalid specifier for module"));
+        }
+    }
+
+    bool inline_module = false;
+
+    if (CURRENT_TOKEN_IS(token::KEYWORD_INLINE)) {
+        inline_module = true;
+        iter.advance();  // skip 'inline'
+    }
+
+    IS_EXCEPTED_TOKEN(token::KEYWORD_MODULE);
+    iter.advance();  // skip 'module'
+
+    ParseResult<PathExpr> name = expr_parser.parse<PathExpr>();
+    RETURN_IF_ERROR(name);
+
+    ParseResult<SuiteState> body = state_parser.parse<SuiteState>();
+    RETURN_IF_ERROR(body);
+
+    NodeT<ModuleDecl> node = make_node<ModuleDecl>(name.value(), body.value(), inline_module);
+    return node;
+}
+
+AST_NODE_IMPL_VISITOR(Jsonify, ModuleDecl) {
+    json.section("ModuleDecl")
+        .add("name", get_node_json(node.name))
+        .add("body", get_node_json(node.body))
+        .add("inline_module", node.inline_module ? "true" : "false");
+}
+
+// ---------------------------------------------------------------------------------------------- //
+
 AST_BASE_IMPL(Declaration, parse) {
     IS_NOT_EMPTY;
 
-    token::Token tok = CURRENT_TOK;          /// get the current token from the iterator
+    token::Token tok = CURRENT_TOK;  /// get the current token from the iterator
+    std::shared_ptr<token::TokenList> modifiers = nullptr;  /// create a pointer to the modifiers
+
+    /* TODO: make this not happen if bool is passed */
+    while (Modifiers::is_modifier(tok)) {
+        if (modifiers == nullptr || modifiers->empty()) {
+            modifiers = std::make_shared<token::TokenList>();
+        }
+
+        modifiers->push_back(tok);  /// add the modifier to the list
+        iter.advance();             /// advance the iterator
+
+        tok = CURRENT_TOK;  /// get the next token
+    }
 
     switch (tok.token_kind()) {
+        case token::KEYWORD_CONST:
+            return parse<ConstDecl>();
+        case token::KEYWORD_CLASS:
+            return parse<ClassDecl>(modifiers);
+        case token::KEYWORD_ENUM:
+            if (modifiers != nullptr) {
+                return std::unexpected(PARSE_ERROR(tok, "invalid modifier for enum"));
+            }
+
+            return parse<EnumDecl>(modifiers);
+        case token::KEYWORD_INTERFACE:
+            return parse<InterDecl>(modifiers);
+        case token::KEYWORD_LET:
+            return parse<LetDecl>(modifiers);
+        case token::KEYWORD_FFI:
+            return parse<FFIDecl>(modifiers);
+        case token::KEYWORD_FUNCTION:
+            return parse<FuncDecl>(modifiers);
+        case token::KEYWORD_OPERATOR:
+            return parse<OpDecl>(modifiers);
+        case token::KEYWORD_TYPE:
+            return parse<TypeDecl>(modifiers);
+        // case token::KEYWORD_UNION:
+        //     return parse<UnionDecl>(modifiers);
+        // TODO: evaluate if unions should be statements or declarations
         case token::KEYWORD_STRUCT:
-            return parse<StructDecl>();
+            return parse<StructDecl>(modifiers);
+        case token::KEYWORD_MODULE:
+            return parse<ModuleDecl>(modifiers);
         default:
             return state_parser.parse();
     }

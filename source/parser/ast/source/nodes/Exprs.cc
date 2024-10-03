@@ -84,8 +84,7 @@
 /// [ ] * LambdaExpr                * LE -> 'fn' TODO                                            ///
 ///                                                                                              ///
 ///                                /* generics */                                                ///
-/// [ ] * GenericInvokeExpr         * GI -> '<' GAE? ( ',' GAE )* '>'                            ///
-/// [ ] * GenericArgumentExpr       * GAE -> E | ID '=' E                                        ///
+/// [ ] * GenericInvokeExpr         * GI -> '<' TY? ( ',' TY )* '>'                             ///
 /// [ ] * GenericInvokePathExpr     * PGE -> PE GI                                               ///
 ///                                                                                              ///
 ///                                                                                              ///
@@ -120,6 +119,7 @@
 
 #include "parser/ast/include/config/AST_config.def"
 #include "parser/ast/include/config/AST_generate.hh"
+#include "parser/ast/include/config/AST_modifiers.hh"
 #include "parser/ast/include/config/case_types.def"
 #include "parser/ast/include/core/AST_nodes.hh"
 #include "parser/ast/include/nodes/AST_Expressions.hh"
@@ -484,7 +484,7 @@ AST_NODE_IMPL(Expression, IdentExpr) {
     return make_node<IdentExpr>(tok, is_reserved_primitive);
 }
 
-AST_NODE_IMPL_VISITOR(Jsonify, IdentExpr) { json.section("IdentExpr").add("name", node.name); }
+AST_NODE_IMPL_VISITOR(Jsonify, IdentExpr) { json.section("IdentExpr", node.name); }
 
 // ---------------------------------------------------------------------------------------------- //
 
@@ -604,14 +604,7 @@ AST_NODE_IMPL_VISITOR(Jsonify, ArgumentListExpr) {
         args.push_back(get_node_json(arg));
     }
 
-    json.section("ArgumentListExpr").add("args", args);
-}
-
-// ---------------------------------------------------------------------------------------------- //
-
-AST_NODE_IMPL(Expression, GenericArgumentExpr) {
-    IS_NOT_EMPTY;
-    NOT_IMPLEMENTED;
+    json.section("ArgumentListExpr", args);
 }
 
 // ---------------------------------------------------------------------------------------------- //
@@ -628,7 +621,7 @@ AST_NODE_IMPL(Expression, GenericInvokeExpr) {
         return make_node<GenericInvokeExpr>(nullptr);
     }
 
-    ParseResult<GenericArgumentExpr> first = parse<GenericArgumentExpr>();
+    ParseResult<Type> first = parse<Type>();
     RETURN_IF_ERROR(first);
 
     NodeT<GenericInvokeExpr> generics = make_node<GenericInvokeExpr>(first.value());
@@ -637,7 +630,7 @@ AST_NODE_IMPL(Expression, GenericInvokeExpr) {
         CURRENT_TOKEN_IS(token::PUNCTUATION_COMMA) {
             iter.advance();  // skip ','
 
-            ParseResult<GenericArgumentExpr> arg = parse<GenericArgumentExpr>();
+            ParseResult<Type> arg = parse<Type>();
             RETURN_IF_ERROR(arg);
 
             generics->args.push_back(arg.value());
@@ -647,6 +640,16 @@ AST_NODE_IMPL(Expression, GenericInvokeExpr) {
     iter.advance();  // skip '>'
 
     return generics;
+}
+
+AST_NODE_IMPL_VISITOR(Jsonify, GenericInvokeExpr) {
+    std::vector<neo::json> args;
+
+    for (const auto &arg : node.args) {
+        args.push_back(get_node_json(arg));
+    }
+
+    json.section("GenericInvokeExpr", args);
 }
 
 // ---------------------------------------------------------------------------------------------- //
@@ -748,7 +751,7 @@ AST_NODE_IMPL(Expression, PathExpr, ParseResult<> simple_path) {
     // := IdentExpr | ScopePathExpr | DotPathExpr
 
     IS_NULL_RESULT(simple_path) {
-        simple_path = parse();
+        simple_path = parse_primary();
         RETURN_IF_ERROR(simple_path);
     }
 
@@ -780,10 +783,7 @@ AST_NODE_IMPL_VISITOR(Jsonify, PathExpr) {
 
 // ---------------------------------------------------------------------------------------------- //
 
-AST_NODE_IMPL(Expression,
-              FunctionCallExpr,
-              ParseResult<> lhs,
-              ParseResult<> gens /* FIXME: unused */) {
+AST_NODE_IMPL(Expression, FunctionCallExpr, ParseResult<> lhs) {
     IS_NOT_EMPTY;
 
     /*
@@ -794,7 +794,6 @@ AST_NODE_IMPL(Expression,
         }
     */
 
-    // if lhs is not empty, then we have a path expression
     ParseResult<PathExpr> path;
 
     IS_NULL_RESULT(lhs) {
@@ -816,7 +815,8 @@ AST_NODE_IMPL(Expression,
 AST_NODE_IMPL_VISITOR(Jsonify, FunctionCallExpr) {
     json.section("FunctionCallExpr")
         .add("path", get_node_json(node.path))
-        .add("args", get_node_json(node.args));
+        .add("args", get_node_json(node.args))
+        .add("generics", get_node_json(node.generic));
 }
 
 // ---------------------------------------------------------------------------------------------- //
@@ -868,7 +868,7 @@ AST_NODE_IMPL_VISITOR(Jsonify, ArrayLiteralExpr) {
         values.push_back(get_node_json(value));
     }
 
-    json.section("ArrayLiteralExpr").add("values", values);
+    json.section("ArrayLiteralExpr", values);
 }
 
 // ---------------------------------------------------------------------------------------------- //
@@ -929,7 +929,7 @@ AST_NODE_IMPL_VISITOR(Jsonify, TupleLiteralExpr) {
         values.push_back(get_node_json(value));
     }
 
-    json.section("TupleLiteralExpr").add("values", values);
+    json.section("TupleLiteralExpr", values);
 }
 
 // ---------------------------------------------------------------------------------------------- //
@@ -987,7 +987,7 @@ AST_NODE_IMPL_VISITOR(Jsonify, SetLiteralExpr) {
         values.push_back(get_node_json(value));
     }
 
-    json.section("SetLiteralExpr").add("values", values);
+    json.section("SetLiteralExpr", values);
 }
 
 // ---------------------------------------------------------------------------------------------- //
@@ -1075,7 +1075,7 @@ AST_NODE_IMPL_VISITOR(Jsonify, MapLiteralExpr) {
         values.push_back(get_node_json(value));
     }
 
-    json.section("MapLiteralExpr").add("values", values);
+    json.section("MapLiteralExpr", values);
 }
 
 // ---------------------------------------------------------------------------------------------- //
@@ -1241,7 +1241,7 @@ AST_NODE_IMPL(Expression, ParenthesizedExpr, ParseResult<> expr) {
 }
 
 AST_NODE_IMPL_VISITOR(Jsonify, ParenthesizedExpr) {
-    json.section("ParenthesizedExpr").add("value", get_node_json(node.value));
+    json.section("ParenthesizedExpr", get_node_json(node.value));
 }
 
 // ---------------------------------------------------------------------------------------------- //
@@ -1308,7 +1308,8 @@ AST_NODE_IMPL_VISITOR(Jsonify, InstOfExpr) {
 // ---------------------------------------------------------------------------------------------- //
 
 /* DEPRECATED: a Type is deduced from context and at this stage is considered a Expression */
-AST_NODE_IMPL(Expression, Type) {  // TODO
+AST_NODE_IMPL(Expression, Type) {  // TODO - REMAKE using the new Modifiers and stricter rules, such
+                                   // as no types can contain a binary expression
     // if E(2) does not exist, check if its a & | * token, since if it is,
     // then return a unary expression since its a pointer or reference type
 
@@ -1320,13 +1321,8 @@ AST_NODE_IMPL(Expression, Type) {  // TODO
     // FunctionQualifier
     IS_NOT_EMPTY;
 
-    std::vector<token::Token> type_prefixes;
-
-    // TODO: all fucntion specifiers can be applied to lambda types
-
-    auto is_type_prefix = [&](const token::Token &tok) {
-        return is_type_qualifier(tok) || is_ffi_specifier(tok);
-    };
+    Modifiers   fn_specifiers(Modifiers::ExpectedModifier::FuncSpec);
+    NodeT<Type> node = make_node<Type>(true);
 
     if (CURRENT_TOKEN_IS(token::KEYWORD_FUNCTION)) {
         iter.advance();  // skip 'fn'
@@ -1374,24 +1370,91 @@ AST_NODE_IMPL(Expression, Type) {  // TODO
         return make_node<Type>(lambda);
     }
 
-    if (is_type_prefix(CURRENT_TOK)) {
-        type_prefixes.push_back(CURRENT_TOK);
-        iter.advance();
+    while (node->specifiers.find_add(CURRENT_TOK)) {
+        iter.advance();  // TODO: Handle 'ffi' ('class' | 'interface' | 'struct' | 'enum' | 'union'
+                         // | 'type')
+    }
 
-        while (is_type_prefix(CURRENT_TOK)) {
-            type_prefixes.push_back(CURRENT_TOK);
-            iter.advance();
+    ParseResult<> EXPR = parse_primary();
+    RETURN_IF_ERROR(EXPR);
+
+    bool continue_loop = true;
+
+    while (continue_loop) {
+        const token::Token &tok = CURRENT_TOK;
+
+        switch (tok.token_kind()) {
+            // case token::PUNCTUATION_OPEN_ANGLE:  /// what to do if its ident '<' parms
+            //                                      /// '>' '(' args ')' its now either a
+            //                                      /// function call w a generic or its a
+            //                                      /// binary expression may god help me
+            //     NOT_IMPLEMENTED;
+            // SOLUTION: 2 pass compiler
+            case token::PUNCTUATION_OPEN_PAREN:
+                EXPR = parse<FunctionCallExpr>(EXPR);
+                RETURN_IF_ERROR(EXPR);
+                break;
+
+            case token::PUNCTUATION_OPEN_BRACKET:
+                EXPR = parse<ArrayAccessExpr>(EXPR);
+                RETURN_IF_ERROR(EXPR);
+                break;
+
+            case token::OPERATOR_SCOPE:
+                EXPR = parse<ScopePathExpr>(EXPR);
+                RETURN_IF_ERROR(EXPR);
+                break;
+
+            case token::KEYWORD_HAS:
+            case token::KEYWORD_DERIVES:
+                return std::unexpected(
+                    PARSE_ERROR(tok, "expected a type, but found a 'has' or 'derives' keyword"));
+
+            case token::PUNCTUATION_QUESTION_MARK:
+            case token::KEYWORD_IF:
+                EXPR = parse<TernaryExpr>(EXPR);
+                RETURN_IF_ERROR(EXPR);
+                break;
+
+            case token::KEYWORD_AS:
+                return std::unexpected(
+                    PARSE_ERROR(tok, "expected a type, but found a 'as' keyword"));
+            case token::PUNCTUATION_OPEN_ANGLE:  // generic lol
+            {
+                ParseResult<GenericInvokeExpr> generic = parse<GenericInvokeExpr>();
+                RETURN_IF_ERROR(generic);
+
+                node->generics = generic.value();
+                continue_loop  = false;
+                break;
+            }
+
+            default:
+                if (is_excepted(tok, IS_UNARY_OPERATOR)) {
+                    EXPR = parse<UnaryExpr>(EXPR);
+                    RETURN_IF_ERROR(EXPR);
+                } else if (tok == token::PUNCTUATION_OPEN_PAREN) {
+                    iter.advance();                         // skip '('
+                    EXPR = parse<ParenthesizedExpr>(EXPR);  /// im not sure why this works, but
+                                                            /// based on small tests, it seems
+                                                            /// to work fine i'll find out soon
+                                                            /// enough if it doesn't
+                    RETURN_IF_ERROR(EXPR);
+                } else {
+                    continue_loop = false;
+                }
         }
     }
 
-    ParseResult<> type = parse();
-    RETURN_IF_ERROR(type);
-
-    return make_node<Type>(type.value());
+    node->value = EXPR.value();
+    return node;
 }
 
 AST_NODE_IMPL_VISITOR(Jsonify, Type) {
-    json.section("Type").add("value", get_node_json(node.value)).add("type", (int)node.type);
+    json.section("Type")
+        .add("value", get_node_json(node.value))
+        .add("generics", get_node_json(node.generics))
+        .add("specifiers", node.specifiers.to_json());
 }
 
 // ---------------------------------------------------------------------------------------------- //
