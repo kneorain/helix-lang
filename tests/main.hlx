@@ -2,6 +2,8 @@ fn main() {
     print("THIS IS A TEST");
 }
 
+ffi "c++" import "hello.h";
+
 fn test_fn() -> i32 {
     return 0;
 }
@@ -23,6 +25,10 @@ class WithGenericsBound requires <T> if T has Number {
     fn WithGenericsBound(self) {
         self.x = 0;
         WithGenericsBound::y = 0;
+    }
+
+    op + as fn add(self, other: T) -> T {
+        return self.x + other;
     }
 
     pub fn something(self, a: int, y: float = 19.21) {

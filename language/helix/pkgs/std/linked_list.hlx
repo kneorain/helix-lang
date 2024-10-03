@@ -10,9 +10,8 @@
 //                                                                                                //
 //===------------------------------------------------------------------------------------------===//
 
-#[link-time]
-import types::{Allocator};
-import alloc::{DefaultAllocator};
+#[link-time] import types::Allocator;
+#[link-time] import alloc::DefaultAllocator;
 
 class IntNode {
     let data: int;
@@ -46,7 +45,7 @@ class IntNode {
     }
 }
 
-fn listLength(head: *IntNode) -> int {
+fn listLength(head: &IntNode) -> int {
     let count = 0;
     let *current = head;
 
@@ -98,9 +97,9 @@ fn listRemoveNode(head: *IntNode, target: int) {
     }
 }
 
-fn main() {
-    let head = IntNode(1, &null);
-    let *tail = &head;
+fn main(a: const int,  a: int | float) {
+    let head: IntNode = IntNode(1, &null);
+    let  *tail = &head;
 
     for i in 2..100 {
         tail = tail.addNodeAfter(i);
