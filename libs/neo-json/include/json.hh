@@ -144,6 +144,11 @@ inline namespace _json {
             return std::get<Json>(_data[key]);
         }
 
+        template <typename T>
+        void section(const string &key, const T &val) {
+            _data[key] = get(val);
+        }
+
         [[nodiscard]] constexpr string to_string(bool is_base = true) const {
             string result;
 
@@ -207,8 +212,8 @@ inline namespace _json {
         }
 
       private:
-        string            key;
-        string            _val;
+        string    key;
+        string    _val;
         JsonVec_t _array;
     };
 

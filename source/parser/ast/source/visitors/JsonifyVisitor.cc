@@ -15,8 +15,6 @@
 #include "parser/ast/include/types/AST_jsonify_visitor.hh"
 
 __AST_VISITOR_BEGIN {
-    void Jsonify::visit(const parser ::ast ::node ::GenericArgumentExpr & /*unused*/) {}
-    void Jsonify::visit(const parser ::ast ::node ::GenericInvokeExpr & /*unused*/) {}
     void Jsonify::visit(const parser ::ast ::node ::GenericInvokePathExpr & /*unused*/) {}
 
 }  // namespace __AST_BEGIN

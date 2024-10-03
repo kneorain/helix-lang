@@ -11,67 +11,73 @@
 //
 //===------------------------------------------------------------------------------------------===//
 
-
 #ifndef __KEYWORDS_DEF__
 #define __KEYWORDS_DEF__
 
-#define KEYWORD_TOKENS_COUNT 52
+#define KEYWORD_TOKENS_COUNT 51
+
+/// Key: Val
+/// M  : Modifier
+/// S  : Statement
+/// D  : Declaration
+/// H  : Helper
+/// E  : Expression
+/// P  : Preprocessor
 
 /* TODO determine if is needs to be removed */
 
-#define KEYWORD_TOKENS(GENERATE)             \
-    GENERATE(KEYWORD_IF,        "if"       ) \
-    GENERATE(KEYWORD_ELSE,      "else"     ) \
-    GENERATE(KEYWORD_UNLESS,    "unless"   ) \
-    GENERATE(KEYWORD_MACRO,     "macro"    ) \
-    GENERATE(KEYWORD_DEFINE,    "define"   ) \
-    GENERATE(KEYWORD_FUNCTION,  "fn"       ) \
-    GENERATE(KEYWORD_OPERATOR,  "op"       ) \
-    GENERATE(KEYWORD_INLINE,    "inline"   ) \
-    GENERATE(KEYWORD_STATIC,    "static"   ) \
-    GENERATE(KEYWORD_RETURN,    "return"   ) \
-    GENERATE(KEYWORD_ASYNC,     "async"    ) \
-    GENERATE(KEYWORD_SPAWN,     "spawn"    ) \
-    GENERATE(KEYWORD_AWAIT,     "await"    ) \
-    GENERATE(KEYWORD_THREAD,    "thread"   ) \
-    GENERATE(KEYWORD_FOR,       "for"      ) \
-    GENERATE(KEYWORD_WHILE,     "while"    ) \
-    GENERATE(KEYWORD_BREAK,     "break"    ) \
-    GENERATE(KEYWORD_CONTINUE,  "continue" ) \
-    GENERATE(KEYWORD_CASE,      "case"     ) \
-    GENERATE(KEYWORD_MATCH,     "match"    ) \
-    GENERATE(KEYWORD_SWITCH,    "switch"   ) \
-    GENERATE(KEYWORD_DEFAULT,   "default"  ) \
-    GENERATE(KEYWORD_ENUM,      "enum"     ) \
-    GENERATE(KEYWORD_TYPE,      "type"     ) \
-    GENERATE(KEYWORD_EVAL,      "eval"     ) \
-    GENERATE(KEYWORD_CLASS,     "class"    ) \
-    GENERATE(KEYWORD_UNION,     "union"    ) \
-    GENERATE(KEYWORD_STRUCT,    "struct"   ) \
-    GENERATE(KEYWORD_ABSTRACT,  "abstract" ) \
-    GENERATE(KEYWORD_INTERFACE, "interface") \
-    GENERATE(KEYWORD_HAS,       "has"      ) \
-    GENERATE(KEYWORD_TRY,       "try"      ) \
-    GENERATE(KEYWORD_PANIC,     "panic"    ) \
-    GENERATE(KEYWORD_CATCH,     "catch"    ) \
-    GENERATE(KEYWORD_FINALLY,   "finally"  ) \
-    GENERATE(KEYWORD_LET,       "let"      ) \
-    GENERATE(KEYWORD_PRIVATE,   "priv"     ) \
-    GENERATE(KEYWORD_PUBLIC,    "pub"      ) \
-    GENERATE(KEYWORD_PROTECTED, "prot"     ) \
-    GENERATE(KEYWORD_INTERNAL,  "intl"     ) \
-    GENERATE(KEYWORD_CONST,     "const"    ) \
-    GENERATE(KEYWORD_GLOBAL,    "global"   ) \
-    GENERATE(KEYWORD_FFI,       "ffi"      ) \
-    GENERATE(KEYWORD_IMPORT,    "import"   ) \
-    GENERATE(KEYWORD_YIELD,     "yield"    ) \
-    GENERATE(KEYWORD_DELETE,    "delete"   ) \
-    GENERATE(KEYWORD_AS,        "as"       ) \
-    GENERATE(KEYWORD_IN,        "in"       ) \
-    GENERATE(KEYWORD_DERIVES,   "derives"  ) \
-    GENERATE(KEYWORD_MODULE,    "module"   ) \
-    GENERATE(KEYWORD_REQUIRES,  "requires" ) \
-    GENERATE(KEYWORD_UNSAFE,    "unsafe"   ) \
+#define KEYWORD_TOKENS(GENERATE)                       \
+    /* S */ GENERATE(KEYWORD_IF, "if")                 \
+    /* S */ GENERATE(KEYWORD_ELSE, "else")             \
+    /* S */ GENERATE(KEYWORD_UNLESS, "unless")         \
+    /*---- P ----*/ GENERATE(KEYWORD_MACRO, "macro")   \
+    /*---- P ----*/ GENERATE(KEYWORD_DEFINE, "define") \
+    /* D */ GENERATE(KEYWORD_FUNCTION, "fn")           \
+    /* D */ GENERATE(KEYWORD_OPERATOR, "op")           \
+    /* M */ GENERATE(KEYWORD_INLINE, "inline")         \
+    /* M */ GENERATE(KEYWORD_STATIC, "static")         \
+    /* S */ GENERATE(KEYWORD_RETURN, "return")         \
+    /* M */ GENERATE(KEYWORD_ASYNC, "async")           \
+    /* E */ GENERATE(KEYWORD_SPAWN, "spawn")           \
+    /* E */ GENERATE(KEYWORD_AWAIT, "await")           \
+    /* E */ GENERATE(KEYWORD_THREAD, "thread")         \
+    /* S */ GENERATE(KEYWORD_FOR, "for")               \
+    /* S */ GENERATE(KEYWORD_WHILE, "while")           \
+    /* S */ GENERATE(KEYWORD_BREAK, "break")           \
+    /* S */ GENERATE(KEYWORD_CONTINUE, "continue")     \
+    /* H */ GENERATE(KEYWORD_CASE, "case")             \
+    /* S */ GENERATE(KEYWORD_MATCH, "match")           \
+    /* S */ GENERATE(KEYWORD_SWITCH, "switch")         \
+    /* H */ GENERATE(KEYWORD_DEFAULT, "default")       \
+    /* H */ GENERATE(KEYWORD_ENUM, "enum")             \
+    /* D */ GENERATE(KEYWORD_TYPE, "type")             \
+    /* M */ GENERATE(KEYWORD_EVAL, "eval")             \
+    /* D */ GENERATE(KEYWORD_CLASS, "class")           \
+    /* D */ GENERATE(KEYWORD_UNION, "union")           \
+    /* D */ GENERATE(KEYWORD_STRUCT, "struct")         \
+    /* D */ GENERATE(KEYWORD_INTERFACE, "interface")   \
+    /* H */ GENERATE(KEYWORD_HAS, "has")               \
+    /* S */ GENERATE(KEYWORD_TRY, "try")               \
+    /* S */ GENERATE(KEYWORD_PANIC, "panic")           \
+    /* S */ GENERATE(KEYWORD_CATCH, "catch")           \
+    /* S */ GENERATE(KEYWORD_FINALLY, "finally")       \
+    /* D */ GENERATE(KEYWORD_LET, "let")               \
+    /* M */ GENERATE(KEYWORD_PRIVATE, "priv")          \
+    /* M */ GENERATE(KEYWORD_PUBLIC, "pub")            \
+    /* M */ GENERATE(KEYWORD_PROTECTED, "prot")        \
+    /* M */ GENERATE(KEYWORD_INTERNAL, "intl")         \
+    /* M */ GENERATE(KEYWORD_CONST, "const")           \
+    /*---- S ----*/ GENERATE(KEYWORD_GLOBAL, "global") \
+    /* D */ GENERATE(KEYWORD_FFI, "ffi")               \
+    /* S */ GENERATE(KEYWORD_IMPORT, "import")         \
+    /* S */ GENERATE(KEYWORD_YIELD, "yield")           \
+    /* S */ GENERATE(KEYWORD_DELETE, "delete")         \
+    /* H */ GENERATE(KEYWORD_AS, "as")                 \
+    /* H */ GENERATE(KEYWORD_IN, "in")                 \
+    /* H */ GENERATE(KEYWORD_DERIVES, "derives")       \
+    /* D */ GENERATE(KEYWORD_MODULE, "module")         \
+    /* H */ GENERATE(KEYWORD_REQUIRES, "requires")     \
+    /*---- M ----*/ GENERATE(KEYWORD_UNSAFE, "unsafe")
 
 // NOTE: IF THIS GENERATION IS CHANGED DO NOT FORGET TO UPDATE COUNT
 // TODO: change 'in' to a operator
