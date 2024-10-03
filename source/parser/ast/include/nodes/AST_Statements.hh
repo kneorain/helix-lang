@@ -16,7 +16,7 @@
 #include <utility>
 
 #include "parser/ast/include/config/AST_config.def"
-#include "parser/ast/include/core/AST_nodes.hh"
+#include "parser/ast/include/private/AST_nodes.hh"
 #include "parser/ast/include/types/AST_types.hh"
 
 // va
@@ -59,7 +59,7 @@ __AST_NODE_BEGIN {
 
         explicit ForPyStatementCore(bool /* unused */) {}
 
-        token::Token                 in_marker;
+        __TOKEN_N::Token                 in_marker;
         NodeT<NamedVarSpecifierList> vars;
         NodeT<>                      range;
         NodeT<>                      body;
@@ -169,7 +169,7 @@ __AST_NODE_BEGIN {
             Fallthrough,
         };
 
-        SwitchCaseState(NodeT<> condition, NodeT<SuiteState> body, CaseType type, token::Token marker)
+        SwitchCaseState(NodeT<> condition, NodeT<SuiteState> body, CaseType type, __TOKEN_N::Token marker)
             : condition(std::move(condition))
             , body(std::move(body))
             , type(type)
@@ -178,7 +178,7 @@ __AST_NODE_BEGIN {
         NodeT<>           condition;
         NodeT<SuiteState> body;
         CaseType          type;
-        token::Token      marker;
+        __TOKEN_N::Token      marker;
     };
 
     class ImportState final : public Node {
@@ -235,10 +235,10 @@ __AST_NODE_BEGIN {
 
         // := 'break' ';'
 
-        explicit BreakState(token::Token marker)
+        explicit BreakState(__TOKEN_N::Token marker)
             : marker(std::move(marker)) {}
 
-        token::Token marker;
+        __TOKEN_N::Token marker;
     };
 
     class ContinueState final : public Node {
@@ -246,10 +246,10 @@ __AST_NODE_BEGIN {
 
         // := 'continue' ';'
 
-        explicit ContinueState(token::Token marker)
+        explicit ContinueState(__TOKEN_N::Token marker)
             : marker(std::move(marker)) {}
 
-        token::Token marker;
+        __TOKEN_N::Token marker;
     };
 
     class ExprState final : public Node {

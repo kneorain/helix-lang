@@ -21,8 +21,7 @@
 #include <vector>
 
 #include "neo-types/include/hxint.hh"
-#include "token/include/token.hh"
-#include "token/include/token_list.hh"
+#include "token/include/Token.hh"
 
 #define LINES_TO_SHOW 5
 
@@ -78,7 +77,7 @@ struct _internal_error {
 
 
 using string_vec   = std::vector<string>;
-using fix_pair     = std::pair<token::Token, i64>;
+using fix_pair     = std::pair<__TOKEN_N::Token, i64>;
 using fix_pair_vec = std::vector<fix_pair>;
 using errors_rep   = std::vector<_internal_error>;
 
@@ -104,7 +103,7 @@ struct Errors {
 
 
 struct CodeError {
-    token::Token *pof;  //< point of failure
+    __TOKEN_N::Token *pof;  //< point of failure
     double         err_code;
     bool          mark_pof = true;
     string_vec    fix_fmt_args;
@@ -142,7 +141,7 @@ class Panic {
 };
 
 
-static inline CodeError create_old_CodeError(token::Token *pof,
+static inline CodeError create_old_CodeError(__TOKEN_N::Token *pof,
                                              const double  err_code,
                                              string_vec    fix_fmt_args = {},
                                              string_vec    err_fmt_args = {},

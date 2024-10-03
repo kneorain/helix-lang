@@ -93,17 +93,13 @@
 #include <utility>
 #include <vector>
 
-#include "neo-pprint/include/hxpprint.hh"
 #include "parser/ast/include/config/AST_config.def"
-#include "parser/ast/include/config/AST_generate.hh"
-#include "parser/ast/include/config/AST_modifiers.hh"
-#include "parser/ast/include/config/case_types.def"
-#include "parser/ast/include/core/AST_nodes.hh"
-#include "parser/ast/include/nodes/AST_Expressions.hh"
+#include "parser/ast/include/private/AST_generate.hh"
+#include "parser/ast/include/types/AST_modifiers.hh"
+#include "parser/ast/include/nodes/AST_expressions.hh"
 #include "parser/ast/include/types/AST_jsonify_visitor.hh"
 #include "parser/ast/include/types/AST_types.hh"
-#include "token/include/generate.hh"
-#include "token/include/token_list.hh"
+#include "token/include/Token.hh"
 
 AST_NODE_IMPL(Declaration, RequiresParamDecl) {
     IS_NOT_EMPTY;
@@ -112,7 +108,7 @@ AST_NODE_IMPL(Declaration, RequiresParamDecl) {
     NodeT<RequiresParamDecl>       node = make_node<RequiresParamDecl>(true);
     ParseResult<NamedVarSpecifier> var;
 
-    if CURRENT_TOKEN_IS (token::KEYWORD_CONST) {
+    if CURRENT_TOKEN_IS (__TOKEN_N::KEYWORD_CONST) {
         iter.advance();  // skip 'const'
         node->is_const = true;
     }
@@ -122,7 +118,7 @@ AST_NODE_IMPL(Declaration, RequiresParamDecl) {
 
     node->var = var.value();
 
-    if CURRENT_TOKEN_IS (token::OPERATOR_ASSIGN) {
+    if CURRENT_TOKEN_IS (__TOKEN_N::OPERATOR_ASSIGN) {
         iter.advance();  // skip '='
 
         ParseResult<> value = expr_parser.parse();
@@ -147,7 +143,7 @@ AST_NODE_IMPL(Declaration, RequiresParamList) {
     IS_NOT_EMPTY;
     // RequiresParamList := RequiresParamDecl (',' RequiresParamDecl)*)?
 
-#define TOKENS_REQUIRED {token::KEYWORD_CONST, token::IDENTIFIER}
+#define TOKENS_REQUIRED {__TOKEN_N::KEYWORD_CONST, __TOKEN_N::IDENTIFIER}
     IS_IN_EXCEPTED_TOKENS(TOKENS_REQUIRED);
 #undef TOKENS_REQUIRED
 
@@ -156,7 +152,7 @@ AST_NODE_IMPL(Declaration, RequiresParamList) {
 
     NodeT<RequiresParamList> node = make_node<RequiresParamList>(first.value());
 
-    while (CURRENT_TOKEN_IS(token::PUNCTUATION_COMMA)) {
+    while (CURRENT_TOKEN_IS(__TOKEN_N::PUNCTUATION_COMMA)) {
         iter.advance();  // skip ','
 
         ParseResult<RequiresParamDecl> next = parse<RequiresParamDecl>();
@@ -183,14 +179,14 @@ AST_NODE_IMPL_VISITOR(Jsonify, RequiresParamList) {
 AST_NODE_IMPL(Declaration, EnumMemberDecl) {
     IS_NOT_EMPTY;
     // EnumMemberDecl := E.IdentExpr ('=' E)?
-    IS_EXCEPTED_TOKEN(token::IDENTIFIER);
+    IS_EXCEPTED_TOKEN(__TOKEN_N::IDENTIFIER);
 
     ParseResult<IdentExpr> name = expr_parser.parse<IdentExpr>();
     RETURN_IF_ERROR(name);
 
     NodeT<EnumMemberDecl> node = make_node<EnumMemberDecl>(name.value());
 
-    if (CURRENT_TOKEN_IS(token::OPERATOR_ASSIGN)) {
+    if (CURRENT_TOKEN_IS(__TOKEN_N::OPERATOR_ASSIGN)) {
         iter.advance();  // skip '='
 
         ParseResult<> value = expr_parser.parse();
@@ -214,12 +210,12 @@ AST_NODE_IMPL(Declaration, UDTDeriveDecl) {
     IS_NOT_EMPTY;
     // UDTDeriveDecl := 'derives' (VisDecl? E.Type (',' VisDecl? E.Type)*)?
 
-    IS_EXCEPTED_TOKEN(token::KEYWORD_DERIVES);
+    IS_EXCEPTED_TOKEN(__TOKEN_N::KEYWORD_DERIVES);
 
     iter.advance();  // skip 'derives'
 
     AccessSpecifier access = AccessSpecifier(
-        token::Token(token::KEYWORD_PUBLIC, "HZL_CMPILER_INL.ACCESS_SPECIFIER__.tmp"));
+        __TOKEN_N::Token(__TOKEN_N::KEYWORD_PUBLIC, "HZL_CMPILER_INL.ACCESS_SPECIFIER__.tmp"));
     if (AccessSpecifier::is_access_specifier(CURRENT_TOK)) {
         access = AccessSpecifier(CURRENT_TOK);
     }
@@ -229,11 +225,11 @@ AST_NODE_IMPL(Declaration, UDTDeriveDecl) {
 
     NodeT<UDTDeriveDecl> node = make_node<UDTDeriveDecl>(std::make_pair(type.value(), access));
 
-    while (CURRENT_TOKEN_IS(token::PUNCTUATION_COMMA)) {
+    while (CURRENT_TOKEN_IS(__TOKEN_N::PUNCTUATION_COMMA)) {
         iter.advance();  // skip ','
 
         AccessSpecifier access = AccessSpecifier(
-            token::Token(token::KEYWORD_PUBLIC, "HZL_CMPILER_INL.ACCESS_SPECIFIER__.tmp"));
+            __TOKEN_N::Token(__TOKEN_N::KEYWORD_PUBLIC, "HZL_CMPILER_INL.ACCESS_SPECIFIER__.tmp"));
         if (AccessSpecifier::is_access_specifier(CURRENT_TOK)) {
             access = AccessSpecifier(CURRENT_TOK);
         }
@@ -269,7 +265,7 @@ AST_NODE_IMPL(Declaration, TypeBoundList) {
 
     NodeT<TypeBoundList> node = make_node<TypeBoundList>(bound.value());
 
-    while (CURRENT_TOKEN_IS(token::PUNCTUATION_COMMA)) {
+    while (CURRENT_TOKEN_IS(__TOKEN_N::PUNCTUATION_COMMA)) {
         iter.advance();  // skip ','
 
         ParseResult<InstOfExpr> next = expr_parser.parse<InstOfExpr>(expr_parser.parse_primary());
@@ -307,10 +303,10 @@ AST_NODE_IMPL(Declaration, RequiresDecl) {
     IS_NOT_EMPTY;
     // RequiresDecl := requires' '<' RequiresParamList '>' ('if' TypeBoundList)?
 
-    IS_EXCEPTED_TOKEN(token::KEYWORD_REQUIRES);
+    IS_EXCEPTED_TOKEN(__TOKEN_N::KEYWORD_REQUIRES);
     iter.advance();  // skip 'requires
 
-    IS_EXCEPTED_TOKEN(token::PUNCTUATION_OPEN_ANGLE);
+    IS_EXCEPTED_TOKEN(__TOKEN_N::PUNCTUATION_OPEN_ANGLE);
     iter.advance();  // skip '<'
 
     ParseResult<RequiresParamList> params = parse<RequiresParamList>();
@@ -318,10 +314,10 @@ AST_NODE_IMPL(Declaration, RequiresDecl) {
 
     NodeT<RequiresDecl> node = make_node<RequiresDecl>(params.value());
 
-    IS_EXCEPTED_TOKEN(token::PUNCTUATION_CLOSE_ANGLE);
+    IS_EXCEPTED_TOKEN(__TOKEN_N::PUNCTUATION_CLOSE_ANGLE);
     iter.advance();  // skip '>'
 
-    if (CURRENT_TOKEN_IS(token::KEYWORD_IF)) {
+    if (CURRENT_TOKEN_IS(__TOKEN_N::KEYWORD_IF)) {
         iter.advance();  // skip 'if'
 
         ParseResult<TypeBoundList> bounds = parse<TypeBoundList>();
@@ -341,7 +337,7 @@ AST_NODE_IMPL_VISITOR(Jsonify, RequiresDecl) {
 
 // ---------------------------------------------------------------------------------------------- //
 
-AST_NODE_IMPL(Declaration, StructDecl, const std::shared_ptr<token::TokenList> &modifiers) {
+AST_NODE_IMPL(Declaration, StructDecl, const std::shared_ptr<__TOKEN_N::TokenList> &modifiers) {
     IS_NOT_EMPTY;
     // StructDecl := Modifiers 'struct' E.IdentExpr UDTDeriveDecl? RequiresDecl? S.Suite
 
@@ -360,7 +356,7 @@ AST_NODE_IMPL(Declaration, StructDecl, const std::shared_ptr<token::TokenList> &
         }
     }
 
-    IS_EXCEPTED_TOKEN(token::KEYWORD_STRUCT);
+    IS_EXCEPTED_TOKEN(__TOKEN_N::KEYWORD_STRUCT);
     iter.advance();  // skip 'struct'
 
     ParseResult<IdentExpr> name = expr_parser.parse<IdentExpr>();
@@ -368,21 +364,21 @@ AST_NODE_IMPL(Declaration, StructDecl, const std::shared_ptr<token::TokenList> &
 
     node->name = name.value();
 
-    if (CURRENT_TOKEN_IS(token::KEYWORD_DERIVES)) {
+    if (CURRENT_TOKEN_IS(__TOKEN_N::KEYWORD_DERIVES)) {
         ParseResult<UDTDeriveDecl> derives = parse<UDTDeriveDecl>();
         RETURN_IF_ERROR(derives);
 
         node->derives = derives.value();
     }
 
-    if (CURRENT_TOKEN_IS(token::KEYWORD_REQUIRES)) {
+    if (CURRENT_TOKEN_IS(__TOKEN_N::KEYWORD_REQUIRES)) {
         ParseResult<RequiresDecl> generics = parse<RequiresDecl>();
         RETURN_IF_ERROR(generics);
 
         node->generics = generics.value();
     }
 
-    if (CURRENT_TOKEN_IS(token::PUNCTUATION_SEMICOLON)) {  // forward declaration
+    if (CURRENT_TOKEN_IS(__TOKEN_N::PUNCTUATION_SEMICOLON)) {  // forward declaration
         iter.advance();                                    // skip ';'
         return node;
     }
@@ -417,7 +413,7 @@ AST_NODE_IMPL_VISITOR(Jsonify, ConstDecl) { json.section("ConstDecl"); }
 
 // ---------------------------------------------------------------------------------------------- //
 
-AST_NODE_IMPL(Declaration, ClassDecl, const std::shared_ptr<token::TokenList> &modifiers) {
+AST_NODE_IMPL(Declaration, ClassDecl, const std::shared_ptr<__TOKEN_N::TokenList> &modifiers) {
     IS_NOT_EMPTY;
     // ClassDecl := Modifiers 'class'     E.IdentExpr UDTDeriveDecl? RequiresDecl? S.Suite
 
@@ -436,7 +432,7 @@ AST_NODE_IMPL(Declaration, ClassDecl, const std::shared_ptr<token::TokenList> &m
         }
     }
 
-    IS_EXCEPTED_TOKEN(token::KEYWORD_CLASS);
+    IS_EXCEPTED_TOKEN(__TOKEN_N::KEYWORD_CLASS);
     iter.advance();  // skip 'class'
 
     ParseResult<IdentExpr> name = expr_parser.parse<IdentExpr>();
@@ -444,21 +440,21 @@ AST_NODE_IMPL(Declaration, ClassDecl, const std::shared_ptr<token::TokenList> &m
 
     node->name = name.value();
 
-    if (CURRENT_TOKEN_IS(token::KEYWORD_DERIVES)) {
+    if (CURRENT_TOKEN_IS(__TOKEN_N::KEYWORD_DERIVES)) {
         ParseResult<UDTDeriveDecl> derives = parse<UDTDeriveDecl>();
         RETURN_IF_ERROR(derives);
 
         node->derives = derives.value();
     }
 
-    if (CURRENT_TOKEN_IS(token::KEYWORD_REQUIRES)) {
+    if (CURRENT_TOKEN_IS(__TOKEN_N::KEYWORD_REQUIRES)) {
         ParseResult<RequiresDecl> generics = parse<RequiresDecl>();
         RETURN_IF_ERROR(generics);
 
         node->generics = generics.value();
     }
 
-    if (CURRENT_TOKEN_IS(token::PUNCTUATION_SEMICOLON)) {  // forward declaration
+    if (CURRENT_TOKEN_IS(__TOKEN_N::PUNCTUATION_SEMICOLON)) {  // forward declaration
         iter.advance();                                    // skip ';'
         return node;
     }
@@ -482,7 +478,7 @@ AST_NODE_IMPL_VISITOR(Jsonify, ClassDecl) {
 
 // ---------------------------------------------------------------------------------------------- //
 
-AST_NODE_IMPL(Declaration, InterDecl, const std::shared_ptr<token::TokenList> &modifiers) {
+AST_NODE_IMPL(Declaration, InterDecl, const std::shared_ptr<__TOKEN_N::TokenList> &modifiers) {
     IS_NOT_EMPTY;
     // InterDecl := Modifiers 'interface' E.IdentExpr UDTDeriveDecl? RequiresDecl? S.Suite
 
@@ -501,7 +497,7 @@ AST_NODE_IMPL(Declaration, InterDecl, const std::shared_ptr<token::TokenList> &m
         }
     }
 
-    IS_EXCEPTED_TOKEN(token::KEYWORD_INTERFACE);
+    IS_EXCEPTED_TOKEN(__TOKEN_N::KEYWORD_INTERFACE);
     iter.advance();  // skip 'interface'
 
     ParseResult<IdentExpr> name = expr_parser.parse<IdentExpr>();
@@ -509,21 +505,21 @@ AST_NODE_IMPL(Declaration, InterDecl, const std::shared_ptr<token::TokenList> &m
 
     node->name = name.value();
 
-    if (CURRENT_TOKEN_IS(token::KEYWORD_DERIVES)) {
+    if (CURRENT_TOKEN_IS(__TOKEN_N::KEYWORD_DERIVES)) {
         ParseResult<UDTDeriveDecl> derives = parse<UDTDeriveDecl>();
         RETURN_IF_ERROR(derives);
 
         node->derives = derives.value();
     }
 
-    if (CURRENT_TOKEN_IS(token::KEYWORD_REQUIRES)) {
+    if (CURRENT_TOKEN_IS(__TOKEN_N::KEYWORD_REQUIRES)) {
         ParseResult<RequiresDecl> generics = parse<RequiresDecl>();
         RETURN_IF_ERROR(generics);
 
         node->generics = generics.value();
     }
 
-    if (CURRENT_TOKEN_IS(token::PUNCTUATION_SEMICOLON)) {  // forward declaration
+    if (CURRENT_TOKEN_IS(__TOKEN_N::PUNCTUATION_SEMICOLON)) {  // forward declaration
         return std::unexpected(
             PARSE_ERROR(CURRENT_TOK, "forward declaration's are not allowed for interface's"));
     }
@@ -547,7 +543,7 @@ AST_NODE_IMPL_VISITOR(Jsonify, InterDecl) {
 
 // ---------------------------------------------------------------------------------------------- //
 
-AST_NODE_IMPL(Declaration, EnumDecl, const std::shared_ptr<token::TokenList> &modifiers) {
+AST_NODE_IMPL(Declaration, EnumDecl, const std::shared_ptr<__TOKEN_N::TokenList> &modifiers) {
     IS_NOT_EMPTY;
     // EnumDecl := Modifiers 'enum' ('derives' E.Type)? (('{' (EnumMemberDecl (','
     // EnumMemberDecl)*)? '}') | (':' (EnumMemberDecl (',' EnumMemberDecl)*) ';'))
@@ -567,7 +563,7 @@ AST_NODE_IMPL(Declaration, EnumDecl, const std::shared_ptr<token::TokenList> &mo
         }
     }
 
-    IS_EXCEPTED_TOKEN(token::KEYWORD_ENUM);
+    IS_EXCEPTED_TOKEN(__TOKEN_N::KEYWORD_ENUM);
     iter.advance();  // skip 'enum'
 
     ParseResult<IdentExpr> name = expr_parser.parse<IdentExpr>();
@@ -575,7 +571,7 @@ AST_NODE_IMPL(Declaration, EnumDecl, const std::shared_ptr<token::TokenList> &mo
 
     node->name = name.value();
 
-    if (CURRENT_TOKEN_IS(token::KEYWORD_DERIVES)) {
+    if (CURRENT_TOKEN_IS(__TOKEN_N::KEYWORD_DERIVES)) {
         iter.advance();  // skip 'derives'
 
         ParseResult<Type> derives = expr_parser.parse<Type>();
@@ -584,38 +580,38 @@ AST_NODE_IMPL(Declaration, EnumDecl, const std::shared_ptr<token::TokenList> &mo
         node->derives = derives.value();
     }
 
-    if (CURRENT_TOKEN_IS(token::PUNCTUATION_OPEN_BRACE)) {
+    if (CURRENT_TOKEN_IS(__TOKEN_N::PUNCTUATION_OPEN_BRACE)) {
         iter.advance();  // skip '{'
 
-        while (CURRENT_TOKEN_IS(token::IDENTIFIER)) {
+        while (CURRENT_TOKEN_IS(__TOKEN_N::IDENTIFIER)) {
             ParseResult<EnumMemberDecl> member = parse<EnumMemberDecl>();
             RETURN_IF_ERROR(member);
 
             node->members.emplace_back(member.value());
 
-            if (CURRENT_TOKEN_IS(token::PUNCTUATION_COMMA)) {
+            if (CURRENT_TOKEN_IS(__TOKEN_N::PUNCTUATION_COMMA)) {
                 iter.advance();  // skip ','
             }
         }
 
-        IS_EXCEPTED_TOKEN(token::PUNCTUATION_CLOSE_BRACE);
+        IS_EXCEPTED_TOKEN(__TOKEN_N::PUNCTUATION_CLOSE_BRACE);
         iter.advance();  // skip '}'
 
-    } else if (CURRENT_TOKEN_IS(token::PUNCTUATION_COLON)) {
+    } else if (CURRENT_TOKEN_IS(__TOKEN_N::PUNCTUATION_COLON)) {
         iter.advance();  // skip ':'
 
-        while (CURRENT_TOKEN_IS(token::IDENTIFIER)) {
+        while (CURRENT_TOKEN_IS(__TOKEN_N::IDENTIFIER)) {
             ParseResult<EnumMemberDecl> member = parse<EnumMemberDecl>();
             RETURN_IF_ERROR(member);
 
             node->members.emplace_back(member.value());
 
-            if (CURRENT_TOKEN_IS(token::PUNCTUATION_COMMA)) {
+            if (CURRENT_TOKEN_IS(__TOKEN_N::PUNCTUATION_COMMA)) {
                 iter.advance();  // skip ','
             }
         }
 
-        IS_EXCEPTED_TOKEN(token::PUNCTUATION_SEMICOLON);
+        IS_EXCEPTED_TOKEN(__TOKEN_N::PUNCTUATION_SEMICOLON);
         iter.advance();  // skip ';'
 
     } else {
@@ -641,7 +637,7 @@ AST_NODE_IMPL_VISITOR(Jsonify, EnumDecl) {
 
 // ---------------------------------------------------------------------------------------------- //
 
-AST_NODE_IMPL(Declaration, TypeDecl, const std::shared_ptr<token::TokenList> &modifiers) {
+AST_NODE_IMPL(Declaration, TypeDecl, const std::shared_ptr<__TOKEN_N::TokenList> &modifiers) {
     IS_NOT_EMPTY;
     // TypeDecl := Modifiers 'type'  E.IdentExpr RequiresDecl? '=' E ';'
 
@@ -652,7 +648,7 @@ AST_NODE_IMPL_VISITOR(Jsonify, TypeDecl) { json.section("TypeDecl"); }
 
 // ---------------------------------------------------------------------------------------------- //
 
-AST_NODE_IMPL(Declaration, FuncDecl, const std::shared_ptr<token::TokenList> &modifiers) {
+AST_NODE_IMPL(Declaration, FuncDecl, const std::shared_ptr<__TOKEN_N::TokenList> &modifiers) {
     IS_NOT_EMPTY;
     // FuncDecl :=  Modifiers 'fn' E.PathExpr '(' VarDecl[true]* ')' RequiresDecl? ('->'
     // E.TypeExpr)? (S.Suite | ';' | '=' ('default' | 'delete'))
@@ -675,7 +671,7 @@ AST_NODE_IMPL(Declaration, FuncDecl, const std::shared_ptr<token::TokenList> &mo
         }
     }
 
-    IS_EXCEPTED_TOKEN(token::KEYWORD_FUNCTION);
+    IS_EXCEPTED_TOKEN(__TOKEN_N::KEYWORD_FUNCTION);
     iter.advance();  // skip 'fn'
 
     ParseResult<PathExpr> name = expr_parser.parse<PathExpr>();
@@ -687,11 +683,11 @@ AST_NODE_IMPL(Declaration, FuncDecl, const std::shared_ptr<token::TokenList> &mo
 
     node->name = name.value();
 
-    IS_EXCEPTED_TOKEN(token::PUNCTUATION_OPEN_PAREN);
+    IS_EXCEPTED_TOKEN(__TOKEN_N::PUNCTUATION_OPEN_PAREN);
     iter.advance();  // skip '('
 
-    while (CURRENT_TOKEN_IS(token::IDENTIFIER) || CURRENT_TOKEN_IS(token::KEYWORD_CONST)) {
-        token::Token starting = CURRENT_TOK;
+    while (CURRENT_TOKEN_IS(__TOKEN_N::IDENTIFIER) || CURRENT_TOKEN_IS(__TOKEN_N::KEYWORD_CONST)) {
+        __TOKEN_N::Token starting = CURRENT_TOK;
 
         ParseResult<VarDecl> param = parse<VarDecl>(true);
         RETURN_IF_ERROR(param);
@@ -707,22 +703,22 @@ AST_NODE_IMPL(Declaration, FuncDecl, const std::shared_ptr<token::TokenList> &mo
 
         node->params.emplace_back(param.value());
 
-        if (CURRENT_TOKEN_IS(token::PUNCTUATION_COMMA)) {
+        if (CURRENT_TOKEN_IS(__TOKEN_N::PUNCTUATION_COMMA)) {
             iter.advance();  // skip ','
         }
     }
 
-    IS_EXCEPTED_TOKEN(token::PUNCTUATION_CLOSE_PAREN);
+    IS_EXCEPTED_TOKEN(__TOKEN_N::PUNCTUATION_CLOSE_PAREN);
     iter.advance();  // skip ')'
 
-    if (CURRENT_TOKEN_IS(token::KEYWORD_REQUIRES)) {
+    if (CURRENT_TOKEN_IS(__TOKEN_N::KEYWORD_REQUIRES)) {
         ParseResult<RequiresDecl> generics = parse<RequiresDecl>();
         RETURN_IF_ERROR(generics);
 
         node->generics = generics.value();
     }
 
-    if (CURRENT_TOKEN_IS(token::OPERATOR_ARROW)) {
+    if (CURRENT_TOKEN_IS(__TOKEN_N::OPERATOR_ARROW)) {
         iter.advance();  // skip '->'
 
         ParseResult<Type> returns = expr_parser.parse<Type>();
@@ -731,18 +727,18 @@ AST_NODE_IMPL(Declaration, FuncDecl, const std::shared_ptr<token::TokenList> &mo
         node->returns = returns.value();
     }
 
-    if (CURRENT_TOKEN_IS(token::PUNCTUATION_SEMICOLON)) {
+    if (CURRENT_TOKEN_IS(__TOKEN_N::PUNCTUATION_SEMICOLON)) {
         iter.advance();  // skip ';'
-    } else if (CURRENT_TOKEN_IS(token::OPERATOR_ASSIGN)) {
+    } else if (CURRENT_TOKEN_IS(__TOKEN_N::OPERATOR_ASSIGN)) {
         iter.advance();  // skip '='
 
         while (node->qualifiers.find_add(CURRENT_TOK)) {
             iter.advance();  // skip qualifier
         }
 
-        IS_EXCEPTED_TOKEN(token::PUNCTUATION_SEMICOLON);
+        IS_EXCEPTED_TOKEN(__TOKEN_N::PUNCTUATION_SEMICOLON);
         iter.advance();  // skip ';'
-    } else if (CURRENT_TOKEN_IS(token::PUNCTUATION_OPEN_BRACE)) {
+    } else if (CURRENT_TOKEN_IS(__TOKEN_N::PUNCTUATION_OPEN_BRACE)) {
         ParseResult<SuiteState> body = state_parser.parse<SuiteState>();
         RETURN_IF_ERROR(body);
 
@@ -780,7 +776,7 @@ AST_NODE_IMPL(Declaration, VarDecl, bool force_type, bool force_value) {
     ParseResult<NamedVarSpecifier> var = state_parser.parse<NamedVarSpecifier>(force_type);
     RETURN_IF_ERROR(var);
 
-    if (CURRENT_TOKEN_IS(token::OPERATOR_ASSIGN)) {
+    if (CURRENT_TOKEN_IS(__TOKEN_N::OPERATOR_ASSIGN)) {
         iter.advance();  // skip '='
 
         ParseResult<> value = expr_parser.parse();
@@ -806,7 +802,7 @@ AST_NODE_IMPL_VISITOR(Jsonify, VarDecl) {
 
 // ---------------------------------------------------------------------------------------------- //
 
-AST_NODE_IMPL(Declaration, FFIDecl, const std::shared_ptr<token::TokenList> &modifiers) {
+AST_NODE_IMPL(Declaration, FFIDecl, const std::shared_ptr<__TOKEN_N::TokenList> &modifiers) {
     IS_NOT_EMPTY;
     // FFIDecl := Modifiers 'ffi' L.StringLiteral D
 
@@ -817,7 +813,7 @@ AST_NODE_IMPL_VISITOR(Jsonify, FFIDecl) { json.section("FFIDecl"); }
 
 // ---------------------------------------------------------------------------------------------- //
 
-AST_NODE_IMPL(Declaration, LetDecl, const std::shared_ptr<token::TokenList> &modifiers) {
+AST_NODE_IMPL(Declaration, LetDecl, const std::shared_ptr<__TOKEN_N::TokenList> &modifiers) {
     IS_NOT_EMPTY;
     // LetDecl := Modifiers 'let' Modifiers VarDecl* ';'
 
@@ -836,7 +832,7 @@ AST_NODE_IMPL(Declaration, LetDecl, const std::shared_ptr<token::TokenList> &mod
         }
     }
 
-    IS_EXCEPTED_TOKEN(token::KEYWORD_LET);
+    IS_EXCEPTED_TOKEN(__TOKEN_N::KEYWORD_LET);
     iter.advance();  // skip 'let'
 
     while (node->modifiers.find_add(CURRENT_TOK)) {
@@ -844,7 +840,7 @@ AST_NODE_IMPL(Declaration, LetDecl, const std::shared_ptr<token::TokenList> &mod
     }
 
     while
-        CURRENT_TOKEN_IS(token::IDENTIFIER) {
+        CURRENT_TOKEN_IS(__TOKEN_N::IDENTIFIER) {
             ParseResult<VarDecl> var = parse<VarDecl>();
             RETURN_IF_ERROR(var);
 
@@ -856,12 +852,12 @@ AST_NODE_IMPL(Declaration, LetDecl, const std::shared_ptr<token::TokenList> &mod
 
             node->vars.emplace_back(var.value());
 
-            if (CURRENT_TOKEN_IS(token::PUNCTUATION_COMMA)) {
+            if (CURRENT_TOKEN_IS(__TOKEN_N::PUNCTUATION_COMMA)) {
                 iter.advance();  // skip ','
             }
         }
 
-    IS_EXCEPTED_TOKEN(token::PUNCTUATION_SEMICOLON);
+    IS_EXCEPTED_TOKEN(__TOKEN_N::PUNCTUATION_SEMICOLON);
     iter.advance();  // skip ';'
 
     return node;
@@ -883,7 +879,7 @@ AST_NODE_IMPL_VISITOR(Jsonify, LetDecl) {
 // ---------------------------------------------------------------------------------------------- //
 
 /* TODO: MERGE WITH FUNCTION DECL */
-AST_NODE_IMPL(Declaration, OpDecl, const std::shared_ptr<token::TokenList> &modifiers) {
+AST_NODE_IMPL(Declaration, OpDecl, const std::shared_ptr<__TOKEN_N::TokenList> &modifiers) {
     IS_NOT_EMPTY;
     // OpDecl := Modifiers 'op' T FuncDecl[no_SharedModifiers=true]
 
@@ -894,7 +890,7 @@ AST_NODE_IMPL_VISITOR(Jsonify, OpDecl) { json.section("OpDecl"); }
 
 // ---------------------------------------------------------------------------------------------- //
 
-AST_NODE_IMPL(Declaration, ModuleDecl, const std::shared_ptr<token::TokenList> &modifiers) {
+AST_NODE_IMPL(Declaration, ModuleDecl, const std::shared_ptr<__TOKEN_N::TokenList> &modifiers) {
     IS_NOT_EMPTY;
     // ModuleDecl := 'inline'? 'module' E.PathExpr[scopeOnly=true] S.Suite
 
@@ -907,12 +903,12 @@ AST_NODE_IMPL(Declaration, ModuleDecl, const std::shared_ptr<token::TokenList> &
 
     bool inline_module = false;
 
-    if (CURRENT_TOKEN_IS(token::KEYWORD_INLINE)) {
+    if (CURRENT_TOKEN_IS(__TOKEN_N::KEYWORD_INLINE)) {
         inline_module = true;
         iter.advance();  // skip 'inline'
     }
 
-    IS_EXCEPTED_TOKEN(token::KEYWORD_MODULE);
+    IS_EXCEPTED_TOKEN(__TOKEN_N::KEYWORD_MODULE);
     iter.advance();  // skip 'module'
 
     ParseResult<PathExpr> name = expr_parser.parse<PathExpr>();
@@ -937,13 +933,13 @@ AST_NODE_IMPL_VISITOR(Jsonify, ModuleDecl) {
 AST_BASE_IMPL(Declaration, parse) {
     IS_NOT_EMPTY;
 
-    token::Token tok = CURRENT_TOK;  /// get the current token from the iterator
-    std::shared_ptr<token::TokenList> modifiers = nullptr;  /// create a pointer to the modifiers
+    __TOKEN_N::Token tok = CURRENT_TOK;  /// get the current token from the iterator
+    std::shared_ptr<__TOKEN_N::TokenList> modifiers = nullptr;  /// create a pointer to the modifiers
 
     /* TODO: make this not happen if bool is passed */
     while (Modifiers::is_modifier(tok)) {
         if (modifiers == nullptr || modifiers->empty()) {
-            modifiers = std::make_shared<token::TokenList>();
+            modifiers = std::make_shared<__TOKEN_N::TokenList>();
         }
 
         modifiers->push_back(tok);  /// add the modifier to the list
@@ -953,34 +949,34 @@ AST_BASE_IMPL(Declaration, parse) {
     }
 
     switch (tok.token_kind()) {
-        case token::KEYWORD_CONST:
+        case __TOKEN_N::KEYWORD_CONST:
             return parse<ConstDecl>();
-        case token::KEYWORD_CLASS:
+        case __TOKEN_N::KEYWORD_CLASS:
             return parse<ClassDecl>(modifiers);
-        case token::KEYWORD_ENUM:
+        case __TOKEN_N::KEYWORD_ENUM:
             if (modifiers != nullptr) {
                 return std::unexpected(PARSE_ERROR(tok, "invalid modifier for enum"));
             }
 
             return parse<EnumDecl>(modifiers);
-        case token::KEYWORD_INTERFACE:
+        case __TOKEN_N::KEYWORD_INTERFACE:
             return parse<InterDecl>(modifiers);
-        case token::KEYWORD_LET:
+        case __TOKEN_N::KEYWORD_LET:
             return parse<LetDecl>(modifiers);
-        case token::KEYWORD_FFI:
+        case __TOKEN_N::KEYWORD_FFI:
             return parse<FFIDecl>(modifiers);
-        case token::KEYWORD_FUNCTION:
+        case __TOKEN_N::KEYWORD_FUNCTION:
             return parse<FuncDecl>(modifiers);
-        case token::KEYWORD_OPERATOR:
+        case __TOKEN_N::KEYWORD_OPERATOR:
             return parse<OpDecl>(modifiers);
-        case token::KEYWORD_TYPE:
+        case __TOKEN_N::KEYWORD_TYPE:
             return parse<TypeDecl>(modifiers);
-        // case token::KEYWORD_UNION:
+        // case __TOKEN_N::KEYWORD_UNION:
         //     return parse<UnionDecl>(modifiers);
         // TODO: evaluate if unions should be statements or declarations
-        case token::KEYWORD_STRUCT:
+        case __TOKEN_N::KEYWORD_STRUCT:
             return parse<StructDecl>(modifiers);
-        case token::KEYWORD_MODULE:
+        case __TOKEN_N::KEYWORD_MODULE:
             return parse<ModuleDecl>(modifiers);
         default:
             return state_parser.parse();

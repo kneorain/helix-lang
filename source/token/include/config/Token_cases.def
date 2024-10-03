@@ -1,0 +1,219 @@
+//===------------------------------------------ C++ ------------------------------------------====//
+//                                                                                                //
+//  Part of the Helix Project, under the Attribution 4.0 International license (CC BY 4.0).       //
+//  You are allowed to use, modify, redistribute, and create derivative works, even for           //
+//  commercial purposes, provided that you give appropriate credit, and indicate if changes       //
+//   were made. For more information, please visit: https://creativecommons.org/licenses/by/4.0/  //
+//                                                                                                //
+//  SPDX-License-Identifier: CC-BY-4.0                                                            //
+//  Copyright (c) 2024 (CC BY 4.0)                                                                //
+//                                                                                                //
+//====----------------------------------------------------------------------------------------====//
+//                                                                                                //
+//  this file is used as  a helper to define the cases for token types used by the parser         //
+//                                                                                                //
+//===-----------------------------------------------------------------------------------------====//
+
+#ifndef __TOKEN_CASE_TYPES_H__
+#define __TOKEN_CASE_TYPES_H__
+
+#include "token/include/Token.hh"
+
+#define IS_LITERAL                      \
+    {__TOKEN_N::LITERAL_STRING,             \
+     __TOKEN_N::LITERAL_TRUE,               \
+     __TOKEN_N::LITERAL_FALSE,              \
+     __TOKEN_N::LITERAL_INTEGER,            \
+     __TOKEN_N::LITERAL_COMPLIER_DIRECTIVE, \
+     __TOKEN_N::LITERAL_FLOATING_POINT,     \
+     __TOKEN_N::LITERAL_CHAR,               \
+     __TOKEN_N::LITERAL_NULL}
+
+#define IS_IDENTIFIER                                                              \
+    {                                                                              \
+        __TOKEN_N::IDENTIFIER,       __TOKEN_N::PRIMITIVE_VOID,  __TOKEN_N::PRIMITIVE_BOOL,    \
+        __TOKEN_N::PRIMITIVE_BYTE,   __TOKEN_N::PRIMITIVE_CHAR,  __TOKEN_N::PRIMITIVE_I8,      \
+        __TOKEN_N::PRIMITIVE_U8,    __TOKEN_N::PRIMITIVE_I16,    __TOKEN_N::PRIMITIVE_U16,     \
+        __TOKEN_N::PRIMITIVE_I32,   __TOKEN_N::PRIMITIVE_U32,    __TOKEN_N::PRIMITIVE_F32,     \
+        __TOKEN_N::PRIMITIVE_I64,   __TOKEN_N::PRIMITIVE_U64,    __TOKEN_N::PRIMITIVE_F64,     \
+        __TOKEN_N::PRIMITIVE_I128,  __TOKEN_N::PRIMITIVE_U128,   \
+    }
+
+#define IS_KEYWORD                                                                \
+    {__TOKEN_N::KEYWORD_IF,        __TOKEN_N::KEYWORD_ELSE,      __TOKEN_N::KEYWORD_UNLESS,   \
+     __TOKEN_N::KEYWORD_SPAWN,     __TOKEN_N::KEYWORD_AWAIT,     __TOKEN_N::KEYWORD_THREAD,   \
+     __TOKEN_N::KEYWORD_MACRO,     __TOKEN_N::KEYWORD_DEFINE,    __TOKEN_N::KEYWORD_FUNCTION, \
+     __TOKEN_N::KEYWORD_OPERATOR,  __TOKEN_N::KEYWORD_INLINE,    __TOKEN_N::KEYWORD_RETURN,   \
+     __TOKEN_N::KEYWORD_ENCLOSING, __TOKEN_N::KEYWORD_ASYNC,     __TOKEN_N::KEYWORD_FOR,      \
+     __TOKEN_N::KEYWORD_WHILE,     __TOKEN_N::KEYWORD_BREAK,     __TOKEN_N::KEYWORD_CONTINUE, \
+     __TOKEN_N::KEYWORD_CASE,      __TOKEN_N::KEYWORD_MATCH,     __TOKEN_N::KEYWORD_SWITCH,   \
+     __TOKEN_N::KEYWORD_DEFAULT,   __TOKEN_N::KEYWORD_ENUM,      __TOKEN_N::KEYWORD_TYPE,     \
+     __TOKEN_N::KEYWORD_CLASS,     __TOKEN_N::KEYWORD_UNION,     __TOKEN_N::KEYWORD_STRUCT,   \
+     __TOKEN_N::KEYWORD_ABSTRACT,  __TOKEN_N::KEYWORD_INTERFACE, __TOKEN_N::KEYWORD_IS,       \
+     __TOKEN_N::KEYWORD_TRY,       __TOKEN_N::KEYWORD_PANIC,     __TOKEN_N::KEYWORD_CATCH,    \
+     __TOKEN_N::KEYWORD_FINALLY,   __TOKEN_N::KEYWORD_LET,       __TOKEN_N::KEYWORD_PRIVATE,  \
+     __TOKEN_N::KEYWORD_AUTO,      __TOKEN_N::KEYWORD_CONST,     __TOKEN_N::KEYWORD_GLOBAL,   \
+     __TOKEN_N::KEYWORD_FROM,      __TOKEN_N::KEYWORD_FFI,       __TOKEN_N::KEYWORD_IMPORT,   \
+     __TOKEN_N::KEYWORD_EXTERN,    __TOKEN_N::KEYWORD_YIELD,     __TOKEN_N::KEYWORD_AS,       \
+     __TOKEN_N::KEYWORD_DERIVES,   __TOKEN_N::KEYWORD_MODULE}
+
+#define IS_DELIMITER           \
+    {__TOKEN_N::DELIMITER_TAB,     \
+     __TOKEN_N::DELIMITER_NEWLINE, \
+     __TOKEN_N::EOF_TOKEN,         \
+     __TOKEN_N::DELIMITER_SPACE,   \
+     __TOKEN_N::WHITESPACE}
+
+#define IS_UNARY_OPERATOR         \
+    {__TOKEN_N::OPERATOR_ADD,         \
+     __TOKEN_N::OPERATOR_SUB,         \
+     __TOKEN_N::OPERATOR_BITWISE_NOT, \
+     __TOKEN_N::OPERATOR_LOGICAL_NOT, \
+     __TOKEN_N::OPERATOR_POW,         \
+     __TOKEN_N::OPERATOR_ABS,         \
+     __TOKEN_N::OPERATOR_INC,         \
+     __TOKEN_N::OPERATOR_DEC,         \
+     __TOKEN_N::OPERATOR_RANGE,       \
+     __TOKEN_N::OPERATOR_MUL,         \
+     __TOKEN_N::OPERATOR_MAT,         \
+     __TOKEN_N::OPERATOR_BITWISE_AND, \
+     __TOKEN_N::OPERATOR_RANGE_INCLUSIVE}
+
+#define IS_OPERATOR                          \
+    {__TOKEN_N::OPERATOR_ADD,                    \
+     __TOKEN_N::OPERATOR_SUB,                    \
+     __TOKEN_N::OPERATOR_MUL,                    \
+     __TOKEN_N::OPERATOR_DIV,                    \
+     __TOKEN_N::OPERATOR_MOD,                    \
+     __TOKEN_N::OPERATOR_MAT,                    \
+     __TOKEN_N::OPERATOR_BITWISE_AND,            \
+     __TOKEN_N::OPERATOR_BITWISE_OR,             \
+     __TOKEN_N::OPERATOR_BITWISE_XOR,            \
+     __TOKEN_N::OPERATOR_BITWISE_NOT,            \
+     __TOKEN_N::OPERATOR_ASSIGN,                 \
+     __TOKEN_N::OPERATOR_LOGICAL_NOT,            \
+     __TOKEN_N::OPERATOR_POW,                    \
+     __TOKEN_N::OPERATOR_ABS,                    \
+     __TOKEN_N::OPERATOR_BITWISE_L_SHIFT,        \
+     __TOKEN_N::OPERATOR_BITWISE_NAND,           \
+     __TOKEN_N::OPERATOR_BITWISE_R_SHIFT,        \
+     __TOKEN_N::OPERATOR_BITWISE_NOR,            \
+     __TOKEN_N::OPERATOR_EQUAL,                  \
+     __TOKEN_N::OPERATOR_NOT_EQUAL,              \
+     __TOKEN_N::OPERATOR_GREATER_THAN_EQUALS,    \
+     __TOKEN_N::OPERATOR_INC,                    \
+     __TOKEN_N::OPERATOR_DEC,                    \
+     __TOKEN_N::OPERATOR_LESS_THAN_EQUALS,       \
+     __TOKEN_N::OPERATOR_ADD_ASSIGN,             \
+     __TOKEN_N::OPERATOR_SUB_ASSIGN,             \
+     __TOKEN_N::OPERATOR_MUL_ASSIGN,             \
+     __TOKEN_N::OPERATOR_BITWISE_AND_ASSIGN,     \
+     __TOKEN_N::OPERATOR_BITWISE_OR_ASSIGN,      \
+     __TOKEN_N::OPERATOR_BITWISE_NOR_ASSIGN,     \
+     __TOKEN_N::OPERATOR_BITWISE_XOR_ASSIGN,     \
+     __TOKEN_N::OPERATOR_BITWISE_NOT_ASSIGN,     \
+     __TOKEN_N::OPERATOR_DIV_ASSIGN,             \
+     __TOKEN_N::OPERATOR_MOD_ASSIGN,             \
+     __TOKEN_N::OPERATOR_MAT_ASSIGN,             \
+     __TOKEN_N::OPERATOR_LOGICAL_AND,            \
+     __TOKEN_N::OPERATOR_LOGICAL_NAND,           \
+     __TOKEN_N::OPERATOR_LOGICAL_OR,             \
+     __TOKEN_N::OPERATOR_LOGICAL_NOR,            \
+     __TOKEN_N::OPERATOR_LOGICAL_XOR,            \
+     __TOKEN_N::OPERATOR_RANGE,                  \
+     __TOKEN_N::OPERATOR_ARROW,                  \
+     __TOKEN_N::OPERATOR_NOT_ASSIGN,             \
+     __TOKEN_N::OPERATOR_SCOPE,                  \
+     __TOKEN_N::OPERATOR_REF_EQUAL,              \
+     __TOKEN_N::OPERATOR_POWER_ASSIGN,           \
+     __TOKEN_N::OPERATOR_AND_ASSIGN,             \
+     __TOKEN_N::OPERATOR_NAND_ASSIGN,            \
+     __TOKEN_N::OPERATOR_OR_ASSIGN,              \
+     __TOKEN_N::OPERATOR_NOR_ASSIGN,             \
+     __TOKEN_N::OPERATOR_XOR_ASSIGN,             \
+     __TOKEN_N::OPERATOR_BITWISE_NAND_ASSIGN,    \
+     __TOKEN_N::OPERATOR_BITWISE_L_SHIFT_ASSIGN, \
+     __TOKEN_N::OPERATOR_BITWISE_R_SHIFT_ASSIGN, \
+     __TOKEN_N::OTHERS,                          \
+     __TOKEN_N::PUNCTUATION_OPEN_ANGLE,          \
+     __TOKEN_N::PUNCTUATION_CLOSE_ANGLE,         \
+     __TOKEN_N::OPERATOR_RANGE_INCLUSIVE}
+
+#define IS_BINARY_OPERATOR                   \
+    {__TOKEN_N::OPERATOR_ADD,                    \
+     __TOKEN_N::OPERATOR_SUB,                    \
+     __TOKEN_N::OPERATOR_MUL,                    \
+     __TOKEN_N::OPERATOR_DIV,                    \
+     __TOKEN_N::OPERATOR_MOD,                    \
+     __TOKEN_N::OPERATOR_MAT,                    \
+     __TOKEN_N::OPERATOR_BITWISE_AND,            \
+     __TOKEN_N::OPERATOR_BITWISE_OR,             \
+     __TOKEN_N::OPERATOR_BITWISE_XOR,            \
+     __TOKEN_N::OPERATOR_ASSIGN,                 \
+     __TOKEN_N::OPERATOR_BITWISE_NOR_ASSIGN,     \
+     __TOKEN_N::OPERATOR_POW,                    \
+     __TOKEN_N::OPERATOR_BITWISE_L_SHIFT,        \
+     __TOKEN_N::OPERATOR_BITWISE_NOT_ASSIGN,     \
+     __TOKEN_N::OPERATOR_BITWISE_R_SHIFT,        \
+     __TOKEN_N::OPERATOR_EQUAL,                  \
+     __TOKEN_N::OPERATOR_MAT_ASSIGN,             \
+     __TOKEN_N::OPERATOR_NOT_EQUAL,              \
+     __TOKEN_N::OPERATOR_GREATER_THAN_EQUALS,    \
+     __TOKEN_N::OPERATOR_LESS_THAN_EQUALS,       \
+     __TOKEN_N::OPERATOR_ADD_ASSIGN,             \
+     __TOKEN_N::OPERATOR_SUB_ASSIGN,             \
+     __TOKEN_N::OPERATOR_MUL_ASSIGN,             \
+     __TOKEN_N::OPERATOR_DIV_ASSIGN,             \
+     __TOKEN_N::OPERATOR_MOD_ASSIGN,             \
+     __TOKEN_N::OPERATOR_BITWISE_AND_ASSIGN,     \
+     __TOKEN_N::OPERATOR_BITWISE_OR_ASSIGN,      \
+     __TOKEN_N::OPERATOR_BITWISE_XOR_ASSIGN,     \
+     __TOKEN_N::OPERATOR_LOGICAL_AND,            \
+     __TOKEN_N::OPERATOR_LOGICAL_OR,             \
+     __TOKEN_N::OPERATOR_LOGICAL_XOR,            \
+     __TOKEN_N::OPERATOR_RANGE,                  \
+     __TOKEN_N::OPERATOR_ARROW,                  \
+     __TOKEN_N::OPERATOR_NOT_ASSIGN,             \
+     __TOKEN_N::OPERATOR_REF_EQUAL,              \
+     __TOKEN_N::OPERATOR_POWER_ASSIGN,           \
+     __TOKEN_N::OPERATOR_AND_ASSIGN,             \
+     __TOKEN_N::OPERATOR_NAND_ASSIGN,            \
+     __TOKEN_N::OPERATOR_OR_ASSIGN,              \
+     __TOKEN_N::OPERATOR_NOR_ASSIGN,             \
+     __TOKEN_N::OPERATOR_XOR_ASSIGN,             \
+     __TOKEN_N::OPERATOR_BITWISE_NAND_ASSIGN,    \
+     __TOKEN_N::OPERATOR_BITWISE_L_SHIFT_ASSIGN, \
+     __TOKEN_N::OPERATOR_BITWISE_R_SHIFT_ASSIGN, \
+     __TOKEN_N::OTHERS,                          \
+     __TOKEN_N::PUNCTUATION_OPEN_ANGLE,          \
+     __TOKEN_N::PUNCTUATION_CLOSE_ANGLE,         \
+     __TOKEN_N::OPERATOR_RANGE_INCLUSIVE}
+
+#define IS_PUNCTUATION                       \
+    {__TOKEN_N::PUNCTUATION_OPEN_PAREN,          \
+     __TOKEN_N::PUNCTUATION_CLOSE_PAREN,         \
+     __TOKEN_N::PUNCTUATION_OPEN_BRACE,          \
+     __TOKEN_N::PUNCTUATION_CLOSE_BRACE,         \
+     __TOKEN_N::PUNCTUATION_OPEN_BRACKET,        \
+     __TOKEN_N::PUNCTUATION_CLOSE_BRACKET,       \
+     __TOKEN_N::PUNCTUATION_COMMA,               \
+     __TOKEN_N::PUNCTUATION_SEMICOLON,           \
+     __TOKEN_N::PUNCTUATION_COLON,               \
+     __TOKEN_N::PUNCTUATION_QUESTION_MARK,       \
+     __TOKEN_N::PUNCTUATION_DOT,                 \
+     __TOKEN_N::PUNCTUATION_SINGLE_LINE_COMMENT, \
+     __TOKEN_N::PUNCTUATION_MULTI_LINE_COMMENT,  \
+     __TOKEN_N::PUNCTUATION_ELLIPSIS}
+
+#define IS_PRIMITIVE                                                            \
+    {__TOKEN_N::PRIMITIVE_VOID,  __TOKEN_N::PRIMITIVE_BOOL,    __TOKEN_N::PRIMITIVE_BYTE,   \
+     __TOKEN_N::PRIMITIVE_CHAR,  __TOKEN_N::PRIMITIVE_POINTER, __TOKEN_N::PRIMITIVE_I8,     \
+     __TOKEN_N::PRIMITIVE_U8,    __TOKEN_N::PRIMITIVE_I16,     __TOKEN_N::PRIMITIVE_U16,    \
+     __TOKEN_N::PRIMITIVE_I32,   __TOKEN_N::PRIMITIVE_U32,     __TOKEN_N::PRIMITIVE_F32,    \
+     __TOKEN_N::PRIMITIVE_I64,   __TOKEN_N::PRIMITIVE_U64,     __TOKEN_N::PRIMITIVE_F64,    \
+     __TOKEN_N::PRIMITIVE_FLOAT, __TOKEN_N::PRIMITIVE_I128,    __TOKEN_N::PRIMITIVE_U128,   \
+     __TOKEN_N::PRIMITIVE_INT,   __TOKEN_N::PRIMITIVE_DECIMAL, __TOKEN_N::PRIMITIVE_STRING, \
+     __TOKEN_N::PRIMITIVE_LIST,  __TOKEN_N::PRIMITIVE_TUPLE,   __TOKEN_N::PRIMITIVE_SET,    \
+     __TOKEN_N::PRIMITIVE_MAP,   __TOKEN_N::PRIMITIVE_ANY}
+
+#endif  // __TOKEN_CASE_TYPES_H__

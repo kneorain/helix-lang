@@ -37,7 +37,7 @@
 
 #include "parser/ast/include/config/AST_config.def"
 #include "parser/ast/include/types/AST_parse_error.hh"
-#include "token/include/token.hh"
+#include "token/include/Token.hh"
 
 __AST_NODE_BEGIN { class Node; }
 

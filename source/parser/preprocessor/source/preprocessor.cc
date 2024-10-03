@@ -1,15 +1,14 @@
-// -*- C++ -*-
-//===------------------------------------------------------------------------------------------===//
-//
-// Part of the Helix Project, under the Attribution 4.0 International license (CC BY 4.0).
-// You are allowed to use, modify, redistribute, and create derivative works, even for commercial
-// purposes, provided that you give appropriate credit, and indicate if changes were made.
-// For more information, please visit: https://creativecommons.org/licenses/by/4.0/
-//
-// SPDX-License-Identifier: CC-BY-4.0
-// Copyright (c) 2024 (CC BY 4.0)
-//
-//===------------------------------------------------------------------------------------------===//
+//===------------------------------------------ C++ ------------------------------------------====//
+//                                                                                                //
+//  Part of the Helix Project, under the Attribution 4.0 International license (CC BY 4.0).       //
+//  You are allowed to use, modify, redistribute, and create derivative works, even for           //
+//  commercial purposes, provided that you give appropriate credit, and indicate if changes       //
+//   were made. For more information, please visit: https://creativecommons.org/licenses/by/4.0/  //
+//                                                                                                //
+//  SPDX-License-Identifier: CC-BY-4.0                                                            //
+//  Copyright (c) 2024 (CC BY 4.0)                                                                //
+//                                                                                                //
+//====----------------------------------------------------------------------------------------====//
 
 #include "parser/preprocessor/include/preprocessor.hh"
 
@@ -21,11 +20,10 @@
 #include <vector>
 
 #include "neo-panic/include/error.hh"
-#include "token/include/generate.hh"
-#include "token/include/token.hh"
+#include "token/include/Token.hh"
 
 namespace parser::preprocessor {
-Preprocessor::Preprocessor(TokenList                 &tokens,
+Preprocessor::Preprocessor(__TOKEN_N::TokenList      &tokens,
                            const std::string         &name,
                            const std::vector<string> &custom_include_dirs)
     : source_tokens(tokens) {
@@ -40,8 +38,8 @@ Preprocessor::Preprocessor(TokenList                 &tokens,
         include_dirs.emplace_back(path_str);
     }
 
-    transform(abi::reserved.begin(),
-              abi::reserved.end(),
+    transform(__TOKEN_ABI_N::reserved.begin(),
+              __TOKEN_ABI_N::reserved.end(),
               allowed_abi.begin(),
               [](const auto &pair) { return string(pair.second); });
 
@@ -102,34 +100,36 @@ void parse_ffi(Preprocessor *self) {  // at the time of call, current() is 'ffi'
 
 iter_body:
     switch (self->current().token_kind()) {  // at call time peek should be ffi
-        case tokens::KEYWORD_FFI:
-            if (self->peek().value_or(Token()).token_kind() != tokens::LITERAL_STRING) {
-                error::Panic(
-                    error::CodeError{.pof       = &self->current(),
-                                     .err_code  = 0.7005,
-                                     .mark_pof  = false,
-                                     .opt_fixes = {{bare_token(tokens::LITERAL_STRING, "\"...\""),
-                                                    self->current().column_number() +
-                                                        self->current().length() + 1}}});
+        case __TOKEN_TYPES_N::KEYWORD_FFI:
+            if (self->peek().value_or(__TOKEN_N::Token()).token_kind() !=
+                __TOKEN_TYPES_N::LITERAL_STRING) {
+                error::Panic(error::CodeError{
+                    .pof       = &self->current(),
+                    .err_code  = 0.7005,
+                    .mark_pof  = false,
+                    .opt_fixes = {
+                        {__TOKEN_N::bare_token(__TOKEN_TYPES_N::LITERAL_STRING, "\"...\""),
+                         self->current().column_number() + self->current().length() + 1}}});
             }
 
             self->advance(2);  // skip ffi and the string ident
 
-            if (self->current().token_kind() == tokens::KEYWORD_IMPORT) {  // ffi "c" import
+            if (self->current().token_kind() ==
+                __TOKEN_TYPES_N::KEYWORD_IMPORT) {  // ffi "c" import
                 goto_caller = "ffi";
                 goto abi_import;  // no loop back
             } else {              // if the import token is missing
                 auto bad_token = self->peek_back().value();
                 throw error::Panic(error::CodeError{
                     .pof = &bad_token, .err_code = 0.10001,
-                    //.opt_fixes = {{bare_token(tokens::KEYWORD_IMPORT) + " ", -1}}
+                    //.opt_fixes = {{__TOKEN_N::bare_token(__TOKEN_TYPES_N::KEYWORD_IMPORT) + " ", -1}}
                 });
             }
 
             jump_back = true;
             break;
 
-        case tokens::PUNCTUATION_OPEN_BRACE:  // ffi "py" { <-- this opening brace
+        case __TOKEN_TYPES_N::PUNCTUATION_OPEN_BRACE:  // ffi "py" { <-- this opening brace
             brace_count++;
 
             if (brace_count <= 0) {  // if there's more }'s than opening ones
@@ -141,7 +141,7 @@ iter_body:
             advance_and_continue();  // skip {
             break;
 
-        case tokens::PUNCTUATION_CLOSE_BRACE:  // } <-- this closing brace
+        case __TOKEN_TYPES_N::PUNCTUATION_CLOSE_BRACE:  // } <-- this closing brace
             brace_count--;
 
             if (brace_count < 0) {  // if there's an additional closing brace
@@ -157,7 +157,7 @@ iter_body:
             advance_and_continue();  // skip }
             break;
 
-        case tokens::KEYWORD_IMPORT:  // import <-- this "sympy";
+        case __TOKEN_TYPES_N::KEYWORD_IMPORT:  // import <-- this "sympy";
         abi_import:
             // syntax: 'import' (string (',' string)*) ';'
             if (!self->peek().has_value()) {  // just 'import' no specifier
@@ -166,7 +166,7 @@ iter_body:
                     .pof = &bad_token, .err_code = 0.10001, .err_fmt_args = {"opening brace"}});
             }
 
-            if (self->peek().value().token_kind() != tokens::LITERAL_STRING) {
+            if (self->peek().value().token_kind() != __TOKEN_TYPES_N::LITERAL_STRING) {
                 // 0.10101
                 auto bad_token = self->peek().value();
                 throw error::Panic(error::CodeError{
@@ -177,7 +177,8 @@ iter_body:
 
             self->advance(2);  // skip 'import' string | other
 
-            if (self->current().token_kind() == tokens::PUNCTUATION_COMMA) {  // (',' string)*
+            if (self->current().token_kind() ==
+                __TOKEN_TYPES_N::PUNCTUATION_COMMA) {  // (',' string)*
                 // 0.10102
                 error::Panic(error::CodeError{.pof = &self->current(), .err_code = 0.10102});
                 // TODO: add parsing if needed (might not look cohesive)
@@ -185,13 +186,13 @@ iter_body:
             }
 
             // ';' at this point it should only be a semicolon
-            if (self->current().token_kind() != tokens::PUNCTUATION_SEMICOLON) {
+            if (self->current().token_kind() != __TOKEN_TYPES_N::PUNCTUATION_SEMICOLON) {
                 auto bad_token = self->peek_back().value();
                 error::Panic(error::CodeError{
                     .pof       = &bad_token,
                     .err_code  = 4.0001,
                     .mark_pof  = false,
-                    .opt_fixes = {{bare_token(tokens::PUNCTUATION_SEMICOLON), -1}}});
+                    .opt_fixes = {{__TOKEN_N::bare_token(__TOKEN_TYPES_N::PUNCTUATION_SEMICOLON), -1}}});
             }
 
             advance_and_continue();  // skip ; or ,
@@ -202,7 +203,7 @@ iter_body:
 
             break;
 
-        case tokens::PUNCTUATION_SEMICOLON:
+        case __TOKEN_TYPES_N::PUNCTUATION_SEMICOLON:
             advance_and_continue();  // skip ;'s
             break;
 
@@ -274,19 +275,19 @@ void parse_macro(Preprocessor *self) {}
 //                 // TODO: add space between insert if its not there
 //                 //       and also make sure it clips to avoid inserting inside a color
 
-//                 .opt_fixes = {{bare_token(tokens::PUNCTUATION_OPEN_BRACE), -1}}});
+//                 .opt_fixes = {{__TOKEN_N::bare_token(__TOKEN_TYPES_N::PUNCTUATION_OPEN_BRACE), -1}}});
 //         }
 //     };
 
 //     check_next_token();
-//     if (self->peek().value().token_kind() != tokens::IDENTIFIER) {
+//     if (self->peek().value().token_kind() != __TOKEN_TYPES_N::IDENTIFIER) {
 //         // this is a anonyms namespace (ignored for defines)
 //         self->advance();  // module (:|{)<
 //     } else {
 //         // if this is a valid namespace
 
 //         check_next_token();
-//         if (self->current().token_kind() != tokens::IDENTIFIER) {
+//         if (self->current().token_kind() != __TOKEN_TYPES_N::IDENTIFIER) {
 //             // if theres a diffrent token
 //             throw error::Panic(error::CodeError{
 //                 .pof          = &self->current(),
@@ -296,21 +297,23 @@ void parse_macro(Preprocessor *self) {}
 //                 // TODO: add space between insert if its not there
 //                 //       and also make sure it clips to avoid inserting inside a color
 
-//                 .opt_fixes = {{bare_token(tokens::PUNCTUATION_OPEN_BRACE), -1}}});
+//                 .opt_fixes = {{__TOKEN_N::bare_token(__TOKEN_TYPES_N::PUNCTUATION_OPEN_BRACE), -1}}});
 //         }
-    
+
 //     error::Panic(
 //                 error::CodeError{.pof      = &self->current(),
 //                                 .err_code = 0.7008,
 
 //                                 // TODO: add space between insert if its not there
-//                                 //       and also make sure it clips to avoid inserting inside a color
+//                                 //       and also make sure it clips to avoid inserting inside a
+//                                 color
 
-//                                 .opt_fixes = {{bare_token(tokens::PUNCTUATION_OPEN_BRACE),
-//                                                 self->current().column_number() + self->current().length() + 3}}});
+//                                 .opt_fixes =
+//                                 {{__TOKEN_N::bare_token(__TOKEN_TYPES_N::PUNCTUATION_OPEN_BRACE),
+//                                                 self->current().column_number() +
+//                                                 self->current().length() + 3}}});
 
-
-//     if (self->current().token_kind() == tokens::PUNCTUATION_COLON);
+//     if (self->current().token_kind() == __TOKEN_TYPES_N::PUNCTUATION_COLON);
 //     auto bad_token = self->current();
 
 //     error::Panic(
@@ -318,9 +321,10 @@ void parse_macro(Preprocessor *self) {}
 //                             .err_code = 0.7008,
 
 //                             // TODO: add space between insert if its not there
-//                             //       and also make sure it clips to avoid inserting inside a color
+//                             //       and also make sure it clips to avoid inserting inside a
+//                             color
 
-//                             .opt_fixes = {{bare_token(tokens::PUNCTUATION_OPEN_BRACE),
+//                             .opt_fixes = {{__TOKEN_N::bare_token(__TOKEN_TYPES_N::PUNCTUATION_OPEN_BRACE),
 //                                         bad_token.column_number() + bad_token.length() + 3}}});
 
 // }
@@ -336,12 +340,9 @@ void parse_namespace(Preprocessor *self) {
     // else say excepted a {
 
     QualifiedName namespace_name;
-
 }
 
-void parse_brace(Preprocessor *self) {
-
-}
+void parse_brace(Preprocessor *self) {}
 
 void parse_invocation(Preprocessor *self) {
     // work to do in parse_invocation:
@@ -353,7 +354,7 @@ void parse_invocation(Preprocessor *self) {
     // define)
 }
 
-TokenList Preprocessor::parse(std::shared_ptr<preprocessor::ImportNode> parent_node) {
+__TOKEN_N::TokenList Preprocessor::parse(std::shared_ptr<preprocessor::ImportNode> parent_node) {
     /* order of parsing (first to last)
         imports - working on now
         defines
@@ -367,26 +368,26 @@ TokenList Preprocessor::parse(std::shared_ptr<preprocessor::ImportNode> parent_n
         }
 
         switch (current().token_kind()) {
-            case tokens::KEYWORD_IMPORT:
+            case __TOKEN_TYPES_N::KEYWORD_IMPORT:
                 parse_import(this);
                 break;
-            case tokens::KEYWORD_FFI:
+            case __TOKEN_TYPES_N::KEYWORD_FFI:
                 parse_ffi(this);
                 break;
-            case tokens::KEYWORD_DEFINE:
+            case __TOKEN_TYPES_N::KEYWORD_DEFINE:
                 parse_define(this);
                 break;
-            case tokens::KEYWORD_MACRO:
+            case __TOKEN_TYPES_N::KEYWORD_MACRO:
                 parse_macro(this);
                 break;
-            case tokens::OPERATOR_LOGICAL_NOT:
+            case __TOKEN_TYPES_N::OPERATOR_LOGICAL_NOT:
                 parse_invocation(this);
                 break;
-            case tokens::KEYWORD_MODULE:
+            case __TOKEN_TYPES_N::KEYWORD_MODULE:
                 parse_namespace(this);
                 break;
-            case tokens::PUNCTUATION_OPEN_BRACE:
-            case tokens::PUNCTUATION_CLOSE_BRACE:
+            case __TOKEN_TYPES_N::PUNCTUATION_OPEN_BRACE:
+            case __TOKEN_TYPES_N::PUNCTUATION_CLOSE_BRACE:
                 parse_brace(this);
                 break;
             default:

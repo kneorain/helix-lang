@@ -14,8 +14,8 @@
 #define __AST_EXPRESSIONS_H__
 
 #include "parser/ast/include/config/AST_config.def"
-#include "parser/ast/include/config/AST_modifiers.hh"
-#include "parser/ast/include/core/AST_nodes.hh"
+#include "parser/ast/include/types/AST_modifiers.hh"
+#include "parser/ast/include/private/AST_nodes.hh"
 #include "parser/ast/include/types/AST_types.hh"
 
 __AST_NODE_BEGIN {
@@ -31,24 +31,24 @@ __AST_NODE_BEGIN {
             Null,
         };
 
-        LiteralExpr(token::Token value, LiteralType type)
+        LiteralExpr(__TOKEN_N::Token value, LiteralType type)
             : value(std::move(value))
             , type(type) {}
 
-        token::Token value;
+        __TOKEN_N::Token value;
         LiteralType  type;
     };
 
     class BinaryExpr final : public Node {  // := E op E
         BASE_CORE_METHODS(BinaryExpr);
 
-        BinaryExpr(NodeT<> lhs, NodeT<> rhs, token::Token op)
+        BinaryExpr(NodeT<> lhs, NodeT<> rhs, __TOKEN_N::Token op)
             : lhs(std::move(lhs))
             , op(std::move(op))
             , rhs(std::move(rhs)) {}
 
         NodeT<>      lhs;
-        token::Token op;
+        __TOKEN_N::Token op;
         NodeT<>      rhs;
     };
 
@@ -57,24 +57,24 @@ __AST_NODE_BEGIN {
 
         enum class PosType { PreFix, PostFix };
 
-        UnaryExpr(NodeT<> opd, token::Token op, PosType type)
+        UnaryExpr(NodeT<> opd, __TOKEN_N::Token op, PosType type)
             : opd(std::move(opd))
             , op(std::move(op))
             , type(type) {}
 
         NodeT<>      opd;
-        token::Token op;
+        __TOKEN_N::Token op;
         PosType      type = PosType::PreFix;
     };
 
     class IdentExpr final : public Node {  // := T
         BASE_CORE_METHODS(IdentExpr);
 
-        explicit IdentExpr(token::Token name, bool is_reserved_primitive = false)
+        explicit IdentExpr(__TOKEN_N::Token name, bool is_reserved_primitive = false)
             : name(std::move(name))
             , is_reserved_primitive(is_reserved_primitive) {}
 
-        token::Token name;
+        __TOKEN_N::Token name;
         bool         is_reserved_primitive = false;
     };
 
@@ -262,13 +262,13 @@ __AST_NODE_BEGIN {
     class LambdaExpr final : public Node {  // TODO
         BASE_CORE_METHODS(LambdaExpr);
 
-        explicit LambdaExpr(token::Token marker)
+        explicit LambdaExpr(__TOKEN_N::Token marker)
             : marker(std::move(marker)) {}
 
         NodeV<>      args;
         NodeT<>      body;
         NodeT<>      ret;
-        token::Token marker;
+        __TOKEN_N::Token marker;
     };
 
     class TernaryExpr final : public Node {  // := (E '?' E ':' E) | (E 'if' E 'else' E)
@@ -342,16 +342,16 @@ __AST_NODE_BEGIN {
 
         enum class AsyncThreadingType { Await, Spawn, Thread, Other };
 
-        explicit AsyncThreading(NodeT<> value, const token::Token &type)
+        explicit AsyncThreading(NodeT<> value, const __TOKEN_N::Token &type)
             : value(std::move(value)) {
             switch (type.token_kind()) {
-                case token::KEYWORD_AWAIT:
+                case __TOKEN_N::KEYWORD_AWAIT:
                     this->type = AsyncThreadingType::Await;
                     break;
-                case token::KEYWORD_SPAWN:
+                case __TOKEN_N::KEYWORD_SPAWN:
                     this->type = AsyncThreadingType::Spawn;
                     break;
-                case token::KEYWORD_THREAD:
+                case __TOKEN_N::KEYWORD_THREAD:
                     this->type = AsyncThreadingType::Thread;
                     break;
                 default:

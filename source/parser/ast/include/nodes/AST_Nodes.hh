@@ -13,9 +13,9 @@
 #ifndef __AST_ALL_NODES_H__
 #define __AST_ALL_NODES_H__
 
-#include "parser/ast/include/nodes/AST_Annotations.hh"
-#include "parser/ast/include/nodes/AST_Declarations.hh"
-#include "parser/ast/include/nodes/AST_Expressions.hh"
-#include "parser/ast/include/nodes/AST_Statements.hh"
+#include "parser/ast/include/nodes/AST_annotations.hh"
+#include "parser/ast/include/nodes/AST_declarations.hh"
+#include "parser/ast/include/nodes/AST_expressions.hh"
+#include "parser/ast/include/nodes/AST_statements.hh"
 
 #endif  // __AST_ALL_NODES_H__

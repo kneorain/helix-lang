@@ -18,8 +18,7 @@
 #ifndef __CXX_EMITTER_HH__
 #define __CXX_EMITTER_HH__
 
-#include "core/utils/josnify.hh"
-#include "parser/ast/include/core/AST_visitor.hh"
+#include "parser/ast/include/types/AST_visitor.hh"
 
 namespace codegen::cxx {
 enum class GenerateMode {
@@ -29,7 +28,7 @@ enum class GenerateMode {
     GENERATE_EXTERN_SIGNATURES,
 };
 
-class CXXGenerator : public parser::ast::Visitor {
+class CXXGenerator : public parser::ast::visitor::Visitor {
 private:
 bool __generate_signatures = false;
 bool __generate_implementations = false;
@@ -44,9 +43,6 @@ public:
     CXXGenerator(CXXGenerator&&) = default;
     CXXGenerator& operator=(CXXGenerator&&) = default;
 
-    neo::json json {"ast"};
-
-    GENERATE_VISITOR_FUNCTIONS;
 };
 }
 

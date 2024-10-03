@@ -82,14 +82,14 @@
         return std::unexpected(                                                          \
             ParseError(PREVIOUS_TOK,                                                     \
                        GET_DEBUG_INFO + "expected a " +                                  \
-                           std::string(token::tokens_map.at(tok).value_or("unknown")) +  \
+                           std::string(__TOKEN_N::tokens_map.at(tok).value_or("unknown")) +  \
                            " token, but found nothing"));                                \
     }                                                                                    \
     if (CURRENT_TOK != tok) {                                                            \
         iter.advance();                                                                  \
         return std::unexpected(PARSE_ERROR(                                              \
             PREVIOUS_TOK,                                                                \
-            "expected a " + std::string(token::tokens_map.at(tok).value_or("unknown")) + \
+            "expected a " + std::string(__TOKEN_N::tokens_map.at(tok).value_or("unknown")) + \
                 " token, but found: " + PREVIOUS_TOK.token_kind_repr()));                \
     }
 
@@ -108,7 +108,7 @@
         auto        tokens = toks;                                                                 \
         std::string tokens_str;                                                                    \
         for (auto &t : tokens) {                                                                   \
-            tokens_str += std::string(token::tokens_map.at(t).value_or("unknown")) + ", ";         \
+            tokens_str += std::string(__TOKEN_N::tokens_map.at(t).value_or("unknown")) + ", ";         \
         }                                                                                          \
         return std::unexpected(PARSE_ERROR(PREVIOUS_TOK,                                           \
                                            "expected one of the following tokens: " + tokens_str + \
@@ -118,7 +118,7 @@
         auto        tokens = toks;                                                                 \
         std::string tokens_str;                                                                    \
         for (auto &t : tokens) {                                                                   \
-            tokens_str += std::string(token::tokens_map.at(t).value_or("unknown")) + ", ";         \
+            tokens_str += std::string(__TOKEN_N::tokens_map.at(t).value_or("unknown")) + ", ";         \
         }                                                                                          \
         iter.advance();                                                                            \
         return std::unexpected(                                                                    \
@@ -138,7 +138,7 @@
     template <typename T = Node>                         \
     using p_r = parser::ast::ParseResult<T>;             \
                                                          \
-    token::TokenList::TokenListIter &iter; /* NOLINT */  \
+    __TOKEN_N::TokenList::TokenListIter &iter; /* NOLINT */  \
     std::vector<p_r<>>               parse_stack;        \
                                                          \
   public:                                                \
@@ -150,12 +150,27 @@
     ~name()                       = default;             \
     p_r<> parse();                                       \
                                                          \
-    explicit name(token::TokenList::TokenListIter &iter) \
+    explicit name(__TOKEN_N::TokenList::TokenListIter &iter) \
         : iter(iter)
 
-// template <typename T, typename... Args>
-// p_r<T> parse(Args &&...args) { /* NOLINT */
-//     MACRO(GENERATE_IF_STATEMENTS);
-// }
+#define null nullptr
+#define GENERATE_IF_STATEMENTS(name)                      \
+    if constexpr (std::is_same_v<T, name>) {              \
+        return parse_##name(std::forward<Args>(args)...); \
+    }
+
+#define FORWARD_DECL(name) class name;
+#define DECL_PARSE_FUNC(name) ParseResult<name> parse_##name();
+#define NODE_ENUM(name) name,
+#define VISIT_FUNC(name) virtual void visit(const __AST_NODE::name &) = 0;
+#define VISIT_EXTEND(name) void visit(const __AST_NODE::name &node) override;
+
+#define GENERATE_MACRO_HELPER(MACRO) EXPRS(MACRO) STATES(MACRO) DECLS(MACRO)
+
+#define GENERATE_NODES_ENUM enum class nodes { GENERATE_MACRO_HELPER(NODE_ENUM) };
+#define GENERATE_NODES_FORWARD_DECLS GENERATE_MACRO_HELPER(FORWARD_DECL)
+#define GENERATE_PARSE_FUNCS
+#define GENERATE_VISIT_FUNCS GENERATE_MACRO_HELPER(VISIT_FUNC)
+#define GENERATE_VISIT_EXTENDS GENERATE_MACRO_HELPER(VISIT_EXTEND)
 
 #endif  // __AST_CONFIG_DEF__

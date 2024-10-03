@@ -19,12 +19,11 @@
 
 #include "parser/cst/include/cst.hh"
 #include "parser/cst/include/nodes.hh"
-#include "token/include/token.hh"
-#include "token/include/token_list.hh"
+#include "token/include/Token.hh"
 
 namespace parser {
 class CSTParser {
-    explicit CSTParser(token::TokenList tokens);
+    explicit CSTParser(__TOKEN_N::TokenList tokens);
 };
 }  // namespace parser
 

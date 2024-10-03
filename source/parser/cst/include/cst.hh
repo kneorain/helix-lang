@@ -23,8 +23,7 @@
 #include <string>
 #include <vector>
 
-#include "token/include/token.hh"
-#include "token/include/token_list.hh"
+#include "token/include/Token.hh"
 
 namespace parser::cst {
 inline string get_indent(u16 depth) noexcept { return string(static_cast<u16>(depth * 4), ' '); };
@@ -32,11 +31,11 @@ inline string get_indent(u16 depth) noexcept { return string(static_cast<u16>(de
 struct ParseError {};
 
 // concept AstBase = requires(T t) {
-//     { t.parse(token::TokenList) } -> std::expected<std::weak_ptr<ASTBase>, ParseError>;
+//     { t.parse(__TOKEN_N::TokenList) } -> std::expected<std::weak_ptr<ASTBase>, ParseError>;
 //     { t.to_string() } -> std::string;
 // };
 
-using TokenListRef = std::shared_ptr<token::TokenList>;
+using TokenListRef = std::shared_ptr<__TOKEN_N::TokenList>;
 using ParseResult = std::expected<TokenListRef, ParseError>;
 
 template <typename T>

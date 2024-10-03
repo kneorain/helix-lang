@@ -1,0 +1,31 @@
+//===------------------------------------------ C++ ------------------------------------------====//
+//                                                                                                //
+//  Part of the Helix Project, under the Attribution 4.0 International license (CC BY 4.0).       //
+//  You are allowed to use, modify, redistribute, and create derivative works, even for           //
+//  commercial purposes, provided that you give appropriate credit, and indicate if changes       //
+//   were made. For more information, please visit: https://creativecommons.org/licenses/by/4.0/  //
+//                                                                                                //
+//  SPDX-License-Identifier: CC-BY-4.0                                                            //
+//  Copyright (c) 2024 (CC BY 4.0)                                                                //
+//                                                                                                //
+//====----------------------------------------------------------------------------------------====//
+
+#ifndef __CONTROLLER_CONFIG_DEF__
+#define __CONTROLLER_CONFIG_DEF__
+
+#define __CONTROLLER_BEGIN namespace controller
+#define __CONTROLLER_FS_BEGIN namespace controller::file_system
+#define __CONTROLLER_CLI_BEGIN namespace controller::cli
+
+#define __CONTROLLER_N         controller
+#define __CONTROLLER_FS_N      __CONTROLLER_N::file_system
+#define __CONTROLLER_CLI_N     __CONTROLLER_N::cli
+
+
+// #define __CONTROLLER_NODE_BEGIN namespace parser::ast::node
+// #define __CONTROLLER_VISITOR_BEGIN namespace parser::ast::visitor
+// #define __CONTROLLER_N parser::ast
+// #define __CONTROLLER_NODE parser::ast::node
+// #define __CONTROLLER_VISITOR parser::ast::visitor
+
+#endif  // __CONTROLLER_CONFIG_DEF__

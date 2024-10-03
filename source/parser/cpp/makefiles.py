@@ -25,7 +25,7 @@ data_to_write = (
 //                                                                                                //
 //====----------------------------------------------------------------------------------------====//
 
-#include "parser/ast/include/core/AST.hh"
+#include "parser/ast/include/private/AST.hh"
 #include "parser/ast/include/config/AST_config.def"
 
 __AST_NODE_BEGIN {

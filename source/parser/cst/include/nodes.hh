@@ -1,15 +1,14 @@
-// -*- C++ -*-
-//===------------------------------------------------------------------------------------------===//
-//
-// Part of the Helix Project, under the Attribution 4.0 International license (CC BY 4.0).
-// You are allowed to use, modify, redistribute, and create derivative works, even for commercial
-// purposes, provided that you give appropriate credit, and indicate if changes were made.
-// For more information, please visit: https://creativecommons.org/licenses/by/4.0/
-//
-// SPDX-License-Identifier: CC-BY-4.0
-// Copyright (c) 2024 (CC BY 4.0)
-//
-//===------------------------------------------------------------------------------------------===//
+//===------------------------------------------ C++ ------------------------------------------====//
+//                                                                                                //
+//  Part of the Helix Project, under the Attribution 4.0 International license (CC BY 4.0).       //
+//  You are allowed to use, modify, redistribute, and create derivative works, even for           //
+//  commercial purposes, provided that you give appropriate credit, and indicate if changes       //
+//   were made. For more information, please visit: https://creativecommons.org/licenses/by/4.0/  //
+//                                                                                                //
+//  SPDX-License-Identifier: CC-BY-4.0                                                            //
+//  Copyright (c) 2024 (CC BY 4.0)                                                                //
+//                                                                                                //
+//====----------------------------------------------------------------------------------------====//
 
 #ifndef __CST_NODES_HH__
 #define __CST_NODES_HH__
@@ -21,13 +20,10 @@
 #include  <stdexcept>
 #include "neo-panic/include/error.hh"
 #include "neo-pprint/include/hxpprint.hh"
-#include "core/utils/josnify.hh"
 #include "lexer/include/lexer.hh"
 #include "parser/cst/include/cst.hh"
-#include "token/include/token.hh"
-#include "token/include/token_list.hh"
+#include "token/include/Token.hh"
 #include "neo-types/include/hxint.hh"
-#include "token/include/generate.hh"
 
 #define CST_NODE_METHODS(name)               \
     ~name() = default;                       \
@@ -379,8 +375,8 @@ private:
     // BoolValue value; // should this be a bool?
 };
 
-using StringLiteral = Quoted<'"', tokens::LITERAL_STRING>;
-using CharLiteral = Quoted<'\'', tokens::LITERAL_CHAR>;
+using StringLiteral = Quoted<'"', __TOKEN_TYPES_N::LITERAL_STRING>;
+using CharLiteral = Quoted<'\'', __TOKEN_TYPES_N::LITERAL_CHAR>;
 
 template <const tokens StartTokenKind, const char StartChar, typename MiddleNode,
           const char EndChar, const tokens EndTokensKind>
@@ -450,23 +446,23 @@ struct Delimited final
 
 template <CSTNode T>
 using Parentheses =
-    Delimited<tokens::PUNCTUATION_OPEN_PAREN, '(', T, ')', tokens::PUNCTUATION_CLOSE_PAREN>;
+    Delimited<__TOKEN_TYPES_N::PUNCTUATION_OPEN_PAREN, '(', T, ')', __TOKEN_TYPES_N::PUNCTUATION_CLOSE_PAREN>;
 
 template <CSTNode T>
 using CurlyBraces =
-    Delimited<tokens::PUNCTUATION_OPEN_BRACE, '{', T, '}', tokens::PUNCTUATION_CLOSE_BRACE>;
+    Delimited<__TOKEN_TYPES_N::PUNCTUATION_OPEN_BRACE, '{', T, '}', __TOKEN_TYPES_N::PUNCTUATION_CLOSE_BRACE>;
 
 template <CSTNode T>
 using SquareBrack =
-    Delimited<tokens::PUNCTUATION_OPEN_BRACKET, '[', T, ']', tokens::PUNCTUATION_CLOSE_BRACKET>;
+    Delimited<__TOKEN_TYPES_N::PUNCTUATION_OPEN_BRACKET, '[', T, ']', __TOKEN_TYPES_N::PUNCTUATION_CLOSE_BRACKET>;
 
 template <CSTNode T>
 using AngleBrace =
-    Delimited<tokens::PUNCTUATION_OPEN_ANGLE, '<', T, '>', tokens::PUNCTUATION_CLOSE_ANGLE>;
+    Delimited<__TOKEN_TYPES_N::PUNCTUATION_OPEN_ANGLE, '<', T, '>', __TOKEN_TYPES_N::PUNCTUATION_CLOSE_ANGLE>;
 
 template <CSTNode T>
 using PipeDelimited =
-    Delimited<tokens::OPERATOR_BITWISE_OR, '|', T, '|', tokens::OPERATOR_BITWISE_OR>;
+    Delimited<__TOKEN_TYPES_N::OPERATOR_BITWISE_OR, '|', T, '|', __TOKEN_TYPES_N::OPERATOR_BITWISE_OR>;
 
 enum SeparatedType { Trailing, OptionalTrailing, NoTrailing };
 

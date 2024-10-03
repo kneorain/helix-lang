@@ -13,7 +13,7 @@
 #ifndef __AST_VISITOR_H__
 #define __AST_VISITOR_H__
 
-#include "parser/ast/include/config/AST_generate.hh"
+#include "parser/ast/include/private/AST_generate.hh"
 
 __AST_VISITOR_BEGIN {
     class Visitor {

@@ -1,15 +1,14 @@
-// -*- C++ -*-
-//===------------------------------------------------------------------------------------------===//
-//
-// Part of the Helix Project, under the Attribution 4.0 International license (CC BY 4.0).
-// You are allowed to use, modify, redistribute, and create derivative works, even for commercial
-// purposes, provided that you give appropriate credit, and indicate if changes were made.
-// For more information, please visit: https://creativecommons.org/licenses/by/4.0/
-//
-// SPDX-License-Identifier: CC-BY-4.0
-// Copyright (c) 2024 (CC BY 4.0)
-//
-//===------------------------------------------------------------------------------------------===//
+//===------------------------------------------ C++ ------------------------------------------====//
+//                                                                                                //
+//  Part of the Helix Project, under the Attribution 4.0 International license (CC BY 4.0).       //
+//  You are allowed to use, modify, redistribute, and create derivative works, even for           //
+//  commercial purposes, provided that you give appropriate credit, and indicate if changes       //
+//   were made. For more information, please visit: https://creativecommons.org/licenses/by/4.0/  //
+//                                                                                                //
+//  SPDX-License-Identifier: CC-BY-4.0                                                            //
+//  Copyright (c) 2024 (CC BY 4.0)                                                                //
+//                                                                                                //
+//====----------------------------------------------------------------------------------------====//
 
 #include "lexer/include/lexer.hh"
 
@@ -18,11 +17,8 @@
 
 #include "lexer/include/cases.def"
 #include "neo-panic/include/error.hh"
-#include "neo-pprint/include/hxpprint.hh"
 
 namespace parser::lexer {
-using namespace token;
-
 Lexer::Lexer(std::string source, const std::string &filename)
     : tokens(filename)
     , source(std::move(source))
@@ -35,7 +31,7 @@ Lexer::Lexer(std::string source, const std::string &filename)
     , offset(0)
     , end(this->source.size()) {}
 
-Lexer::Lexer(const token::Token &token)
+Lexer::Lexer(const __TOKEN_N::Token &token)
     : tokens(token.file_name())
     , source(token.value())
     , file_name(token.file_name())
@@ -47,13 +43,13 @@ Lexer::Lexer(const token::Token &token)
     , offset(token.offset())
     , end(this->source.size()) {}
 
-TokenList Lexer::tokenize() {
-    token::Token token;
+__TOKEN_N::TokenList Lexer::tokenize() {
+    __TOKEN_N::Token token;
 
     while ((currentPos + 1) <= end) {
         token = next_token();
 
-        if (token.token_kind() == tokens::WHITESPACE) {
+        if (token.token_kind() == __TOKEN_TYPES_N::WHITESPACE) {
             continue;
         }
 
@@ -69,9 +65,9 @@ TokenList Lexer::tokenize() {
     return tokens;
 }
 
-inline Token Lexer::get_eof() { return {line, column, 1, offset, "\0", file_name, "<eof>"}; }
+inline __TOKEN_N::Token Lexer::get_eof() { return {line, column, 1, offset, "\0", file_name, "<eof>"}; }
 
-inline Token Lexer::process_single_line_comment() {
+inline __TOKEN_N::Token Lexer::process_single_line_comment() {
     auto start = currentPos;
 
     while (current() != '\n' && !is_eof()) {
@@ -87,7 +83,7 @@ inline Token Lexer::process_single_line_comment() {
             "//"};
 }
 
-inline Token Lexer::process_multi_line_comment() {
+inline __TOKEN_N::Token Lexer::process_multi_line_comment() {
     auto start         = currentPos;
     u64  comment_depth = 0;
 
@@ -124,7 +120,7 @@ inline Token Lexer::process_multi_line_comment() {
     }
 
     if (comment_depth != 0) {
-        auto bad_token = Token{start_line, start_col, 2, offset, "", file_name};
+        auto bad_token = __TOKEN_N::Token{start_line, start_col, 2, offset, "", file_name};
         throw error::Panic(error::create_old_CodeError(
             &bad_token, 2.1002, {}, std::vector<string>{"block comment"}));
     }
@@ -138,11 +134,11 @@ inline Token Lexer::process_multi_line_comment() {
             "/*"};
 }
 
-inline Token Lexer::next_token() {
+inline __TOKEN_N::Token Lexer::next_token() {
     switch (source[currentPos]) {
         case WHITE_SPACE:
             bare_advance();
-            return Token{};
+            return __TOKEN_N::Token{};
         case '/':
             switch (peek_forward()) {
                 case '/':
@@ -174,21 +170,21 @@ inline Token Lexer::next_token() {
             return parse_operator();
     }
 
-    auto bad_token = Token{line, column, 1, offset, std::string(1, current()), file_name};
+    auto bad_token = __TOKEN_N::Token{line, column, 1, offset, std::string(1, current()), file_name};
 
     throw error::Panic(error::create_old_CodeError(
         &bad_token, 1.0011, std::vector<string>{std::string(1, current())}));
 }
 
-inline Token Lexer::parse_compiler_directive() {
+inline __TOKEN_N::Token Lexer::parse_compiler_directive() {
     auto start       = currentPos;
     auto end_loop    = false;
     u32  brace_level = 0;
 
     if (peek_forward() != '[') {
-        Token bad_token = {line, column, 1, offset, source.substr(start, 1), file_name};
+        __TOKEN_N::Token bad_token = {line, column, 1, offset, source.substr(start, 1), file_name};
 
-        throw error::Panic(error::CodeError{.pof = &bad_token, .err_code = 0.7006});
+        throw error::Panic(error::CodeError{.pof = &bad_token, .err_code = 0.7006 /* NOLINT */});
     }
 
     while (!end_loop && !is_eof()) {
@@ -208,7 +204,7 @@ inline Token Lexer::parse_compiler_directive() {
         bare_advance();
     }
 
-    Token tok{line,
+    __TOKEN_N::Token tok{line,
               column - (currentPos - start),
               currentPos - start,
               offset,
@@ -216,16 +212,17 @@ inline Token Lexer::parse_compiler_directive() {
               file_name,
               "/* complier_directive */"};
 
-    throw error::Panic(error::CodeError{.pof = &tok, .err_code = 0.7007});
+    throw error::Panic(error::CodeError{.pof = &tok, .err_code = 0.7007 /* NOLINT */});
 }
 
-inline Token Lexer::process_whitespace() {
-    auto result = Token{line, column, 1, offset, source.substr(currentPos, 1), file_name, "/*   */"};
+inline __TOKEN_N::Token Lexer::process_whitespace() {
+    auto result =
+        __TOKEN_N::Token{line, column, 1, offset, source.substr(currentPos, 1), file_name, "/*   */"};
     bare_advance();
     return result;
 }
 
-inline Token Lexer::parse_alpha_numeric() {
+inline __TOKEN_N::Token Lexer::parse_alpha_numeric() {
     auto start = currentPos;
 
     bool end_loop = false;
@@ -244,14 +241,14 @@ inline Token Lexer::parse_alpha_numeric() {
         bare_advance();
     }
 
-    auto result = Token{line,
+    auto result = __TOKEN_N::Token{line,
                         column - (currentPos - start),
                         currentPos - start,
                         offset,
                         source.substr(start, currentPos - start),
                         file_name};
 
-    if (result.token_kind() != tokens::OTHERS) {
+    if (result.token_kind() != __TOKEN_TYPES_N::OTHERS) {
         return result;
     }
 
@@ -264,7 +261,7 @@ inline Token Lexer::parse_alpha_numeric() {
             "_"};
 }
 
-inline Token Lexer::parse_numeric() {
+inline __TOKEN_N::Token Lexer::parse_numeric() {
     // all the data within 0-9 is a number
     // a number can have the following chars after the first digit:
     // 0-9, ., F, f, U, u, o, x, b, e, E, A-F, a-f, _
@@ -299,7 +296,7 @@ inline Token Lexer::parse_numeric() {
     // if theres a . then it is a float
     if (is_float) {
         if (dot_count > 1) {
-            auto bad_token = Token{line,
+            auto bad_token = __TOKEN_N::Token{line,
                                    column - (currentPos - start),
                                    currentPos - start,
                                    offset,
@@ -326,7 +323,7 @@ inline Token Lexer::parse_numeric() {
             "/* int */"};
 }
 
-inline Token Lexer::parse_string() {
+inline __TOKEN_N::Token Lexer::parse_string() {
     // all the data within " (<string>) or ' (<char>) is a string
     auto start        = currentPos;
     auto start_line   = line;
@@ -359,7 +356,7 @@ inline Token Lexer::parse_string() {
     }
 
     if (is_eof()) {
-        auto bad_token = Token{start_line, start_column, 1, offset, "\"", file_name};
+        auto bad_token = __TOKEN_N::Token{start_line, start_column, 1, offset, "\"", file_name};
         throw error::Panic(
             error::create_old_CodeError(&bad_token, 2.1002, {}, std::vector<string>{"string"}));
     }
@@ -382,8 +379,8 @@ inline Token Lexer::parse_string() {
             token_type};
 }
 
-inline Token Lexer::parse_operator() {
-    auto start = currentPos;
+inline __TOKEN_N::Token Lexer::parse_operator() {
+    auto start    = currentPos;
     bool end_loop = false;
 
     while (!end_loop && !is_eof()) {
@@ -405,39 +402,39 @@ inline Token Lexer::parse_operator() {
             file_name};
 }
 
-inline Token Lexer::parse_punctuation() {  // gets here bacause of something like . | :
-    Token result;
+inline __TOKEN_N::Token Lexer::parse_punctuation() {  // gets here bacause of something like . | :
+    __TOKEN_N::Token result;
 
     switch (source[currentPos]) {
-        case '.': // .
+        case '.':  // .
             // can be: .., ..., ..=
-            if (peek_forward() == '.') { // ..
+            if (peek_forward() == '.') {  // ..
                 bare_advance();
-                
-                if (peek_forward() == '.') { // ...
+
+                if (peek_forward() == '.') {  // ...
                     bare_advance(2);
-                    result = Token{line, column - 2, 3, offset, "...", file_name};
+                    result = __TOKEN_N::Token{line, column - 2, 3, offset, "...", file_name};
 
                     return result;
                 }
 
-                if (peek_forward() == '=') { // ..=
+                if (peek_forward() == '=') {  // ..=
                     bare_advance(2);
-                    result = Token{line, column - 2, 3, offset, "..=", file_name};
+                    result = __TOKEN_N::Token{line, column - 2, 3, offset, "..=", file_name};
 
                     return result;
                 }
 
                 bare_advance();
-                result = Token{line, column - 1, 2, offset, "..", file_name};
+                result = __TOKEN_N::Token{line, column - 1, 2, offset, "..", file_name};
                 return result;
             }
             break;
 
-        case ':': // : or ::
+        case ':':  // : or ::
             if (peek_forward() == ':') {
                 bare_advance(2);
-                result = Token{line, column, 2, offset, "::", file_name};
+                result = __TOKEN_N::Token{line, column, 2, offset, "::", file_name};
 
                 return result;
             }
@@ -448,7 +445,7 @@ inline Token Lexer::parse_punctuation() {  // gets here bacause of something lik
         }
     }
 
-    result = Token{line, column, 1, offset, source.substr(currentPos, 1), file_name};
+    result = __TOKEN_N::Token{line, column, 1, offset, source.substr(currentPos, 1), file_name};
     bare_advance();
     return result;
 }

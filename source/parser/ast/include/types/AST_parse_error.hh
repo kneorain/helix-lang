@@ -18,12 +18,12 @@
 
 #include "neo-panic/include/error.hh"
 #include "parser/ast/include/config/AST_config.def"
-#include "token/include/token.hh"
+#include "token/include/Token.hh"
 
 __AST_BEGIN {
     class ParseError {
-        token::Token err;
-        token::Token expected;
+        __TOKEN_N::Token err;
+        __TOKEN_N::Token expected;
         std::string  msg;
 
       public:
@@ -34,14 +34,14 @@ __AST_BEGIN {
         ParseError(ParseError &&)                 = default;
         ParseError &operator=(ParseError &&)      = default;
 
-        ParseError(const token::Token &err, const token::Token &expected)
+        ParseError(const __TOKEN_N::Token &err, const __TOKEN_N::Token &expected)
             : err(err)
             , expected(expected) {
 
             this->msg = "expected '" + expected.value() + "' but found '" + err.value() + "'";
         }
 
-        ParseError(token::Token err, std::string msg)
+        ParseError(__TOKEN_N::Token err, std::string msg)
             : err(std::move(err))
             , msg(std::move(msg)) {}
 
@@ -51,7 +51,7 @@ __AST_BEGIN {
         [[nodiscard]] std::string what() const { return msg; }
         void                      panic() const {
             error::Panic(error::CodeError{
-                                     .pof      = const_cast<token::Token *>(&err),
+                                     .pof      = const_cast<__TOKEN_N::Token *>(&err),
                                      .err_code = 0.0001,
                                      .mark_pof = true,
             });

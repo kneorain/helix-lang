@@ -190,27 +190,25 @@ symbols from the imports are available when needed for resolution.
 
 #include "neo-pprint/include/hxpprint.hh"
 #include "parser/ast/include/config/AST_config.def"
-#include "parser/ast/include/config/AST_generate.hh"
-#include "parser/ast/include/config/case_types.def"
-#include "parser/ast/include/core/AST_nodes.hh"
-#include "parser/ast/include/nodes/AST_Expressions.hh"
-#include "parser/ast/include/nodes/AST_Statements.hh"
+#include "parser/ast/include/private/AST_generate.hh"
+#include "token/include/config/Token_cases.def"
+#include "parser/ast/include/private/AST_nodes.hh"
+#include "parser/ast/include/nodes/AST_expressions.hh"
+#include "parser/ast/include/nodes/AST_statements.hh"
 #include "parser/ast/include/types/AST_jsonify_visitor.hh"
 #include "parser/ast/include/types/AST_types.hh"
-#include "token/include/generate.hh"
-#include "token/include/token.hh"
-#include "token/include/token_list.hh"
+#include "token/include/Token.hh"
 
 // ---------------------------------------------------------------------------------------------- //
 
-bool is_excepted(const token::Token &tok, const std::unordered_set<token::tokens> &tokens);
-std::vector<token::Token> get_modifiers(token::TokenList::TokenListIter &iter);
-bool                      is_ffi_specifier(const token::Token &tok);
-bool                      is_type_qualifier(const token::Token &tok);
-bool                      is_access_specifier(const token::Token &tok);
-bool                      is_function_specifier(const token::Token &tok);
-bool                      is_function_qualifier(const token::Token &tok);
-bool                      is_storage_specifier(const token::Token &tok);
+bool is_excepted(const __TOKEN_N::Token &tok, const std::unordered_set<__TOKEN_TYPES_N> &tokens);
+std::vector<__TOKEN_N::Token> get_modifiers(__TOKEN_N::TokenList::TokenListIter &iter);
+bool                      is_ffi_specifier(const __TOKEN_N::Token &tok);
+bool                      is_type_qualifier(const __TOKEN_N::Token &tok);
+bool                      is_access_specifier(const __TOKEN_N::Token &tok);
+bool                      is_function_specifier(const __TOKEN_N::Token &tok);
+bool                      is_function_qualifier(const __TOKEN_N::Token &tok);
+bool                      is_storage_specifier(const __TOKEN_N::Token &tok);
 
 // ---------------------------------------------------------------------------------------------- //
 
@@ -226,61 +224,61 @@ AST_BASE_IMPL(Statement, parse) {  // NOLINT(readability-function-cognitive-comp
     IS_NOT_EMPTY;                  /// simple macro to check if the iterator is empty, expands to:
                                    /// if(iter.remaining_n() == 0) { return std::unexpected(...); }
 
-    token::Token tok = CURRENT_TOK;          /// get the current token from the iterator
+    __TOKEN_N::Token tok = CURRENT_TOK;          /// get the current token from the iterator
     // modifiers        = get_modifiers(iter);  /// get the modifiers for the statement
 
     switch (tok.token_kind()) {
-        // TODO: case token::KEYWORD_IMPORT
-        case token::KEYWORD_IF:
-        case token::KEYWORD_UNLESS:
+        // TODO: case __TOKEN_N::KEYWORD_IMPORT
+        case __TOKEN_N::KEYWORD_IF:
+        case __TOKEN_N::KEYWORD_UNLESS:
             return parse_IfState();
 
-        case token::KEYWORD_RETURN:
+        case __TOKEN_N::KEYWORD_RETURN:
             return parse_ReturnState();
 
-        case token::KEYWORD_FOR:
+        case __TOKEN_N::KEYWORD_FOR:
             return parse_ForState();
 
-        case token::KEYWORD_WHILE:
+        case __TOKEN_N::KEYWORD_WHILE:
             return parse_WhileState();
 
-        case token::KEYWORD_BREAK:
+        case __TOKEN_N::KEYWORD_BREAK:
             return parse_BreakState();
 
-        case token::KEYWORD_CONTINUE:
+        case __TOKEN_N::KEYWORD_CONTINUE:
             return parse_ContinueState();
 
-        case token::KEYWORD_SWITCH:
+        case __TOKEN_N::KEYWORD_SWITCH:
             return parse_SwitchState();
 
-        case token::KEYWORD_TRY:
+        case __TOKEN_N::KEYWORD_TRY:
             return parse_TryState();
 
-        case token::KEYWORD_PANIC:
+        case __TOKEN_N::KEYWORD_PANIC:
             return parse_PanicState();
 
-        case token::KEYWORD_FINALLY:
+        case __TOKEN_N::KEYWORD_FINALLY:
             return parse_FinallyState();
 
-        case token::KEYWORD_YIELD:
+        case __TOKEN_N::KEYWORD_YIELD:
             return parse_YieldState();
 
-        case token::KEYWORD_DELETE:
+        case __TOKEN_N::KEYWORD_DELETE:
             return parse_DeleteState();
 
-        case token::KEYWORD_ELSE:
+        case __TOKEN_N::KEYWORD_ELSE:
             return std::unexpected(PARSE_ERROR(
                 CURRENT_TOK, "found dangling 'else' without a matching 'if' or 'unless'"));
 
-        case token::KEYWORD_CASE:
+        case __TOKEN_N::KEYWORD_CASE:
             return std::unexpected(
                 PARSE_ERROR(CURRENT_TOK, "found dangling 'case' without a matching 'switch'"));
 
-        case token::KEYWORD_DEFAULT:
+        case __TOKEN_N::KEYWORD_DEFAULT:
             return std::unexpected(
                 PARSE_ERROR(CURRENT_TOK, "found dangling 'default' without a matching 'switch'"));
 
-        case token::KEYWORD_CATCH:
+        case __TOKEN_N::KEYWORD_CATCH:
             return std::unexpected(
                 PARSE_ERROR(CURRENT_TOK, "found dangling 'catch' without a matching 'try'"));
 
@@ -304,10 +302,10 @@ AST_NODE_IMPL(Statement, NamedVarSpecifier, bool force_type) {
             return make_node<NamedVarSpecifier>(path.value());
         }
 
-        IS_EXCEPTED_TOKEN(token::PUNCTUATION_COLON);
+        IS_EXCEPTED_TOKEN(__TOKEN_N::PUNCTUATION_COLON);
     }
 
-    if (CURRENT_TOKEN_IS(token::PUNCTUATION_COLON)) {
+    if (CURRENT_TOKEN_IS(__TOKEN_N::PUNCTUATION_COLON)) {
         iter.advance();  // skip ':'
 
         ParseResult<Type> type = expr_parser.parse<Type>();
@@ -334,7 +332,7 @@ AST_NODE_IMPL(Statement, NamedVarSpecifierList, bool force_type) {
 
     NodeT<NamedVarSpecifierList> node = make_node<NamedVarSpecifierList>(true);
 
-    if (CURRENT_TOKEN_IS_NOT(token::IDENTIFIER)) {
+    if (CURRENT_TOKEN_IS_NOT(__TOKEN_N::IDENTIFIER)) {
         return std::unexpected(
             PARSE_ERROR(CURRENT_TOK,
                         "expected an identifier for the variable name, but found: " +
@@ -346,7 +344,7 @@ AST_NODE_IMPL(Statement, NamedVarSpecifierList, bool force_type) {
 
     node->vars.emplace_back(var.value());
 
-    while (CURRENT_TOKEN_IS(token::PUNCTUATION_COMMA)) {
+    while (CURRENT_TOKEN_IS(__TOKEN_N::PUNCTUATION_COMMA)) {
         iter.advance();  // skip ','
 
         ParseResult<NamedVarSpecifier> next_var = parse<NamedVarSpecifier>(force_type);
@@ -375,15 +373,15 @@ AST_NODE_IMPL(Statement, ForPyStatementCore, bool skip_start) {
     // := NamedVarSpecifier* 'in' E SuiteState
 
     bool                      except_closing_paren = false;
-    token::Token              starting_tok;
+    __TOKEN_N::Token              starting_tok;
     NodeT<ForPyStatementCore> node = make_node<ForPyStatementCore>(true);
 
     if (!skip_start) {
-        IS_EXCEPTED_TOKEN(token::KEYWORD_FOR);
+        IS_EXCEPTED_TOKEN(__TOKEN_N::KEYWORD_FOR);
         iter.advance();  // skip 'for'
     }
 
-    if (CURRENT_TOKEN_IS(token::PUNCTUATION_OPEN_PAREN)) {
+    if (CURRENT_TOKEN_IS(__TOKEN_N::PUNCTUATION_OPEN_PAREN)) {
         except_closing_paren = true;
         starting_tok         = CURRENT_TOK;
         iter.advance();  // skip '('
@@ -395,7 +393,7 @@ AST_NODE_IMPL(Statement, ForPyStatementCore, bool skip_start) {
 
     node->vars = vars.value();
 
-    IS_EXCEPTED_TOKEN(token::KEYWORD_IN);
+    IS_EXCEPTED_TOKEN(__TOKEN_N::KEYWORD_IN);
     node->in_marker = CURRENT_TOK;
     iter.advance();  // skip 'in'
 
@@ -403,7 +401,7 @@ AST_NODE_IMPL(Statement, ForPyStatementCore, bool skip_start) {
     RETURN_IF_ERROR(range);
 
     if (except_closing_paren) {
-        if (CURRENT_TOKEN_IS_NOT(token::PUNCTUATION_CLOSE_PAREN)) {
+        if (CURRENT_TOKEN_IS_NOT(__TOKEN_N::PUNCTUATION_CLOSE_PAREN)) {
             return std::unexpected(PARSE_ERROR(starting_tok,
                                                "expected ')' to close the for loop, but found: " +
                                                    CURRENT_TOK.token_kind_repr()));
@@ -437,48 +435,48 @@ AST_NODE_IMPL(Statement, ForCStatementCore, bool skip_start) {
 
     bool except_closing_paren = false;
 
-    token::Token             starting_tok;
+    __TOKEN_N::Token             starting_tok;
     NodeT<ForCStatementCore> node = make_node<ForCStatementCore>(true);
 
     if (!skip_start) {
-        if (CURRENT_TOKEN_IS(token::KEYWORD_FOR)) {
+        if (CURRENT_TOKEN_IS(__TOKEN_N::KEYWORD_FOR)) {
             iter.advance();  // skip 'for'
         }
     }
 
-    if (CURRENT_TOKEN_IS(token::PUNCTUATION_OPEN_PAREN)) {  // '('
+    if (CURRENT_TOKEN_IS(__TOKEN_N::PUNCTUATION_OPEN_PAREN)) {  // '('
         except_closing_paren = true;
         starting_tok         = CURRENT_TOK;
         iter.advance();  // skip '('
     }
 
-    if (CURRENT_TOKEN_IS_NOT(token::PUNCTUATION_SEMICOLON)) {
+    if (CURRENT_TOKEN_IS_NOT(__TOKEN_N::PUNCTUATION_SEMICOLON)) {
         ParseResult<> init = parse();
         RETURN_IF_ERROR(init);
 
         node->init = init.value();  // next semi colon has been skipped
     } else {
-        IS_EXCEPTED_TOKEN(token::PUNCTUATION_SEMICOLON);
+        IS_EXCEPTED_TOKEN(__TOKEN_N::PUNCTUATION_SEMICOLON);
         iter.advance();  // skip ';'
     }
 
     // first semi colon is skipped
 
-    if (CURRENT_TOKEN_IS_NOT(token::PUNCTUATION_SEMICOLON)) {
+    if (CURRENT_TOKEN_IS_NOT(__TOKEN_N::PUNCTUATION_SEMICOLON)) {
         ParseResult<> condition = expr_parser.parse();
         RETURN_IF_ERROR(condition);
 
         node->condition = condition.value();
 
-        IS_EXCEPTED_TOKEN(token::PUNCTUATION_SEMICOLON);
+        IS_EXCEPTED_TOKEN(__TOKEN_N::PUNCTUATION_SEMICOLON);
         iter.advance();  // skip ';' - 2
     } else {
-        IS_EXCEPTED_TOKEN(token::PUNCTUATION_SEMICOLON);
+        IS_EXCEPTED_TOKEN(__TOKEN_N::PUNCTUATION_SEMICOLON);
         iter.advance();  // skip ';' - 2
     }
 
-    if (CURRENT_TOKEN_IS_NOT(token::PUNCTUATION_OPEN_BRACE) &&
-        CURRENT_TOKEN_IS_NOT(token::PUNCTUATION_COLON)) {
+    if (CURRENT_TOKEN_IS_NOT(__TOKEN_N::PUNCTUATION_OPEN_BRACE) &&
+        CURRENT_TOKEN_IS_NOT(__TOKEN_N::PUNCTUATION_COLON)) {
         // update condition
         ParseResult<> update = expr_parser.parse();
         RETURN_IF_ERROR(update);
@@ -487,7 +485,7 @@ AST_NODE_IMPL(Statement, ForCStatementCore, bool skip_start) {
     }  // no semicolon after this
 
     if (except_closing_paren) {
-        if (CURRENT_TOKEN_IS_NOT(token::PUNCTUATION_CLOSE_PAREN)) {
+        if (CURRENT_TOKEN_IS_NOT(__TOKEN_N::PUNCTUATION_CLOSE_PAREN)) {
             return std::unexpected(PARSE_ERROR(starting_tok,
                                                "expected ')' to close the for loop, but found: " +
                                                    CURRENT_TOK.token_kind_repr()));
@@ -520,10 +518,10 @@ AST_NODE_IMPL(Statement, ForState) {
 
     bool except_closing_paren = false;
 
-    IS_EXCEPTED_TOKEN(token::KEYWORD_FOR);
+    IS_EXCEPTED_TOKEN(__TOKEN_N::KEYWORD_FOR);
     iter.advance();  // skip 'for'
 
-    if (CURRENT_TOKEN_IS(token::PUNCTUATION_OPEN_PAREN)) {
+    if (CURRENT_TOKEN_IS(__TOKEN_N::PUNCTUATION_OPEN_PAREN)) {
         except_closing_paren = true;
         iter.advance();  // skip '('
     }
@@ -533,7 +531,7 @@ AST_NODE_IMPL(Statement, ForState) {
     /// if the token is a ident then parse a NamedVarSpecifier* then if theres 'in' then its a
     /// python style loop
 
-    if (CURRENT_TOKEN_IS_NOT(token::IDENTIFIER)) {
+    if (CURRENT_TOKEN_IS_NOT(__TOKEN_N::IDENTIFIER)) {
     c_style_for:
         if (except_closing_paren) {
             iter.reverse();  // go back to the '('
@@ -546,9 +544,9 @@ AST_NODE_IMPL(Statement, ForState) {
     }
 
     // if we dont have (',' | ':' | 'in') then we are in a c style loop
-    if (iter.peek().has_value() && (NEXT_TOK.token_kind() != token::PUNCTUATION_COMMA &&
-                                    NEXT_TOK.token_kind() != token::PUNCTUATION_COLON &&
-                                    NEXT_TOK.token_kind() != token::KEYWORD_IN)) {
+    if (iter.peek().has_value() && (NEXT_TOK.token_kind() != __TOKEN_N::PUNCTUATION_COMMA &&
+                                    NEXT_TOK.token_kind() != __TOKEN_N::PUNCTUATION_COLON &&
+                                    NEXT_TOK.token_kind() != __TOKEN_N::KEYWORD_IN)) {
         goto c_style_for;
     }
 
@@ -572,7 +570,7 @@ AST_NODE_IMPL(Statement, WhileState) {
     IS_NOT_EMPTY;
     // := 'while' E SuiteState
 
-    IS_EXCEPTED_TOKEN(token::KEYWORD_WHILE);
+    IS_EXCEPTED_TOKEN(__TOKEN_N::KEYWORD_WHILE);
     iter.advance();  // skip 'while'
 
     ParseResult<> condition = expr_parser.parse();
@@ -600,11 +598,11 @@ AST_NODE_IMPL(Statement, ElseState) {
 
     NodeT<ElseState> node = make_node<ElseState>(true);
 
-    IS_EXCEPTED_TOKEN(token::KEYWORD_ELSE);
+    IS_EXCEPTED_TOKEN(__TOKEN_N::KEYWORD_ELSE);
     iter.advance();  // skip 'else'
 
-    if (CURRENT_TOKEN_IS(token::KEYWORD_IF) || CURRENT_TOKEN_IS(token::KEYWORD_UNLESS)) {
-        node->type = CURRENT_TOKEN_IS(token::KEYWORD_IF) ? ElseState::ElseType::ElseIf
+    if (CURRENT_TOKEN_IS(__TOKEN_N::KEYWORD_IF) || CURRENT_TOKEN_IS(__TOKEN_N::KEYWORD_UNLESS)) {
+        node->type = CURRENT_TOKEN_IS(__TOKEN_N::KEYWORD_IF) ? ElseState::ElseType::ElseIf
                                                          : ElseState::ElseType::ElseUnless;
         iter.advance();  // skip 'if' | 'unless'
 
@@ -640,9 +638,9 @@ AST_NODE_IMPL(Statement, IfState) {
     NodeT<IfState> node;
     bool           is_unless = false;
 
-#define IF_UNLESS_TOKENS {token::KEYWORD_IF, token::KEYWORD_UNLESS}
+#define IF_UNLESS_TOKENS {__TOKEN_N::KEYWORD_IF, __TOKEN_N::KEYWORD_UNLESS}
     IS_IN_EXCEPTED_TOKENS(IF_UNLESS_TOKENS);
-    if (CURRENT_TOKEN_IS(token::KEYWORD_UNLESS)) {
+    if (CURRENT_TOKEN_IS(__TOKEN_N::KEYWORD_UNLESS)) {
         is_unless = true;
     }
 
@@ -663,9 +661,9 @@ AST_NODE_IMPL(Statement, IfState) {
 
     node->body = body.value();
 
-    if CURRENT_TOKEN_IS (token::KEYWORD_ELSE) {
+    if CURRENT_TOKEN_IS (__TOKEN_N::KEYWORD_ELSE) {
         bool         captured_final_else = false;
-        token::Token starting_else;
+        __TOKEN_N::Token starting_else;
 
         ParseResult<ElseState> else_body = parse<ElseState>();
         RETURN_IF_ERROR(else_body);
@@ -676,7 +674,7 @@ AST_NODE_IMPL(Statement, IfState) {
             captured_final_else = true;
         }
 
-        while (CURRENT_TOKEN_IS(token::KEYWORD_ELSE)) {
+        while (CURRENT_TOKEN_IS(__TOKEN_N::KEYWORD_ELSE)) {
             starting_else = CURRENT_TOK;
 
             else_body = parse<ElseState>();
@@ -718,9 +716,9 @@ AST_NODE_IMPL(Statement, SwitchCaseState) {
     IS_NOT_EMPTY;
     // := ('case' E SuiteState) | 'default' SuiteState
 
-    token::Token marker;
+    __TOKEN_N::Token marker;
 
-    if (CURRENT_TOKEN_IS(token::KEYWORD_CASE)) {
+    if (CURRENT_TOKEN_IS(__TOKEN_N::KEYWORD_CASE)) {
         marker = CURRENT_TOK;
         iter.advance();  // skip 'case'
 
@@ -728,17 +726,17 @@ AST_NODE_IMPL(Statement, SwitchCaseState) {
         RETURN_IF_ERROR(expr);
 
         // if thres a fallthorugh
-        if (CURRENT_TOKEN_IS(token::PUNCTUATION_COLON)) {
-            if (iter.peek().has_value() && NEXT_TOK.token_kind() == token::KEYWORD_CASE) {
+        if (CURRENT_TOKEN_IS(__TOKEN_N::PUNCTUATION_COLON)) {
+            if (iter.peek().has_value() && NEXT_TOK.token_kind() == __TOKEN_N::KEYWORD_CASE) {
                 iter.advance();  // skip ':'
                 return make_node<SwitchCaseState>(
                     expr.value(), nullptr, SwitchCaseState::CaseType::Fallthrough, marker);
             }
         }
 
-        if (CURRENT_TOKEN_IS(token::PUNCTUATION_OPEN_BRACE)) {
+        if (CURRENT_TOKEN_IS(__TOKEN_N::PUNCTUATION_OPEN_BRACE)) {
             if (iter.peek().has_value() &&
-                NEXT_TOK.token_kind() == token::PUNCTUATION_CLOSE_BRACE) {
+                NEXT_TOK.token_kind() == __TOKEN_N::PUNCTUATION_CLOSE_BRACE) {
                 return std::unexpected(PARSE_ERROR(
                     CURRENT_TOK, "mssing statement, if you want to fallthrough use ':'"));
             }
@@ -751,7 +749,7 @@ AST_NODE_IMPL(Statement, SwitchCaseState) {
             expr.value(), body.value(), SwitchCaseState::CaseType::Case, marker);
     }
 
-    if (CURRENT_TOKEN_IS(token::KEYWORD_DEFAULT)) {
+    if (CURRENT_TOKEN_IS(__TOKEN_N::KEYWORD_DEFAULT)) {
         marker = CURRENT_TOK;
         iter.advance();  // skip 'default'
 
@@ -762,7 +760,7 @@ AST_NODE_IMPL(Statement, SwitchCaseState) {
             nullptr, body.value(), SwitchCaseState::CaseType::Default, marker);
     }
 
-#define DEFAULT_CASE_TOKENS {token::KEYWORD_CASE, token::KEYWORD_DEFAULT}
+#define DEFAULT_CASE_TOKENS {__TOKEN_N::KEYWORD_CASE, __TOKEN_N::KEYWORD_DEFAULT}
     IS_IN_EXCEPTED_TOKENS(DEFAULT_CASE_TOKENS);
 #undef DEFAULT_CASE_TOKENS
 
@@ -785,22 +783,22 @@ AST_NODE_IMPL(Statement, SwitchState) {
     IS_NOT_EMPTY;
     // := 'switch' expr (('{' SwitchCaseState* '}') | (':' SwitchCaseState*))
 
-    IS_EXCEPTED_TOKEN(token::KEYWORD_SWITCH);
+    IS_EXCEPTED_TOKEN(__TOKEN_N::KEYWORD_SWITCH);
     iter.advance();  // skip 'switch'
 
-    token::Token starting_token;  // '(', ')'
-    token::Token first_token;     // 'default'
+    __TOKEN_N::Token starting_token;  // '(', ')'
+    __TOKEN_N::Token first_token;     // 'default'
     bool         expecting_brace_close = false;
     bool         found_default         = false;
 
     ParseResult<> expr = expr_parser.parse();
     RETURN_IF_ERROR(expr);
 
-#define SUITE_TOKENS {token::PUNCTUATION_OPEN_BRACE, token::PUNCTUATION_COLON}
+#define SUITE_TOKENS {__TOKEN_N::PUNCTUATION_OPEN_BRACE, __TOKEN_N::PUNCTUATION_COLON}
     IS_IN_EXCEPTED_TOKENS(SUITE_TOKENS)
 #undef SUITE_TOKENS
 
-    if CURRENT_TOKEN_IS (token::PUNCTUATION_OPEN_BRACE) {
+    if CURRENT_TOKEN_IS (__TOKEN_N::PUNCTUATION_OPEN_BRACE) {
         expecting_brace_close = true;
         starting_token        = CURRENT_TOK;
     }
@@ -819,7 +817,7 @@ AST_NODE_IMPL(Statement, SwitchState) {
         first_token   = case_state.value()->marker;
     }
 
-    while (CURRENT_TOKEN_IS(token::KEYWORD_CASE) || CURRENT_TOKEN_IS(token::KEYWORD_DEFAULT)) {
+    while (CURRENT_TOKEN_IS(__TOKEN_N::KEYWORD_CASE) || CURRENT_TOKEN_IS(__TOKEN_N::KEYWORD_DEFAULT)) {
         case_state = parse<SwitchCaseState>();
         RETURN_IF_ERROR(case_state);
 
@@ -837,7 +835,7 @@ AST_NODE_IMPL(Statement, SwitchState) {
     }
 
     if (expecting_brace_close) {
-        if (iter.remaining_n() == 0 || iter.current().get() != token::PUNCTUATION_CLOSE_BRACE) {
+        if (iter.remaining_n() == 0 || iter.current().get() != __TOKEN_N::PUNCTUATION_CLOSE_BRACE) {
             return std::unexpected(
                 PARSE_ERROR(starting_token, "expected '}' to close the switch block"));
         }
@@ -863,13 +861,13 @@ AST_NODE_IMPL_VISITOR(Jsonify, SwitchState) {
 AST_NODE_IMPL(Statement, YieldState) {
     IS_NOT_EMPTY;
 
-    IS_EXCEPTED_TOKEN(token::KEYWORD_YIELD);
+    IS_EXCEPTED_TOKEN(__TOKEN_N::KEYWORD_YIELD);
     iter.advance();
 
     ParseResult<> expr = expr_parser.parse();
     RETURN_IF_ERROR(expr);
 
-    IS_EXCEPTED_TOKEN(token::PUNCTUATION_SEMICOLON);
+    IS_EXCEPTED_TOKEN(__TOKEN_N::PUNCTUATION_SEMICOLON);
     iter.advance();
 
     return make_node<YieldState>(expr.value());
@@ -884,13 +882,13 @@ AST_NODE_IMPL_VISITOR(Jsonify, YieldState) {
 AST_NODE_IMPL(Statement, DeleteState) {
     IS_NOT_EMPTY;
 
-    IS_EXCEPTED_TOKEN(token::KEYWORD_DELETE);
+    IS_EXCEPTED_TOKEN(__TOKEN_N::KEYWORD_DELETE);
     iter.advance();
 
     ParseResult<> expr = expr_parser.parse();
     RETURN_IF_ERROR(expr);
 
-    IS_EXCEPTED_TOKEN(token::PUNCTUATION_SEMICOLON);
+    IS_EXCEPTED_TOKEN(__TOKEN_N::PUNCTUATION_SEMICOLON);
     iter.advance();
 
     return make_node<DeleteState>(expr.value());
@@ -941,13 +939,13 @@ AST_NODE_IMPL_VISITOR(Jsonify, ImportState) { json.section("ImportState"); }
 AST_NODE_IMPL(Statement, ReturnState) {
     IS_NOT_EMPTY;
 
-    IS_EXCEPTED_TOKEN(token::KEYWORD_RETURN);
+    IS_EXCEPTED_TOKEN(__TOKEN_N::KEYWORD_RETURN);
     iter.advance();  // skip 'return'
 
     ParseResult<> expr = expr_parser.parse();
     RETURN_IF_ERROR(expr);
 
-    IS_EXCEPTED_TOKEN(token::PUNCTUATION_SEMICOLON);
+    IS_EXCEPTED_TOKEN(__TOKEN_N::PUNCTUATION_SEMICOLON);
     iter.advance();  // skip ';'
 
     return make_node<ReturnState>(expr.value());
@@ -962,12 +960,12 @@ AST_NODE_IMPL_VISITOR(Jsonify, ReturnState) {
 AST_NODE_IMPL(Statement, BreakState) {
     IS_NOT_EMPTY;
 
-    IS_EXCEPTED_TOKEN(token::KEYWORD_BREAK);
+    IS_EXCEPTED_TOKEN(__TOKEN_N::KEYWORD_BREAK);
     NodeT<BreakState> node = make_node<BreakState>(CURRENT_TOK);
 
     iter.advance();
 
-    IS_EXCEPTED_TOKEN(token::PUNCTUATION_SEMICOLON);
+    IS_EXCEPTED_TOKEN(__TOKEN_N::PUNCTUATION_SEMICOLON);
     iter.advance();
 
     return node;
@@ -982,12 +980,12 @@ AST_NODE_IMPL_VISITOR(Jsonify, BreakState) {
 AST_NODE_IMPL(Statement, ContinueState) {
     IS_NOT_EMPTY;
 
-    IS_EXCEPTED_TOKEN(token::KEYWORD_CONTINUE);
+    IS_EXCEPTED_TOKEN(__TOKEN_N::KEYWORD_CONTINUE);
     NodeT<ContinueState> node = make_node<ContinueState>(CURRENT_TOK);
 
     iter.advance();
 
-    IS_EXCEPTED_TOKEN(token::PUNCTUATION_SEMICOLON);
+    IS_EXCEPTED_TOKEN(__TOKEN_N::PUNCTUATION_SEMICOLON);
     iter.advance();
 
     return node;
@@ -1005,7 +1003,7 @@ AST_NODE_IMPL(Statement, ExprState) {
     ParseResult<> expr = expr_parser.parse();
     RETURN_IF_ERROR(expr);
 
-    IS_EXCEPTED_TOKEN(token::PUNCTUATION_SEMICOLON);
+    IS_EXCEPTED_TOKEN(__TOKEN_N::PUNCTUATION_SEMICOLON);
     iter.advance();
 
     return make_node<ExprState>(expr.value());
@@ -1022,14 +1020,14 @@ AST_NODE_IMPL(Statement, SuiteState) {
 
     // := BlockState | (':' Statement)
 
-    if CURRENT_TOKEN_IS (token::PUNCTUATION_OPEN_BRACE) {
+    if CURRENT_TOKEN_IS (__TOKEN_N::PUNCTUATION_OPEN_BRACE) {
         ParseResult<BlockState> block = parse<BlockState>();
         RETURN_IF_ERROR(block);
 
         return make_node<SuiteState>(block.value());
     }
 
-    if CURRENT_TOKEN_IS (token::PUNCTUATION_COLON) {
+    if CURRENT_TOKEN_IS (__TOKEN_N::PUNCTUATION_COLON) {
         iter.advance();  // skip ':'
 
         Declaration decl_parser(iter);
@@ -1059,15 +1057,15 @@ AST_NODE_IMPL(Statement, BlockState) {
     // := '{' Statement* '}'
 
     NodeV<>      body;
-    token::Token starting_tok;
+    __TOKEN_N::Token starting_tok;
     Declaration  decl_parser(iter);
 
-    IS_EXCEPTED_TOKEN(token::PUNCTUATION_OPEN_BRACE);
+    IS_EXCEPTED_TOKEN(__TOKEN_N::PUNCTUATION_OPEN_BRACE);
     starting_tok = CURRENT_TOK;
     iter.advance();  // skip '{'
 
     while (CURRENT_TOKEN_IS_NOT(
-        token::PUNCTUATION_CLOSE_BRACE)) {  // TODO: implement this kind of bounds checks for all
+        __TOKEN_N::PUNCTUATION_CLOSE_BRACE)) {  // TODO: implement this kind of bounds checks for all
                                             // the pair token parsers '(', '[', '{'.
         ParseResult<> decl = decl_parser.parse();
         RETURN_IF_ERROR(decl);
@@ -1103,7 +1101,7 @@ AST_NODE_IMPL(Statement, TryState) {
 
     NodeT<TryState> node;
 
-    IS_EXCEPTED_TOKEN(token::KEYWORD_TRY);
+    IS_EXCEPTED_TOKEN(__TOKEN_N::KEYWORD_TRY);
     iter.advance();  // skip 'try'
 
     ParseResult<SuiteState> body = parse<SuiteState>();
@@ -1111,7 +1109,7 @@ AST_NODE_IMPL(Statement, TryState) {
 
     node = make_node<TryState>(body.value());
 
-    if CURRENT_TOKEN_IS (token::KEYWORD_FINALLY) {
+    if CURRENT_TOKEN_IS (__TOKEN_N::KEYWORD_FINALLY) {
         ParseResult<FinallyState> finally_state = parse<FinallyState>();
         RETURN_IF_ERROR(finally_state);
 
@@ -1121,7 +1119,7 @@ AST_NODE_IMPL(Statement, TryState) {
         return node;
     }
 
-    IS_EXCEPTED_TOKEN(token::KEYWORD_CATCH);
+    IS_EXCEPTED_TOKEN(__TOKEN_N::KEYWORD_CATCH);
 
     ParseResult<CatchState> catch_state = parse<CatchState>();
     RETURN_IF_ERROR(catch_state);
@@ -1129,14 +1127,14 @@ AST_NODE_IMPL(Statement, TryState) {
     node->catch_states.emplace_back(catch_state.value());
 
     while
-        CURRENT_TOKEN_IS(token::KEYWORD_CATCH) {
+        CURRENT_TOKEN_IS(__TOKEN_N::KEYWORD_CATCH) {
             ParseResult<CatchState> next_catch = parse<CatchState>();
             RETURN_IF_ERROR(next_catch);
 
             node->catch_states.emplace_back(next_catch.value());
         }
 
-    if CURRENT_TOKEN_IS (token::KEYWORD_FINALLY) {
+    if CURRENT_TOKEN_IS (__TOKEN_N::KEYWORD_FINALLY) {
         ParseResult<FinallyState> finally_state = parse<FinallyState>();
         RETURN_IF_ERROR(finally_state);
 
@@ -1167,13 +1165,13 @@ AST_NODE_IMPL(Statement, CatchState) {
 
     // := 'catch' (NamedVarSpecifier) SuiteState (CatchState)?
 
-    token::Token starting_tok;
+    __TOKEN_N::Token starting_tok;
     bool         except_closing_paren = false;
 
-    IS_EXCEPTED_TOKEN(token::KEYWORD_CATCH);
+    IS_EXCEPTED_TOKEN(__TOKEN_N::KEYWORD_CATCH);
     iter.advance();  // skip 'catch'
 
-    if (CURRENT_TOKEN_IS(token::PUNCTUATION_OPEN_PAREN)) {
+    if (CURRENT_TOKEN_IS(__TOKEN_N::PUNCTUATION_OPEN_PAREN)) {
         except_closing_paren = true;
         starting_tok         = CURRENT_TOK;
         iter.advance();  // skip '('
@@ -1183,7 +1181,7 @@ AST_NODE_IMPL(Statement, CatchState) {
     RETURN_IF_ERROR(catch_state);
 
     if (except_closing_paren) {
-        if (CURRENT_TOKEN_IS_NOT(token::PUNCTUATION_CLOSE_PAREN)) {
+        if (CURRENT_TOKEN_IS_NOT(__TOKEN_N::PUNCTUATION_CLOSE_PAREN)) {
             return std::unexpected(
                 PARSE_ERROR(starting_tok,
                             "expected ')' to close the catch block, but found: " +
@@ -1212,13 +1210,13 @@ AST_NODE_IMPL(Statement, PanicState) {
 
     // := 'panic' E ';'
 
-    IS_EXCEPTED_TOKEN(token::KEYWORD_PANIC);
+    IS_EXCEPTED_TOKEN(__TOKEN_N::KEYWORD_PANIC);
     iter.advance();  // skip 'panic'
 
     ParseResult<> expr = expr_parser.parse();
     RETURN_IF_ERROR(expr);
 
-    IS_EXCEPTED_TOKEN(token::PUNCTUATION_SEMICOLON);
+    IS_EXCEPTED_TOKEN(__TOKEN_N::PUNCTUATION_SEMICOLON);
     iter.advance();  // skip ';'
 
     return make_node<PanicState>(expr.value());
@@ -1235,7 +1233,7 @@ AST_NODE_IMPL(Statement, FinallyState) {
 
     // := 'finally' SuiteState
 
-    IS_EXCEPTED_TOKEN(token::KEYWORD_FINALLY);
+    IS_EXCEPTED_TOKEN(__TOKEN_N::KEYWORD_FINALLY);
     iter.advance();  // skip 'finally'
 
     ParseResult<SuiteState> body = parse<SuiteState>();
@@ -1250,22 +1248,22 @@ AST_NODE_IMPL_VISITOR(Jsonify, FinallyState) {
 
 // ---------------------------------------------------------------------------------------------- //
 
-std::vector<token::Token> get_modifiers(token::TokenList::TokenListIter &iter) {
-    std::vector<token::Token> modifiers;
+std::vector<__TOKEN_N::Token> get_modifiers(__TOKEN_N::TokenList::TokenListIter &iter) {
+    std::vector<__TOKEN_N::Token> modifiers;
 
     while (iter.remaining_n() > 0) {
         switch (iter->token_kind()) {
-            case token::KEYWORD_INLINE:
-            case token::KEYWORD_STATIC:
-            case token::KEYWORD_ASYNC:
-            case token::KEYWORD_EVAL:
-            case token::KEYWORD_PRIVATE:
-            case token::KEYWORD_CONST:
-            case token::KEYWORD_UNSAFE:
-            case token::KEYWORD_PUBLIC:
-            case token::KEYWORD_PROTECTED:
-            case token::KEYWORD_INTERNAL:
-            case token::LITERAL_COMPLIER_DIRECTIVE:
+            case __TOKEN_N::KEYWORD_INLINE:
+            case __TOKEN_N::KEYWORD_STATIC:
+            case __TOKEN_N::KEYWORD_ASYNC:
+            case __TOKEN_N::KEYWORD_EVAL:
+            case __TOKEN_N::KEYWORD_PRIVATE:
+            case __TOKEN_N::KEYWORD_CONST:
+            case __TOKEN_N::KEYWORD_UNSAFE:
+            case __TOKEN_N::KEYWORD_PUBLIC:
+            case __TOKEN_N::KEYWORD_PROTECTED:
+            case __TOKEN_N::KEYWORD_INTERNAL:
+            case __TOKEN_N::LITERAL_COMPLIER_DIRECTIVE:
                 modifiers.push_back(CURRENT_TOK);
                 iter.advance();
                 break;

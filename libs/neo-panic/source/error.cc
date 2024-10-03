@@ -22,11 +22,11 @@
 #include <tuple>
 #include <vector>
 
-#include "driver/include/file_system.hh"
+#include "controller/include/Controller.hh"
 #include "neo-panic/enums/error_codes.def"
 #include "neo-pprint/include/ansi_colors.hh"
 #include "neo-pprint/include/hxpprint.hh"
-#include "token/include/token.hh"
+#include "token/include/Token.hh"
 
 namespace std {
 static inline void lstrip(std::string &str) {
@@ -133,7 +133,7 @@ lines_vec get_surrounding_lines(const string &file_name, u64 line) {
     u64 start_line = (line <= lines_before) ? 1 : (line - lines_before);
 
     for (u64 i = start_line; i < start_line + LINES_TO_SHOW; ++i) {
-        auto line_content = file_system::get_line(file_name, i);
+        auto line_content = __CONTROLLER_FS_N::get_line(file_name, i);
         if (line_content.has_value()) {
             lines.emplace_back(false,
                                std::make_tuple(std::to_string(i), line_content.value(), i == line));
@@ -388,7 +388,7 @@ Panic::Panic(const CompilerError &err)
 }
 
 void Panic::process_full_line() {
-    auto full_line = file_system::get_line(final_err.file, final_err.line);
+    auto full_line = __CONTROLLER_FS_N::get_line(final_err.file, final_err.line);
 
     if (!full_line.has_value()) {
         // TODO: throw error

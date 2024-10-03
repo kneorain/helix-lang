@@ -15,7 +15,7 @@
 
 #include "neo-json/include/json.hh"
 #include "parser/ast/include/config/AST_config.def"
-#include "parser/ast/include/nodes/AST_Nodes.hh"
+#include "parser/ast/include/nodes/AST_nodes.hh"
 #include "parser/ast/include/types/AST_types.hh"
 #include "parser/ast/include/types/AST_visitor.hh"
 
