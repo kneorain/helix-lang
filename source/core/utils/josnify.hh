@@ -299,9 +299,8 @@ class Jsonify {
     }
 
     Jsonify &create_sub(const std::string &sub_section_key) {
-        sub_json.push_back(
-            std::make_shared<Jsonify>(std::string(sub_section_key), this->depth + 1));
-        Jsonify &jsonify_ref = *sub_json.back().get();
+        sub_json.push_back(std::make_shared<Jsonify>(std::string(sub_section_key), this->depth + 1));
+        Jsonify &jsonify_ref = *sub_json.back();
 
         return jsonify_ref;
     }

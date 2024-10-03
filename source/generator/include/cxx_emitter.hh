@@ -19,7 +19,7 @@
 #define __CXX_EMITTER_HH__
 
 #include "core/utils/josnify.hh"
-#include "parser/ast/include/AST_visitor.hh"
+#include "parser/ast/include/core/AST_visitor.hh"
 
 namespace codegen::cxx {
 enum class GenerateMode {

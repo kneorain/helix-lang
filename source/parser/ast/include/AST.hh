@@ -9,46 +9,22 @@
 //  Copyright (c) 2024 (CC BY 4.0)                                                                //
 //                                                                                                //
 //====----------------------------------------------------------------------------------------====//
-//                                                                                                //
-//  this file exports all the AST related files                                                   //
-//                                                                                                //
-//====----------------------------------------------------------------------------------------====//
-//  fyi: i aim to make the AST have the PERFECT readable and maintainable code i can ever write.  //
-//===-----------------------------------------------------------------------------------------====//
 
-#ifndef __AST_HH__
-#define __AST_HH__
+#ifndef __AST_H__
+#define __AST_H__
 
-#include "parser/ast/include/AST_core.def"
-#include "parser/ast/include/AST_classifier.hh"
-#include "parser/ast/include/AST_context.hh"
-#include "parser/ast/include/AST_interface.hh"
-#include "parser/ast/include/AST_matcher.hh"
-#include "parser/ast/include/AST_types.hh"
-#include "parser/ast/include/AST_visitor.hh"
-#include "parser/ast/include/nodes/AST_generate.hh"
+#include "parser/ast/include/config/AST_config.def"
+#include "parser/ast/include/config/AST_generate.hh"
+#include "parser/ast/include/core/AST_classifier.hh"
+#include "parser/ast/include/core/AST_context.hh"
+#include "parser/ast/include/core/AST_matcher.hh"
+#include "parser/ast/include/core/AST_nodes.hh"
+#include "parser/ast/include/nodes/AST_Declarations.hh"
+#include "parser/ast/include/nodes/AST_Expressions.hh"
+#include "parser/ast/include/nodes/AST_Statements.hh"
+#include "parser/ast/include/types/AST_jsonify_visitor.hh"
+#include "parser/ast/include/types/AST_types.hh"
+#include "parser/ast/include/types/AST_visitor.hh"
 
-// TODO: Make this work again
 
-// #undef EXPR_VA_CLASS
-// #undef STMT_VA_CLASS
-// #undef DECL_VA_CLASS
-// #undef ANNO_VA_CLASS
-// #undef TYPE_VA_CLASS
-
-// #undef MAKE_NODE_ENUM
-// #undef MAKE_NODE_CLASS
-// #undef MAKE_FORWARD_DECL
-// #undef MAKE_VISITOR_FUNCTION
-
-// #undef GENERATE_NODES_ENUM
-// #undef GENERATE_NODES_FORWARD_DECLS
-// #undef GENERATE_NODES_CLASSES
-
-// #undef GENERICS
-// #undef STATEMENTS
-// #undef EXPRESSION
-// #undef ANNOTATIONS
-// #undef DECLARATIONS
-
-#endif  // __AST_HH__
+#endif  // __AST_H__

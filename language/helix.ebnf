@@ -1,15 +1,15 @@
 
 /* Main Program Structure */
 
-Program ::= (ImportStatement | PreprocessorDirective | Declaration | FunctionDefinition | Statement)*
+Program ::= (ImportState | PreprocessorDirective | Declaration | FunctionDefinition | Statement)*
 
 /* Modules and Imports */
 
 Module ::= 'module' QualifiedNamespaceID Suite // module ... { :: ... }..
 
-ImportStatement ::= 'import' QualifiedNamespaceID ('::' '{' (QualifiedNamespaceID (',' QualifiedNamespaceID)*) '}')? ('as' QualifiedNamespaceID)? ';'
+ImportState ::= 'import' QualifiedNamespaceID ('::' '{' (QualifiedNamespaceID (',' QualifiedNamespaceID)*) '}')? ('as' QualifiedNamespaceID)? ';'
 
-FFIImportStatement ::= 'ffi' String ImportStatement
+FFIImportState ::= 'ffi' String ImportState
 
 /* Preprocessor Directives */
 
@@ -29,17 +29,17 @@ PyStyleForLoop ::= AnySeparatedID (':' Type)? 'in' Expression
 
 WhileLoop ::= 'while' Expression Suite
 
-IfStatement ::= ('if' | 'unless') Expression Suite
+IfState ::= ('if' | 'unless') Expression Suite
 
-ElseIfStatement ::= 'else' ('if' | 'unless') Expression Suite
+ElseIfState ::= 'else' ('if' | 'unless') Expression Suite
 
-ElseStatement ::= 'else' Suite
+ElseState ::= 'else' Suite
 
-ContinueStatement ::= 'continue' ';'
+ContinueState ::= 'continue' ';'
 
-BreakStatement ::= 'break' ';'
+BreakState ::= 'break' ';'
 
-SwitchStatement ::= 'switch' '{' (CaseStatement | DefaultCaseStatement)* '}'
+SwitchState ::= 'switch' '{' (CaseStatement | DefaultCaseStatement)* '}'
 
 CaseStatement ::= 'case' Expression Suite
 
@@ -181,7 +181,7 @@ Assignment ::= AnySeparatedID '=' Expression ';'
 
 Statement ::= VariableDeclaration | Assignment | Expression ';' | ControlFlowStatement | ReturnExpression | YieldExpression | BlockStatement
 
-ControlFlowStatement ::= ForLoop | WhileLoop | IfStatement | UnlessStatement | ElseIfStatement | ElseStatement | ContinueStatement | BreakStatement | SwitchStatement | MatchExpression
+ControlFlowStatement ::= ForLoop | WhileLoop | IfState | UnlessStatement | ElseIfState | ElseState | ContinueState | BreakState | SwitchState | MatchExpression
 
 BlockStatement ::= Suite
 

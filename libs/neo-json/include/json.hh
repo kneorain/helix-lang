@@ -128,6 +128,12 @@ inline namespace _json {
             return *this;
         }
 
+        template <typename T>
+        Json &add(const T &val) {
+            _array.push_back(get(val));
+            return *this;
+        }
+
         Json &section(const string &key) {
             if (_data.contains(key)) {
                 if (auto *sub_json = std::get_if<Json>(&_data[key])) {
@@ -136,6 +142,11 @@ inline namespace _json {
             }
             _data[key] = Json();
             return std::get<Json>(_data[key]);
+        }
+
+        template <typename T>
+        void section(const string &key, const T &val) {
+            _data[key] = get(val);
         }
 
         [[nodiscard]] constexpr string to_string(bool is_base = true) const {
@@ -201,8 +212,8 @@ inline namespace _json {
         }
 
       private:
-        string            key;
-        string            _val;
+        string    key;
+        string    _val;
         JsonVec_t _array;
     };
 

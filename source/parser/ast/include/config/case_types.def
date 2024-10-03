@@ -1,0 +1,217 @@
+//===------------------------------------------ C++ ------------------------------------------====//
+//                                                                                                //
+//  Part of the Helix Project, under the Attribution 4.0 International license (CC BY 4.0).       //
+//  You are allowed to use, modify, redistribute, and create derivative works, even for           //
+//  commercial purposes, provided that you give appropriate credit, and indicate if changes       //
+//   were made. For more information, please visit: https://creativecommons.org/licenses/by/4.0/  //
+//                                                                                                //
+//  SPDX-License-Identifier: CC-BY-4.0                                                            //
+//  Copyright (c) 2024 (CC BY 4.0)                                                                //
+//                                                                                                //
+//====----------------------------------------------------------------------------------------====//
+//                                                                                                //
+//  this file is used as  a helper to define the cases for token types used by the parser         //
+//                                                                                                //
+//===-----------------------------------------------------------------------------------------====//
+
+#ifndef __CASE_TYPES_H__
+#define __CASE_TYPES_H__
+
+#define IS_LITERAL                      \
+    {token::LITERAL_STRING,             \
+     token::LITERAL_TRUE,               \
+     token::LITERAL_FALSE,              \
+     token::LITERAL_INTEGER,            \
+     token::LITERAL_COMPLIER_DIRECTIVE, \
+     token::LITERAL_FLOATING_POINT,     \
+     token::LITERAL_CHAR,               \
+     token::LITERAL_NULL}
+
+#define IS_IDENTIFIER                                                              \
+    {                                                                              \
+        token::IDENTIFIER,       token::PRIMITIVE_VOID,  token::PRIMITIVE_BOOL,    \
+        token::PRIMITIVE_BYTE,   token::PRIMITIVE_CHAR,  token::PRIMITIVE_I8,      \
+        token::PRIMITIVE_U8,    token::PRIMITIVE_I16,    token::PRIMITIVE_U16,     \
+        token::PRIMITIVE_I32,   token::PRIMITIVE_U32,    token::PRIMITIVE_F32,     \
+        token::PRIMITIVE_I64,   token::PRIMITIVE_U64,    token::PRIMITIVE_F64,     \
+        token::PRIMITIVE_I128,  token::PRIMITIVE_U128,   \
+    }
+
+#define IS_KEYWORD                                                                \
+    {token::KEYWORD_IF,        token::KEYWORD_ELSE,      token::KEYWORD_UNLESS,   \
+     token::KEYWORD_SPAWN,     token::KEYWORD_AWAIT,     token::KEYWORD_THREAD,   \
+     token::KEYWORD_MACRO,     token::KEYWORD_DEFINE,    token::KEYWORD_FUNCTION, \
+     token::KEYWORD_OPERATOR,  token::KEYWORD_INLINE,    token::KEYWORD_RETURN,   \
+     token::KEYWORD_ENCLOSING, token::KEYWORD_ASYNC,     token::KEYWORD_FOR,      \
+     token::KEYWORD_WHILE,     token::KEYWORD_BREAK,     token::KEYWORD_CONTINUE, \
+     token::KEYWORD_CASE,      token::KEYWORD_MATCH,     token::KEYWORD_SWITCH,   \
+     token::KEYWORD_DEFAULT,   token::KEYWORD_ENUM,      token::KEYWORD_TYPE,     \
+     token::KEYWORD_CLASS,     token::KEYWORD_UNION,     token::KEYWORD_STRUCT,   \
+     token::KEYWORD_ABSTRACT,  token::KEYWORD_INTERFACE, token::KEYWORD_IS,       \
+     token::KEYWORD_TRY,       token::KEYWORD_PANIC,     token::KEYWORD_CATCH,    \
+     token::KEYWORD_FINALLY,   token::KEYWORD_LET,       token::KEYWORD_PRIVATE,  \
+     token::KEYWORD_AUTO,      token::KEYWORD_CONST,     token::KEYWORD_GLOBAL,   \
+     token::KEYWORD_FROM,      token::KEYWORD_FFI,       token::KEYWORD_IMPORT,   \
+     token::KEYWORD_EXTERN,    token::KEYWORD_YIELD,     token::KEYWORD_AS,       \
+     token::KEYWORD_DERIVES,   token::KEYWORD_MODULE}
+
+#define IS_DELIMITER           \
+    {token::DELIMITER_TAB,     \
+     token::DELIMITER_NEWLINE, \
+     token::EOF_TOKEN,         \
+     token::DELIMITER_SPACE,   \
+     token::WHITESPACE}
+
+#define IS_UNARY_OPERATOR         \
+    {token::OPERATOR_ADD,         \
+     token::OPERATOR_SUB,         \
+     token::OPERATOR_BITWISE_NOT, \
+     token::OPERATOR_LOGICAL_NOT, \
+     token::OPERATOR_POW,         \
+     token::OPERATOR_ABS,         \
+     token::OPERATOR_INC,         \
+     token::OPERATOR_DEC,         \
+     token::OPERATOR_RANGE,       \
+     token::OPERATOR_MUL,         \
+     token::OPERATOR_MAT,         \
+     token::OPERATOR_BITWISE_AND, \
+     token::OPERATOR_RANGE_INCLUSIVE}
+
+#define IS_OPERATOR                          \
+    {token::OPERATOR_ADD,                    \
+     token::OPERATOR_SUB,                    \
+     token::OPERATOR_MUL,                    \
+     token::OPERATOR_DIV,                    \
+     token::OPERATOR_MOD,                    \
+     token::OPERATOR_MAT,                    \
+     token::OPERATOR_BITWISE_AND,            \
+     token::OPERATOR_BITWISE_OR,             \
+     token::OPERATOR_BITWISE_XOR,            \
+     token::OPERATOR_BITWISE_NOT,            \
+     token::OPERATOR_ASSIGN,                 \
+     token::OPERATOR_LOGICAL_NOT,            \
+     token::OPERATOR_POW,                    \
+     token::OPERATOR_ABS,                    \
+     token::OPERATOR_BITWISE_L_SHIFT,        \
+     token::OPERATOR_BITWISE_NAND,           \
+     token::OPERATOR_BITWISE_R_SHIFT,        \
+     token::OPERATOR_BITWISE_NOR,            \
+     token::OPERATOR_EQUAL,                  \
+     token::OPERATOR_NOT_EQUAL,              \
+     token::OPERATOR_GREATER_THAN_EQUALS,    \
+     token::OPERATOR_INC,                    \
+     token::OPERATOR_DEC,                    \
+     token::OPERATOR_LESS_THAN_EQUALS,       \
+     token::OPERATOR_ADD_ASSIGN,             \
+     token::OPERATOR_SUB_ASSIGN,             \
+     token::OPERATOR_MUL_ASSIGN,             \
+     token::OPERATOR_BITWISE_AND_ASSIGN,     \
+     token::OPERATOR_BITWISE_OR_ASSIGN,      \
+     token::OPERATOR_BITWISE_NOR_ASSIGN,     \
+     token::OPERATOR_BITWISE_XOR_ASSIGN,     \
+     token::OPERATOR_BITWISE_NOT_ASSIGN,     \
+     token::OPERATOR_DIV_ASSIGN,             \
+     token::OPERATOR_MOD_ASSIGN,             \
+     token::OPERATOR_MAT_ASSIGN,             \
+     token::OPERATOR_LOGICAL_AND,            \
+     token::OPERATOR_LOGICAL_NAND,           \
+     token::OPERATOR_LOGICAL_OR,             \
+     token::OPERATOR_LOGICAL_NOR,            \
+     token::OPERATOR_LOGICAL_XOR,            \
+     token::OPERATOR_RANGE,                  \
+     token::OPERATOR_ARROW,                  \
+     token::OPERATOR_NOT_ASSIGN,             \
+     token::OPERATOR_SCOPE,                  \
+     token::OPERATOR_REF_EQUAL,              \
+     token::OPERATOR_POWER_ASSIGN,           \
+     token::OPERATOR_AND_ASSIGN,             \
+     token::OPERATOR_NAND_ASSIGN,            \
+     token::OPERATOR_OR_ASSIGN,              \
+     token::OPERATOR_NOR_ASSIGN,             \
+     token::OPERATOR_XOR_ASSIGN,             \
+     token::OPERATOR_BITWISE_NAND_ASSIGN,    \
+     token::OPERATOR_BITWISE_L_SHIFT_ASSIGN, \
+     token::OPERATOR_BITWISE_R_SHIFT_ASSIGN, \
+     token::OTHERS,                          \
+     token::PUNCTUATION_OPEN_ANGLE,          \
+     token::PUNCTUATION_CLOSE_ANGLE,         \
+     token::OPERATOR_RANGE_INCLUSIVE}
+
+#define IS_BINARY_OPERATOR                   \
+    {token::OPERATOR_ADD,                    \
+     token::OPERATOR_SUB,                    \
+     token::OPERATOR_MUL,                    \
+     token::OPERATOR_DIV,                    \
+     token::OPERATOR_MOD,                    \
+     token::OPERATOR_MAT,                    \
+     token::OPERATOR_BITWISE_AND,            \
+     token::OPERATOR_BITWISE_OR,             \
+     token::OPERATOR_BITWISE_XOR,            \
+     token::OPERATOR_ASSIGN,                 \
+     token::OPERATOR_BITWISE_NOR_ASSIGN,     \
+     token::OPERATOR_POW,                    \
+     token::OPERATOR_BITWISE_L_SHIFT,        \
+     token::OPERATOR_BITWISE_NOT_ASSIGN,     \
+     token::OPERATOR_BITWISE_R_SHIFT,        \
+     token::OPERATOR_EQUAL,                  \
+     token::OPERATOR_MAT_ASSIGN,             \
+     token::OPERATOR_NOT_EQUAL,              \
+     token::OPERATOR_GREATER_THAN_EQUALS,    \
+     token::OPERATOR_LESS_THAN_EQUALS,       \
+     token::OPERATOR_ADD_ASSIGN,             \
+     token::OPERATOR_SUB_ASSIGN,             \
+     token::OPERATOR_MUL_ASSIGN,             \
+     token::OPERATOR_DIV_ASSIGN,             \
+     token::OPERATOR_MOD_ASSIGN,             \
+     token::OPERATOR_BITWISE_AND_ASSIGN,     \
+     token::OPERATOR_BITWISE_OR_ASSIGN,      \
+     token::OPERATOR_BITWISE_XOR_ASSIGN,     \
+     token::OPERATOR_LOGICAL_AND,            \
+     token::OPERATOR_LOGICAL_OR,             \
+     token::OPERATOR_LOGICAL_XOR,            \
+     token::OPERATOR_RANGE,                  \
+     token::OPERATOR_ARROW,                  \
+     token::OPERATOR_NOT_ASSIGN,             \
+     token::OPERATOR_REF_EQUAL,              \
+     token::OPERATOR_POWER_ASSIGN,           \
+     token::OPERATOR_AND_ASSIGN,             \
+     token::OPERATOR_NAND_ASSIGN,            \
+     token::OPERATOR_OR_ASSIGN,              \
+     token::OPERATOR_NOR_ASSIGN,             \
+     token::OPERATOR_XOR_ASSIGN,             \
+     token::OPERATOR_BITWISE_NAND_ASSIGN,    \
+     token::OPERATOR_BITWISE_L_SHIFT_ASSIGN, \
+     token::OPERATOR_BITWISE_R_SHIFT_ASSIGN, \
+     token::OTHERS,                          \
+     token::PUNCTUATION_OPEN_ANGLE,          \
+     token::PUNCTUATION_CLOSE_ANGLE,         \
+     token::OPERATOR_RANGE_INCLUSIVE}
+
+#define IS_PUNCTUATION                       \
+    {token::PUNCTUATION_OPEN_PAREN,          \
+     token::PUNCTUATION_CLOSE_PAREN,         \
+     token::PUNCTUATION_OPEN_BRACE,          \
+     token::PUNCTUATION_CLOSE_BRACE,         \
+     token::PUNCTUATION_OPEN_BRACKET,        \
+     token::PUNCTUATION_CLOSE_BRACKET,       \
+     token::PUNCTUATION_COMMA,               \
+     token::PUNCTUATION_SEMICOLON,           \
+     token::PUNCTUATION_COLON,               \
+     token::PUNCTUATION_QUESTION_MARK,       \
+     token::PUNCTUATION_DOT,                 \
+     token::PUNCTUATION_SINGLE_LINE_COMMENT, \
+     token::PUNCTUATION_MULTI_LINE_COMMENT,  \
+     token::PUNCTUATION_ELLIPSIS}
+
+#define IS_PRIMITIVE                                                            \
+    {token::PRIMITIVE_VOID,  token::PRIMITIVE_BOOL,    token::PRIMITIVE_BYTE,   \
+     token::PRIMITIVE_CHAR,  token::PRIMITIVE_POINTER, token::PRIMITIVE_I8,     \
+     token::PRIMITIVE_U8,    token::PRIMITIVE_I16,     token::PRIMITIVE_U16,    \
+     token::PRIMITIVE_I32,   token::PRIMITIVE_U32,     token::PRIMITIVE_F32,    \
+     token::PRIMITIVE_I64,   token::PRIMITIVE_U64,     token::PRIMITIVE_F64,    \
+     token::PRIMITIVE_FLOAT, token::PRIMITIVE_I128,    token::PRIMITIVE_U128,   \
+     token::PRIMITIVE_INT,   token::PRIMITIVE_DECIMAL, token::PRIMITIVE_STRING, \
+     token::PRIMITIVE_LIST,  token::PRIMITIVE_TUPLE,   token::PRIMITIVE_SET,    \
+     token::PRIMITIVE_MAP,   token::PRIMITIVE_ANY}
+
+#endif  // __CASE_TYPES_H__

@@ -1,1 +1,31 @@
-this_is_a_fn_call(1, 2, 3);
+fn main() {
+    print("THIS IS A TEST");
+}
+
+fn test_fn() -> i32 {
+    return 0;
+}
+
+class WithGenerics requires <T> {
+    let x: T;
+    let static y: i32;
+
+    fn WithGenerics(self) {
+        self.x = 0;
+        WithGenerics::y = 0;
+    }
+}
+
+class WithGenericsBound requires <T> if T has Number {
+    pub let x: T;
+    pub let y: i32;
+
+    fn WithGenericsBound(self) {
+        self.x = 0;
+        WithGenericsBound::y = 0;
+    }
+
+    pub fn something(self, a: int, y: float = 19.21) {
+        print("Hello, World!");
+    }
+}

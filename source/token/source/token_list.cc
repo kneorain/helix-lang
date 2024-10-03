@@ -48,26 +48,34 @@ void TokenList::reset() { it = this->cbegin(); }
 
 const std::string &TokenList::file_name() const { return filename; }
 
-TokenList&& TokenList::slice(const std::uint64_t start, std::int64_t end) {
-    if (end < 0) {
-        end = static_cast<std::int64_t>(this->size());  // - (-end);
-    }
-    if (end > static_cast<std::int64_t>(this->size())) {
-        end = static_cast<std::int64_t>(this->size());
+TokenList TokenList::slice(const u64 start, i64 end) {
+    if (start > static_cast<u64>(std::numeric_limits<i64>::max())) [[unlikely]] {
+        throw std::out_of_range("start is greater than the maximum value of i64.");
     }
 
-    if (start > end) {
-        throw std::out_of_range("Start of slice is greater than range.");
+    if (end < 0) [[likely]] {
+        end = static_cast<i64>(this->size());
     }
 
-    difference_type start_index = start;
-    difference_type end_index   = end;
+    if (end > static_cast<i64>(this->size())) [[unlikely]] {
+        end = static_cast<i64>(this->size());
+    }
+
+    if (start > static_cast<u64>(std::numeric_limits<TokenVec::difference_type>::max())) [[unlikely]] {
+        throw std::out_of_range("start of slice is greater than allowable range.");
+    }
+
+    if (static_cast<i64>(start) > end) [[unlikely]] {
+        throw std::out_of_range("start of slice is greater than end.");
+    }
+
+    auto start_index = static_cast<difference_type>(start);
+    difference_type end_index = end;
 
     return {this->filename, this->cbegin() + start_index, this->cbegin() + end_index};
 }
 
-TokenList TokenList::raw_slice(const std::uint64_t start, const std::int64_t end) const {
-
+TokenList TokenList::raw_slice(const u64 start, const i64 end) const {
     auto start_index = static_cast<TokenVec::difference_type>(start);
     auto end_index   = static_cast<TokenVec::difference_type>(end);
 
@@ -77,14 +85,14 @@ TokenList TokenList::raw_slice(const std::uint64_t start, const std::int64_t end
 /// @brief
 /// @param i Inclusive split
 /// @return first is the left side of the split and the second is the right
-std::pair<TokenList, TokenList> TokenList::split_at(const std::uint64_t i) const {
+std::pair<TokenList, TokenList> TokenList::split_at(const u64 i) const {
     auto      start_idx = static_cast<TokenVec::difference_type>(i);
     TokenList first{this->filename, this->cbegin(), cbegin() + start_idx};
     TokenList second{this->filename, this->cbegin() + start_idx, this->cend()};
     return {first, second};
 }
 
-TokenList TokenList::pop(const std::uint64_t offset) {
+TokenList TokenList::pop(const u64 offset) {
 
     auto diff = static_cast<TokenVec::difference_type>(offset);
     *this     = {this->filename, this->cbegin() + diff + 1, this->cend()};
@@ -195,6 +203,10 @@ Token *TokenList::TokenListIter::operator->() {
 
 TokenList::TokenListIter &TokenList::TokenListIter::operator*() { return *this; }
 
+const Token &TokenList::TokenListIter::operator*() const {
+    return tokens.get()[cursor_position];
+}
+
 std::reference_wrapper<TokenList::TokenListIter> TokenList::TokenListIter::operator--() {
     if ((cursor_position - 1) >= 0) {
         --cursor_position;
@@ -213,7 +225,7 @@ std::reference_wrapper<TokenList::TokenListIter> TokenList::TokenListIter::opera
     throw std::out_of_range("access to token in token list is out of bounds");
 }
 
-std::reference_wrapper<Token> TokenList::TokenListIter::advance(const std::int32_t n) {
+std::reference_wrapper<Token> TokenList::TokenListIter::advance(const i32 n) {
     if ((cursor_position + n) <= end + 1) {
         ++cursor_position;
     }
@@ -225,7 +237,7 @@ std::reference_wrapper<Token> TokenList::TokenListIter::advance(const std::int32
     return tokens.get()[cursor_position];
 }
 
-std::reference_wrapper<Token> TokenList::TokenListIter::reverse(const std::int32_t n) {
+std::reference_wrapper<Token> TokenList::TokenListIter::reverse(const i32 n) {
     if ((cursor_position - n) >= 0) {
         --cursor_position;
     }
@@ -238,7 +250,7 @@ std::reference_wrapper<Token> TokenList::TokenListIter::reverse(const std::int32
 }
 
 std::optional<std::reference_wrapper<Token>>
-TokenList::TokenListIter::peek(const std::int32_t n) const {
+TokenList::TokenListIter::peek(const i32 n) const {
     if ((cursor_position + n) <= end) {
         return tokens.get()[cursor_position + n];
     }
@@ -247,7 +259,7 @@ TokenList::TokenListIter::peek(const std::int32_t n) const {
 }
 
 std::optional<std::reference_wrapper<Token>>
-TokenList::TokenListIter::peek_back(const std::int32_t n) const {
+TokenList::TokenListIter::peek_back(const i32 n) const {
     if ((cursor_position - n) >= 0) {
         return tokens.get()[cursor_position - n];
     }

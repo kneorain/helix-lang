@@ -70,6 +70,7 @@ function setup_windows()
 	add_linkdirs(".\\libs\\llvm-18.1.9-src\\llvm\\lib")
 	add_includedirs(".\\libs\\llvm-18.1.9-src\\clang\\include")
 	add_linkdirs(".\\libs\\llvm-18.1.9-src\\clang\\lib")
+
 end
 
 function setup_linux()
@@ -104,7 +105,7 @@ function setup_debug()
 	set_symbols ("debug") -- Generate debug symbols
 	set_optimize("none")  -- Disable optimization
 	add_defines ("DEBUG") -- Define DEBUG macro
-    set_warnings("all")
+    set_warnings("all", "extra")
 end
 
 function setup_release()
@@ -169,6 +170,8 @@ local function helix_src_setup()
 	add_headerfiles("libs/neo-panic/**.hh")  -- add all files in the neo-json directory
 	add_headerfiles("libs/neo-pprint/**.hh") -- add all files in the neo-json directory
 	add_headerfiles("libs/neo-types/**.hh")  -- add all files in the neo-json directory
+
+	add_headerfiles("libs/PEGTL/**.hpp")  -- add all files in the neo-json directory
 
 	add_files("libs/neo-panic/**.cc") -- add all files in the neo-json directory
 end

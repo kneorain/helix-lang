@@ -28,7 +28,6 @@
 #include "neo-pprint/include/hxpprint.hh"
 #include "token/include/token.hh"
 
-
 namespace std {
 static inline void lstrip(std::string &str) {
     str.erase(str.begin(), std::find_if(str.begin(), str.end(), [](unsigned char chr) {
@@ -460,7 +459,7 @@ void Panic::show_error() {
 
         // Check if the current line is blank
         if (line_content.empty()) {
-            auto   next_it     = it + 1;
+            auto   next_it     = std::next(it);  // safer alternative to it + 1
             size_t blank_count = 1;
 
             // Count consecutive blank lines
@@ -476,17 +475,20 @@ void Panic::show_error() {
 
             // Keep only one blank line if more than one consecutive blank lines
             if (blank_count > 1) {
-                it = lines.erase(it + 1, it + blank_count);
+                // Use `erase` and update the iterator
+                it = lines.erase(std::next(it), next_it);  // safely erase using `next_it`
+            } else {
+                ++it;
             }
+        } else {
+            ++it;
         }
-
-        it++;
     }
 
     // add the message
     formatted_error += A_W + final_err.level + ": " + final_err.msg + string(colors::reset) +
                        "\n";  // fatal: missing semicolon
-    formatted_error += A_W + string(level_len-1, ' ') + "-->  at " +
+    formatted_error += A_W + string(level_len - 1, ' ') + "-->  at " +
                        format_loc_info(final_err.file, final_err.line, final_err.col) + "\n";
 
     string left_side;

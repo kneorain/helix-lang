@@ -1,0 +1,514 @@
+// this is the language definition for helix
+// this is higher level then ebnf and is used to define the syntax of helix
+// this is a sudo code language that defines the syntax and ast structure of helix
+
+ffi "c++" enum tokens { // tokens in the c++ is defined in the token namespace - token::TOKEN_NAME
+    KEYWORD_IF, KEYWORD_ELSE, KEYWORD_UNLESS, KEYWORD_MACRO, KEYWORD_DEFINE, KEYWORD_FUNCTION,
+    KEYWORD_OPERATOR, KEYWORD_INLINE, KEYWORD_RETURN, KEYWORD_ENCLOSING, KEYWORD_ASYNC, KEYWORD_SPAWN,
+    KEYWORD_STATIC, KEYWORD_AWAIT, KEYWORD_THREAD, KEYWORD_FOR, KEYWORD_WHILE, KEYWORD_BREAK,
+    KEYWORD_CONTINUE, KEYWORD_CASE, KEYWORD_MATCH, KEYWORD_SWITCH, KEYWORD_DEFAULT, KEYWORD_ENUM,
+    KEYWORD_TYPE, KEYWORD_CLASS, KEYWORD_UNION, KEYWORD_STRUCT, KEYWORD_ABSTRACT, KEYWORD_INTERFACE,
+    KEYWORD_IS, KEYWORD_TRY, KEYWORD_PANIC, KEYWORD_CATCH, KEYWORD_FINALLY, KEYWORD_LET,
+    KEYWORD_PRIVATE, KEYWORD_AUTO, KEYWORD_CONST, KEYWORD_GLOBAL, KEYWORD_FROM, KEYWORD_FFI,
+    KEYWORD_IMPORT, KEYWORD_YIELD, KEYWORD_AS, KEYWORD_DERIVES, KEYWORD_MODULE, KEYWORD_UNSAFE,
+    DELIMITER_TAB, DELIMITER_NEWLINE, DELIMITER_SPACE, LITERAL_TRUE, LITERAL_FALSE, LITERAL_INTEGER,
+    LITERAL_COMPLIER_DIRECTIVE, LITERAL_FLOATING_POINT, LITERAL_STRING, LITERAL_CHAR, LITERAL_NULL,
+    OPERATOR_ADD, OPERATOR_SUB, OPERATOR_MUL, OPERATOR_DIV, OPERATOR_MOD, OPERATOR_MAT,
+    OPERATOR_BITWISE_AND, OPERATOR_BITWISE_OR, OPERATOR_BITWISE_XOR, OPERATOR_BITWISE_NOT,
+    OPERATOR_ASSIGN, OPERATOR_LOGICAL_NOT, OPERATOR_POW, OPERATOR_ABS, OPERATOR_BITWISE_L_SHIFT,
+    OPERATOR_BITWISE_NAND, OPERATOR_BITWISE_R_SHIFT, OPERATOR_BITWISE_NOR, OPERATOR_EQUAL,
+    OPERATOR_NOT_EQUAL, OPERATOR_GREATER_THAN_EQUALS, OPERATOR_INC, OPERATOR_DEC,
+    OPERATOR_LESS_THAN_EQUALS, OPERATOR_ADD_ASSIGN, OPERATOR_SUB_ASSIGN, OPERATOR_MUL_ASSIGN,
+    OPERATOR_BITWISE_AND_ASSIGN, OPERATOR_BITWISE_OR_ASSIGN, OPERATOR_BITWISE_NOR_ASSIGN,
+    OPERATOR_BITWISE_XOR_ASSIGN, OPERATOR_BITWISE_NOT_ASSIGN, OPERATOR_DIV_ASSIGN, OPERATOR_MOD_ASSIGN,
+    OPERATOR_MAT_ASSIGN, OPERATOR_LOGICAL_AND, OPERATOR_LOGICAL_NAND, OPERATOR_LOGICAL_OR,
+    OPERATOR_LOGICAL_NOR, OPERATOR_LOGICAL_XOR, OPERATOR_RANGE, OPERATOR_ARROW, OPERATOR_NOT_ASSIGN,
+    OPERATOR_SCOPE, OPERATOR_REF_EQUAL, OPERATOR_POWER_ASSIGN, OPERATOR_AND_ASSIGN, OPERATOR_NAND_ASSIGN,
+    OPERATOR_OR_ASSIGN, OPERATOR_NOR_ASSIGN, OPERATOR_XOR_ASSIGN, OPERATOR_BITWISE_NAND_ASSIGN,
+    OPERATOR_BITWISE_L_SHIFT_ASSIGN, OPERATOR_BITWISE_R_SHIFT_ASSIGN, OPERATOR_RANGE_INCLUSIVE, IDENTIFIER,
+    WHITESPACE, OTHERS, EOF_TOKEN, PRIMITIVE_VOID, PRIMITIVE_BOOL, PRIMITIVE_BYTE, PRIMITIVE_CHAR,
+    PRIMITIVE_POINTER, PRIMITIVE_I8, PRIMITIVE_U8, PRIMITIVE_I16, PRIMITIVE_U16, PRIMITIVE_I32,
+    PRIMITIVE_U32, PRIMITIVE_F32, PRIMITIVE_I64, PRIMITIVE_U64, PRIMITIVE_F64, PRIMITIVE_FLOAT,
+    PRIMITIVE_I128, PRIMITIVE_U128, PRIMITIVE_INT, PRIMITIVE_DECIMAL, PRIMITIVE_STRING,
+    PRIMITIVE_LIST, PRIMITIVE_TUPLE, PRIMITIVE_SET, PRIMITIVE_MAP, PRIMITIVE_ANY, PUNCTUATION_OPEN_PAREN,
+    PUNCTUATION_CLOSE_PAREN, PUNCTUATION_OPEN_BRACE, PUNCTUATION_CLOSE_BRACE, PUNCTUATION_OPEN_BRACKET,
+    PUNCTUATION_CLOSE_BRACKET, PUNCTUATION_OPEN_ANGLE, PUNCTUATION_CLOSE_ANGLE, PUNCTUATION_COMMA,
+    PUNCTUATION_SEMICOLON, PUNCTUATION_COLON, PUNCTUATION_QUESTION_MARK, PUNCTUATION_DOT,
+    PUNCTUATION_SINGLE_LINE_COMMENT, PUNCTUATION_MULTI_LINE_COMMENT, PUNCTUATION_ELLIPSIS,
+};
+
+let Identifier_T <- tokens::IDENTIFIER
+
+let Literal_T    <- tokens::LITERAL_TRUE           | tokens::LITERAL_FALSE  | tokens::LITERAL_INTEGER
+                  | tokens::LITERAL_FLOATING_POINT | tokens::LITERAL_STRING | tokens::LITERAL_CHAR
+                  | tokens::LITERAL_NULL
+
+let Operator_T <- tokens::OPERATOR_ADD                 | tokens::OPERATOR_SUB                    | tokens::OPERATOR_MUL
+                | tokens::OPERATOR_BITWISE_AND         | tokens::OPERATOR_BITWISE_OR             | tokens::OPERATOR_BITWISE_XOR
+                | tokens::OPERATOR_DIV                 | tokens::OPERATOR_MOD                    | tokens::OPERATOR_MAT
+                | tokens::OPERATOR_BITWISE_NOT         | tokens::OPERATOR_ASSIGN                 | tokens::OPERATOR_LOGICAL_NOT
+                | tokens::OPERATOR_POW                 | tokens::OPERATOR_ABS                    | tokens::OPERATOR_BITWISE_L_SHIFT
+                | tokens::OPERATOR_BITWISE_NAND        | tokens::OPERATOR_BITWISE_R_SHIFT        | tokens::OPERATOR_BITWISE_NOR
+                | tokens::OPERATOR_EQUAL               | tokens::OPERATOR_NOT_EQUAL              | tokens::OPERATOR_GREATER_THAN_EQUALS
+                | tokens::OPERATOR_INC                 | tokens::OPERATOR_DEC                    | tokens::OPERATOR_LESS_THAN_EQUALS
+                | tokens::OPERATOR_ADD_ASSIGN          | tokens::OPERATOR_SUB_ASSIGN             | tokens::OPERATOR_MUL_ASSIGN
+                | tokens::OPERATOR_BITWISE_AND_ASSIGN  | tokens::OPERATOR_BITWISE_OR_ASSIGN      | tokens::OPERATOR_BITWISE_NOR_ASSIGN
+                | tokens::OPERATOR_BITWISE_XOR_ASSIGN  | tokens::OPERATOR_BITWISE_NOT_ASSIGN     | tokens::OPERATOR_DIV_ASSIGN
+                | tokens::OPERATOR_MOD_ASSIGN          | tokens::OPERATOR_MAT_ASSIGN             | tokens::OPERATOR_LOGICAL_AND
+                | tokens::OPERATOR_LOGICAL_NAND        | tokens::OPERATOR_LOGICAL_OR             | tokens::OPERATOR_LOGICAL_NOR
+                | tokens::OPERATOR_LOGICAL_XOR         | tokens::OPERATOR_RANGE                  | tokens::OPERATOR_ARROW
+                | tokens::OPERATOR_NOT_ASSIGN          | tokens::OPERATOR_SCOPE                  | tokens::OPERATOR_REF_EQUAL
+                | tokens::OPERATOR_POWER_ASSIGN        | tokens::OPERATOR_AND_ASSIGN             | tokens::OPERATOR_NAND_ASSIGN
+                | tokens::OPERATOR_OR_ASSIGN           | tokens::OPERATOR_NOR_ASSIGN             | tokens::OPERATOR_XOR_ASSIGN
+                | tokens::OPERATOR_BITWISE_NAND_ASSIGN | tokens::OPERATOR_BITWISE_L_SHIFT_ASSIGN | tokens::OPERATOR_BITWISE_R_SHIFT_ASSIGN
+                | tokens::OPERATOR_RANGE_INCLUSIVE     | tokens::PUNCTUATION_ELLIPSIS            | tokens::PUNCTUATION_OPEN_ANGLE
+                | tokens::PUNCTUATION_CLOSE_ANGLE
+
+let Primitive_T <- tokens::PRIMITIVE_VOID    | tokens::PRIMITIVE_BOOL | tokens::PRIMITIVE_BYTE  | tokens::PRIMITIVE_CHAR
+                 | tokens::PRIMITIVE_POINTER | tokens::PRIMITIVE_I8   | tokens::PRIMITIVE_U8    | tokens::PRIMITIVE_I16
+                 | tokens::PRIMITIVE_U16     | tokens::PRIMITIVE_I32  | tokens::PRIMITIVE_U32   | tokens::PRIMITIVE_F32
+                 | tokens::PRIMITIVE_I64     | tokens::PRIMITIVE_U64  | tokens::PRIMITIVE_F64   | tokens::PRIMITIVE_FLOAT
+                 | tokens::PRIMITIVE_I128    | tokens::PRIMITIVE_U128 | tokens::PRIMITIVE_INT   | tokens::PRIMITIVE_DECIMAL
+                 | tokens::PRIMITIVE_STRING  | tokens::PRIMITIVE_LIST | tokens::PRIMITIVE_TUPLE | tokens::PRIMITIVE_SET
+                 | tokens::PRIMITIVE_MAP
+
+let TypeQualifier_T       <- tokens::KEYWORD_CONST     | tokens::KEYWORD_UNSAFE  | tokens::KEYWORD_INLINE  | tokens::KEYWORD_STATIC
+                           | tokens::KEYWORD_EVAL      | (tokens::KEYWORD_CONST? + tokens::KEYWORD_EVAL)
+
+let StorageSpecifier_T    <- tokens::KEYWORD_GLOBAL    | tokens::KEYWORD_STATIC   | tokens::KEYWORD_UNSAFE | tokens::KEYWORD_FFI
+
+let VisibilitySpecifier_T <- tokens::KEYWORD_PUBLIC    | tokens::KEYWORD_PRIVATE  | tokens::KEYWORD_PROTECTED
+
+let FunctionSpecifier_T   <- tokens::KEYWORD_INLINE    | tokens::KEYWORD_ABSTRACT | tokens::KEYWORD_CONST  | tokens::KEYWORD_OVERRIDE
+                           | tokens::KEYWORD_EVAL      | (tokens::KEYWORD_CONST?  + tokens::KEYWORD_EVAL)
+
+let FunctionQualifier_T   <- tokens::KEYWORD_ABSTRACT | tokens::KEYWORD_DEFAULT  | tokens::KEYWORD_DELETE | tokens::KEYWORD_OVERRIDE
+                           | tokens::KEYWORD_CONST
+
+// ----------------------------------------- Expressions ---------------------------------------- //
+
+class LiteralExpression:
+    := Literal_T$1
+    value = $1
+
+class BinaryExpression:
+    := (class Expression)$1 + Operator_T$2 + (class Expression)$3
+    left     = $1
+    operator = $2
+    right    = $3
+
+class UnaryExpression:
+    := Operator_T$1 + (class Expression)$2
+    operator = $1
+    operand  = $2
+
+class IdentifierExpression:
+    := Identifier_T$1
+    name = $1
+
+class NamedArgument:
+    := (class IdentifierExpression)$1 + tokens::PUNCTUATION_ASSIGN + (class Expression)$2
+    name  = $1
+    value = $2
+
+class PositionalArgumentExpression:
+    := (class Expression)$1
+    value = $1
+
+class ArgumentExpression:
+    := (class PositionalArgumentExpression)$1 | (class NamedArgument)$1
+    value = $1
+    arg_t = 'positional' else 'keyword'
+
+class ArgumentListExpression:
+    := tokens::PUNCTUATION_OPEN_PAREN + (class ArgumentExpression)$1 + ((tokens::PUNCTUATION_COMMA + (class ArgumentExpression)$1)*)? + tokens::PUNCTUATION_CLOSE_PAREN
+    arguments[] = $1
+
+class GenericPositionalArgumentExpression:
+    := (class Expression)$1
+    value = $1
+
+class GenericNamedArgumentExpression:
+    := (class IdentifierExpression)$1 + tokens::PUNCTUATION_ASSIGN + (class Expression)$2
+    name  = $1
+    value = $2
+
+class GenericArgumentExpression:
+    := (class GenericPositionalArgumentExpression)$1 | (class GenericNamedArgumentExpression)$1
+    value = $1
+    arg_t = 'positional' else 'keyword'
+
+class GenericInvocationExpression:
+    := tokens::PUNCTUATION_OPEN_ANGLE + (class GenericArgumentExpression)$1 + ((tokens::PUNCTUATION_COMMA + (class GenericArgumentExpression)$1)*)? + tokens::PUNCTUATION_CLOSE_ANGLE
+    arguments[] = $1
+
+class ScopeAccessExpression:
+    := (class IdentifierExpression)$1 + (class GenericInvocationExpression?)$2 + ((tokens::OPERATOR_SCOPE + (class IdentifierExpression)$1 + (class GenericInvocationExpression?)$2)*)?
+    names[] = $1
+    generics[] = $2
+
+class DotAccessExpression:
+    := (class Expression)$1 + (class GenericInvocationExpression?)$2 + ((tokens::PUNCTUATION_DOT + (class Expression)$1 + (class GenericInvocationExpression?)$2)*)?
+    paths[] = $1
+    generics[] = $2
+
+class ArrayAccessExpression:
+    := (class Expression)$1 + tokens::PUNCTUATION_OPEN_BRACKET + (class Expression)$2 + tokens::PUNCTUATION_CLOSE_BRACKET
+    array = $1
+    index = $2
+
+class MemberAccessExpression:
+    := (class DotAccessExpression)$1 | (class ScopeAccessExpression)$1
+    path = $1
+    type = 'dot' else 'scope'
+
+class QualifiedPathExpression:
+    := ((class MemberAccessExpression)$1)*
+    paths[] = $1
+
+class FunctionCallExpression:
+    := (class QualifiedPathExpression)$1 + (class GenericInvocationExpression?)$2 + (class ArgumentListExpression)$3
+    function = $1
+    arguments = $2
+
+class ArrayLiteralExpression:
+    := tokens::PUNCTUATION_OPEN_BRACKET + ((class Expression)$1 + (tokens::PUNCTUATION_COMMA + (class Expression)$1)*)? + tokens::PUNCTUATION_CLOSE_BRACKET
+    elements[] = $1
+
+class TupleLiteralExpression:
+    := tokens::PUNCTUATION_OPEN_PAREN + ((class Expression)$1 + (tokens::PUNCTUATION_COMMA + (class Expression)$1)*)? + tokens::PUNCTUATION_CLOSE_PAREN
+    elements[] = $1
+
+class SetLiteralExpression:
+    := tokens::PUNCTUATION_OPEN_BRACE + ((class Expression)$1 + (tokens::PUNCTUATION_COMMA + (class Expression)$1)*)? + tokens::PUNCTUATION_CLOSE_BRACE
+    elements[] = $1
+
+class MapPairExpression:
+    := (class Expression)$1 + tokens::PUNCTUATION_COLON + (class Expression)$1
+    key = $1
+    value = $2
+
+class MapLiteralExpression:
+    := tokens::PUNCTUATION_OPEN_BRACE + ((class MapPairExpression)$1 + (tokens::PUNCTUATION_COMMA + (class MapPairExpression)$1)*)? + tokens::PUNCTUATION_CLOSE_BRACE
+    elements[] = $1
+
+class LambdaExpression:
+    := tokens::KEYWORD_FUNCTION + (class ArgumentListExpression)$1 + tokens::OPERATOR_ARROW + (class Suite)$2
+    arguments = $1
+    body = $2
+    type = 'suite'
+
+class PyTernaryExpression:
+    := (class Expression)$1 + tokens::KEYWORD_IF + (class Expression)$2 + tokens::KEYWORD_ELSE + (class Expression)$3
+    condition = $2
+    true = $1
+    false = $3
+
+class CTernaryExpression:
+    := (class Expression)$1 + tokens::PUNCTUATION_QUESTION_MARK + (class Expression)$2 + tokens::PUNCTUATION_COLON + (class Expression)$3
+    condition = $1
+    true = $2
+    false = $3
+
+class TernaryExpression:
+    := (class PyTernaryExpression)$1 | (class CTernaryExpression)$1
+    condition = $1
+    type = 'py' else 'c'
+
+class ParenthesizedExpression:
+    := tokens::PUNCTUATION_OPEN_PAREN + (class Expression)$1 + tokens::PUNCTUATION_CLOSE_PAREN
+    expression = $1
+
+class CastExpression:
+    := (class Expression)$1 + tokens::KEYWORD_AS + (class Type)$2
+    expression = $1
+    value = $2
+
+class InstanceOfExpression:
+    := ((class Expression)$1 + tokens::KEYWORD_HAS + (class Expression)$2) | ((class Expression)$1 + tokens::KEYWORD_DERIVES + (class Type)$2)
+    expression = $1
+    value = $2
+    type = 'has' | 'derives'
+
+class Expression:
+    := (class LiteralExpression)$1      | (class BinaryExpression)$1        | (class UnaryExpression)$1       | (class IdentifierExpression)$1
+     | (class ArrayLiteralExpression)$1 | (class TupleLiteralExpression)$1  | (class SetLiteralExpression)$1  | (class MapLiteralExpression)$1
+     | (class LambdaExpression)$1       | (class Block)$1                   | (class Suite)$1                 | (class TernaryExpression)$1
+     | (class CastExpression)$1         | (class QualifiedPathExpression)$1 | (class ArrayAccessExpression)$1 | (class FunctionCallExpression)$1
+     | (class ParenthesizedExpression)$1
+    value = $1
+    type = 'literal' | 'binary' | 'unary' | 'identifier' | 'array' | 'tuple' | 'set' | 'map' | 'lambda' | 'block' | 'suite' | 'ternary' | 'cast' | 'path' | 'access' | 'call' | 'parenthesized'
+
+// -------------------------------------------- Type -------------------------------------------- //
+
+class PtrType:
+    := ((tokens::OPERATOR_MUL | tokens::OPERATOR_BITWISE_AND) + ((class ScopeAccessExpression) | (class IdentifierExpression))$1) | (((class ScopeAccessExpression) | (class IdentifierExpression))$1 + (tokens::OPERATOR_MUL | tokens::OPERATOR_BITWISE_AND))
+    value = $1
+    value_t = 'scope' | 'identifier'
+    type = 'ptr' | 'ref'
+    
+
+class Type:
+    := Primitive_T$2 | (
+        ((tokens::KEYWORD_UNSAFE | tokens::KEYWORD_CONST)$1)? + ((class PtrType)$2 | ((class ScopeAccessExpression) | (class IdentifierExpression))$2)
+    ) + (tokens::PUNCTUATION_QUESTION_MARK?)$3
+    value = $2
+    variant = $1
+    nullable = $3
+    type = 'prim' | 'ptr' | 'scope' | 'identifier'
+
+// ----------------------------------------- Statements ----------------------------------------- //
+
+class NamedVarSpecifier:
+    := (class VariableCreation | class VariableDeclaration)$1
+    value = $1
+
+class ForPyStatementCore:
+    := (class NamedVarSpecifier)$1 + ((tokens::PUNCTUATION_COMMA + (class NamedVarSpecifier)$1)*)? + tokens::KEYWORD_IN + (class Expression)$2
+    identifiers[] = $1
+    iterable = $2
+
+class ForCStatementCore:
+    := ((class NamedVarSpecifier)$1 + ((tokens::PUNCTUATION_COMMA + (class NamedVarSpecifier)$1)*)?)? + tokens::PUNCTUATION_SEMICOLON + (class Expression?)$2 + tokens::PUNCTUATION_SEMICOLON + (class Expression?)$2
+    identifiers[] = $1
+    condition = $2
+    increment = $3
+
+class ForState:
+    := tokens::KEYWORD_FOR + ((tokens::PUNCTUATION_OPEN_PAREN + (class ForPyStatementCore | class ForCStatementCore)$1 + tokens::PUNCTUATION_CLOSE_PAREN) | (class ForPyStatementCore | class ForCStatementCore)$1) + (class Suite)$2
+    core = $1
+    body = $2
+    type = 'py' | 'c'
+
+class WhileState:
+    := tokens::KEYWORD_WHILE + (class Expression)$1 + (class Suite)$2
+    condition = $1
+    body = $2
+
+class ElseState:
+    := (tokens::KEYWORD_ELSE + tokens::KEYWORD_IF + (class Expression)$1 + (class Suite)$2) | (tokens::KEYWORD_ELSE + (class Suite)$1)
+    body = $1
+    condition = $2
+    type = 'else-if' | 'else'
+
+class IfState
+    := tokens::KEYWORD_IF + (class Expression)$1 + (class Suite)$2 + ((class ElseState)$1)*
+    condition = $1
+    body = $2
+    else = $3
+
+class SwitchCaseState:
+    := tokens::KEYWORD_CASE + (class Expression)$1 + (class Suite)$2 + tokens::PUNCTUATION_SEMICOLON
+    condition = $1
+    body = $2
+
+class SwitchState:
+    := tokens::KEYWORD_SWITCH + (class Expression)$1 + tokens::PUNCTUATION_OPEN_BRACE + ((class SwitchCaseState)$1)* + tokens::PUNCTUATION_CLOSE_BRACE
+    condition = $1
+    cases[] = $2
+
+class YieldState:
+    := tokens::KEYWORD_YIELD + (class Expression)$1 + tokens::PUNCTUATION_SEMICOLON
+    value = $1
+
+class AliasState:
+    := tokens::KEYWORD_AS + (class QualifiedPathExpression)$1
+    path = $1
+
+class SingleImportState:
+    := (class QualifiedPathExpression)$1 + (class AliasState)$2?
+    module = $1
+    alias = $2
+
+class MultiImportState:
+    := tokens::PUNCTUATION_OPEN_BRACE + ((class SingleImport)$1) + ((tokens::PUNCTUATION_COMMA + (class SingleImport)$1)*)? + tokens::PUNCTUATION_CLOSE_BRACE
+    imports[] = $1
+
+class ImportState:
+    := tokens::KEYWORD_IMPORT + (class SingleImport)$1 + ((class MultiImportState)$2)? + tokens::PUNCTUATION_SEMICOLON
+    module = $1
+    imports = $2
+ 
+class ReturnState:
+    := tokens::KEYWORD_RETURN + (class Expression)$1 + tokens::PUNCTUATION_SEMICOLON
+    value = $1
+
+class BreakState:
+    := tokens::KEYWORD_BREAK + tokens::PUNCTUATION_SEMICOLON
+
+class ContinueState:
+    := tokens::KEYWORD_CONTINUE + tokens::PUNCTUATION_SEMICOLON
+
+class ExprState:
+    := (class Expression)$1 + tokens::PUNCTUATION_SEMICOLON
+    expression = $1
+
+class Statement:
+    := (class ImportState)$1   | (class ReturnState)$1     | (class BreakState)$1
+     | (class ContinueState)$1 | (class ExprState)$1       | (class IfState)$1
+     | (class SwitchState)$1   | (class WhileState)$1      | (class ForState)$1
+     | (class YieldState)$1    | (class Suite)$1
+    value = $1
+    type = 'import' | 'return' | 'break' | 'continue' | 'expression' | 'if' | 'switch' | 'while' | 'for' | 'yield' | 'suite'
+
+// ----------------------------------------- Declarations --------------------------------------- //
+
+class VariableDeclaration:
+    := TypeQualifier_T$1 + tokens::KEYWORD_LET + (class IdentifierExpression)$2 + (class TypedCore)$3 + tokens::PUNCTUATION_SEMICOLON
+    qualifier = $1
+    name = $2
+    type = $3
+
+class FFIDeclaration:
+    := ((VisibilitySpecifier_T?)$1 + (FunctionSpecifier_T?)$2) +  tokens::KEYWORD_FFI + tokens::LITERAL_STRING$3 + (class FunctionDeclaration)$4
+    visibility = ['public', 'private', 'protected']$1
+    specifier = ['inline', 'abstract', 'const', 'override', 'eval']$2
+    ffi = $3
+    function = $4
+
+class GenericBound:
+    := tokens::KEYWORD_IF + (class InstanceOfExpression)$1 + (tokens::PUNCTUATION_COMMA + ((class InstanceOfExpression)$1)*)?
+    bounds[] = $1
+
+class ConstGenericParameter:
+    := tokens::KEYWORD_CONST + (class IdentifierExpression)$1 + (class TypedCore)$2
+    name  = $1
+    value = $2
+
+class GenericParameter:
+    := (class ConstGenericParameter)$1 | (class IdentifierExpression)$1
+    name = $1
+    type = 'const' else 'identifier'
+
+class GenericParameterList:
+    := tokens::PUNCTUATION_OPEN_ANGLE + ((class GenericParameter)$1 + (tokens::PUNCTUATION_COMMA + (class GenericParameter)$1)*)? + tokens::PUNCTUATION_CLOSE_ANGLE
+    parameters[] = $1
+
+class GenericDeclaration:
+    := tokens::KEYWORD_REQUIRES + (class GenericParameterList)$1 + (class GenericBound?)$2
+    parameters = $1
+    bounds = $2
+
+class VariableCreation:
+    := TypeQualifier_T$1 + (class IdentifierExpression)$2 + (class TypedCore)$3
+    qualifier = $1
+    name = $2
+    value = $3
+
+class ArgumentsDeclaration:
+    := tokens::PUNCTUATION_OPEN_PAREN + ((class VariableCreation)$1 + (tokens::PUNCTUATION_COMMA + (class VariableCreation)$1)*)? + tokens::PUNCTUATION_CLOSE_PAREN
+    arguments[] = $1
+
+class FunctionDeclaration:
+    := ((VisibilitySpecifier_T?)$1       + (FunctionSpecifier_T?)$2)      + tokens::KEYWORD_FUNCTION
+     + (class QualifiedPathExpression)$3 + (class ArgumentsDeclaration)$4 + tokens::OPERATOR_ARROW
+     + (class Type)$5                    + (class GenericDeclaration?)$6  + (class Suite)$7
+    visibility = ['public', 'private', 'protected']$1
+    specifier = ['inline', 'abstract', 'const', 'override', 'eval']$2
+    name = $3
+    arguments = $4
+    return_type = $5
+    generics = $6
+    body = $7
+
+class EnumValueDeclaration:
+    := (class IdentifierExpression)$1 + (tokens::OPERATOR_ASSIGN + (class Expression)$2)?
+    name  = $1
+    value = $2
+
+class EnumDeclaration:
+    := ((VisibilitySpecifier_T?)$1 + (FunctionSpecifier_T?)$2) + tokens::KEYWORD_ENUM + (class IdentifierExpression)$3 + tokens::PUNCTUATION_OPEN_BRACE
+     + ((class EnumValueDeclaration)$4 + (tokens::PUNCTUATION_COMMA + (class EnumValueDeclaration)$4)*)? + tokens::PUNCTUATION_CLOSE_BRACE
+    visibility = ['public', 'private', 'protected']$1
+    specifier = ['inline', 'abstract', 'const', 'override', 'eval']$2
+    name     = $3
+    values[] = $4
+
+class TypeDeclaration:
+    := (VisibilitySpecifier_T?)$1 + tokens::KEYWORD_TYPE + (class IdentifierExpression)$3 + (class GenericDeclaration?)$4 + tokens::OPERATOR_ASSIGN + (class Expression)$5 + tokens::PUNCTUATION_SEMICOLON
+    visibility = ['public', 'private', 'protected']$1
+    name = $3
+    generics = $4
+    value = $5
+
+class StructDeclaration:
+    := ((VisibilitySpecifier_T?)$1 + (FunctionSpecifier_T?)$2) + tokens::KEYWORD_STRUCT + (class IdentifierExpression)$3 + (class GenericDeclaration?)$4 + (class Suite)$5
+    visibility = ['public', 'private', 'protected']$1
+    specifier = ['inline', 'abstract', 'const', 'override', 'eval']$2
+    name = $3
+    generics = $4
+    body = $5
+
+class ClassDeclaration:
+    := ((VisibilitySpecifier_T?)$1 + (FunctionSpecifier_T?)$2) + tokens::KEYWORD_CLASS + (class IdentifierExpression)$3 + (class GenericDeclaration?)$4 + (class Suite)$5
+    visibility = ['public', 'private', 'protected']$1
+    specifier = ['inline', 'abstract', 'const', 'override', 'eval']$2
+    name = $3
+    generics = $4
+    body = $5
+
+class AbstractDeclaration:
+    := (VisibilitySpecifier_T?)$1 + tokens::KEYWORD_ABSTRACT + (class IdentifierExpression)$3 + (class GenericDeclaration?)$4 + (class Suite)$5
+    visibility = ['public', 'private', 'protected']$1
+    name = $3
+    generics = $4
+    body = $5
+
+class InterfaceDeclaration:
+    := (VisibilitySpecifier_T?)$1 + tokens::KEYWORD_INTERFACE + (class IdentifierExpression)$3 + (class GenericDeclaration?)$4 + (class Suite)$5
+    visibility = ['public', 'private', 'protected']$1
+    name = $3
+    generics = $4
+    body = $5
+
+class UnionDeclaration:
+    := (VisibilitySpecifier_T?)$1 + tokens::KEYWORD_UNION + (class IdentifierExpression)$3 + (class GenericDeclaration?)$4 + (class Suite)$5
+    visibility = ['public', 'private', 'protected']$1
+    name = $3
+    generics = $4
+    body = $5
+
+class Declarations:
+    := (class VariableDeclaration)$1 | (class FunctionDeclaration)$1 | (class EnumDeclaration)$1     | (class TypeDeclaration)$1
+     | (class StructDeclaration)$1   | (class ClassDeclaration)$1    | (class AbstractDeclaration)$1 | (class InterfaceDeclaration)$1
+     | (class UnionDeclaration)$1    | (class FFIDeclaration)$1
+    value = $1
+    type = 'variable' | 'function' | 'enum' | 'type' | 'struct' | 'class' | 'abstract' | 'interface' | 'union' | 'ffi'
+
+//  ----------------------------------------- Annotations ---------------------------------------- //
+
+class CompilerDirective:
+    := tokens::LITERAL_COMPLIER_DIRECTIVE$1
+    value = $1
+
+class Comment:
+    := tokens::PUNCTUATION_SINGLE_LINE_COMMENT$1 | tokens::PUNCTUATION_MULTI_LINE_COMMENT$1
+    value = $1
+    type = 'single' | 'multi'
+
+// -------------------------------------------- Suite ------------------------------------------- //
+
+class Block:
+    := tokens::PUNCTUATION_OPEN_BRACE + ((class Statement)$1)* + tokens::PUNCTUATION_CLOSE_BRACE
+    statements[] = $1
+
+class InlineBlock:
+    := tokens::PUNCTUATION_COLON + (class Statement)$1
+    statement = $1
+
+class Suite:
+    := (class Block)$1 | (class InlineBlock)$1 | tokens::PUNCTUATION_SEMICOLON
+    statements[] = $1
+    type = 'block' | 'inline' | 'empty'
+
+class TypedCore:
+    := tokens::PUNCTUATION_COLON + (class Type)$1 (tokens::OPERATOR_ASSIGN + (class Expression)$2)?
+    type  = $1
+    value = $2
+
+// -------------------------------------------- Root -------------------------------------------- //
+
+class Root:
+    := ((class Declarations)$1 | (class Statement)$1 | (class Suite)$1 | (class CompilerDirective)$1 | (class Comment)$1 | (class Expression)$1)*
+    value = $1
+    type = 'declarations' | 'statement' | 'suite' | 'directive' | 'comment'

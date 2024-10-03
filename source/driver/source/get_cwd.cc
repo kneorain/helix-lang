@@ -16,7 +16,11 @@
 #include "driver/include/file_system.hh"
 
 #if defined(_WIN32) || defined(_WIN64)
+#   include <stdexcept>
+#   include <cstdlib>
 #   include <windows.h>
+#   include <array>
+#   include <string>
 #   define PATH_MAX MAX_PATH
 #else
 #   include <unistd.h>

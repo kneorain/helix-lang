@@ -18,8 +18,8 @@
 #define OTHER_TOKENS_COUNT 4
 
 #define OTHER_TOKENS(GENERATE)      \
-    GENERATE(IDENTIFIER, "<id>"   ) \
-    GENERATE(WHITESPACE, "< >"    ) \
+    GENERATE(IDENTIFIER, "_"      ) \
+    GENERATE(WHITESPACE, " "      ) \
     GENERATE(OTHERS,     "<other>") \
     GENERATE(EOF_TOKEN,  "<eof>"  )
 

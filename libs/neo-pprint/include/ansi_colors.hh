@@ -18,9 +18,9 @@
 #define COLORS_ALLOWED
 
 #ifdef COLORS_ALLOWED
-    #define CREATE_COLOR(COLOR, CODE) inline constexpr const char *COLOR = CODE;
+    #define CREATE_COLOR(COLOR, CODE) inline const char *COLOR = CODE;
 #else
-    #define CREATE_COLOR(COLOR, CODE) inline constexpr const char *COLOR = "";
+    #define CREATE_COLOR(COLOR, CODE) inline const char *COLOR = "";
 #endif
 
 namespace colors {
@@ -105,7 +105,7 @@ inline namespace fg256 {
     CREATE_COLOR(grey3, "\x1b[38;5;234m");
     CREATE_COLOR(grey4, "\x1b[38;5;235m");
     CREATE_COLOR(grey5, "\x1b[38;5;236m");
-    inline const constexpr char *custom(int red, int green, int blue) {
+    inline const char *custom(int red, int green, int blue) {
         const int BASE = 0x10;
         const int COLOR = 0x24;
         std::string code = "\x1b[38;5;";
@@ -139,7 +139,7 @@ inline namespace bg256 {
     CREATE_COLOR(grey3, "\x1b[48;5;234m");
     CREATE_COLOR(grey4, "\x1b[48;5;235m");
     CREATE_COLOR(grey5, "\x1b[48;5;236m");
-    inline const constexpr char *custom(int red, int green, int blue) {
+    inline const char *custom(int red, int green, int blue) {
         const int BASE = 0x10;
         const int COLOR = 0x24;
         std::string code = "\x1b[48;5;";

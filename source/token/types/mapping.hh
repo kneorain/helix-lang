@@ -17,8 +17,8 @@
 #include <algorithm>
 #include <array>
 #include <optional>
-#include <string_view>
 #include <string>
+#include <string_view>
 #include <utility>
 
 using std::string;
