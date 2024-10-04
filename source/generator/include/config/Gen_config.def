@@ -1,0 +1,61 @@
+//===------------------------------------------ C++ ------------------------------------------====//
+//                                                                                                //
+//  Part of the Helix Project, under the Attribution 4.0 International license (CC BY 4.0).       //
+//  You are allowed to use, modify, redistribute, and create derivative works, even for           //
+//  commercial purposes, provided that you give appropriate credit, and indicate if changes       //
+//   were made. For more information, please visit: https://creativecommons.org/licenses/by/4.0/  //
+//                                                                                                //
+//  SPDX-License-Identifier: CC-BY-4.0                                                            //
+//  Copyright (c) 2024 (CC BY 4.0)                                                                //
+//                                                                                                //
+//====----------------------------------------------------------------------------------------====//
+
+#ifndef __CODEGEN_CONFIG_DEF__
+#define __CODEGEN_CONFIG_DEF__
+
+#define __CODEGEN_BEGIN namespace token
+#define __CODEGEN_ABI_BEGIN namespace __CODEGEN_N::abi
+#define __CODEGEN_CLASSES_BEGIN namespace __CODEGEN_N::classes
+
+#define __CODEGEN_N         token
+#define __CODEGEN_ABI_N     __CODEGEN_N::abi
+#define __CODEGEN_TYPES_N   __CODEGEN_N::tokens
+#define __CODEGEN_CLASSES_N __CODEGEN_N::classes
+
+#define MAKE_TOKEN(name, string) name,
+#define MAKE_TOKEN_PAIR(name, string) std::pair{name, string},
+#define MAKE_TOKEN_CLASS(name, string)                            \
+    class name {                                                  \
+      public:                                                     \
+        consteval std::string_view make_view() { return string; } \
+    };
+
+#define TOKENS_COUNT                                                                              \
+    CXX_TOKENS_COUNT                                                                          \
+
+#define TOKENS(MACRO)       \
+    CXX_TOKENS_COUNT(MACRO)
+
+#define RESERVED(MACRO) RESERVED_ABI(MACRO)
+
+#define RESERVED_COUNT RESERVED_ABI_COUNT
+
+// The enum inside of the struct removes the naming conflict with the token classes.
+#define GENERATE_TOKENS_ENUM_AND_MAPPING                                               \
+    __CODEGEN_BEGIN {                                                                    \
+        enum tokens { TOKENS(MAKE_TOKEN) };                                            \
+                                                                                       \
+        constexpr Mapping<tokens, TOKENS_COUNT> tokens_map{{TOKENS(MAKE_TOKEN_PAIR)}}; \
+    }                                                                                  \
+    __CODEGEN_CLASSES_BEGIN { TOKENS(MAKE_TOKEN_CLASS) }
+
+#define GENERATE_RESERVED_ENUM_AND_MAPPING                               \
+    __CODEGEN_ABI_BEGIN {                                                  \
+        enum reserved { RESERVED(MAKE_TOKEN) };                          \
+                                                                         \
+        constexpr __CODEGEN_N::Mapping<reserved, RESERVED_COUNT> reserved{ \
+            {RESERVED(MAKE_TOKEN_PAIR)}};                                \
+    }                                                                    \
+    __CODEGEN_CLASSES_BEGIN { RESERVED(MAKE_TOKEN_CLASS) }
+
+#endif  // __CODEGEN_CONFIG_DEF__

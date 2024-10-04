@@ -2,8 +2,6 @@ fn main() {
     print("THIS IS A TEST");
 }
 
-ffi "c++" import "hello.h";
-
 fn test_fn() -> i32 {
     return 0;
 }
