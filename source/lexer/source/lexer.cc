@@ -65,7 +65,9 @@ __TOKEN_N::TokenList Lexer::tokenize() {
     return tokens;
 }
 
-inline __TOKEN_N::Token Lexer::get_eof() { return {line, column, 1, offset, "\0", file_name, "<eof>"}; }
+inline __TOKEN_N::Token Lexer::get_eof() {
+    return {line, column, 1, offset, "\0", file_name, "<eof>"};
+}
 
 inline __TOKEN_N::Token Lexer::process_single_line_comment() {
     auto start = currentPos;
@@ -170,7 +172,8 @@ inline __TOKEN_N::Token Lexer::next_token() {
             return parse_operator();
     }
 
-    auto bad_token = __TOKEN_N::Token{line, column, 1, offset, std::string(1, current()), file_name};
+    auto bad_token =
+        __TOKEN_N::Token{line, column, 1, offset, std::string(1, current()), file_name};
 
     throw error::Panic(error::create_old_CodeError(
         &bad_token, 1.0011, std::vector<string>{std::string(1, current())}));
@@ -205,19 +208,19 @@ inline __TOKEN_N::Token Lexer::parse_compiler_directive() {
     }
 
     __TOKEN_N::Token tok{line,
-              column - (currentPos - start),
-              currentPos - start,
-              offset,
-              source.substr(start + 2, (currentPos - start) - 3),
-              file_name,
-              "/* complier_directive */"};
+                         column - (currentPos - start),
+                         currentPos - start,
+                         offset,
+                         source.substr(start + 2, (currentPos - start) - 3),
+                         file_name,
+                         "/* complier_directive */"};
 
     throw error::Panic(error::CodeError{.pof = &tok, .err_code = 0.7007 /* NOLINT */});
 }
 
 inline __TOKEN_N::Token Lexer::process_whitespace() {
-    auto result =
-        __TOKEN_N::Token{line, column, 1, offset, source.substr(currentPos, 1), file_name, "/*   */"};
+    auto result = __TOKEN_N::Token{
+        line, column, 1, offset, source.substr(currentPos, 1), file_name, "/*   */"};
     bare_advance();
     return result;
 }
@@ -242,11 +245,11 @@ inline __TOKEN_N::Token Lexer::parse_alpha_numeric() {
     }
 
     auto result = __TOKEN_N::Token{line,
-                        column - (currentPos - start),
-                        currentPos - start,
-                        offset,
-                        source.substr(start, currentPos - start),
-                        file_name};
+                                   column - (currentPos - start),
+                                   currentPos - start,
+                                   offset,
+                                   source.substr(start, currentPos - start),
+                                   file_name};
 
     if (result.token_kind() != __TOKEN_TYPES_N::OTHERS) {
         return result;
@@ -297,12 +300,12 @@ inline __TOKEN_N::Token Lexer::parse_numeric() {
     if (is_float) {
         if (dot_count > 1) {
             auto bad_token = __TOKEN_N::Token{line,
-                                   column - (currentPos - start),
-                                   currentPos - start,
-                                   offset,
-                                   source.substr(start, currentPos - start),
-                                   file_name,
-                                   "/* float */"};
+                                              column - (currentPos - start),
+                                              currentPos - start,
+                                              offset,
+                                              source.substr(start, currentPos - start),
+                                              file_name,
+                                              "/* float */"};
 
             throw error::Panic(error::create_old_CodeError(&bad_token, 0.0003));
         }

@@ -14,8 +14,6 @@
 #ifndef __PYTHON_EMITTER_HH__
 #define __PYTHON_EMITTER_HH__
 
-namespace codegen::python {
-    
-}
+namespace codegen::python {}
 
-#endif // __PYTHON_EMITTER_HH__
+#endif  // __PYTHON_EMITTER_HH__

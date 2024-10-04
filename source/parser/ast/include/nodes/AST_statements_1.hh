@@ -59,7 +59,7 @@ __AST_NODE_BEGIN {
 
         explicit ForPyStatementCore(bool /* unused */) {}
 
-        __TOKEN_N::Token                 in_marker;
+        __TOKEN_N::Token             in_marker;
         NodeT<NamedVarSpecifierList> vars;
         NodeT<>                      range;
         NodeT<>                      body;
@@ -169,7 +169,10 @@ __AST_NODE_BEGIN {
             Fallthrough,
         };
 
-        SwitchCaseState(NodeT<> condition, NodeT<SuiteState> body, CaseType type, __TOKEN_N::Token marker)
+        SwitchCaseState(NodeT<>           condition,
+                        NodeT<SuiteState> body,
+                        CaseType          type,
+                        __TOKEN_N::Token  marker)
             : condition(std::move(condition))
             , body(std::move(body))
             , type(type)
@@ -178,7 +181,7 @@ __AST_NODE_BEGIN {
         NodeT<>           condition;
         NodeT<SuiteState> body;
         CaseType          type;
-        __TOKEN_N::Token      marker;
+        __TOKEN_N::Token  marker;
     };
 
     class ImportState final : public Node {

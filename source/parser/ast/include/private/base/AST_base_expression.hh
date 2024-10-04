@@ -36,7 +36,7 @@ __AST_NODE_BEGIN {
      *     NodeT<...> node = expr.parse<...>();
      */
     class Expression {  // THIS IS NOT A NODE
-        AST_CLASS_BASE(Expression, EXPRS){};
+        AST_CLASS_BASE(Expression, EXPRS) {};
 
         ParseResult<> parse_primary();
         template <typename T, typename... Args>

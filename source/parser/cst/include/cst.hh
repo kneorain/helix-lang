@@ -36,7 +36,7 @@ struct ParseError {};
 // };
 
 using TokenListRef = std::shared_ptr<__TOKEN_N::TokenList>;
-using ParseResult = std::expected<TokenListRef, ParseError>;
+using ParseResult  = std::expected<TokenListRef, ParseError>;
 
 template <typename T>
 struct CSTBase;
@@ -63,20 +63,20 @@ struct CSTBase : public CSTBase<void> {
     CSTBase(const CSTBase &)            = default;
     CSTBase &operator=(CSTBase &&)      = default;
     CSTBase &operator=(const CSTBase &) = delete;
-   ~CSTBase()                           = default;
+    ~CSTBase()                          = default;
 };
 
 template <typename T = void>
-concept CSTNode      = std::derived_from<T, CSTBase<T>>;
+concept CSTNode = std::derived_from<T, CSTBase<T>>;
 
 template <typename T = void>
-using CSTNodePtr     = std::shared_ptr<CSTBase<T>>;
+using CSTNodePtr = std::shared_ptr<CSTBase<T>>;
 
 template <typename T = void>
-using CSTNodeList    = std::vector<CSTNodePtr<T>>;
+using CSTNodeList = std::vector<CSTNodePtr<T>>;
 
 template <typename T = void>
-using CSTSlice       = const std::reference_wrapper<CSTNodeList<T>>;
+using CSTSlice = const std::reference_wrapper<CSTNodeList<T>>;
 
 }  // namespace parser::cst
 #endif  // __CST_HH__

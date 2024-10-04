@@ -15,8 +15,8 @@
 #include <string>
 #include <string_view>
 
-#include "neo-panic/include/error.hh"
 #include "lexer/include/lexer.hh"
+#include "neo-panic/include/error.hh"
 #include "token/include/private/Token_base.hh"
 #include "token/include/private/Token_list.hh"
 
@@ -59,8 +59,8 @@ TEST_CASE("Test __TOKEN_N::Token constructor", "[__TOKEN_N::Token]") {
 
 TEST_CASE("Test Lexer tokenization", "[lexer::Lexer]") {
     SECTION("Basic tokenization") {
-        std::string source = "if (x > 0) { return true; }";
-        Lexer lexer(source, "<test>");
+        std::string          source = "if (x > 0) { return true; }";
+        Lexer                lexer(source, "<test>");
         __TOKEN_N::TokenList tokens = lexer.tokenize();
 
         REQUIRE(tokens.size() == 12);
@@ -78,8 +78,8 @@ TEST_CASE("Test Lexer tokenization", "[lexer::Lexer]") {
     }
 
     SECTION("Complex expression") {
-        std::string source = "let result = (a + b) * (c - d) / 2;";
-        Lexer lexer(source, "<test>");
+        std::string          source = "let result = (a + b) * (c - d) / 2;";
+        Lexer                lexer(source, "<test>");
         __TOKEN_N::TokenList tokens = lexer.tokenize();
 
         REQUIRE(tokens.size() == 18);
@@ -104,27 +104,27 @@ TEST_CASE("Test Lexer tokenization", "[lexer::Lexer]") {
 TEST_CASE("Test Lexer error handling", "[lexer::Lexer]") {
     SECTION("Invalid character") {
         std::string source = "let x = $;";
-        Lexer lexer(source, "<test>");
+        Lexer       lexer(source, "<test>");
         REQUIRE_THROWS_AS(lexer.tokenize(), error::Panic);
     }
 
     SECTION("Unclosed string literal") {
         std::string source = "let message = \"Hello, world;";
-        Lexer lexer(source, "<test>");
+        Lexer       lexer(source, "<test>");
         REQUIRE_THROWS_AS(lexer.tokenize(), error::Panic);
     }
 
     SECTION("Invalid numeric literal") {
         std::string source = "let value = 3.14.15;";
-        Lexer lexer(source, "<test>");
+        Lexer       lexer(source, "<test>");
         REQUIRE_THROWS_AS(lexer.tokenize(), error::Panic);
     }
 }
 
 TEST_CASE("Test Lexer whitespace handling", "[lexer::Lexer]") {
     SECTION("Mixed whitespace") {
-        std::string source = "  let   x\t=\n10;\n";
-        Lexer lexer(source, "<test>");
+        std::string          source = "  let   x\t=\n10;\n";
+        Lexer                lexer(source, "<test>");
         __TOKEN_N::TokenList tokens = lexer.tokenize();
 
         REQUIRE(tokens.size() == 6);
@@ -138,8 +138,8 @@ TEST_CASE("Test Lexer whitespace handling", "[lexer::Lexer]") {
 
 TEST_CASE("Test Lexer comment handling", "[lexer::Lexer]") {
     SECTION("Single-line comment") {
-        std::string source = "let x = 5; // This is a comment\nlet y = 10;";
-        Lexer lexer(source, "<test>");
+        std::string          source = "let x = 5; // This is a comment\nlet y = 10;";
+        Lexer                lexer(source, "<test>");
         __TOKEN_N::TokenList tokens = lexer.tokenize();
 
         REQUIRE(tokens.size() == 12);
@@ -151,7 +151,7 @@ TEST_CASE("Test Lexer comment handling", "[lexer::Lexer]") {
 
     SECTION("Multi-line comment") {
         std::string source = "let x = 5;\n/* This is a\nmulti-line comment */\nlet y = 10;";
-        Lexer lexer(source, "<test>");
+        Lexer       lexer(source, "<test>");
         __TOKEN_N::TokenList tokens = lexer.tokenize();
 
         REQUIRE(tokens.size() == 12);
@@ -164,8 +164,8 @@ TEST_CASE("Test Lexer comment handling", "[lexer::Lexer]") {
 
 TEST_CASE("Test Lexer string literal handling", "[lexer::Lexer]") {
     SECTION("Simple string") {
-        std::string source = "let message = \"Hello, world!\";";
-        Lexer lexer(source, "<test>");
+        std::string          source = "let message = \"Hello, world!\";";
+        Lexer                lexer(source, "<test>");
         __TOKEN_N::TokenList tokens = lexer.tokenize();
 
         REQUIRE(tokens.size() == 6);
@@ -174,8 +174,8 @@ TEST_CASE("Test Lexer string literal handling", "[lexer::Lexer]") {
     }
 
     SECTION("String with escapes") {
-        std::string source = R"(let message = "Hello, \"world\"!";)";
-        Lexer lexer(source, "<test>");
+        std::string          source = R"(let message = "Hello, \"world\"!";)";
+        Lexer                lexer(source, "<test>");
         __TOKEN_N::TokenList tokens = lexer.tokenize();
 
         REQUIRE(tokens.size() == 6);
@@ -186,8 +186,8 @@ TEST_CASE("Test Lexer string literal handling", "[lexer::Lexer]") {
 
 TEST_CASE("Test Lexer operator handling", "[lexer::Lexer]") {
     SECTION("Compound operators") {
-        std::string source = "a += b -= c *= d /= e %= f;";
-        Lexer lexer(source, "<test>");
+        std::string          source = "a += b -= c *= d /= e %= f;";
+        Lexer                lexer(source, "<test>");
         __TOKEN_N::TokenList tokens = lexer.tokenize();
 
         REQUIRE(tokens.size() == 13);
@@ -199,8 +199,8 @@ TEST_CASE("Test Lexer operator handling", "[lexer::Lexer]") {
     }
 
     SECTION("Comparison operators") {
-        std::string source = "a == b != c < d > e <= f >= g;";
-        Lexer lexer(source, "<test>");
+        std::string          source = "a == b != c < d > e <= f >= g;";
+        Lexer                lexer(source, "<test>");
         __TOKEN_N::TokenList tokens = lexer.tokenize();
 
         REQUIRE(tokens.size() == 15);
@@ -215,8 +215,8 @@ TEST_CASE("Test Lexer operator handling", "[lexer::Lexer]") {
 
 TEST_CASE("Test Lexer numeric literal handling", "[lexer::Lexer]") {
     SECTION("Integer literals") {
-        std::string source = "let a = 42; let b = 0xFF; let c = 0b1010;";
-        Lexer lexer(source, "<test>");
+        std::string          source = "let a = 42; let b = 0xFF; let c = 0b1010;";
+        Lexer                lexer(source, "<test>");
         __TOKEN_N::TokenList tokens = lexer.tokenize();
 
         REQUIRE(tokens.size() == 16);
@@ -229,8 +229,8 @@ TEST_CASE("Test Lexer numeric literal handling", "[lexer::Lexer]") {
     }
 
     SECTION("Float literals") {
-        std::string source = "let a = 3.14; let b = 2.5e-3; let c = 0.5;";
-        Lexer lexer(source, "<test>");
+        std::string          source = "let a = 3.14; let b = 2.5e-3; let c = 0.5;";
+        Lexer                lexer(source, "<test>");
         __TOKEN_N::TokenList tokens = lexer.tokenize();
 
         REQUIRE(tokens.size() == 16);
@@ -246,7 +246,7 @@ TEST_CASE("Test Lexer numeric literal handling", "[lexer::Lexer]") {
 TEST_CASE("Test Lexer identifier handling", "[lexer::Lexer]") {
     SECTION("Valid identifiers") {
         std::string source = "let _var1 = 10; specialVar = 20; camelCase = 30; PascalCase = 40;";
-        Lexer lexer(source, "<test>");
+        Lexer       lexer(source, "<test>");
         __TOKEN_N::TokenList tokens = lexer.tokenize();
 
         REQUIRE(tokens.size() == 18);
@@ -263,8 +263,8 @@ TEST_CASE("Test Lexer identifier handling", "[lexer::Lexer]") {
 
 TEST_CASE("Test Lexer keyword handling", "[lexer::Lexer]") {
     SECTION("Keywords") {
-        std::string source = "if else while for fn return let const class";
-        Lexer lexer(source, "<test>");
+        std::string          source = "if else while for fn return let const class";
+        Lexer                lexer(source, "<test>");
         __TOKEN_N::TokenList tokens = lexer.tokenize();
 
         REQUIRE(tokens.size() == 10);

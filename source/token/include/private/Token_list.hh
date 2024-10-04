@@ -23,7 +23,6 @@
 #include "token/include/config/Token_config.def"
 #include "token/include/private/Token_base.hh"
 
-
 __TOKEN_BEGIN {
     class TokenList : public std::vector<Token> {
       private:

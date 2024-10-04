@@ -12,7 +12,7 @@
 
 #ifndef __AST_PARSE_ERROR_H__
 #define __AST_PARSE_ERROR_H__
- 
+
 #include <string>
 #include <utility>
 
@@ -24,7 +24,7 @@ __AST_BEGIN {
     class ParseError {
         __TOKEN_N::Token err;
         __TOKEN_N::Token expected;
-        std::string  msg;
+        std::string      msg;
 
       public:
         ParseError()                              = default;

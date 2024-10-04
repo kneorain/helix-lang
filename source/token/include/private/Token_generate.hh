@@ -24,7 +24,6 @@
 #include "token/include/enums/Token_punctuation.def"
 #include "token/include/types/mapping.hh"
 
-
 // generate enum and maps for all tokens
 GENERATE_RESERVED_ENUM_AND_MAPPING
 GENERATE_TOKENS_ENUM_AND_MAPPING

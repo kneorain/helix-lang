@@ -17,8 +17,6 @@
 #include "parser/ast/include/private/AST_generate.hh"
 #include "parser/ast/include/types/AST_types.hh"
 
-__AST_NODE_BEGIN {
+__AST_NODE_BEGIN {}  //  namespace __AST_NODE_BEGIN
 
-}  //  namespace __AST_NODE_BEGIN
-
-#endif // __AST_BASE_ANNOTATION_H__
+#endif  // __AST_BASE_ANNOTATION_H__

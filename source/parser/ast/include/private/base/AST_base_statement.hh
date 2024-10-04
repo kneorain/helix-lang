@@ -37,7 +37,7 @@ __AST_NODE_BEGIN {
      *     NodeT<...> node = state.parse<...>();
      */
     class Statement {  // THIS IS NOT A NODE
-        AST_CLASS_BASE(Statement, STATES), expr_parser(iter){};
+        AST_CLASS_BASE(Statement, STATES), expr_parser(iter) {};
 
         template <typename T, typename... Args>
         ParseResult<T> parse(Args &&...args) { /* NOLINT */
@@ -98,7 +98,7 @@ __AST_NODE_BEGIN {
 
       private:
         std::vector<__TOKEN_N::Token> modifiers;
-        Expression                expr_parser;
+        Expression                    expr_parser;
 
         ParseResult<NamedVarSpecifier>     parse_NamedVarSpecifier(bool force_type = false);
         ParseResult<NamedVarSpecifierList> parse_NamedVarSpecifierList(bool force_types = false);

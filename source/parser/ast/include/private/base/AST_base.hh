@@ -32,4 +32,4 @@ __AST_NODE_BEGIN {
     };
 }  //  namespace __AST_NODE_BEGIN
 
-#endif // __AST_BASE_H__
+#endif  // __AST_BASE_H__

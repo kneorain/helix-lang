@@ -54,8 +54,8 @@ class Lexer {
     [[nodiscard]] inline bool is_eof() const;
 
     __TOKEN_N::TokenList tokens;     //> list of tokens
-    std::string      source;     //> source code
-    std::string      file_name;  //> file name
+    std::string          source;     //> source code
+    std::string          file_name;  //> file name
 
     char currentChar;  //> current character
     u64  cachePos;     //> cache position

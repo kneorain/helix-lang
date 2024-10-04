@@ -94,10 +94,10 @@
 #include <vector>
 
 #include "parser/ast/include/config/AST_config.def"
-#include "parser/ast/include/private/AST_generate.hh"
-#include "parser/ast/include/types/AST_modifiers.hh"
 #include "parser/ast/include/nodes/AST_expressions.hh"
+#include "parser/ast/include/private/AST_generate.hh"
 #include "parser/ast/include/types/AST_jsonify_visitor.hh"
+#include "parser/ast/include/types/AST_modifiers.hh"
 #include "parser/ast/include/types/AST_types.hh"
 #include "token/include/Token.hh"
 
@@ -379,7 +379,7 @@ AST_NODE_IMPL(Declaration, StructDecl, const std::shared_ptr<__TOKEN_N::TokenLis
     }
 
     if (CURRENT_TOKEN_IS(__TOKEN_N::PUNCTUATION_SEMICOLON)) {  // forward declaration
-        iter.advance();                                    // skip ';'
+        iter.advance();                                        // skip ';'
         return node;
     }
 
@@ -455,7 +455,7 @@ AST_NODE_IMPL(Declaration, ClassDecl, const std::shared_ptr<__TOKEN_N::TokenList
     }
 
     if (CURRENT_TOKEN_IS(__TOKEN_N::PUNCTUATION_SEMICOLON)) {  // forward declaration
-        iter.advance();                                    // skip ';'
+        iter.advance();                                        // skip ';'
         return node;
     }
 
@@ -934,7 +934,8 @@ AST_BASE_IMPL(Declaration, parse) {
     IS_NOT_EMPTY;
 
     __TOKEN_N::Token tok = CURRENT_TOK;  /// get the current token from the iterator
-    std::shared_ptr<__TOKEN_N::TokenList> modifiers = nullptr;  /// create a pointer to the modifiers
+    std::shared_ptr<__TOKEN_N::TokenList> modifiers =
+        nullptr;  /// create a pointer to the modifiers
 
     /* TODO: make this not happen if bool is passed */
     while (Modifiers::is_modifier(tok)) {

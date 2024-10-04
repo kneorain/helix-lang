@@ -31,12 +31,13 @@ using IncludeDirectories = std::list<std::filesystem::path>;
 using OptToken           = std::optional<__TOKEN_N::Token>;
 
 struct DefineStatement {
-    using ParamList = std::map<__TOKEN_N::Token, __TOKEN_N::TokenList>;  // alias for parameter list with default args
+    using ParamList = std::map<__TOKEN_N::Token,
+                               __TOKEN_N::TokenList>;  // alias for parameter list with default args
 
-    ParamList     params;  // parameters and default arguments
-    __TOKEN_N::TokenList     body;    // body of the macro
-    QualifiedName loc;     // namespace location
-    __TOKEN_N::Token         name;    // name of the macro
+    ParamList            params;  // parameters and default arguments
+    __TOKEN_N::TokenList body;    // body of the macro
+    QualifiedName        loc;     // namespace location
+    __TOKEN_N::Token     name;    // name of the macro
 
     static bool is_valid(const QualifiedName &loc, const __TOKEN_N::Token &invocation);
 };
@@ -55,10 +56,10 @@ class Preprocessor {
     using TokenIterator = __TOKEN_N::TokenList::TokenListIter;
     using BraceStack    = std::vector<i64>;
 
-    __TOKEN_N::TokenList      source_tokens;          // tokens from the source file
-    QualifiedName  current_namespace;      // current namespace, taking nesting into account
-    BraceStack     namespace_brace_level;  // pop when this is reached
-    TokenIterator *source_iter = nullptr;  // iterator over source tokens
+    __TOKEN_N::TokenList source_tokens;          // tokens from the source file
+    QualifiedName        current_namespace;      // current namespace, taking nesting into account
+    BraceStack           namespace_brace_level;  // pop when this is reached
+    TokenIterator       *source_iter = nullptr;  // iterator over source tokens
 
     //===-------------------------------------- friends ---------------------------------------===//
 
@@ -73,10 +74,14 @@ class Preprocessor {
 
     //===------------------------------------ iter helpers ------------------------------------===//
 
-    inline bool   is_source_iter_set() { return source_iter != nullptr; }
+    inline bool              is_source_iter_set() { return source_iter != nullptr; }
     inline __TOKEN_N::Token &current() { return source_iter->current().get(); }
-    inline __TOKEN_N::Token &advance(const std::int32_t n = 1) { return source_iter->advance(n).get(); }
-    inline __TOKEN_N::Token &reverse(const std::int32_t n = 1) { return source_iter->reverse(n).get(); }
+    inline __TOKEN_N::Token &advance(const std::int32_t n = 1) {
+        return source_iter->advance(n).get();
+    }
+    inline __TOKEN_N::Token &reverse(const std::int32_t n = 1) {
+        return source_iter->reverse(n).get();
+    }
 
     OptToken peek(const std::int32_t n = 1) const { return source_iter->peek(n)->get(); }
     OptToken peek_back(const std::int32_t n = 1) const { return source_iter->peek_back(n)->get(); }
@@ -84,7 +89,7 @@ class Preprocessor {
     //===--------------------------------------------------------------------------------------===//
 
   public:
-    explicit Preprocessor(__TOKEN_N::TokenList                 &tokens,
+    explicit Preprocessor(__TOKEN_N::TokenList      &tokens,
                           const std::string         &name                = "",
                           const std::vector<string> &custom_include_dirs = {});
     Preprocessor(Preprocessor &&)                 = default;
@@ -94,7 +99,8 @@ class Preprocessor {
 
     ~Preprocessor();
 
-    __TOKEN_N::TokenList parse(preprocessor::ImportNodePtr /* do NOT set when externally invoked */ = nullptr);
+    __TOKEN_N::TokenList
+        parse(preprocessor::ImportNodePtr /* do NOT set when externally invoked */ = nullptr);
 };
 
 }  // namespace parser::preprocessor

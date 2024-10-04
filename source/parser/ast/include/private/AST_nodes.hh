@@ -24,5 +24,4 @@
 #include "parser/ast/include/private/base/AST_base_expression.hh"
 #include "parser/ast/include/private/base/AST_base_statement.hh"
 
-
 #endif  // __AST_NODES_H__

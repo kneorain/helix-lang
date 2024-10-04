@@ -14,8 +14,6 @@
 #ifndef __RUST_EMITTER_HH__
 #define __RUST_EMITTER_HH__
 
-namespace codegen::rust {
-    
-}
+namespace codegen::rust {}
 
-#endif // __RUST_EMITTER_HH__
+#endif  // __RUST_EMITTER_HH__

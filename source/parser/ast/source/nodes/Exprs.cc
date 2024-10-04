@@ -118,13 +118,13 @@
 #include <vector>
 
 #include "parser/ast/include/config/AST_config.def"
-#include "parser/ast/include/private/AST_generate.hh"
-#include "parser/ast/include/types/AST_modifiers.hh"
-#include "token/include/config/Token_cases.def"
-#include "parser/ast/include/private/AST_nodes.hh"
 #include "parser/ast/include/nodes/AST_expressions.hh"
+#include "parser/ast/include/private/AST_generate.hh"
+#include "parser/ast/include/private/AST_nodes.hh"
 #include "parser/ast/include/types/AST_jsonify_visitor.hh"
+#include "parser/ast/include/types/AST_modifiers.hh"
 #include "parser/ast/include/types/AST_types.hh"
+#include "token/include/config/Token_cases.def"
 
 // ---------------------------------------------------------------------------------------------- //
 
@@ -143,8 +143,8 @@ bool is_ffi_specifier(const __TOKEN_N::Token &tok);
 AST_BASE_IMPL(Expression, parse_primary) {  // NOLINT(readability-function-cognitive-complexity)
     IS_NOT_EMPTY;
 
-    __TOKEN_N::Token  tok = CURRENT_TOK;
-    ParseResult<> node;
+    __TOKEN_N::Token tok = CURRENT_TOK;
+    ParseResult<>    node;
 
     if (is_excepted(tok, IS_LITERAL)) {
         node = parse<LiteralExpr>();
@@ -155,15 +155,15 @@ AST_BASE_IMPL(Expression, parse_primary) {  // NOLINT(readability-function-cogni
     } else if (is_excepted(tok, IS_PUNCTUATION)) {
         if (tok.token_kind() ==
             __TOKEN_N::PUNCTUATION_OPEN_PAREN) {  /// at this point we either have a tuple or a
-                                              /// parenthesized expression, so we need to do
-                                              /// further analysis to determine which one it
-                                              /// is
-            iter.advance();                   /// skip '('
+                                                  /// parenthesized expression, so we need to do
+                                                  /// further analysis to determine which one it
+                                                  /// is
+            iter.advance();                       /// skip '('
             ParseResult<> expr = parse();
             RETURN_IF_ERROR(expr);
 
             if (CURRENT_TOK == __TOKEN_N::PUNCTUATION_COMMA) {  /// if the next token is a
-                                                            /// comma, then its a tuple
+                                                                /// comma, then its a tuple
                 node = parse<TupleLiteralExpr>(expr);
             } else {
                 node = parse<ParenthesizedExpr>(expr);
@@ -200,7 +200,9 @@ AST_BASE_IMPL(Expression, parse_primary) {  // NOLINT(readability-function-cogni
             }
         }
     } else if (is_excepted(tok,
-                           {__TOKEN_N::KEYWORD_THREAD, __TOKEN_N::KEYWORD_SPAWN, __TOKEN_N::KEYWORD_AWAIT})) {
+                           {__TOKEN_N::KEYWORD_THREAD,
+                            __TOKEN_N::KEYWORD_SPAWN,
+                            __TOKEN_N::KEYWORD_AWAIT})) {
         node = parse<AsyncThreading>();
     } else {
         return std::unexpected(
@@ -218,7 +220,7 @@ AST_BASE_IMPL(Expression, parse) {  // NOLINT(readability-function-cognitive-com
                                     /// if(iter.remaining_n() == 0) { return std::unexpected(...); }
 
     __TOKEN_N::Token tok;
-    size_t       iter_n = 0;
+    size_t           iter_n = 0;
     size_t n_max = iter.remaining_n() << 1;  /// this is a way to approx the tokens to parse, and is
                                              /// used to prevent the parser from going into an
                                              /// infinite loop  if the expression is malformed, this
@@ -343,7 +345,7 @@ AST_NODE_IMPL(Expression, LiteralExpr, ParseResult<> str_concat) {
     IS_NOT_EMPTY;
 
     __TOKEN_N::Token tok = CURRENT_TOK;  // get tokens[0]
-    iter.advance();                  // pop tokens[0]
+    iter.advance();                      // pop tokens[0]
 
     LiteralExpr::LiteralType type{};
 
@@ -408,7 +410,7 @@ AST_NODE_IMPL(Expression, BinaryExpr, ParseResult<> lhs, int min_precedence) {
     __TOKEN_N::Token tok = CURRENT_TOK;
 
     while (is_excepted(tok, IS_BINARY_OPERATOR) && get_precedence(tok) >= min_precedence) {
-        int          precedence = get_precedence(tok);
+        int              precedence = get_precedence(tok);
         __TOKEN_N::Token op         = tok;
 
         iter.advance();
@@ -471,7 +473,7 @@ AST_NODE_IMPL(Expression, IdentExpr) {
 
     // verify the current token is an identifier
     __TOKEN_N::Token tok                   = CURRENT_TOK;
-    bool         is_reserved_primitive = false;
+    bool             is_reserved_primitive = false;
 
     IS_IN_EXCEPTED_TOKENS(IS_IDENTIFIER);
 
@@ -1464,7 +1466,8 @@ AST_NODE_IMPL(Expression, AsyncThreading) {
 
     __TOKEN_N::Token tok = CURRENT_TOK;
 
-#define ASYNC_THREADING_OPS {__TOKEN_N::KEYWORD_AWAIT, __TOKEN_N::KEYWORD_SPAWN, __TOKEN_N::KEYWORD_THREAD}
+#define ASYNC_THREADING_OPS \
+    {__TOKEN_N::KEYWORD_AWAIT, __TOKEN_N::KEYWORD_SPAWN, __TOKEN_N::KEYWORD_THREAD}
 
     IS_IN_EXCEPTED_TOKENS(ASYNC_THREADING_OPS);
     iter.advance();  // skip 'await', 'spawn' or 'thread'
@@ -1590,7 +1593,9 @@ bool is_function_qualifier(const __TOKEN_N::Token &tok) {
 };
 
 bool is_storage_specifier(const __TOKEN_N::Token &tok) {
-    return is_excepted(
-        tok,
-        {__TOKEN_N::KEYWORD_FFI, __TOKEN_N::KEYWORD_STATIC, __TOKEN_N::KEYWORD_ASYNC, __TOKEN_N::KEYWORD_EVAL});
+    return is_excepted(tok,
+                       {__TOKEN_N::KEYWORD_FFI,
+                        __TOKEN_N::KEYWORD_STATIC,
+                        __TOKEN_N::KEYWORD_ASYNC,
+                        __TOKEN_N::KEYWORD_EVAL});
 };

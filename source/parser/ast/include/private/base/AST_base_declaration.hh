@@ -18,7 +18,6 @@
 #include "parser/ast/include/private/base/AST_base_expression.hh"
 #include "parser/ast/include/private/base/AST_base_statement.hh"
 
-
 __AST_NODE_BEGIN {
     /*
      *  Declaration class
@@ -38,7 +37,7 @@ __AST_NODE_BEGIN {
      *     NodeT<...> node = decl.parse<...>();
      */
     class Declaration {
-        AST_CLASS_BASE(Declaration, DECLS), state_parser(iter), expr_parser(iter){};
+        AST_CLASS_BASE(Declaration, DECLS), state_parser(iter), expr_parser(iter) {};
 
         template <typename T, typename... Args>
         ParseResult<T> parse(Args &&...args) { /* NOLINT */

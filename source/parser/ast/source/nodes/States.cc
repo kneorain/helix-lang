@@ -190,25 +190,25 @@ symbols from the imports are available when needed for resolution.
 
 #include "neo-pprint/include/hxpprint.hh"
 #include "parser/ast/include/config/AST_config.def"
-#include "parser/ast/include/private/AST_generate.hh"
-#include "token/include/config/Token_cases.def"
-#include "parser/ast/include/private/AST_nodes.hh"
 #include "parser/ast/include/nodes/AST_expressions.hh"
 #include "parser/ast/include/nodes/AST_statements.hh"
+#include "parser/ast/include/private/AST_generate.hh"
+#include "parser/ast/include/private/AST_nodes.hh"
 #include "parser/ast/include/types/AST_jsonify_visitor.hh"
 #include "parser/ast/include/types/AST_types.hh"
 #include "token/include/Token.hh"
+#include "token/include/config/Token_cases.def"
 
 // ---------------------------------------------------------------------------------------------- //
 
 bool is_excepted(const __TOKEN_N::Token &tok, const std::unordered_set<__TOKEN_TYPES_N> &tokens);
 std::vector<__TOKEN_N::Token> get_modifiers(__TOKEN_N::TokenList::TokenListIter &iter);
-bool                      is_ffi_specifier(const __TOKEN_N::Token &tok);
-bool                      is_type_qualifier(const __TOKEN_N::Token &tok);
-bool                      is_access_specifier(const __TOKEN_N::Token &tok);
-bool                      is_function_specifier(const __TOKEN_N::Token &tok);
-bool                      is_function_qualifier(const __TOKEN_N::Token &tok);
-bool                      is_storage_specifier(const __TOKEN_N::Token &tok);
+bool                          is_ffi_specifier(const __TOKEN_N::Token &tok);
+bool                          is_type_qualifier(const __TOKEN_N::Token &tok);
+bool                          is_access_specifier(const __TOKEN_N::Token &tok);
+bool                          is_function_specifier(const __TOKEN_N::Token &tok);
+bool                          is_function_qualifier(const __TOKEN_N::Token &tok);
+bool                          is_storage_specifier(const __TOKEN_N::Token &tok);
 
 // ---------------------------------------------------------------------------------------------- //
 
@@ -224,7 +224,7 @@ AST_BASE_IMPL(Statement, parse) {  // NOLINT(readability-function-cognitive-comp
     IS_NOT_EMPTY;                  /// simple macro to check if the iterator is empty, expands to:
                                    /// if(iter.remaining_n() == 0) { return std::unexpected(...); }
 
-    __TOKEN_N::Token tok = CURRENT_TOK;          /// get the current token from the iterator
+    __TOKEN_N::Token tok = CURRENT_TOK;  /// get the current token from the iterator
     // modifiers        = get_modifiers(iter);  /// get the modifiers for the statement
 
     switch (tok.token_kind()) {
@@ -373,7 +373,7 @@ AST_NODE_IMPL(Statement, ForPyStatementCore, bool skip_start) {
     // := NamedVarSpecifier* 'in' E SuiteState
 
     bool                      except_closing_paren = false;
-    __TOKEN_N::Token              starting_tok;
+    __TOKEN_N::Token          starting_tok;
     NodeT<ForPyStatementCore> node = make_node<ForPyStatementCore>(true);
 
     if (!skip_start) {
@@ -435,7 +435,7 @@ AST_NODE_IMPL(Statement, ForCStatementCore, bool skip_start) {
 
     bool except_closing_paren = false;
 
-    __TOKEN_N::Token             starting_tok;
+    __TOKEN_N::Token         starting_tok;
     NodeT<ForCStatementCore> node = make_node<ForCStatementCore>(true);
 
     if (!skip_start) {
@@ -603,7 +603,7 @@ AST_NODE_IMPL(Statement, ElseState) {
 
     if (CURRENT_TOKEN_IS(__TOKEN_N::KEYWORD_IF) || CURRENT_TOKEN_IS(__TOKEN_N::KEYWORD_UNLESS)) {
         node->type = CURRENT_TOKEN_IS(__TOKEN_N::KEYWORD_IF) ? ElseState::ElseType::ElseIf
-                                                         : ElseState::ElseType::ElseUnless;
+                                                             : ElseState::ElseType::ElseUnless;
         iter.advance();  // skip 'if' | 'unless'
 
         ParseResult<> expr = expr_parser.parse();
@@ -662,7 +662,7 @@ AST_NODE_IMPL(Statement, IfState) {
     node->body = body.value();
 
     if CURRENT_TOKEN_IS (__TOKEN_N::KEYWORD_ELSE) {
-        bool         captured_final_else = false;
+        bool             captured_final_else = false;
         __TOKEN_N::Token starting_else;
 
         ParseResult<ElseState> else_body = parse<ElseState>();
@@ -788,8 +788,8 @@ AST_NODE_IMPL(Statement, SwitchState) {
 
     __TOKEN_N::Token starting_token;  // '(', ')'
     __TOKEN_N::Token first_token;     // 'default'
-    bool         expecting_brace_close = false;
-    bool         found_default         = false;
+    bool             expecting_brace_close = false;
+    bool             found_default         = false;
 
     ParseResult<> expr = expr_parser.parse();
     RETURN_IF_ERROR(expr);
@@ -817,7 +817,8 @@ AST_NODE_IMPL(Statement, SwitchState) {
         first_token   = case_state.value()->marker;
     }
 
-    while (CURRENT_TOKEN_IS(__TOKEN_N::KEYWORD_CASE) || CURRENT_TOKEN_IS(__TOKEN_N::KEYWORD_DEFAULT)) {
+    while (CURRENT_TOKEN_IS(__TOKEN_N::KEYWORD_CASE) ||
+           CURRENT_TOKEN_IS(__TOKEN_N::KEYWORD_DEFAULT)) {
         case_state = parse<SwitchCaseState>();
         RETURN_IF_ERROR(case_state);
 
@@ -971,9 +972,7 @@ AST_NODE_IMPL(Statement, BreakState) {
     return node;
 }
 
-AST_NODE_IMPL_VISITOR(Jsonify, BreakState) {
-    json.section("BreakState", node.marker);
-}
+AST_NODE_IMPL_VISITOR(Jsonify, BreakState) { json.section("BreakState", node.marker); }
 
 // ---------------------------------------------------------------------------------------------- //
 
@@ -991,9 +990,7 @@ AST_NODE_IMPL(Statement, ContinueState) {
     return node;
 }
 
-AST_NODE_IMPL_VISITOR(Jsonify, ContinueState) {
-    json.section("ContinueState", node.marker);
-}
+AST_NODE_IMPL_VISITOR(Jsonify, ContinueState) { json.section("ContinueState", node.marker); }
 
 // ---------------------------------------------------------------------------------------------- //
 
@@ -1009,9 +1006,7 @@ AST_NODE_IMPL(Statement, ExprState) {
     return make_node<ExprState>(expr.value());
 }
 
-AST_NODE_IMPL_VISITOR(Jsonify, ExprState) {
-    json.section("ExprState", get_node_json(node.value));
-}
+AST_NODE_IMPL_VISITOR(Jsonify, ExprState) { json.section("ExprState", get_node_json(node.value)); }
 
 // ---------------------------------------------------------------------------------------------- //
 
@@ -1035,7 +1030,6 @@ AST_NODE_IMPL(Statement, SuiteState) {
         ParseResult<> decl = decl_parser.parse();
         RETURN_IF_ERROR(decl);
 
-
         NodeT<BlockState> block = make_node<BlockState>(NodeV<>{decl.value()});
         return make_node<SuiteState>(block);
     }
@@ -1046,9 +1040,7 @@ AST_NODE_IMPL(Statement, SuiteState) {
                         CURRENT_TOK.token_kind_repr()));
 }
 
-AST_NODE_IMPL_VISITOR(Jsonify, SuiteState) {
-    json.section("SuiteState", get_node_json(node.body));
-}
+AST_NODE_IMPL_VISITOR(Jsonify, SuiteState) { json.section("SuiteState", get_node_json(node.body)); }
 
 // ---------------------------------------------------------------------------------------------- //
 
@@ -1056,17 +1048,17 @@ AST_NODE_IMPL(Statement, BlockState) {
     IS_NOT_EMPTY;
     // := '{' Statement* '}'
 
-    NodeV<>      body;
+    NodeV<>          body;
     __TOKEN_N::Token starting_tok;
-    Declaration  decl_parser(iter);
+    Declaration      decl_parser(iter);
 
     IS_EXCEPTED_TOKEN(__TOKEN_N::PUNCTUATION_OPEN_BRACE);
     starting_tok = CURRENT_TOK;
     iter.advance();  // skip '{'
 
-    while (CURRENT_TOKEN_IS_NOT(
-        __TOKEN_N::PUNCTUATION_CLOSE_BRACE)) {  // TODO: implement this kind of bounds checks for all
-                                            // the pair token parsers '(', '[', '{'.
+    while (CURRENT_TOKEN_IS_NOT(__TOKEN_N::PUNCTUATION_CLOSE_BRACE)) {  // TODO: implement this kind
+                                                                        // of bounds checks for all
+        // the pair token parsers '(', '[', '{'.
         ParseResult<> decl = decl_parser.parse();
         RETURN_IF_ERROR(decl);
 
@@ -1166,7 +1158,7 @@ AST_NODE_IMPL(Statement, CatchState) {
     // := 'catch' (NamedVarSpecifier) SuiteState (CatchState)?
 
     __TOKEN_N::Token starting_tok;
-    bool         except_closing_paren = false;
+    bool             except_closing_paren = false;
 
     IS_EXCEPTED_TOKEN(__TOKEN_N::KEYWORD_CATCH);
     iter.advance();  // skip 'catch'
@@ -1222,9 +1214,7 @@ AST_NODE_IMPL(Statement, PanicState) {
     return make_node<PanicState>(expr.value());
 }
 
-AST_NODE_IMPL_VISITOR(Jsonify, PanicState) {
-    json.section("PanicState",get_node_json(node.expr));
-}
+AST_NODE_IMPL_VISITOR(Jsonify, PanicState) { json.section("PanicState", get_node_json(node.expr)); }
 
 // ---------------------------------------------------------------------------------------------- //
 

@@ -122,7 +122,8 @@ iter_body:
                 auto bad_token = self->peek_back().value();
                 throw error::Panic(error::CodeError{
                     .pof = &bad_token, .err_code = 0.10001,
-                    //.opt_fixes = {{__TOKEN_N::bare_token(__TOKEN_TYPES_N::KEYWORD_IMPORT) + " ", -1}}
+                    //.opt_fixes = {{__TOKEN_N::bare_token(__TOKEN_TYPES_N::KEYWORD_IMPORT) + " ",
+                    //-1}}
                 });
             }
 
@@ -192,7 +193,8 @@ iter_body:
                     .pof       = &bad_token,
                     .err_code  = 4.0001,
                     .mark_pof  = false,
-                    .opt_fixes = {{__TOKEN_N::bare_token(__TOKEN_TYPES_N::PUNCTUATION_SEMICOLON), -1}}});
+                    .opt_fixes = {
+                        {__TOKEN_N::bare_token(__TOKEN_TYPES_N::PUNCTUATION_SEMICOLON), -1}}});
             }
 
             advance_and_continue();  // skip ; or ,
@@ -275,7 +277,8 @@ void parse_macro(Preprocessor *self) {}
 //                 // TODO: add space between insert if its not there
 //                 //       and also make sure it clips to avoid inserting inside a color
 
-//                 .opt_fixes = {{__TOKEN_N::bare_token(__TOKEN_TYPES_N::PUNCTUATION_OPEN_BRACE), -1}}});
+//                 .opt_fixes = {{__TOKEN_N::bare_token(__TOKEN_TYPES_N::PUNCTUATION_OPEN_BRACE),
+//                 -1}}});
 //         }
 //     };
 
@@ -297,7 +300,8 @@ void parse_macro(Preprocessor *self) {}
 //                 // TODO: add space between insert if its not there
 //                 //       and also make sure it clips to avoid inserting inside a color
 
-//                 .opt_fixes = {{__TOKEN_N::bare_token(__TOKEN_TYPES_N::PUNCTUATION_OPEN_BRACE), -1}}});
+//                 .opt_fixes = {{__TOKEN_N::bare_token(__TOKEN_TYPES_N::PUNCTUATION_OPEN_BRACE),
+//                 -1}}});
 //         }
 
 //     error::Panic(
@@ -324,7 +328,8 @@ void parse_macro(Preprocessor *self) {}
 //                             //       and also make sure it clips to avoid inserting inside a
 //                             color
 
-//                             .opt_fixes = {{__TOKEN_N::bare_token(__TOKEN_TYPES_N::PUNCTUATION_OPEN_BRACE),
+//                             .opt_fixes =
+//                             {{__TOKEN_N::bare_token(__TOKEN_TYPES_N::PUNCTUATION_OPEN_BRACE),
 //                                         bad_token.column_number() + bad_token.length() + 3}}});
 
 // }

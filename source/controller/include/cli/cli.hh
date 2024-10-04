@@ -16,9 +16,9 @@
 #include <optional>
 #include <string>
 
-#include "taywee-args/include/args.hh"
-#include "neo-types/include/hxint.hh"
 #include "controller/include/config/Controller_config.def"
+#include "neo-types/include/hxint.hh"
+#include "taywee-args/include/args.hh"
 
 /*
 Helios - package manager / build system
@@ -99,62 +99,62 @@ abi-options:
 */
 
 __CONTROLLER_CLI_BEGIN {
-class CLIArgs {
-  public:
-    enum class OPTIMIZATION : u8 { O1 = 1, O2 = 2, O3 = 3, O4 = 4, O5 = 5 };
-    enum class MODE : char { RELEASE = 'r', DEBUG_= 'd' };
-    enum class ABI : char { PYTHON = 'p', RUST = 'r', CXX = 'c', HELIX = 'h' };
+    class CLIArgs {
+      public:
+        enum class OPTIMIZATION : u8 { O1 = 1, O2 = 2, O3 = 3, O4 = 4, O5 = 5 };
+        enum class MODE : char { RELEASE = 'r', DEBUG_ = 'd' };
+        enum class ABI : char { PYTHON = 'p', RUST = 'r', CXX = 'c', HELIX = 'h' };
 
-    std::string file;
-    std::optional<std::string> output_file;
-    // Options
-    OPTIMIZATION optimize;
+        std::string                file;
+        std::optional<std::string> output_file;
+        // Options
+        OPTIMIZATION optimize;
 
-    bool help    = false;
-    bool verbose = false;
-    bool quiet   = false;
-    bool exit_   = false;
-    int  exit_co = 0;
+        bool help    = false;
+        bool verbose = false;
+        bool quiet   = false;
+        bool exit_   = false;
+        int  exit_co = 0;
 
-    bool emit_tokens = false;
-    bool emit_llvm   = false;
-    bool emit_asm    = false;
-    bool emit_ast    = false;
-    bool emit_cst    = false;
-    bool emit_ir     = false;
-    bool emit_doc    = false;
+        bool emit_tokens = false;
+        bool emit_llvm   = false;
+        bool emit_asm    = false;
+        bool emit_ast    = false;
+        bool emit_cst    = false;
+        bool emit_ir     = false;
+        bool emit_doc    = false;
 
-    struct tool_chain {
-        std::string target;
-        std::string arch;
-        std::string cpu;
-        std::string sdk;
+        struct tool_chain {
+            std::string target;
+            std::string arch;
+            std::string cpu;
+            std::string sdk;
+        };
+
+        tool_chain toolchain;
+
+        std::string config_file;
+
+        MODE build_mode;
+        ABI  build_lib;  // if --lib is passed without [-py, -rs, -cx, -hlx] then assume -hlx
+
+        std::vector<std::string> include_dirs;
+        std::vector<std::string> library_dirs;
+        std::vector<std::string> link_libraries;
+        std::vector<std::string> module_dirs;
+
+        explicit CLIArgs(int argc, char **argv, const std::string &version);
+        std::string get_all_flags;
     };
 
-    tool_chain toolchain;
+    inline void check_exit(CLIArgs & obj) {
+        if (obj.exit_) {
+            std::exit(obj.exit_co);
+        }
 
-    std::string config_file;
-
-    MODE build_mode;
-    ABI build_lib;  // if --lib is passed without [-py, -rs, -cx, -hlx] then assume -hlx
-
-    std::vector<std::string> include_dirs;
-    std::vector<std::string> library_dirs;
-    std::vector<std::string> link_libraries;
-    std::vector<std::string> module_dirs;
-
-    explicit CLIArgs(int argc, char **argv, const std::string& version);
-    std::string get_all_flags;
-};
-
-inline void check_exit(CLIArgs &obj) {
-    if (obj.exit_) {
-        std::exit(obj.exit_co);
+        if (obj.file.empty()) {
+            std::cout << "no files provided run \"helix -h\" for help." << std::endl;
+            std::exit(0);
+        }
     }
-
-    if (obj.file.empty()) {
-        std::cout << "no files provided run \"helix -h\" for help." << std::endl;
-        std::exit(0);
-    }
-}
 }  // end __CONTROLLER_CLI_BEGIN

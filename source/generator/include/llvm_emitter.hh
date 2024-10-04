@@ -14,8 +14,6 @@
 #ifndef __LLVM_EMITTER_HH__
 #define __LLVM_EMITTER_HH__
 
-namespace codegen::llvm {
-    
-}
+namespace codegen::llvm {}
 
-#endif // __LLVM_EMITTER_HH__
+#endif  // __LLVM_EMITTER_HH__

@@ -14,8 +14,8 @@
 #define __AST_EXPRESSIONS_H__
 
 #include "parser/ast/include/config/AST_config.def"
-#include "parser/ast/include/types/AST_modifiers.hh"
 #include "parser/ast/include/private/AST_nodes.hh"
+#include "parser/ast/include/types/AST_modifiers.hh"
 #include "parser/ast/include/types/AST_types.hh"
 
 __AST_NODE_BEGIN {
@@ -36,7 +36,7 @@ __AST_NODE_BEGIN {
             , type(type) {}
 
         __TOKEN_N::Token value;
-        LiteralType  type;
+        LiteralType      type;
     };
 
     class BinaryExpr final : public Node {  // := E op E
@@ -47,9 +47,9 @@ __AST_NODE_BEGIN {
             , op(std::move(op))
             , rhs(std::move(rhs)) {}
 
-        NodeT<>      lhs;
+        NodeT<>          lhs;
         __TOKEN_N::Token op;
-        NodeT<>      rhs;
+        NodeT<>          rhs;
     };
 
     class UnaryExpr final : public Node {  // := op E
@@ -62,9 +62,9 @@ __AST_NODE_BEGIN {
             , op(std::move(op))
             , type(type) {}
 
-        NodeT<>      opd;
+        NodeT<>          opd;
         __TOKEN_N::Token op;
-        PosType      type = PosType::PreFix;
+        PosType          type = PosType::PreFix;
     };
 
     class IdentExpr final : public Node {  // := T
@@ -75,7 +75,7 @@ __AST_NODE_BEGIN {
             , is_reserved_primitive(is_reserved_primitive) {}
 
         __TOKEN_N::Token name;
-        bool         is_reserved_primitive = false;
+        bool             is_reserved_primitive = false;
     };
 
     class NamedArgumentExpr final : public Node {  // := IdentExpr '=' E
@@ -94,7 +94,7 @@ __AST_NODE_BEGIN {
 
         explicit ArgumentExpr(NodeT<> value)
             : value(std::move(value))
-            , type(ArgumentType::Positional){};
+            , type(ArgumentType::Positional) {};
 
         enum class ArgumentType {
             Positional,
@@ -117,8 +117,7 @@ __AST_NODE_BEGIN {
         NodeV<> args;
     };
 
-    class GenericInvokeExpr final
-        : public Node {  // := '<' Type ((',' Type)*)? '>'
+    class GenericInvokeExpr final : public Node {  // := '<' Type ((',' Type)*)? '>'
         BASE_CORE_METHODS(GenericInvokeExpr);
 
         explicit GenericInvokeExpr(NodeT<> args) {
@@ -256,7 +255,7 @@ __AST_NODE_BEGIN {
         }
 
         NodeV<NamedArgumentExpr> kwargs;
-        NodeT<>          path;
+        NodeT<>                  path;
     };
 
     class LambdaExpr final : public Node {  // TODO
@@ -265,9 +264,9 @@ __AST_NODE_BEGIN {
         explicit LambdaExpr(__TOKEN_N::Token marker)
             : marker(std::move(marker)) {}
 
-        NodeV<>      args;
-        NodeT<>      body;
-        NodeT<>      ret;
+        NodeV<>          args;
+        NodeT<>          body;
+        NodeT<>          ret;
         __TOKEN_N::Token marker;
     };
 
@@ -332,9 +331,9 @@ __AST_NODE_BEGIN {
             : value(std::move(value)) {}
         explicit Type(bool /* unused */) {}
 
-        NodeT<>  value;
+        NodeT<>                  value;
         NodeT<GenericInvokeExpr> generics;
-        Modifiers specifiers = Modifiers(Modifiers::ExpectedModifier::TypeSpec);
+        Modifiers                specifiers = Modifiers(Modifiers::ExpectedModifier::TypeSpec);
     };
 
     class AsyncThreading final : public Node {  // := IdentExpr

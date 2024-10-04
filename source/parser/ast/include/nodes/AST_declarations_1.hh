@@ -17,9 +17,9 @@
 #include <vector>
 
 #include "parser/ast/include/config/AST_config.def"
-#include "parser/ast/include/types/AST_modifiers.hh"
-#include "parser/ast/include/private/AST_nodes.hh"
 #include "parser/ast/include/nodes/AST_expressions.hh"
+#include "parser/ast/include/private/AST_nodes.hh"
+#include "parser/ast/include/types/AST_modifiers.hh"
 #include "parser/ast/include/types/AST_types.hh"
 
 __AST_NODE_BEGIN {
@@ -233,10 +233,10 @@ __AST_NODE_BEGIN {
 
         // OpDecl :=  SharedModifiers? 'op' T FuncDecl[no_SharedModifiers=true]
 
-        Modifiers       modifiers = Modifiers(Modifiers::ExpectedModifier::FuncSpec,
+        Modifiers        modifiers = Modifiers(Modifiers::ExpectedModifier::FuncSpec,
                                         Modifiers::ExpectedModifier::AccessSpec);
-        __TOKEN_N::Token    op;
-        NodeT<FuncDecl> func;
+        __TOKEN_N::Token op;
+        NodeT<FuncDecl>  func;
     };
 
     class ModuleDecl final : public Node {

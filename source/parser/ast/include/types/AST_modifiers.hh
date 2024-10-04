@@ -66,7 +66,7 @@ __AST_BEGIN {
         }
 
         __TOKEN_N::Token marker;
-        Specifier    type;
+        Specifier        type;
     };
 
     struct FFIQualifier {  // excepted after the ffi keyword
@@ -121,7 +121,7 @@ __AST_BEGIN {
         }
 
         __TOKEN_N::Token marker;
-        Qualifier    type;
+        Qualifier        type;
     };
 
     struct TypeSpecifier {
@@ -172,7 +172,7 @@ __AST_BEGIN {
         }
 
         __TOKEN_N::Token marker;
-        Specifier    type;
+        Specifier        type;
     };
 
     struct AccessSpecifier {
@@ -218,7 +218,7 @@ __AST_BEGIN {
         }
 
         __TOKEN_N::Token marker;
-        Specifier    type;
+        Specifier        type;
     };
 
     struct FunctionSpecifier {  // the part before the function signature
@@ -270,7 +270,7 @@ __AST_BEGIN {
         }
 
         __TOKEN_N::Token marker;
-        Specifier    type;
+        Specifier        type;
     };
 
     struct FunctionQualifier {
@@ -316,7 +316,7 @@ __AST_BEGIN {
         }
 
         __TOKEN_N::Token marker;
-        Qualifier    type;
+        Qualifier        type;
     };
 
     struct ClassSpecifier {
@@ -353,7 +353,7 @@ __AST_BEGIN {
         }
 
         __TOKEN_N::Token marker;
-        Specifier    type;
+        Specifier        type;
     };
 
     struct Modifiers {
@@ -369,7 +369,7 @@ __AST_BEGIN {
         };
 
       private:
-        std::vector<ExpectedModifier>                                    expected_modifiers;
+        std::vector<ExpectedModifier>                                      expected_modifiers;
         std::unordered_set<__TOKEN_TYPES_N>                                allowed_modifiers;
         std::unordered_map<ExpectedModifier, std::vector<__TOKEN_TYPES_N>> modifiers_map = {
             {ExpectedModifier::StorageSpec, {__TOKEN_N::KEYWORD_FFI, __TOKEN_N::KEYWORD_STATIC}},

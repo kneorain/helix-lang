@@ -36,7 +36,7 @@ __AST_VISITOR_BEGIN {
 
     inline neo::json get_node_json(const NodeT<> &node) {
         auto visitor = Jsonify();
-        
+
         if (node == nullptr) {
             return neo::json("nullptr");
         }

@@ -29,21 +29,20 @@ enum class GenerateMode {
 };
 
 class CXXGenerator : public parser::ast::visitor::Visitor {
-private:
-bool __generate_signatures = false;
-bool __generate_implementations = false;
-bool __generate_extern_signatures = false;
+  private:
+    bool __generate_signatures        = false;
+    bool __generate_implementations   = false;
+    bool __generate_extern_signatures = false;
 
-public:
+  public:
     CXXGenerator() = default;
     explicit CXXGenerator(GenerateMode) noexcept;
-    virtual ~CXXGenerator() = default;
-    CXXGenerator(const CXXGenerator&) = default;
-    CXXGenerator& operator=(const CXXGenerator&) = default;
-    CXXGenerator(CXXGenerator&&) = default;
-    CXXGenerator& operator=(CXXGenerator&&) = default;
-
+    virtual ~CXXGenerator()                       = default;
+    CXXGenerator(const CXXGenerator &)            = default;
+    CXXGenerator &operator=(const CXXGenerator &) = default;
+    CXXGenerator(CXXGenerator &&)                 = default;
+    CXXGenerator &operator=(CXXGenerator &&)      = default;
 };
-}
+}  // namespace codegen::cxx
 
-#endif // __CXX_EMITTER_HH__
+#endif  // __CXX_EMITTER_HH__
