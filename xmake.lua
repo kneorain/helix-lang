@@ -157,6 +157,7 @@ local function helix_src_setup()
 
 	-- Add source fikes
 	add_files("source/**.cc") -- add all files in the source directory
+    -- add_files("source/**.hlx") -- compile all helix files
 
 	-- Header files
 	add_headerfiles("source/**.hh") -- add all headers in the source directory
@@ -333,6 +334,14 @@ target("helix") -- target config defined in the config seciton
     set_kind("binary")
     set_languages("c++23")
 target_end() -- empty target
+
+-- rule("helix")
+--   set_extensions(".hlx")
+--   on_build_file(function (target, sourcefile)
+--     -- Call Helix compiler to compile .hlx file to C++ or object file
+--     os.run("helixc %s", sourcefile)
+--     -- Optionally link Helix output with C++ build
+--   end)
 
 target("helix-api")
     set_kind("static")

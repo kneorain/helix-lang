@@ -25,7 +25,8 @@ The **driver** manages the compilation process by handling I/O and orchestrating
 ### [source/generator](generator)
 This directory holds the code for **code generation (codegen)** in Helix. It converts Helix AST into intermediate representations (CIR and LLVM-IR) and eventually into optimized machine code.
 
-- `CC-IR`: Code generation to Helix's custom CIR (Compiler Intermediate Representation).
+- `CXIR`: Code generation to Helix's custom CIR (Compiler Intermediate Representation).
+- `BC:IR`: Normalized IR for borrow checking and safety validation. (**Note:** borrow checking is not imposed on the user, in the sense of the strictness of Rust's borrow checker, but rather as warnings and suggestions.)
 - `LLVM-IR`: Code generation to LLVM-IR for backend compilation.
 - `include`: Header files for the generator.
 
