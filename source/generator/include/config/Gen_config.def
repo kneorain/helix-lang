@@ -17,6 +17,8 @@
 
 #define __CXIR_CODEGEN_N generator::CXIR
 
+#define CX_VISIT_IMPL(type) void __CXIR_CODEGEN_N::CXIR::visit(const __AST_NODE::type &node /* NOLINT */)
+
 #define MAKE_CXIR_TOKEN(name, string) name,
 #define MAKE_CXIR_TOKEN_PAIR(name, string) std::pair{name, string},
 

@@ -14,7 +14,7 @@
 #define __CXX_TOKENS_DEF__
 
 // Count should be updated based on actual number of tokens added
-#define CXX_TOKENS_COUNT 130  // Update based on total number of tokens
+#define CXX_TOKENS_COUNT 170  // Update based on total number of tokens
 
 // Macro to generate all C++ tokens, including new C++23 tokens
 #define CXX_TOKENS(GENERATE)                              \
@@ -152,6 +152,42 @@
     GENERATE(HELIX_BOOL,            "bool"              ) \
     GENERATE(HELIX_VOID,            "void"              ) \
     GENERATE(HELIX_CHAR,            "char"              ) \
+    /* punctuation */                                    \
+    GENERATE(CXX_LPAREN,            "("                 ) \
+    GENERATE(CXX_RPAREN,            ")"                 ) \
+    GENERATE(CXX_LBRACE,            "{"                 ) \
+    GENERATE(CXX_RBRACE,            "}"                 ) \
+    GENERATE(CXX_LBRACKET,          "["                 ) \
+    GENERATE(CXX_RBRACKET,          "]"                 ) \
+    GENERATE(CXX_COMMA,             ","                 ) \
+    GENERATE(CXX_COLON,             ":"                 ) \
+    GENERATE(CXX_SEMICOLON,         ";"                 ) \
+    GENERATE(CXX_DOT,               "."                 ) \
+    GENERATE(CXX_ELLIPSIS,          "..."               ) \
+    GENERATE(CXX_QUESTION,          "?"                 ) \
+    GENERATE(CXX_TILDE,             "~"                 ) \
+    GENERATE(CXX_EXCLAMATION,       "!"                 ) \
+    GENERATE(CXX_AT,                "@"                 ) \
+    GENERATE(CXX_HASH,              "#"                 ) \
+    GENERATE(CXX_DOLLAR,            "$"                 ) \
+    GENERATE(CXX_PERCENT,           "%"                 ) \
+    GENERATE(CXX_CARET,             "^"                 ) \
+    GENERATE(CXX_AMPERSAND,         "&"                 ) \
+    GENERATE(CXX_ASTERISK,          "*"                 ) \
+    GENERATE(CXX_MINUS,             "-"                 ) \
+    GENERATE(CXX_PLUS,              "+"                 ) \
+    GENERATE(CXX_EQUAL,             "="                 ) \
+    GENERATE(CXX_PIPE,              "|"                 ) \
+    GENERATE(CXX_SLASH,             "/"                 ) \
+    GENERATE(CXX_BACKSLASH,         "\\"                ) \
+    GENERATE(CXX_LESS,              "<"                 ) \
+    GENERATE(CXX_GREATER,           ">"                 ) \
+    GENERATE(CXX_UNDERSCORE,        "_"                 ) \
+    GENERATE(CXX_DOUBLE_QUOTE,      "\""                ) \
+    GENERATE(CXX_SINGLE_QUOTE,      "'"                 ) \
+    GENERATE(CXX_BACKTICK,          "`"                 ) \
+    GENERATE(CXX_SPACE,             " "                 ) \
+    GENERATE(CXX_NEWLINE,           "\n"                )
 
 // NOTE: IF THIS GENERATION IS CHANGED DO NOT FORGET TO UPDATE COUNT
 

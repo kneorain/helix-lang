@@ -75,12 +75,12 @@
 #define GET_DEBUG_INFO std::string("")
 #endif
 
-#define PARSE_ERROR(tok, msg) ParseError(tok, GET_DEBUG_INFO + msg)
-#define PARSE_ERROR_MSG(msg) ParseError(CURRENT_TOK, GET_DEBUG_INFO + msg)
+#define PARSE_ERROR(tok, msg) parser::ast::ParseError(tok, GET_DEBUG_INFO + msg)
+#define PARSE_ERROR_MSG(msg) parser::ast::ParseError(CURRENT_TOK, GET_DEBUG_INFO + msg)
 #define IS_EXCEPTED_TOKEN(tok)                                                           \
     if (iter.remaining_n() == 0) {                                                       \
         return std::unexpected(                                                          \
-            ParseError(PREVIOUS_TOK,                                                     \
+            parser::ast::ParseError(PREVIOUS_TOK,                                                     \
                        GET_DEBUG_INFO + "expected a " +                                  \
                            std::string(__TOKEN_N::tokens_map.at(tok).value_or("unknown")) +  \
                            " token, but found nothing"));                                \

@@ -339,7 +339,7 @@ target_end() -- empty target
 --   set_extensions(".hlx")
 --   on_build_file(function (target, sourcefile)
 --     -- Call Helix compiler to compile .hlx file to C++ or object file
---     os.run("helixc %s", sourcefile)
+--     os.run("helix %s", sourcefile)
 --     -- Optionally link Helix output with C++ build
 --   end)
 

@@ -36,7 +36,112 @@
 #include "parser/ast/include/AST.hh"
 #include "parser/cpp/fn_signatures.hh"
 #include "parser/preprocessor/include/preprocessor.hh"
+#include "generator/include/CX-IR/CXIR.hh"
 #include "token/include/Token.hh"
+
+
+#include <string>
+#include <memory>
+#include <iostream>
+#include <iostream>
+#include <cstdio>
+#include <cstdlib>
+
+#include "llvm-18.1.9-src/llvm/include/llvm/IR/LLVMContext.h"
+#include "llvm-18.1.9-src/llvm/include/llvm/IR/Module.h"
+#include "llvm-18.1.9-src/llvm/include/llvm/IR/IRBuilder.h"
+#include "llvm-18.1.9-src/llvm/include/llvm/AsmParser/Parser.h"
+#include "llvm-18.1.9-src/llvm/include/llvm/IR/Verifier.h"
+#include "llvm-18.1.9-src/llvm/include/llvm/IR/LegacyPassManager.h"
+#include "llvm-18.1.9-src/llvm/include/llvm/Support/TargetSelect.h"
+
+#include "llvm-18.1.9-src/llvm/include/llvm/MC/TargetRegistry.h"
+#include "llvm-18.1.9-src/llvm/include/llvm/Support/FileSystem.h"
+#include "llvm-18.1.9-src/llvm/include/llvm/Support/SourceMgr.h"
+#include "llvm-18.1.9-src/llvm/include/llvm/Support/CodeGen.h"
+#include "llvm-18.1.9-src/llvm/include/llvm/Support/raw_ostream.h"
+#include "llvm-18.1.9-src/llvm/include/llvm/Support/ErrorOr.h"
+#include "llvm-18.1.9-src/llvm/include/llvm/Target/TargetMachine.h"
+#include "llvm-18.1.9-src/llvm/include/llvm/Target/TargetOptions.h"
+
+#include <llvm-18.1.9-src/clang/include/clang/Basic/Diagnostic.h>
+#include <llvm-18.1.9-src/clang/include/clang/Basic/DiagnosticOptions.h>
+#include <llvm-18.1.9-src/clang/include/clang/Basic/FileManager.h>
+#include <llvm-18.1.9-src/clang/include/clang/Basic/TargetOptions.h>
+#include <llvm-18.1.9-src/clang/include/clang/CodeGen/CodeGenAction.h>
+#include <llvm-18.1.9-src/clang/include/clang/Frontend/CompilerInstance.h>
+#include <llvm-18.1.9-src/clang/include/clang/Frontend/CompilerInvocation.h>
+#include <llvm-18.1.9-src/clang/include/clang/Frontend/TextDiagnosticPrinter.h>
+#include <llvm-18.1.9-src/clang/include/clang/Lex/PreprocessorOptions.h>
+#include <llvm-18.1.9-src/llvm/include/llvm/ADT/IntrusiveRefCntPtr.h>
+#include <llvm-18.1.9-src/llvm/include/llvm/Support/CommandLine.h>
+#include <llvm-18.1.9-src/llvm/include/llvm/TargetParser/Host.h>
+#include <llvm-18.1.9-src/llvm/include/llvm/Support/InitLLVM.h>
+#include <llvm-18.1.9-src/llvm/include/llvm/Support/MemoryBuffer.h>
+#include <llvm-18.1.9-src/llvm/include/llvm/Support/Path.h>
+
+#include <system_error>
+
+
+
+void compile_CXIR(generator::CXIR::CXIR &emitter, const std::string &out) {
+    /// compile the c++ using an in-memory buffer and invoke clang++
+    std::string cxx = emitter.to_CXIR();
+    cxx = "#include <cstdio>\n #include <cstdlib>\n #include <string>\n using namespace std;\n" + cxx;
+
+    // make a call to system: clang++
+    std::ofstream file("_H1HJA9ZLO_17.helix-compiler.cc");
+    if (!file) {
+        std::cerr << "Error creating _H1HJA9ZLO_17.helix-compiler.cc file!" << std::endl;
+        return;
+    }
+
+    file << cxx;
+    file.close();
+
+    std::string cmd = std::string("c++ _H1HJA9ZLO_17.helix-compiler.cc -std=c++23 -g -O0 -fno-omit-frame-pointer -Wl,-rpath,/usr/local/lib -o ") + out;
+    const char* compileCommand = cmd.c_str();
+
+    if (system(compileCommand) != 0) {
+        std::cerr << "Compilation failed!" << std::endl;
+        return;
+    }
+
+    system("rm _H1HJA9ZLO_17.helix-compiler.cc");
+
+    std::cout << "object file '" << out << "' generated successfully!" << std::endl;
+}
+
+
+// void compile_CXIR(generator::CXIR::CXIR &emitter, const std::string &out) {
+//     /// compile the c++ using an in-memory buffer and invoke clang++
+//     std::string cxx = emitter.to_CXIR();
+
+//     // make a call to system: clang++
+//     std::string cmd = std::string("clang++ -x c++ - -c -g -o \"") + out + '"';
+//     const char* compileCommand = cmd.c_str();
+
+//     // Use popen to execute the command and pipe the in-memory C++ code to clang++
+//     FILE* clangProcess = popen(compileCommand, "w");
+//     if (clangProcess == nullptr) {
+//         std::cerr << "failed to run clang++!" << std::endl;
+//         return;
+//     }
+
+//     // Write the in-memory C++ code to the clang process (as input)
+//     fputs(cxx.c_str(), clangProcess);
+//     fflush(clangProcess); // Ensure all data is flushed
+
+//     // Close the process to complete the compilation
+//     int result = pclose(clangProcess);
+//     if (result != 0) {
+//         std::cerr << "compilation failed!" << std::endl;
+//         return;
+//     }
+
+//     std::cout << "object file '" << out << "' generated successfully!" << std::endl;
+// }
+
 
 int compile(int argc, char **argv) {
     using namespace parser::lexer;
@@ -128,6 +233,23 @@ int compile(int argc, char **argv) {
 
         print(neo::json("ast").add("Decls", node_json).to_string());
     }
+
+    generator::CXIR::CXIR emitter;
+
+    for (auto &node : ast) {
+        node->accept(emitter);
+    }
+
+    if (parsed_args.emit_ir) {
+        print("emitting CX-IR...", sysIO::endl('\r'));
+
+        print(emitter.to_CXIR());
+    }
+
+    std::string out_file;
+    
+    out_file = (parsed_args.output_file.has_value()) ? parsed_args.output_file.value() : std::filesystem::path(parsed_args.file).stem().string();
+    compile_CXIR(emitter, out_file);
 
     auto                          end  = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double> diff = end - start;
