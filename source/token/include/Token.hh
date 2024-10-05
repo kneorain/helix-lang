@@ -17,5 +17,6 @@
 #include "token/include/private/Token_base.hh"
 #include "token/include/private/Token_generate.hh"
 #include "token/include/private/Token_list.hh"
+#include "token/include/types/mapping.hh"
 
 #endif  // __TOKEN_HH__
