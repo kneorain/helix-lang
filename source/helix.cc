@@ -142,11 +142,7 @@ void compile_CXIR(generator::CXIR::CXIR &emitter, const std::string &out) {
 //     std::cout << "object file '" << out << "' generated successfully!" << std::endl;
 // }
 
-
 int compile(int argc, char **argv) {
-    using namespace parser::lexer;
-    using namespace parser::preprocessor;
-
     // relative to current working dir in POSIX shell (cmd/bash)
     __CONTROLLER_CLI_N::CLIArgs parsed_args(argc, argv, "0.0.1-alpha-0112");
     check_exit(parsed_args);
@@ -160,13 +156,14 @@ int compile(int argc, char **argv) {
     // read the file and tokenize its contents : stage 0
     print("tokenizing...", sysIO::endl('\r'));
     __TOKEN_N::TokenList tokens =
-        Lexer(__CONTROLLER_FS_N::read_file(parsed_args.file), parsed_args.file).tokenize();
+        parser::lexer::Lexer(__CONTROLLER_FS_N::read_file(parsed_args.file), parsed_args.file)
+            .tokenize();
 
     std::vector<string> pkg_paths = {"/Volumes/Container/Projects/Helix/helix-lang/helix/pkgs"};
 
     // preprocess the tokens with optional module import paths : stage 1
     print("preprocessing...", sysIO::endl('\r'));
-    Preprocessor(tokens, "main", pkg_paths).parse();
+    parser::preprocessor::Preprocessor(tokens, "main", pkg_paths).parse();
 
     // preprocessor::import_tree->print_tree(preprocessor::import_tree->get_root());
 

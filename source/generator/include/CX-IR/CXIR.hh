@@ -24,7 +24,7 @@ using namespace clang;
 #include "parser/ast/include/AST.hh"
 #include "token/include/Token.hh"
 
-std::string get_neo_clang_format_config() {
+inline std::string get_neo_clang_format_config() {
     return R"(
 Language:        Cpp
 BasedOnStyle:  Google

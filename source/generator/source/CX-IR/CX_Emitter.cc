@@ -167,7 +167,6 @@ CX_VISIT_IMPL(AsyncThreading) {
         case parser::ast::node::AsyncThreading::AsyncThreadingType::Await:
             ADD_TOKEN(CXX_CO_AWAIT);
             ADD_NODE_PARAM(value);
-
             break;
         case parser::ast::node::AsyncThreading::AsyncThreadingType::Spawn:
         case parser::ast::node::AsyncThreading::AsyncThreadingType::Thread:
@@ -324,27 +323,24 @@ CX_VISIT_IMPL(CatchState) {
     ADD_NODE_PARAM(body);
 }
 
-CX_VISIT_IMPL(FinallyState) {
+CX_VISIT_IMPL(FinallyState){
     // TODO: this needs to be placed before return, so, the code gen needs to be statefull here...
     // for now it will just put the
     // https://stackoverflow.com/questions/33050620/golang-style-defer-in-c
     // for try catch this would have to be placed before the try block
-    //shared_ptr<void>_(nullptr, [] { cout << ", World!"; });
-    ADD_TOKEN_AS_TOKEN(CXX_CORE_IDENTIFIER, "shared_ptr"); ANGLE_DELIMIT(CXX_VOID); 
-}
+    // shared_ptr<void>_(nullptr, [] { cout << ", World!"; });
+    // ADD_TOKEN_AS_TOKEN(CXX_CORE_IDENTIFIER, "shared_ptr");
+    // ANGLE_DELIMIT(ADD_TOKEN(CXX_VOID););
+    CXIR_NOT_IMPLEMENTED;}
 
 CX_VISIT_IMPL(TryState) {
 
+    // Is this nullable?
+    if (node.finally_state != nullptr)
+        ADD_NODE_PARAM(finally_state);
 
-    
-    
     ADD_TOKEN(CXX_TRY);
     ADD_NODE_PARAM(body);
-
-    if (!node.no_catch) {
-
-    }
-
 }
 
 CX_VISIT_IMPL(PanicState) {
@@ -382,15 +378,9 @@ CX_VISIT_IMPL(RequiresParamDecl) {
     }
 }
 
-CX_VISIT_IMPL(RequiresParamList) {
-    // -> (param (',' param)*)?
+CX_VISIT_IMPL(RequiresParamList) {  // -> (param (',' param)*)?
 
-    for (size_t i = 0; i < node.params.size(); i++) {
-        ADD_NODE_PARAM(params[i]);
-        if (i != node.params.size() - 1) {
-            ADD_TOKEN_AS_VALUE(CXX_CORE_OPERATOR, ",");
-        }
-    }
+    COMMA_SEP(params);
 }
 
 CX_VISIT_IMPL(EnumMemberDecl) { CXIR_NOT_IMPLEMENTED; }
@@ -437,17 +427,8 @@ CX_VISIT_IMPL(FuncDecl) {
     }
 
     ADD_NODE_PARAM(name);
-    ADD_TOKEN(CXX_LPAREN);
 
-    for (size_t i = 0; i < node.params.size(); i++) {
-        ADD_NODE_PARAM(params[i]);
-
-        if (i != node.params.size() - 1) {
-            ADD_TOKEN_AS_VALUE(CXX_CORE_OPERATOR, ",");
-        }
-    }
-
-    ADD_TOKEN(CXX_RPAREN);
+    PAREN_DELIMIT(COMMA_SEP(params););
     ADD_NODE_PARAM(body);
 }
 
