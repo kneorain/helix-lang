@@ -339,7 +339,7 @@ CX_VISIT_IMPL(TryState) {
     
     
     ADD_TOKEN(CXX_TRY);
-    ADD_NODE_PARAM(body)
+    ADD_NODE_PARAM(body);
 
     if (!node.no_catch) {
 
