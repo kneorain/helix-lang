@@ -289,7 +289,7 @@ AST_BASE_IMPL(Expression, parse) {  // NOLINT(readability-function-cognitive-com
                 RETURN_IF_ERROR(expr);
                 break;
 
-            case __TOKEN_N::KEYWORD_HAS:
+            case __TOKEN_N::KEYWORD_IN:
             case __TOKEN_N::KEYWORD_DERIVES:
                 expr = parse<InstOfExpr>(expr);
                 RETURN_IF_ERROR(expr);
@@ -1285,13 +1285,13 @@ AST_NODE_IMPL(Expression, InstOfExpr, ParseResult<> lhs) {
         RETURN_IF_ERROR(lhs);
     }
 
-#define INST_OF_OPS {__TOKEN_N::KEYWORD_HAS, __TOKEN_N::KEYWORD_DERIVES}
+#define INST_OF_OPS {__TOKEN_N::KEYWORD_IN, __TOKEN_N::KEYWORD_DERIVES}
     IS_IN_EXCEPTED_TOKENS(INST_OF_OPS);
 #undef INST_OF_OPS
 
-    if CURRENT_TOKEN_IS (__TOKEN_N::KEYWORD_HAS)
-        op = InstOfExpr::InstanceType::Has;
-    iter.advance();  // skip 'has' or 'derives'
+    if CURRENT_TOKEN_IS (__TOKEN_N::KEYWORD_IN)
+        op = InstOfExpr::InstanceType::In;
+    iter.advance();  // skip 'in' or 'derives'
 
     ParseResult<> rhs = parse();
     RETURN_IF_ERROR(rhs);
@@ -1406,10 +1406,10 @@ AST_NODE_IMPL(Expression, Type) {  // TODO - REMAKE using the new Modifiers and 
                 RETURN_IF_ERROR(EXPR);
                 break;
 
-            case __TOKEN_N::KEYWORD_HAS:
+            case __TOKEN_N::KEYWORD_IN:
             case __TOKEN_N::KEYWORD_DERIVES:
                 return std::unexpected(
-                    PARSE_ERROR(tok, "expected a type, but found a 'has' or 'derives' keyword"));
+                    PARSE_ERROR(tok, "expected a type, but found a 'in' or 'derives' keyword"));
 
             case __TOKEN_N::PUNCTUATION_QUESTION_MARK:
             case __TOKEN_N::KEYWORD_IF:

@@ -225,7 +225,7 @@ class CastExpression:
     value = $2
 
 class InstanceOfExpression:
-    := ((class Expression)$1 + __TOKEN_TYPES_N::KEYWORD_HAS + (class Expression)$2) | ((class Expression)$1 + __TOKEN_TYPES_N::KEYWORD_DERIVES + (class Type)$2)
+    := ((class Expression)$1 + __TOKEN_TYPES_N::KEYWORD_IN + (class Expression)$2) | ((class Expression)$1 + __TOKEN_TYPES_N::KEYWORD_DERIVES + (class Type)$2)
     expression = $1
     value = $2
     type = 'has' | 'derives'

@@ -13,9 +13,10 @@
 #ifndef __AST_BASE_H__
 #define __AST_BASE_H__
 
+#include <string>
+
 #include "parser/ast/include/config/AST_config.def"
 #include "parser/ast/include/types/AST_visitor.hh"
-
 __AST_NODE_BEGIN {
     class Node {  // base node
       public:

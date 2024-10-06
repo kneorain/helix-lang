@@ -145,7 +145,7 @@ __AST_NODE_BEGIN {
         NodeT<SuiteState> body;
         ElseType          type = ElseType::Else;
     };
-
+    
     class SwitchState final : public Node {
         BASE_CORE_METHODS(SwitchState);
 

@@ -303,11 +303,11 @@ __AST_NODE_BEGIN {
         NodeT<> type;
     };
 
-    class InstOfExpr final : public Node {  // := E ('has' | 'derives') E
+    class InstOfExpr final : public Node {  // := E ('in' | 'derives') E
         BASE_CORE_METHODS(InstOfExpr);
 
         enum class InstanceType {
-            Has,
+            In,
             Derives,
         };
 
