@@ -82,7 +82,7 @@ __AST_NODE_BEGIN {
         BASE_CORE_METHODS(TypeBoundDecl);
 
         // TypeBoundDecl := InstOfExpr
-
+        
         NodeT<InstOfExpr> bound;
     };
 

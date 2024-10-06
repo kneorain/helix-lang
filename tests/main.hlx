@@ -1,4 +1,3 @@
-ffi "c++" import "vector";
 
 fn print() {
     printf("\n");

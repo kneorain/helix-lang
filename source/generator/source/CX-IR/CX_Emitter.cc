@@ -3,6 +3,7 @@
 
 #include "generator/include/CX-IR/CXIR.hh"
 #include "parser/ast/include/config/AST_config.def"
+#include "parser/ast/include/nodes/AST_declarations.hh"
 #include "parser/ast/include/nodes/AST_expressions.hh"
 #include "parser/ast/include/nodes/AST_statements.hh"
 #include "parser/ast/include/private/AST_generate.hh"
@@ -15,6 +16,17 @@
 #define ADD_TOKEN_AS_TOKEN(token, token_value) \
     tokens.push_back(std::make_unique<CX_Token>(token_value, cxir_tokens::token))
 #define ADD_NODE_PARAM(param) node.param->accept(*this)
+
+// the call is the same but different tokens. could be templated, calling for
+// generics could be parsed the same and then templated to not be the same,
+// this is a note for future implementations, same with
+// this could be a do while
+// no trailing comma
+#define COMMA_SEP(args)                                                          \
+    for (size_t i = 0, size_min_1 = node.args.size() - 1; i < size_min_1; ++i) { \
+        ADD_NODE_PARAM(args[i]);                                                 \
+        ADD_TOKEN_AS_VALUE(CXX_CORE_OPERATOR, ",");                              \
+    }
 
 #define PAREN_DELIMIT(...) \
     ADD_TOKEN(CXX_LPAREN); \
@@ -66,17 +78,6 @@ CX_VISIT_IMPL(NamedArgumentExpr) {
 }
 
 CX_VISIT_IMPL(ArgumentExpr) { ADD_NODE_PARAM(value); }
-
-// the call is the same but different tokens. could be templated, calling for
-// generics could be parsed the same and then templated to not be the same,
-// this is a note for future implementations, same with
-// this could be a do while
-// no trailing comma
-#define COMMA_SEP(args)                                                          \
-    for (size_t i = 0, size_min_1 = node.args.size() - 1; i < size_min_1; ++i) { \
-        ADD_NODE_PARAM(args[i]);                                                 \
-        ADD_TOKEN_AS_VALUE(CXX_CORE_OPERATOR, ",");                              \
-    }
 
 CX_VISIT_IMPL(ArgumentListExpr) {
     // -> '(' arg (',' arg)* ')'
@@ -176,6 +177,7 @@ CX_VISIT_IMPL(AsyncThreading) {
 }
 
 CX_VISIT_IMPL(Type) {  // TODO Modifiers
+
     ADD_NODE_PARAM(value);
     ADD_NODE_PARAM(generics);
 }
@@ -323,7 +325,7 @@ CX_VISIT_IMPL(CatchState) {
     ADD_NODE_PARAM(body);
 }
 
-CX_VISIT_IMPL(FinallyState){
+CX_VISIT_IMPL(FinallyState) {
     // TODO: this needs to be placed before return, so, the code gen needs to be statefull here...
     // for now it will just put the
     // https://stackoverflow.com/questions/33050620/golang-style-defer-in-c
@@ -331,7 +333,8 @@ CX_VISIT_IMPL(FinallyState){
     // shared_ptr<void>_(nullptr, [] { cout << ", World!"; });
     // ADD_TOKEN_AS_TOKEN(CXX_CORE_IDENTIFIER, "shared_ptr");
     // ANGLE_DELIMIT(ADD_TOKEN(CXX_VOID););
-    CXIR_NOT_IMPLEMENTED;}
+    CXIR_NOT_IMPLEMENTED;
+}
 
 CX_VISIT_IMPL(TryState) {
 
@@ -394,14 +397,19 @@ CX_VISIT_IMPL(TypeBoundDecl) { CXIR_NOT_IMPLEMENTED; }
 CX_VISIT_IMPL(RequiresDecl) {
     // -> 'template' '<' params '>'
     ADD_TOKEN(CXX_TEMPLATE);
-    ADD_TOKEN(CXX_LESS);
 
-    ADD_NODE_PARAM(params);
-
-    ADD_TOKEN(CXX_GREATER);
+    ANGLE_DELIMIT(ADD_NODE_PARAM(params););
 }
 
-CX_VISIT_IMPL(ModuleDecl) { CXIR_NOT_IMPLEMENTED; }
+CX_VISIT_IMPL(ModuleDecl) {
+
+    if (node.inline_module)
+        ADD_TOKEN(CXX_INLINE);
+
+    ADD_TOKEN(CXX_NAMESPACE);
+
+    ADD_NODE_PARAM(body);
+}
 
 CX_VISIT_IMPL(StructDecl) { CXIR_NOT_IMPLEMENTED; }
 
@@ -409,11 +417,31 @@ CX_VISIT_IMPL(ConstDecl) { CXIR_NOT_IMPLEMENTED; }
 
 CX_VISIT_IMPL(ClassDecl) { CXIR_NOT_IMPLEMENTED; }
 
-CX_VISIT_IMPL(InterDecl) { CXIR_NOT_IMPLEMENTED; }
+CX_VISIT_IMPL(InterDecl) {
+    // InterDecl := 'const'? VisDecl? 'interface' E.IdentExpr UDTDeriveDecl? RequiresDecl?
+    // S.Suite
+    // ADD_NODE_PARAM(generics); // WE need a custom generics impl here as Self is the first generic
+
+    // if (node.generics != nullptr) {
+    //     if (node.generics->getNodeType() == parser::ast::node::nodes::RequiresDecl) {
+    //         parser::ast::node::RequiresDecl req =
+    //             static_cast<parser::ast::node::RequiresDecl>(*node.generics);
+
+    //         req.params
+    //     }
+    // }
+    CXIR_NOT_IMPLEMENTED;
+}
 
 CX_VISIT_IMPL(EnumDecl) { CXIR_NOT_IMPLEMENTED; }
 
-CX_VISIT_IMPL(TypeDecl) { CXIR_NOT_IMPLEMENTED; }
+CX_VISIT_IMPL(TypeDecl) {
+    // TODO: vis, as there is no way to make a type priv if its not on a class
+    ADD_NODE_PARAM(generics);
+    ADD_TOKEN(CXX_USING);
+    ADD_TOKEN_AS_VALUE(CXX_CORE_OPERATOR, "=");
+    ADD_NODE_PARAM(value);
+}
 
 CX_VISIT_IMPL(FuncDecl) {
     if (node.generics != nullptr) {
