@@ -14,6 +14,7 @@
 #include <llvm/ADT/StringRef.h>
 
 #include <cstdio>
+#include <regex>
 
 using namespace clang;
 
@@ -26,7 +27,8 @@ using namespace clang;
 #include "parser/ast/include/AST.hh"
 #include "token/include/Token.hh"
 
-inline consteval std::string get_neo_clang_format_config() {
+const std::regex double_semi_regexp(R"(;\r?\n\s*?;)");  // Matches any whitespace around the semicolons
+inline std::string get_neo_clang_format_config() {
     return R"(
 Language:        Cpp
 BasedOnStyle:  Google
@@ -253,22 +255,18 @@ __CXIR_CODEGEN_BEGIN {
             clang::tooling::Replacements replacements =
                 clang::format::reformat(style, codeRef, {range});
 
-            // Check if replacements were generated
-            printf("Number of replacements: %lu\n", replacements.size());
-            for (const auto &replacement : replacements) {
-                printf("Replacement: %s\n", replacement.toString().c_str());
-            }
-
             // Apply the replacements to get the formatted code
             llvm::Expected<std::string> formattedCode =
                 clang::tooling::applyAllReplacements(cxir, replacements);
+
             if (!formattedCode) {
                 printf("Error formatting code: %s\n",
                        llvm::toString(formattedCode.takeError()).c_str());
                 throw std::runtime_error("Error formatting code");
             }
 
-            printf("Formatted CXIR: %s\n", formattedCode->c_str());  // Log the result
+            return std::regex_replace(*formattedCode, double_semi_regexp, ";");
+
             return *formattedCode;
         }
         GENERATE_VISIT_EXTENDS;

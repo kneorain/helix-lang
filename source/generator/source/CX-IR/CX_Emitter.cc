@@ -285,7 +285,6 @@ CX_VISIT_IMPL(SwitchState) { CXIR_NOT_IMPLEMENTED; }
 
 CX_VISIT_IMPL(YieldState) {
     ADD_TOKEN(CXX_CO_YIELD);
-
     ADD_NODE_PARAM(value);
     ADD_TOKEN(CXX_SEMICOLON);
 }
@@ -318,22 +317,15 @@ CX_VISIT_IMPL(BreakState) {
 
 CX_VISIT_IMPL(BlockState) {
     // -> (statement ';')*
-    for (auto &stmt : node.body) {
-        stmt->accept(*this);
-        ADD_TOKEN(CXX_SEMICOLON);
-    }
+    SEP_TRAILING(body, ADD_TOKEN(CXX_SEMICOLON););
 }
 
 CX_VISIT_IMPL(SuiteState) {
     // -> '{' body '}'
-    ADD_TOKEN(CXX_LBRACE);
-
-    ADD_NODE_PARAM(body);
-
-    ADD_TOKEN(CXX_RBRACE);
+    BRACE_DELIMIT(ADD_NODE_PARAM(body););
 }
 
-CX_VISIT_IMPL(ContinueState) { CXIR_NOT_IMPLEMENTED; }
+CX_VISIT_IMPL(ContinueState) { ADD_TOKEN(CXX_CONTINUE); }
 
 CX_VISIT_IMPL(CatchState) {
     ADD_TOKEN(CXX_CATCH);
@@ -494,7 +486,6 @@ CX_VISIT_IMPL(VarDecl) {
         ADD_NODE_PARAM(value);
     }
 
-    ADD_TOKEN(CXX_SEMICOLON);
 }
 
 CX_VISIT_IMPL(FFIDecl) { CXIR_NOT_IMPLEMENTED; }
