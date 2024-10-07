@@ -1,7 +1,10 @@
 
+#include <cstdio>
 #include <memory>
+#include <stdexcept>
 
 #include "generator/include/CX-IR/CXIR.hh"
+#include "neo-pprint/include/hxpprint.hh"
 #include "parser/ast/include/config/AST_config.def"
 #include "parser/ast/include/nodes/AST_declarations.hh"
 #include "parser/ast/include/nodes/AST_expressions.hh"
@@ -16,17 +19,25 @@
 #define ADD_TOKEN_AS_TOKEN(token, token_value) \
     tokens.push_back(std::make_unique<CX_Token>(token_value, cxir_tokens::token))
 #define ADD_NODE_PARAM(param) node.param->accept(*this)
-
-// the call is the same but different tokens. could be templated, calling for
-// generics could be parsed the same and then templated to not be the same,
-// this is a note for future implementations, same with
-// this could be a do while
-// no trailing comma
-#define COMMA_SEP(args)                                                          \
-    for (size_t i = 0, size_min_1 = node.args.size() - 1; i < size_min_1; ++i) { \
-        ADD_NODE_PARAM(args[i]);                                                 \
-        ADD_TOKEN_AS_VALUE(CXX_CORE_OPERATOR, ",");                              \
+// This macro will not add a separator after the last element.
+#define SEP(args, sep)                                  \
+    if (!node.args.empty()) {                           \
+        ADD_NODE_PARAM(args[0]);                        \
+        for (size_t i = 1; i < node.args.size(); ++i) { \
+            sep;                                        \
+            ADD_NODE_PARAM(args[i]);                    \
+        }                                               \
     }
+
+// This macro always adds the separator, even after the last element.
+#define SEP_TRAILING(args, sep)                         \
+    if (!node.args.empty())                             \
+        for (size_t i = 0; i < node.args.size(); ++i) { \
+            ADD_NODE_PARAM(args[i]);                    \
+            sep                                         \
+        }
+
+#define COMMA_SEP(args) SEP(args, ADD_TOKEN_AS_VALUE(CXX_CORE_OPERATOR, ",");)
 
 #define PAREN_DELIMIT(...) \
     ADD_TOKEN(CXX_LPAREN); \
@@ -80,6 +91,7 @@ CX_VISIT_IMPL(NamedArgumentExpr) {
 CX_VISIT_IMPL(ArgumentExpr) { ADD_NODE_PARAM(value); }
 
 CX_VISIT_IMPL(ArgumentListExpr) {
+
     // -> '(' arg (',' arg)* ')'
     PAREN_DELIMIT(COMMA_SEP(args););
 }
@@ -117,7 +129,9 @@ CX_VISIT_IMPL(FunctionCallExpr) {
     // args
 
     ADD_NODE_PARAM(path);
-    ADD_NODE_PARAM(generic);
+
+    if (node.generic != nullptr)
+        ADD_NODE_PARAM(generic);
     ADD_NODE_PARAM(args);
 }
 
@@ -179,7 +193,9 @@ CX_VISIT_IMPL(AsyncThreading) {
 CX_VISIT_IMPL(Type) {  // TODO Modifiers
 
     ADD_NODE_PARAM(value);
-    ADD_NODE_PARAM(generics);
+
+    if (node.generics != nullptr)
+        ADD_NODE_PARAM(generics);
 }
 
 CX_VISIT_IMPL(NamedVarSpecifier) {
@@ -454,9 +470,13 @@ CX_VISIT_IMPL(FuncDecl) {
         ADD_TOKEN(CXX_VOID);
     }
 
+    if (node.name == nullptr) {
+        print("error");
+        throw std::runtime_error("This is bad");
+    }
     ADD_NODE_PARAM(name);
-
     PAREN_DELIMIT(COMMA_SEP(params););
+
     ADD_NODE_PARAM(body);
 }
 

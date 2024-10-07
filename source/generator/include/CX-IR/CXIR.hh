@@ -13,6 +13,8 @@
 #include <clang/Format/Format.h>
 #include <llvm/ADT/StringRef.h>
 
+#include <cstdio>
+
 using namespace clang;
 
 #include <memory>
@@ -24,7 +26,7 @@ using namespace clang;
 #include "parser/ast/include/AST.hh"
 #include "token/include/Token.hh"
 
-inline std::string get_neo_clang_format_config() {
+inline consteval std::string get_neo_clang_format_config() {
     return R"(
 Language:        Cpp
 BasedOnStyle:  Google
@@ -175,12 +177,14 @@ __CXIR_CODEGEN_BEGIN {
         [[nodiscard]] std::string get_file_name() const { return file_name; }
         [[nodiscard]] std::string get_value() const { return value; }
         [[nodiscard]] std::string to_CXIR() const {
-            if (file_name == "_H1HJA9ZLO_17.helix-compiler.cxir") {
-                return value + "\n";
+            if (line == 0) {
+                return value + " ";
             }
 
-            return "#line " + std::to_string(line) + " \"" + file_name + "\"\n" + value + "\n";
+            return "\n#line " + std::to_string(line) + " \"" + file_name + "\"\n" + value + "\n";
         }
+
+        [[nodiscard]] std::string to_clean_CXIR() const { return value + " "; }
     };
 
     class CXIR : public __AST_VISITOR::Visitor {
@@ -199,41 +203,74 @@ __CXIR_CODEGEN_BEGIN {
             std::string cxir;
 
             // Build the CXIR string from tokens
+
             for (const auto &token : tokens) {
                 cxir += token->to_CXIR();
             }
 
+            // If cxir is empty, log and return early
+            if (cxir.empty()) {
+                printf("CXIR is empty after processing tokens.\n");
+                return cxir;
+            }
+
+            return cxir;
+        }
+
+        [[nodiscard]] std::string to_readable_CXIR() const {
+            std::string cxir;
+
+            // Build the CXIR string from tokens
+
+            for (const auto &token : tokens) {
+                cxir += token->to_clean_CXIR();
+            }
+
+            // If cxir is empty, log and return early
+            if (cxir.empty()) {
+                printf("CXIR is empty after processing tokens.\n");
+                return cxir;
+            }
+
             // Get the configuration as a string
             std::string config = get_neo_clang_format_config();
+            // printf("Format config: %s\n", config.c_str());  // Log the config
 
-            // Create a FormatStyle object
-            clang::format::FormatStyle neo_style =
-                clang::format::getGoogleStyle(clang::format::FormatStyle::LanguageKind::LK_Cpp);
+            // Use a basic clang format style to simplify testing
+            clang::format::FormatStyle style =
+                clang::format::getLLVMStyle(clang::format::FormatStyle::LanguageKind::LK_Cpp);
 
             // Parse the configuration string into the FormatStyle object
-            auto error = clang::format::parseConfiguration(config, &neo_style);
-
+            auto error = clang::format::parseConfiguration(config, &style);
             if (error) {
-                throw "Failed to parse the configuration.";
+                printf("Failed to parse the configuration: %s\n", error.message().c_str());
+                throw std::runtime_error("Failed to parse configuration");
             }
 
             // Format the cxir code using the style
-            llvm::StringRef              codeRef(cxir);
+            llvm::StringRef              codeRef(cxir.c_str());
             clang::tooling::Range        range(0, cxir.size());
             clang::tooling::Replacements replacements =
-                clang::format::reformat(neo_style, codeRef, {range});
+                clang::format::reformat(style, codeRef, {range});
+
+            // Check if replacements were generated
+            printf("Number of replacements: %lu\n", replacements.size());
+            for (const auto &replacement : replacements) {
+                printf("Replacement: %s\n", replacement.toString().c_str());
+            }
 
             // Apply the replacements to get the formatted code
             llvm::Expected<std::string> formattedCode =
                 clang::tooling::applyAllReplacements(cxir, replacements);
             if (!formattedCode) {
-                llvm::errs() << "Error formatting code.\n";
-                return cxir;  // Return unformatted code in case of error
+                printf("Error formatting code: %s\n",
+                       llvm::toString(formattedCode.takeError()).c_str());
+                throw std::runtime_error("Error formatting code");
             }
 
-            return *formattedCode;  // Return formatted code
+            printf("Formatted CXIR: %s\n", formattedCode->c_str());  // Log the result
+            return *formattedCode;
         }
-
         GENERATE_VISIT_EXTENDS;
     };
 

@@ -61,6 +61,22 @@ function get_runtime(abi)
 	return "" -- error?
 end
 
+function get_cxx_standard(abi)
+	if abi == "llvm"
+	then
+		return "c++23"
+	elseif abi == "gcc"
+	then
+		return "c++23"
+	elseif abi == "msvc"
+	then
+		return "c++2b"
+	end
+	return "" -- error?
+end
+
+
+
 function setup_windows()
 	add_rules("plugin.vsxmake.autoupdate")
 
@@ -145,7 +161,7 @@ local function setup_env()
 	set_policy("build.across_targets_in_parallel", true) -- optimization
 
     -- Set the C++ Standard
-	set_languages("c++23")
+	set_languages(cxx_standard)
 
     -- Set the runtime
     set_runtimes(runtime)
@@ -293,6 +309,7 @@ end
 abi     = get_abi()
 runtime = get_runtime(abi)
 target_tripple = os.arch() .. "-" .. abi .. "-" .. os.host()
+cxx_standard = get_cxx_standard(abi)
 
 -- Define the LLVM and Clang package
 package("llvm-clang")
@@ -332,7 +349,7 @@ target("helix") -- target config defined in the config seciton
         print_all_info()
     end)
     set_kind("binary")
-    set_languages("c++23")
+    set_languages(cxx_standard)
 target_end() -- empty target
 
 -- rule("helix")
