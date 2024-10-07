@@ -10,9 +10,9 @@
 //                                                                                                //
 //====----------------------------------------------------------------------------------------====//
 
-#include "parser/ast/include/private/AST_nodes.hh"
+// #include "parser/ast/include/private/AST_nodes.hh"
 #include "parser/ast/include/types/AST_jsonify_visitor.hh"
-#include "parser/ast/include/types/AST_modifiers.hh"
+// #include "parser/ast/include/types/AST_modifiers.hh"
 #include "parser/ast/include/types/AST_types.hh"
 
 #define _SILENCE_CXX23_ALIGNED_UNION_DEPRECATION_WARNING
@@ -23,46 +23,6 @@
 #pragma comment(linker, "/STACK:2000000000")  // Set stack size to 2MB
 #pragma comment(linker, "/HEAP:2000000000")   // Set heap size to 2MB
 #endif
-
-#include <chrono>
-#include <cstdio>
-#include <memory>
-#include <vector>
-
-#include "controller/include/Controller.hh"
-#include "lexer/include/lexer.hh"
-#include "neo-panic/include/error.hh"
-#include "neo-pprint/include/hxpprint.hh"
-#include "parser/ast/include/AST.hh"
-#include "parser/cpp/fn_signatures.hh"
-#include "parser/preprocessor/include/preprocessor.hh"
-#include "generator/include/CX-IR/CXIR.hh"
-#include "token/include/Token.hh"
-
-
-#include <string>
-#include <memory>
-#include <iostream>
-#include <iostream>
-#include <cstdio>
-#include <cstdlib>
-
-#include "llvm-18.1.9-src/llvm/include/llvm/IR/LLVMContext.h"
-#include "llvm-18.1.9-src/llvm/include/llvm/IR/Module.h"
-#include "llvm-18.1.9-src/llvm/include/llvm/IR/IRBuilder.h"
-#include "llvm-18.1.9-src/llvm/include/llvm/AsmParser/Parser.h"
-#include "llvm-18.1.9-src/llvm/include/llvm/IR/Verifier.h"
-#include "llvm-18.1.9-src/llvm/include/llvm/IR/LegacyPassManager.h"
-#include "llvm-18.1.9-src/llvm/include/llvm/Support/TargetSelect.h"
-
-#include "llvm-18.1.9-src/llvm/include/llvm/MC/TargetRegistry.h"
-#include "llvm-18.1.9-src/llvm/include/llvm/Support/FileSystem.h"
-#include "llvm-18.1.9-src/llvm/include/llvm/Support/SourceMgr.h"
-#include "llvm-18.1.9-src/llvm/include/llvm/Support/CodeGen.h"
-#include "llvm-18.1.9-src/llvm/include/llvm/Support/raw_ostream.h"
-#include "llvm-18.1.9-src/llvm/include/llvm/Support/ErrorOr.h"
-#include "llvm-18.1.9-src/llvm/include/llvm/Target/TargetMachine.h"
-#include "llvm-18.1.9-src/llvm/include/llvm/Target/TargetOptions.h"
 
 #include <llvm-18.1.9-src/clang/include/clang/Basic/Diagnostic.h>
 #include <llvm-18.1.9-src/clang/include/clang/Basic/DiagnosticOptions.h>
@@ -75,14 +35,43 @@
 #include <llvm-18.1.9-src/clang/include/clang/Lex/PreprocessorOptions.h>
 #include <llvm-18.1.9-src/llvm/include/llvm/ADT/IntrusiveRefCntPtr.h>
 #include <llvm-18.1.9-src/llvm/include/llvm/Support/CommandLine.h>
-#include <llvm-18.1.9-src/llvm/include/llvm/TargetParser/Host.h>
 #include <llvm-18.1.9-src/llvm/include/llvm/Support/InitLLVM.h>
 #include <llvm-18.1.9-src/llvm/include/llvm/Support/MemoryBuffer.h>
 #include <llvm-18.1.9-src/llvm/include/llvm/Support/Path.h>
+#include <llvm-18.1.9-src/llvm/include/llvm/TargetParser/Host.h>
 
-#include <system_error>
+#include <chrono>
+#include <cstdio>
+#include <cstdlib>
+#include <iostream>
+// #include <memory>
+// #include <system_error>
+#include <vector>
 
-
+#include "controller/include/Controller.hh"
+#include "generator/include/CX-IR/CXIR.hh"
+#include "lexer/include/lexer.hh"
+// #include "llvm-18.1.9-src/llvm/include/llvm/AsmParser/Parser.h"
+// #include "llvm-18.1.9-src/llvm/include/llvm/IR/IRBuilder.h"
+// #include "llvm-18.1.9-src/llvm/include/llvm/IR/LLVMContext.h"
+// #include "llvm-18.1.9-src/llvm/include/llvm/IR/LegacyPassManager.h"
+// #include "llvm-18.1.9-src/llvm/include/llvm/IR/Module.h"
+// #include "llvm-18.1.9-src/llvm/include/llvm/IR/Verifier.h"
+// #include "llvm-18.1.9-src/llvm/include/llvm/MC/TargetRegistry.h"
+#include "llvm-18.1.9-src/llvm/include/llvm/Support/CodeGen.h"
+#include "llvm-18.1.9-src/llvm/include/llvm/Support/ErrorOr.h"
+#include "llvm-18.1.9-src/llvm/include/llvm/Support/FileSystem.h"
+#include "llvm-18.1.9-src/llvm/include/llvm/Support/SourceMgr.h"
+// #include "llvm-18.1.9-src/llvm/include/llvm/Support/TargetSelect.h"
+#include "llvm-18.1.9-src/llvm/include/llvm/Support/raw_ostream.h"
+// #include "llvm-18.1.9-src/llvm/include/llvm/Target/TargetMachine.h"
+#include "llvm-18.1.9-src/llvm/include/llvm/Target/TargetOptions.h"
+#include "neo-panic/include/error.hh"
+#include "neo-pprint/include/hxpprint.hh"
+// #include "parser/ast/include/AST.hh"
+// #include "parser/cpp/fn_signatures.hh"
+#include "parser/preprocessor/include/preprocessor.hh"
+// #include "token/include/Token.hh"
 
 void compile_CXIR(generator::CXIR::CXIR &emitter, const std::string &out) {
     /// compile the c++ using an in-memory buffer and invoke clang++
@@ -240,7 +229,7 @@ int compile(int argc, char **argv) {
     if (parsed_args.emit_ir) {
         print("emitting CX-IR...", sysIO::endl('\r'));
 
-        print(emitter.to_CXIR());
+        print(emitter.to_readable_CXIR());
     }
 
     std::string out_file;

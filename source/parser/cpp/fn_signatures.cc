@@ -19,35 +19,35 @@ using namespace clang;
 using namespace clang::tooling;
 using namespace clang::ast_matchers;
 
-std::ostringstream Result;
+static std::ostringstream Result;
 
 class DeclarationVisitor : public RecursiveASTVisitor<DeclarationVisitor> {
   public:
     explicit DeclarationVisitor(ASTContext *Context)
         : Context(Context) {}
 
-    bool VisitFunctionDecl(FunctionDecl *D) {
+    static bool VisitFunctionDecl(FunctionDecl *D) {
         if (D->isThisDeclarationADefinition()) {
             Result << D->getReturnType().getAsString() << " " << D->getNameAsString() << "();\n";
         }
         return true;
     }
 
-    bool VisitVarDecl(VarDecl *D) {
+    static bool VisitVarDecl(VarDecl *D) {
         if (D->hasExternalStorage() || D->isFileVarDecl()) {
             Result << D->getType().getAsString() << " " << D->getNameAsString() << ";\n";
         }
         return true;
     }
 
-    bool VisitCXXRecordDecl(CXXRecordDecl *D) {
+    static bool VisitCXXRecordDecl(CXXRecordDecl *D) {
         if (D->isThisDeclarationADefinition()) {
             Result << "class " << D->getNameAsString() << ";\n";
         }
         return true;
     }
 
-    std::string getResult() { return Result.str(); }
+    static std::string getResult() { return Result.str(); }
 
   private:
     ASTContext *Context;

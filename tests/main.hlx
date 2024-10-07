@@ -1,11 +1,22 @@
-ffi "c++" import "vector";
 
 fn print() {
     printf("\n");
 }
 
+fn hi(a:int) -> int {
+    return a;
+}
+
+
 fn main() -> int {
     let a = 5;
     
-    printf("bitched = %s", f.c_str());
+    let f = "world";
+
+    printf("hello %s", f);
+
+    let who:int = hi(3);
+
+    printf("hi: &d");
+
 }

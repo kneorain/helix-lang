@@ -1,8 +1,12 @@
 
+#include <cstdio>
 #include <memory>
+#include <stdexcept>
 
 #include "generator/include/CX-IR/CXIR.hh"
+#include "neo-pprint/include/hxpprint.hh"
 #include "parser/ast/include/config/AST_config.def"
+#include "parser/ast/include/nodes/AST_declarations.hh"
 #include "parser/ast/include/nodes/AST_expressions.hh"
 #include "parser/ast/include/nodes/AST_statements.hh"
 #include "parser/ast/include/private/AST_generate.hh"
@@ -15,6 +19,25 @@
 #define ADD_TOKEN_AS_TOKEN(token, token_value) \
     tokens.push_back(std::make_unique<CX_Token>(token_value, cxir_tokens::token))
 #define ADD_NODE_PARAM(param) node.param->accept(*this)
+// This macro will not add a separator after the last element.
+#define SEP(args, sep)                                  \
+    if (!node.args.empty()) {                           \
+        ADD_NODE_PARAM(args[0]);                        \
+        for (size_t i = 1; i < node.args.size(); ++i) { \
+            sep;                                        \
+            ADD_NODE_PARAM(args[i]);                    \
+        }                                               \
+    }
+
+// This macro always adds the separator, even after the last element.
+#define SEP_TRAILING(args, sep)                         \
+    if (!node.args.empty())                             \
+        for (size_t i = 0; i < node.args.size(); ++i) { \
+            ADD_NODE_PARAM(args[i]);                    \
+            sep                                         \
+        }
+
+#define COMMA_SEP(args) SEP(args, ADD_TOKEN_AS_VALUE(CXX_CORE_OPERATOR, ",");)
 
 #define PAREN_DELIMIT(...) \
     ADD_TOKEN(CXX_LPAREN); \
@@ -67,18 +90,8 @@ CX_VISIT_IMPL(NamedArgumentExpr) {
 
 CX_VISIT_IMPL(ArgumentExpr) { ADD_NODE_PARAM(value); }
 
-// the call is the same but different tokens. could be templated, calling for
-// generics could be parsed the same and then templated to not be the same,
-// this is a note for future implementations, same with
-// this could be a do while
-// no trailing comma
-#define COMMA_SEP(args)                                                          \
-    for (size_t i = 0, size_min_1 = node.args.size() - 1; i < size_min_1; ++i) { \
-        ADD_NODE_PARAM(args[i]);                                                 \
-        ADD_TOKEN_AS_VALUE(CXX_CORE_OPERATOR, ",");                              \
-    }
-
 CX_VISIT_IMPL(ArgumentListExpr) {
+
     // -> '(' arg (',' arg)* ')'
     PAREN_DELIMIT(COMMA_SEP(args););
 }
@@ -116,7 +129,9 @@ CX_VISIT_IMPL(FunctionCallExpr) {
     // args
 
     ADD_NODE_PARAM(path);
-    ADD_NODE_PARAM(generic);
+
+    if (node.generic != nullptr)
+        ADD_NODE_PARAM(generic);
     ADD_NODE_PARAM(args);
 }
 
@@ -176,8 +191,11 @@ CX_VISIT_IMPL(AsyncThreading) {
 }
 
 CX_VISIT_IMPL(Type) {  // TODO Modifiers
+
     ADD_NODE_PARAM(value);
-    ADD_NODE_PARAM(generics);
+
+    if (node.generics != nullptr)
+        ADD_NODE_PARAM(generics);
 }
 
 CX_VISIT_IMPL(NamedVarSpecifier) {
@@ -267,7 +285,6 @@ CX_VISIT_IMPL(SwitchState) { CXIR_NOT_IMPLEMENTED; }
 
 CX_VISIT_IMPL(YieldState) {
     ADD_TOKEN(CXX_CO_YIELD);
-
     ADD_NODE_PARAM(value);
     ADD_TOKEN(CXX_SEMICOLON);
 }
@@ -300,22 +317,15 @@ CX_VISIT_IMPL(BreakState) {
 
 CX_VISIT_IMPL(BlockState) {
     // -> (statement ';')*
-    for (auto &stmt : node.body) {
-        stmt->accept(*this);
-        ADD_TOKEN(CXX_SEMICOLON);
-    }
+    SEP_TRAILING(body, ADD_TOKEN(CXX_SEMICOLON););
 }
 
 CX_VISIT_IMPL(SuiteState) {
     // -> '{' body '}'
-    ADD_TOKEN(CXX_LBRACE);
-
-    ADD_NODE_PARAM(body);
-
-    ADD_TOKEN(CXX_RBRACE);
+    BRACE_DELIMIT(ADD_NODE_PARAM(body););
 }
 
-CX_VISIT_IMPL(ContinueState) { CXIR_NOT_IMPLEMENTED; }
+CX_VISIT_IMPL(ContinueState) { ADD_TOKEN(CXX_CONTINUE); }
 
 CX_VISIT_IMPL(CatchState) {
     ADD_TOKEN(CXX_CATCH);
@@ -323,7 +333,7 @@ CX_VISIT_IMPL(CatchState) {
     ADD_NODE_PARAM(body);
 }
 
-CX_VISIT_IMPL(FinallyState){
+CX_VISIT_IMPL(FinallyState) {
     // TODO: this needs to be placed before return, so, the code gen needs to be statefull here...
     // for now it will just put the
     // https://stackoverflow.com/questions/33050620/golang-style-defer-in-c
@@ -331,7 +341,8 @@ CX_VISIT_IMPL(FinallyState){
     // shared_ptr<void>_(nullptr, [] { cout << ", World!"; });
     // ADD_TOKEN_AS_TOKEN(CXX_CORE_IDENTIFIER, "shared_ptr");
     // ANGLE_DELIMIT(ADD_TOKEN(CXX_VOID););
-    CXIR_NOT_IMPLEMENTED;}
+    CXIR_NOT_IMPLEMENTED;
+}
 
 CX_VISIT_IMPL(TryState) {
 
@@ -394,14 +405,19 @@ CX_VISIT_IMPL(TypeBoundDecl) { CXIR_NOT_IMPLEMENTED; }
 CX_VISIT_IMPL(RequiresDecl) {
     // -> 'template' '<' params '>'
     ADD_TOKEN(CXX_TEMPLATE);
-    ADD_TOKEN(CXX_LESS);
 
-    ADD_NODE_PARAM(params);
-
-    ADD_TOKEN(CXX_GREATER);
+    ANGLE_DELIMIT(ADD_NODE_PARAM(params););
 }
 
-CX_VISIT_IMPL(ModuleDecl) { CXIR_NOT_IMPLEMENTED; }
+CX_VISIT_IMPL(ModuleDecl) {
+
+    if (node.inline_module)
+        ADD_TOKEN(CXX_INLINE);
+
+    ADD_TOKEN(CXX_NAMESPACE);
+
+    ADD_NODE_PARAM(body);
+}
 
 CX_VISIT_IMPL(StructDecl) { CXIR_NOT_IMPLEMENTED; }
 
@@ -409,11 +425,31 @@ CX_VISIT_IMPL(ConstDecl) { CXIR_NOT_IMPLEMENTED; }
 
 CX_VISIT_IMPL(ClassDecl) { CXIR_NOT_IMPLEMENTED; }
 
-CX_VISIT_IMPL(InterDecl) { CXIR_NOT_IMPLEMENTED; }
+CX_VISIT_IMPL(InterDecl) {
+    // InterDecl := 'const'? VisDecl? 'interface' E.IdentExpr UDTDeriveDecl? RequiresDecl?
+    // S.Suite
+    // ADD_NODE_PARAM(generics); // WE need a custom generics impl here as Self is the first generic
+
+    // if (node.generics != nullptr) {
+    //     if (node.generics->getNodeType() == parser::ast::node::nodes::RequiresDecl) {
+    //         parser::ast::node::RequiresDecl req =
+    //             static_cast<parser::ast::node::RequiresDecl>(*node.generics);
+
+    //         req.params
+    //     }
+    // }
+    CXIR_NOT_IMPLEMENTED;
+}
 
 CX_VISIT_IMPL(EnumDecl) { CXIR_NOT_IMPLEMENTED; }
 
-CX_VISIT_IMPL(TypeDecl) { CXIR_NOT_IMPLEMENTED; }
+CX_VISIT_IMPL(TypeDecl) {
+    // TODO: vis, as there is no way to make a type priv if its not on a class
+    ADD_NODE_PARAM(generics);
+    ADD_TOKEN(CXX_USING);
+    ADD_TOKEN_AS_VALUE(CXX_CORE_OPERATOR, "=");
+    ADD_NODE_PARAM(value);
+}
 
 CX_VISIT_IMPL(FuncDecl) {
     if (node.generics != nullptr) {
@@ -426,9 +462,13 @@ CX_VISIT_IMPL(FuncDecl) {
         ADD_TOKEN(CXX_VOID);
     }
 
+    if (node.name == nullptr) {
+        print("error");
+        throw std::runtime_error("This is bad");
+    }
     ADD_NODE_PARAM(name);
-
     PAREN_DELIMIT(COMMA_SEP(params););
+
     ADD_NODE_PARAM(body);
 }
 
@@ -446,7 +486,6 @@ CX_VISIT_IMPL(VarDecl) {
         ADD_NODE_PARAM(value);
     }
 
-    ADD_TOKEN(CXX_SEMICOLON);
 }
 
 CX_VISIT_IMPL(FFIDecl) { CXIR_NOT_IMPLEMENTED; }
