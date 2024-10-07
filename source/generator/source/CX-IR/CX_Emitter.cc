@@ -10,6 +10,7 @@
 #include "parser/ast/include/nodes/AST_expressions.hh"
 #include "parser/ast/include/nodes/AST_statements.hh"
 #include "parser/ast/include/private/AST_generate.hh"
+#include "parser/ast/include/types/AST_modifiers.hh"
 #include "token/include/private/Token_generate.hh"
 
 #define CXIR_NOT_IMPLEMENTED throw std::runtime_error(GET_DEBUG_INFO + "Not implemented yet")
@@ -18,7 +19,10 @@
     tokens.push_back(std::make_unique<CX_Token>(cxir_tokens::token, value))
 #define ADD_TOKEN_AS_TOKEN(token, token_value) \
     tokens.push_back(std::make_unique<CX_Token>(token_value, cxir_tokens::token))
-#define ADD_NODE_PARAM(param) node.param->accept(*this)
+
+#define ADD_NODE_PARAM(param) ADD_PARAM(node.param)
+#define ADD_PARAM(param) param->accept(*this)
+
 // This macro will not add a separator after the last element.
 #define SEP(args, sep)                                  \
     if (!node.args.empty()) {                           \
@@ -37,30 +41,39 @@
             sep                                         \
         }
 
+#define UNLESS_NULL(nullable_val, ...)  \
+    if (node.nullable_val != nullptr) { \
+        __VA_ARGS__                     \
+    }
+
+#define ADD_ALL_PARAMS(params)         \
+    for (const auto &param : params) { \
+        ADD_PARAM(param);              \
+    }
+
+#define ADD_ALL_NODE_PARAMS(params) ADD_ALL_PARAMS(node.params)
+
 #define COMMA_SEP(args) SEP(args, ADD_TOKEN_AS_VALUE(CXX_CORE_OPERATOR, ",");)
 
-#define PAREN_DELIMIT(...) \
-    ADD_TOKEN(CXX_LPAREN); \
+#define DELIMIT(L, R, ...) \
+    ADD_TOKEN(L);          \
     __VA_ARGS__            \
-    ADD_TOKEN(CXX_RPAREN)
+    ADD_TOKEN(R)
 
-#define BRACE_DELIMIT(...) \
-    ADD_TOKEN(CXX_LBRACE); \
-    __VA_ARGS__            \
-    ADD_TOKEN(CXX_RBRACE)
-
-#define BRACKET_DELIMIT(...) \
-    ADD_TOKEN(CXX_LBRACKET); \
-    __VA_ARGS__              \
-    ADD_TOKEN(CXX_RBRACKET)
-
-#define ANGLE_DELIMIT(...) \
-    ADD_TOKEN(CXX_LESS);   \
-    __VA_ARGS__            \
-    ADD_TOKEN(CXX_GREATER)
+#define PAREN_DELIMIT(...) DELIMIT(CXX_LPAREN, CXX_RPAREN, __VA_ARGS__)
+#define BRACE_DELIMIT(...) DELIMIT(CXX_LBRACE, CXX_RBRACE, __VA_ARGS__)
+#define BRACKET_DELIMIT(...) DELIMIT(CXX_LBRACKET, CXX_RBRACKET, __VA_ARGS__)
+#define ANGLE_DELIMIT(...) DELIMIT(CXX_LESS, CXX_GREATER, __VA_ARGS__)
 
 CX_VISIT_IMPL(LiteralExpr) {
     tokens.push_back(std::make_unique<CX_Token>(node.value, cxir_tokens::CXX_CORE_LITERAL));
+}
+
+CX_VISIT_IMPL(LetDecl) {
+
+    // for (auto &var : node.modifiers.) {}
+
+    ADD_ALL_NODE_PARAMS(vars);
 }
 
 CX_VISIT_IMPL(BinaryExpr) {
@@ -130,8 +143,7 @@ CX_VISIT_IMPL(FunctionCallExpr) {
 
     ADD_NODE_PARAM(path);
 
-    if (node.generic != nullptr)
-        ADD_NODE_PARAM(generic);
+    UNLESS_NULL(generic, ADD_NODE_PARAM(generic););
     ADD_NODE_PARAM(args);
 }
 
@@ -159,6 +171,7 @@ CX_VISIT_IMPL(CastExpr) {
 
     PAREN_DELIMIT(PAREN_DELIMIT(ADD_NODE_PARAM(type);); ADD_NODE_PARAM(value););
 }
+
 // := E ('has' | 'derives') E
 CX_VISIT_IMPL(InstOfExpr) {
     switch (node.op) {
@@ -194,16 +207,16 @@ CX_VISIT_IMPL(Type) {  // TODO Modifiers
 
     ADD_NODE_PARAM(value);
 
-    if (node.generics != nullptr)
-        ADD_NODE_PARAM(generics);
+    UNLESS_NULL(generics, ADD_NODE_PARAM(generics););
 }
 
 CX_VISIT_IMPL(NamedVarSpecifier) {
     // (type | auto) name
 
-    if (node.has_type) {
-        ADD_NODE_PARAM(type);
-    } else {
+    UNLESS_NULL(type,  //
+                ADD_NODE_PARAM(type);
+                /**/)
+    else {
         ADD_TOKEN(CXX_AUTO);
     }
 
@@ -262,7 +275,7 @@ CX_VISIT_IMPL(ElseState) {
         ADD_TOKEN(CXX_IF);
 
         PAREN_DELIMIT(if (node.type != parser::ast::node::ElseState::ElseType::ElseUnless)
-                          ADD_TOKEN(CXX_NOT);
+                          ADD_TOKEN(CXX_EXCLAMATION);
 
                       PAREN_DELIMIT(ADD_NODE_PARAM(condition);););
     }
@@ -277,6 +290,8 @@ CX_VISIT_IMPL(IfState) {
 
         PAREN_DELIMIT(ADD_NODE_PARAM(condition);););
     ADD_NODE_PARAM(body);
+
+    ADD_ALL_NODE_PARAMS(else_body);
 }
 
 CX_VISIT_IMPL(SwitchCaseState) { CXIR_NOT_IMPLEMENTED; }
@@ -347,8 +362,11 @@ CX_VISIT_IMPL(FinallyState) {
 CX_VISIT_IMPL(TryState) {
 
     // Is this nullable?
-    if (node.finally_state != nullptr)
-        ADD_NODE_PARAM(finally_state);
+    UNLESS_NULL(finally_state,
+                //
+                ADD_NODE_PARAM(finally_state);
+                //
+    );
 
     ADD_TOKEN(CXX_TRY);
     ADD_NODE_PARAM(body);
@@ -362,41 +380,85 @@ CX_VISIT_IMPL(PanicState) {
 
 CX_VISIT_IMPL(ExprState) {
     // -> expr ';'
-    node.value->accept(*this);
-    tokens.push_back(std::make_unique<CX_Token>(cxir_tokens::CXX_SEMICOLON));
+    ADD_NODE_PARAM(value);
+    ADD_TOKEN(CXX_SEMICOLON);
 }
 
 CX_VISIT_IMPL(RequiresParamDecl) {
     if (node.is_const) {
-        if (!node.var->has_type) {
-            // PANIC?
-            PARSE_ERROR(node.var->path->name, "Const requires a type");
-            return;
-        }
+        UNLESS_NULL(var,
+                    // PANIC?
+                    PARSE_ERROR(node.var->path->name, "Const requires a type");
+                    return;
+                    //
+        );
     }
 
-    if (node.var->has_type) {
-        node.var->type->accept(*this);
-    } else {
+    UNLESS_NULL(var,  //
+                ADD_NODE_PARAM(var->type);
+                /**/)
+    else {
         ADD_TOKEN(CXX_TYPENAME);  // template <typename
     }
 
     ADD_NODE_PARAM(var);
 
-    if (node.value != nullptr) {
-        ADD_TOKEN_AS_VALUE(CXX_CORE_OPERATOR, "=");
-        ADD_NODE_PARAM(value);
-    }
+    UNLESS_NULL(value,  //
+                ADD_TOKEN_AS_VALUE(CXX_CORE_OPERATOR, "=");
+                ADD_NODE_PARAM(value);
+                /**/);
 }
 
 CX_VISIT_IMPL(RequiresParamList) {  // -> (param (',' param)*)?
-
     COMMA_SEP(params);
 }
 
-CX_VISIT_IMPL(EnumMemberDecl) { CXIR_NOT_IMPLEMENTED; }
+CX_VISIT_IMPL(EnumMemberDecl) {
+    ADD_NODE_PARAM(name);
+    UNLESS_NULL(value, /**/
+                ADD_TOKEN_AS_VALUE(CXX_CORE_OPERATOR, "=");
+                ADD_NODE_PARAM(value);
+                /**/);
+}
 
-CX_VISIT_IMPL(UDTDeriveDecl) { CXIR_NOT_IMPLEMENTED; }
+CX_VISIT_IMPL(UDTDeriveDecl) {
+
+    switch (node.derives[0].second.type) {
+        case parser::ast::AccessSpecifier::Specifier::Internal:
+            CXIR_NOT_IMPLEMENTED;  // TODO: ERROR?
+            break;
+        case parser::ast::AccessSpecifier::Specifier::Public:
+            ADD_TOKEN(CXX_PUBLIC);
+            break;
+        case parser::ast::AccessSpecifier::Specifier::Protected:
+            ADD_TOKEN(CXX_PROTECTED);
+            break;
+        case parser::ast::AccessSpecifier::Specifier::Private:
+            ADD_TOKEN(CXX_PRIVATE);
+            break;
+    }
+
+    ADD_NODE_PARAM(derives[0].first);
+    for (size_t i = 1; i < node.derives.size(); ++i) {
+        ADD_TOKEN(CXX_COMMA);
+        switch (node.derives[i].second.type) {
+            case parser::ast::AccessSpecifier::Specifier::Internal:
+                CXIR_NOT_IMPLEMENTED;  // TODO: ERROR?
+                break;
+            case parser::ast::AccessSpecifier::Specifier::Public:
+                ADD_TOKEN(CXX_PUBLIC);
+                break;
+            case parser::ast::AccessSpecifier::Specifier::Protected:
+                ADD_TOKEN(CXX_PROTECTED);
+                break;
+            case parser::ast::AccessSpecifier::Specifier::Private:
+                ADD_TOKEN(CXX_PRIVATE);
+                break;
+        }
+
+        ADD_NODE_PARAM(derives[i].first);
+    }
+}
 
 CX_VISIT_IMPL(TypeBoundList) { CXIR_NOT_IMPLEMENTED; }
 
@@ -419,7 +481,20 @@ CX_VISIT_IMPL(ModuleDecl) {
     ADD_NODE_PARAM(body);
 }
 
-CX_VISIT_IMPL(StructDecl) { CXIR_NOT_IMPLEMENTED; }
+CX_VISIT_IMPL(StructDecl) {
+    // TODO: Modifiers
+    UNLESS_NULL(generics, ADD_NODE_PARAM(generics););
+    ADD_TOKEN(CXX_STRUCT);
+    ADD_NODE_PARAM(name);
+
+    UNLESS_NULL(derives, ADD_TOKEN(CXX_COLON);
+                ADD_NODE_PARAM(derives);)  // should be its own generator
+    ADD_NODE_PARAM(body);
+    ADD_TOKEN(CXX_SEMICOLON);
+
+    // structs can derive?
+    // enums should be able to as well... idea?
+}
 
 CX_VISIT_IMPL(ConstDecl) { CXIR_NOT_IMPLEMENTED; }
 
@@ -441,7 +516,16 @@ CX_VISIT_IMPL(InterDecl) {
     CXIR_NOT_IMPLEMENTED;
 }
 
-CX_VISIT_IMPL(EnumDecl) { CXIR_NOT_IMPLEMENTED; }
+CX_VISIT_IMPL(EnumDecl) {
+
+    ADD_TOKEN(CXX_ENUM);
+    ADD_NODE_PARAM(name);
+
+    UNLESS_NULL(derives, ADD_TOKEN(CXX_COLON); ADD_NODE_PARAM(derives););
+
+    BRACE_DELIMIT(COMMA_SEP(members););
+    ADD_TOKEN(CXX_SEMICOLON);
+}
 
 CX_VISIT_IMPL(TypeDecl) {
     // TODO: vis, as there is no way to make a type priv if its not on a class
@@ -452,20 +536,15 @@ CX_VISIT_IMPL(TypeDecl) {
 }
 
 CX_VISIT_IMPL(FuncDecl) {
-    if (node.generics != nullptr) {
-        ADD_NODE_PARAM(generics);
-    }
+    UNLESS_NULL(generics, ADD_NODE_PARAM(generics););
 
-    if (node.returns != nullptr) {
-        ADD_NODE_PARAM(returns);
-    } else {
-        ADD_TOKEN(CXX_VOID);
-    }
+    UNLESS_NULL(returns, ADD_NODE_PARAM(returns);) else { ADD_TOKEN(CXX_VOID); }
 
-    if (node.name == nullptr) {
-        print("error");
-        throw std::runtime_error("This is bad");
-    }
+    // if (node.name == nullptr) {
+    //     print("error");
+    //     throw std::runtime_error("This is bad");
+    // }
+
     ADD_NODE_PARAM(name);
     PAREN_DELIMIT(COMMA_SEP(params););
 
@@ -473,27 +552,13 @@ CX_VISIT_IMPL(FuncDecl) {
 }
 
 CX_VISIT_IMPL(VarDecl) {
-    if (node.var->type != nullptr) {
-        node.var->type->accept(*this);
-    } else {
-        ADD_TOKEN(CXX_AUTO);
-    }
+    // UNLESS_NULL(var->type, ADD_PARAM(node.var->type);) else { ADD_TOKEN(CXX_AUTO); }
 
-    node.var->path->accept(*this);
+    ADD_NODE_PARAM(var);
 
-    if (node.value != nullptr) {
-        ADD_TOKEN_AS_VALUE(CXX_CORE_OPERATOR, "=");
-        ADD_NODE_PARAM(value);
-    }
-
+    UNLESS_NULL(value, ADD_TOKEN_AS_VALUE(CXX_CORE_OPERATOR, "="); ADD_NODE_PARAM(value);)
 }
 
 CX_VISIT_IMPL(FFIDecl) { CXIR_NOT_IMPLEMENTED; }
-
-CX_VISIT_IMPL(LetDecl) {
-    for (auto &var : node.vars) {
-        var->accept(*this);
-    }
-}
 
 CX_VISIT_IMPL(OpDecl) { CXIR_NOT_IMPLEMENTED; }

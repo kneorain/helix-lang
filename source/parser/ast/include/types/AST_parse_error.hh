@@ -51,10 +51,14 @@ __AST_BEGIN {
         [[nodiscard]] std::string what() const { return msg; }
         void                      panic() const {
             error::Panic(error::CodeError{
-                                     .pof      = const_cast<__TOKEN_N::Token *>(&err),
-                                     .err_code = 0.0001,
-                                     .mark_pof = true,
-            });
+                .pof      = const_cast<__TOKEN_N::Token *>(&err),
+                .err_code = 0.0001,
+                .mark_pof = true,
+                .fix_fmt_args{},
+                .err_fmt_args{},
+                .opt_fixes{},
+                
+                });
         }
     };
 }  // namespace __AST_BEGIN

@@ -31,15 +31,11 @@ __AST_NODE_BEGIN {
         explicit NamedVarSpecifier(NodeT<IdentExpr> path, NodeT<Type> type = nullptr)
             : path(std::move(path))
             , type(std::move(type)) {
-            if (type != nullptr) {
-                has_type = true;
-            }
+            
         }
 
         NodeT<IdentExpr> path;
         NodeT<Type>      type;
-
-        bool has_type;
     };
 
     class NamedVarSpecifierList final : public Node {

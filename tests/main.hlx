@@ -1,10 +1,30 @@
 
-fn print() {
-    printf("\n");
-}
+// fn print() {
+//     printf("\n");
+// }
 
 fn hi(a:int) -> int {
     return a;
+}
+
+// derivies int, not implemented
+enum Foo {
+    Foo,
+    Bar,
+    Baz
+}
+
+struct FooStruct {
+    let hello :int =5;
+}
+
+struct Earth {
+    let round: bool = true; 
+}
+
+// struct Bar derives pub Foo, Earth 
+struct Bar derives FooStruct, Earth {
+    let world:int = 3;
 }
 
 
@@ -15,8 +35,70 @@ fn main() -> int {
 
     printf("hello %s", f);
 
-    let who:int = hi(3);
+    let who: int = hi(3);
 
     printf("hi: &d");
+
+    unless false{ 
+        printf("FEE");
+    } else {
+        printf("hi");
+        if (true) {
+            printf("");
+        } else {
+            
+        }
+    }
+    // if you put a semicolon after if and else it crashes as expr state is a null
+    /*
+    unless false: 
+        printf("FEE");
+    else: if (true) {
+        printf("");
+    } else {
+        printf("hi");
+    };
+
+    unless false: 
+        printf("FEE");
+    else if (true) {
+        printf("");
+    } else {
+        printf("hi");
+    };
+
+    unless false{ 
+        printf("FEE");
+    } else {
+        printf("hi");
+        if (true) {
+            printf("");
+        } else {
+            printf("hi");
+        };
+    }
+    */
+unless false: 
+        printf("FEE");
+    else if (true) {
+        printf("");
+    } else unless false {
+        printf("hi");
+    }
+
+    unless false{ 
+        printf("FEE");
+    } else {
+        printf("hi");
+        if (true) {
+            printf("");
+        } else {
+            printf("hi");
+        }
+    }
+
+
+
+
 
 }
