@@ -4,23 +4,32 @@
 #include "controller/include/config/Controller_config.def"
 
 __CONTROLLER_TOOL_BEGIN {
-    class CompilerInvocation;
+    // base classes
+    class DiagnosticHandler;
+    class InvocationManager;
+    class CompilationUnit;
+    class FileManager;
+    class FrontendProcessor;
+    class BackendProcessor;
 
-    class CompilerInstance {
-        CompilerInstance() = default;
-        ~CompilerInstance() = default;
+    // derived classes
+    class PrettyDiagnosticHandler;
 
-        CompilerInstance(const CompilerInstance &) = delete;
-        CompilerInstance(CompilerInstance &&) = delete;
+    class CompilationUnit {
+        CompilationUnit() = default;
+        ~CompilationUnit() = default;
 
-        CompilerInstance &operator=(const CompilerInstance &) = delete;
-        CompilerInstance &operator=(CompilerInstance &&) = delete;
+        CompilationUnit(const CompilationUnit &) = delete;
+        CompilationUnit(CompilationUnit &&) = delete;
 
-        explicit CompilerInstance(CompilerInvocation &invocation);
-        CompilerInstance(int argc, const char **argv);
+        CompilationUnit &operator=(const CompilationUnit &) = delete;
+        CompilationUnit &operator=(CompilationUnit &&) = delete;
+
+        explicit CompilationUnit(InvocationManager &invocation);
+        CompilationUnit(int argc, const char **argv);
 
         void createDiagnostics();
-        void createDiagnostics(int argc, const char **argv);
+        void createDiagnostics(DiagnosticHandler &diag);
     };
 }
 
