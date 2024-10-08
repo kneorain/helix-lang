@@ -16,6 +16,7 @@
 #define __CONTROLLER_BEGIN namespace controller
 #define __CONTROLLER_FS_BEGIN namespace controller::file_system
 #define __CONTROLLER_CLI_BEGIN namespace controller::cli
+#define __CONTROLLER_TOOL_BEGIN namespace controller::tool
 
 #define __CONTROLLER_N         controller
 #define __CONTROLLER_FS_N      __CONTROLLER_N::file_system
