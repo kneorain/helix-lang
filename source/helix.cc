@@ -11,7 +11,11 @@
 //====----------------------------------------------------------------------------------------====//
 
 // #include "parser/ast/include/private/AST_nodes.hh"
+#include <memory>
+
+#include "clang/Basic/LangStandard.h"
 #include "parser/ast/include/types/AST_jsonify_visitor.hh"
+
 // #include "parser/ast/include/types/AST_modifiers.hh"
 #include "parser/ast/include/types/AST_types.hh"
 
@@ -62,9 +66,9 @@
 #include "llvm-18.1.9-src/llvm/include/llvm/Support/ErrorOr.h"
 #include "llvm-18.1.9-src/llvm/include/llvm/Support/FileSystem.h"
 #include "llvm-18.1.9-src/llvm/include/llvm/Support/SourceMgr.h"
-// #include "llvm-18.1.9-src/llvm/include/llvm/Support/TargetSelect.h"
+#include "llvm-18.1.9-src/llvm/include/llvm/Support/TargetSelect.h"
 #include "llvm-18.1.9-src/llvm/include/llvm/Support/raw_ostream.h"
-// #include "llvm-18.1.9-src/llvm/include/llvm/Target/TargetMachine.h"
+#include "llvm-18.1.9-src/llvm/include/llvm/Target/TargetMachine.h"
 #include "llvm-18.1.9-src/llvm/include/llvm/Target/TargetOptions.h"
 #include "neo-panic/include/error.hh"
 #include "neo-pprint/include/hxpprint.hh"
@@ -73,34 +77,56 @@
 #include "parser/preprocessor/include/preprocessor.hh"
 // #include "token/include/Token.hh"
 
-void compile_CXIR(generator::CXIR::CXIR &emitter, const std::string &out) {
-    /// compile the c++ using an in-memory buffer and invoke clang++
-    std::string cxx = emitter.to_CXIR();
-    cxx = "#include <cstdio>\n #include <cstdlib>\n #include <string>\n using namespace std;\n" + cxx;
+void compile_CXIR(generator::CXIR::CXIR &emitter,
+                  const std::string     &out,
+                  const std::string     &file,
+                  int                    argc,
+                  char                 **argv) {
+    print("starting");
+    llvm::InitLLVM X(argc, argv);
+    print("initialized llvm");
+    llvm::InitializeAllTargets();
+    print("initialized targets");
+    llvm::InitializeAllTargetMCs();
+    print("initialized target MCs");
+    llvm::InitializeAllAsmParsers();
+    print("initialized asm parsers");
+    llvm::InitializeAllAsmPrinters();
 
-    // make a call to system: clang++
-    std::ofstream file("_H1HJA9ZLO_17.helix-compiler.cc");
-    if (!file) {
-        std::cerr << "Error creating _H1HJA9ZLO_17.helix-compiler.cc file!" << std::endl;
+    clang::CompilerInstance compiler;
+    print("initialized compiler");
+    clang::CompilerInvocation::CreateFromArgs(
+        compiler.getInvocation(),
+        {"-std=c++23", "-g", "-O0", "-fno-omit-frame-pointer", "-Wl,-rpath,/usr/local/lib"},
+        compiler.getDiagnostics());
+
+    // Set the input file and output file by using a MemoryBufferRef
+    print("setting input file");
+    std::unique_ptr<llvm::MemoryBuffer> buffer =
+        llvm::MemoryBuffer::getMemBuffer(emitter.to_CXIR());
+
+    if (!buffer) {
+        print("failed to create memory buffer!");
         return;
     }
 
-    file << cxx;
-    file.close();
+    print("created memory buffer");
+    llvm::MemoryBufferRef buff_ref = llvm::MemoryBufferRef(buffer->getBuffer(), file);
 
-    std::string cmd = std::string("c++ _H1HJA9ZLO_17.helix-compiler.cc -std=c++23 -g -O0 -fno-omit-frame-pointer -Wl,-rpath,/usr/local/lib -o ") + out;
-    const char* compileCommand = cmd.c_str();
+    print("set memory buffer");
+    compiler.getFrontendOpts().Inputs.push_back(clang::FrontendInputFile(
+        buff_ref, clang::InputKind(Language::CXX, clang::InputKind::Source)));
 
-    if (system(compileCommand) != 0) {
-        std::cerr << "Compilation failed!" << std::endl;
-        return;
-    }
+    print("set input file");
+    compiler.getFrontendOpts().OutputFile = out;
 
-    system("rm _H1HJA9ZLO_17.helix-compiler.cc");
-
-    std::cout << "object file '" << out << "' generated successfully!" << std::endl;
+    // Invoke the compiler (action depends on what you want, e.g. EmitObj)
+    std::unique_ptr<clang::FrontendAction> action = std::make_unique<clang::EmitObjAction>();
+ 
+    print("set output file");
+    // Execute the action
+    compiler.ExecuteAction(*action);
 }
-
 
 // void compile_CXIR(generator::CXIR::CXIR &emitter, const std::string &out) {
 //     /// compile the c++ using an in-memory buffer and invoke clang++
@@ -133,7 +159,7 @@ void compile_CXIR(generator::CXIR::CXIR &emitter, const std::string &out) {
 
 int compile(int argc, char **argv) {
     // relative to current working dir in POSIX shell (cmd/bash)
-    __CONTROLLER_CLI_N::CLIArgs parsed_args(argc, argv, "0.0.1-alpha-0112");
+    __CONTROLLER_CLI_N::CLIArgs parsed_args(argc, argv, "0.0.1-alpha-2012");
     check_exit(parsed_args);
 
     if (parsed_args.verbose) {
@@ -143,7 +169,7 @@ int compile(int argc, char **argv) {
     auto start = std::chrono::high_resolution_clock::now();
 
     // read the file and tokenize its contents : stage 0
-    print("tokenizing...", sysIO::endl('\r'));
+    print("tokenizing...", sysIO::endl('\n'));
     __TOKEN_N::TokenList tokens =
         parser::lexer::Lexer(__CONTROLLER_FS_N::read_file(parsed_args.file), parsed_args.file)
             .tokenize();
@@ -151,7 +177,7 @@ int compile(int argc, char **argv) {
     std::vector<string> pkg_paths = {"/Volumes/Container/Projects/Helix/helix-lang/helix/pkgs"};
 
     // preprocess the tokens with optional module import paths : stage 1
-    print("preprocessing...", sysIO::endl('\r'));
+    print("preprocessing...", sysIO::endl('\n'));
     parser::preprocessor::Preprocessor(tokens, "main", pkg_paths).parse();
 
     // preprocessor::import_tree->print_tree(preprocessor::import_tree->get_root());
@@ -180,17 +206,17 @@ int compile(int argc, char **argv) {
     // generate ast from the given tokens : stage 2
     auto iter = tokens.begin();
 
-    print("parsing...         ", sysIO::endl('\r'));
+    print("parsing...         ", sysIO::endl('\n'));
 
     parser::ast::NodeV<>       ast;
     parser::ast::ParseResult<> expr;
 
     while (iter.remaining_n() != 0) {
-        print("parsing.. ", sysIO::endl('\r'));
+        print("parsing.. ", sysIO::endl('\n'));
         auto decl = parser::ast::node::Declaration(iter);
         expr      = decl.parse();
 
-        print("parsing.  ", sysIO::endl('\r'));
+        print("parsing.  ", sysIO::endl('\n'));
         if (!expr.has_value()) {
             expr.error().panic();
             print(expr.error().what());
@@ -199,13 +225,13 @@ int compile(int argc, char **argv) {
         }
 
         ast.emplace_back(expr.value());
-        print("Parsing...", sysIO::endl('\r'));
+        print("Parsing...", sysIO::endl('\n'));
     }
 
     if (!expr.has_value()) {
-        print("aborting...", sysIO::endl('\r'));
+        print("aborting...", sysIO::endl('\n'));
     } else {
-        print("parsed     ", sysIO::endl('\r'));
+        print("parsed     ", sysIO::endl('\n'));
     }
 
     if (parsed_args.emit_ast) {
@@ -227,15 +253,18 @@ int compile(int argc, char **argv) {
     }
 
     if (parsed_args.emit_ir) {
-        print("emitting CX-IR...", sysIO::endl('\r'));
+        print("emitting CX-IR...", sysIO::endl('\n'));
 
         print(emitter.to_readable_CXIR());
     }
 
     std::string out_file;
-    
-    out_file = (parsed_args.output_file.has_value()) ? parsed_args.output_file.value() : std::filesystem::path(parsed_args.file).stem().string();
-    compile_CXIR(emitter, out_file);
+
+    out_file = (parsed_args.output_file.has_value())
+                   ? parsed_args.output_file.value()
+                   : std::filesystem::path(parsed_args.file).stem().string();
+    const std::array<const char*, 5> f_argv = {"-std=c++23", "-g", "-O0", "-fno-omit-frame-pointer", "-Wl,-rpath,/usr/local/lib"};
+    compile_CXIR(emitter, out_file, parsed_args.file, f_argv.size(), const_cast<char**>(f_argv.data()));
 
     auto                          end  = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double> diff = end - start;
