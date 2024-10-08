@@ -26,7 +26,10 @@
 #include "neo-types/include/hxint.hh"
 
 __CONTROLLER_FS_BEGIN {
+    using fs_path = std::filesystem::path;
+
     std::string                          get_cwd();
+    fs_path                              normalize_path(std::string & filename);
     std::optional<std::filesystem::path> resolve_path(const std::string &resolve);
     std::optional<std::filesystem::path> resolve_path(const std::string &resolve,
                                                       const std::string &base);
