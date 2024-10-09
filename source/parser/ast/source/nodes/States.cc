@@ -198,6 +198,7 @@ symbols from the imports are available when needed for resolution.
 #include "parser/ast/include/types/AST_types.hh"
 #include "token/include/Token.hh"
 #include "token/include/config/Token_cases.def"
+#include "token/include/private/Token_generate.hh"
 
 // ---------------------------------------------------------------------------------------------- //
 
@@ -912,6 +913,25 @@ AST_NODE_IMPL_VISITOR(Jsonify, AliasState) { json.section("AliasState"); }
 
 AST_NODE_IMPL(Statement, SingleImportState) {
     IS_NOT_EMPTY;
+
+    // := 'import' (E.PathExpr ('as' Ident)?) | Literal
+
+    IS_EXCEPTED_TOKEN(__TOKEN_N::KEYWORD_IMPORT);
+    iter.advance();  // skip 'import'
+
+    if (CURRENT_TOKEN_IS(__TOKEN_N::LITERAL_STRING)) {
+        ParseResult<LiteralExpr> literal = expr_parser.parse<LiteralExpr>();
+        RETURN_IF_ERROR(literal);
+
+        NodeT<SingleImportState> node = make_node<SingleImportState>(literal.value());
+        node->type                    = SingleImportState::ImportType::External;
+
+        IS_EXCEPTED_TOKEN(__TOKEN_N::PUNCTUATION_SEMICOLON);
+        iter.advance();  // skip ';'
+
+        return node;
+    }
+
     NOT_IMPLEMENTED;
 }
 

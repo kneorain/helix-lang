@@ -478,6 +478,8 @@ CX_VISIT_IMPL(ModuleDecl) {
 
     ADD_TOKEN(CXX_NAMESPACE);
 
+    ADD_NODE_PARAM(name);
+
     ADD_NODE_PARAM(body);
 }
 
@@ -559,6 +561,22 @@ CX_VISIT_IMPL(VarDecl) {
     UNLESS_NULL(value, ADD_TOKEN_AS_VALUE(CXX_CORE_OPERATOR, "="); ADD_NODE_PARAM(value);)
 }
 
-CX_VISIT_IMPL(FFIDecl) { CXIR_NOT_IMPLEMENTED; }
+CX_VISIT_IMPL(FFIDecl) {
+    if (node.name->value.value() != "\"c++\"") {
+        throw std::runtime_error("Only C++ is supported at the moment");
+    }
+
+    ADD_TOKEN(CXX_PP_INCLUDE);
+
+    if (node.value->getNodeType() == parser::ast::node::nodes::SingleImportState) {
+        ADD_TOKEN_AS_VALUE(
+            CXX_CORE_LITERAL,
+            std::static_pointer_cast<parser::ast::node::LiteralExpr>(
+                std::static_pointer_cast<parser::ast::node::SingleImportState>(node.value)->path)
+                ->value.value());
+    } else {
+        throw std::runtime_error("Only string literals are supported at the moment");
+    }
+}
 
 CX_VISIT_IMPL(OpDecl) { CXIR_NOT_IMPLEMENTED; }

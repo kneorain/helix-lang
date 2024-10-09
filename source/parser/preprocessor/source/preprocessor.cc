@@ -89,139 +89,142 @@ ffi "py" {
 }
 */
 void parse_ffi(Preprocessor *self) {  // at the time of call, current() is 'ffi'
-    i32    brace_count = 0;
-    bool   jump_back   = false;
-    string goto_caller;
+    //     i32    brace_count = 0;
+    //     bool   jump_back   = false;
+    //     string goto_caller;
 
-    auto advance_and_continue = [&]() {
-        self->advance();
-        jump_back = true;
-    };
+    //     auto advance_and_continue = [&]() {
+    //         self->advance();
+    //         jump_back = true;
+    //     };
 
-iter_body:
-    switch (self->current().token_kind()) {  // at call time peek should be ffi
-        case __TOKEN_TYPES_N::KEYWORD_FFI:
-            if (self->peek().value_or(__TOKEN_N::Token()).token_kind() !=
-                __TOKEN_TYPES_N::LITERAL_STRING) {
-                error::Panic(error::CodeError{
-                    .pof       = &self->current(),
-                    .err_code  = 0.7005,
-                    .mark_pof  = false,
-                    .opt_fixes = {
-                        {__TOKEN_N::bare_token(__TOKEN_TYPES_N::LITERAL_STRING, "\"...\""),
-                         self->current().column_number() + self->current().length() + 1}}});
-            }
+    // iter_body:
+    //     switch (self->current().token_kind()) {  // at call time peek should be ffi
+    //         case __TOKEN_TYPES_N::KEYWORD_FFI:
+    //             if (self->peek().value_or(__TOKEN_N::Token()).token_kind() !=
+    //                 __TOKEN_TYPES_N::LITERAL_STRING) {
+    //                 error::Panic(error::CodeError{
+    //                     .pof       = &self->current(),
+    //                     .err_code  = 0.7005,
+    //                     .mark_pof  = false,
+    //                     .opt_fixes = {
+    //                         {__TOKEN_N::bare_token(__TOKEN_TYPES_N::LITERAL_STRING, "\"...\""),
+    //                          self->current().column_number() + self->current().length() + 1}}});
+    //             }
 
-            self->advance(2);  // skip ffi and the string ident
+    //             self->advance(2);  // skip ffi and the string ident
 
-            if (self->current().token_kind() ==
-                __TOKEN_TYPES_N::KEYWORD_IMPORT) {  // ffi "c" import
-                goto_caller = "ffi";
-                goto abi_import;  // no loop back
-            } else {              // if the import token is missing
-                auto bad_token = self->peek_back().value();
-                throw error::Panic(error::CodeError{
-                    .pof = &bad_token, .err_code = 0.10001,
-                    //.opt_fixes = {{__TOKEN_N::bare_token(__TOKEN_TYPES_N::KEYWORD_IMPORT) + " ",
-                    //-1}}
-                });
-            }
+    //             if (self->current().token_kind() ==
+    //                 __TOKEN_TYPES_N::KEYWORD_IMPORT) {  // ffi "c" import
+    //                 goto_caller = "ffi";
+    //                 goto abi_import;  // no loop back
+    //             } else {              // if the import token is missing
+    //                 auto bad_token = self->peek_back().value();
+    //                 throw error::Panic(error::CodeError{
+    //                     .pof = &bad_token, .err_code = 0.10001,
+    //                     //.opt_fixes = {{__TOKEN_N::bare_token(__TOKEN_TYPES_N::KEYWORD_IMPORT) +
+    //                     " ",
+    //                     //-1}}
+    //                 });
+    //             }
 
-            jump_back = true;
-            break;
+    //             jump_back = true;
+    //             break;
 
-        case __TOKEN_TYPES_N::PUNCTUATION_OPEN_BRACE:  // ffi "py" { <-- this opening brace
-            brace_count++;
+    //         case __TOKEN_TYPES_N::PUNCTUATION_OPEN_BRACE:  // ffi "py" { <-- this opening brace
+    //             brace_count++;
 
-            if (brace_count <= 0) {  // if there's more }'s than opening ones
-                throw error::Panic(error::CodeError{.pof          = &self->current(),
-                                                    .err_code     = 2.1002,
-                                                    .err_fmt_args = {"closing brace"}});
-            }
+    //             if (brace_count <= 0) {  // if there's more }'s than opening ones
+    //                 throw error::Panic(error::CodeError{.pof          = &self->current(),
+    //                                                     .err_code     = 2.1002,
+    //                                                     .err_fmt_args = {"closing brace"}});
+    //             }
 
-            advance_and_continue();  // skip {
-            break;
+    //             advance_and_continue();  // skip {
+    //             break;
 
-        case __TOKEN_TYPES_N::PUNCTUATION_CLOSE_BRACE:  // } <-- this closing brace
-            brace_count--;
+    //         case __TOKEN_TYPES_N::PUNCTUATION_CLOSE_BRACE:  // } <-- this closing brace
+    //             brace_count--;
 
-            if (brace_count < 0) {  // if there's an additional closing brace
-                throw error::Panic(error::CodeError{.pof          = &self->current(),
-                                                    .err_code     = 2.1002,
-                                                    .err_fmt_args = {"opening brace"}});
-            }
+    //             if (brace_count < 0) {  // if there's an additional closing brace
+    //                 throw error::Panic(error::CodeError{.pof          = &self->current(),
+    //                                                     .err_code     = 2.1002,
+    //                                                     .err_fmt_args = {"opening brace"}});
+    //             }
 
-            if (brace_count == 0) {  // completed
-                return;
-            }
+    //             if (brace_count == 0) {  // completed
+    //                 return;
+    //             }
 
-            advance_and_continue();  // skip }
-            break;
+    //             advance_and_continue();  // skip }
+    //             break;
 
-        case __TOKEN_TYPES_N::KEYWORD_IMPORT:  // import <-- this "sympy";
-        abi_import:
-            // syntax: 'import' (string (',' string)*) ';'
-            if (!self->peek().has_value()) {  // just 'import' no specifier
-                auto bad_token = self->peek().value();
-                throw error::Panic(error::CodeError{
-                    .pof = &bad_token, .err_code = 0.10001, .err_fmt_args = {"opening brace"}});
-            }
+    //         case __TOKEN_TYPES_N::KEYWORD_IMPORT:  // import <-- this "sympy";
+    //         abi_import:
+    //             // syntax: 'import' (string (',' string)*) ';'
+    //             if (!self->peek().has_value()) {  // just 'import' no specifier
+    //                 auto bad_token = self->peek().value();
+    //                 throw error::Panic(error::CodeError{
+    //                     .pof = &bad_token, .err_code = 0.10001, .err_fmt_args = {"opening
+    //                     brace"}});
+    //             }
 
-            if (self->peek().value().token_kind() != __TOKEN_TYPES_N::LITERAL_STRING) {
-                // 0.10101
-                auto bad_token = self->peek().value();
-                throw error::Panic(error::CodeError{
-                    .pof          = &bad_token,
-                    .err_code     = 0.10101,
-                    .fix_fmt_args = {"import \"" + self->peek().value().value() + "\""}});
-            }
+    //             if (self->peek().value().token_kind() != __TOKEN_TYPES_N::LITERAL_STRING) {
+    //                 // 0.10101
+    //                 auto bad_token = self->peek().value();
+    //                 throw error::Panic(error::CodeError{
+    //                     .pof          = &bad_token,
+    //                     .err_code     = 0.10101,
+    //                     .fix_fmt_args = {"import \"" + self->peek().value().value() + "\""}});
+    //             }
 
-            self->advance(2);  // skip 'import' string | other
+    //             self->advance(2);  // skip 'import' string | other
 
-            if (self->current().token_kind() ==
-                __TOKEN_TYPES_N::PUNCTUATION_COMMA) {  // (',' string)*
-                // 0.10102
-                error::Panic(error::CodeError{.pof = &self->current(), .err_code = 0.10102});
-                // TODO: add parsing if needed (might not look cohesive)
-                //       don't forget to advance after parsing out multiple
-            }
+    //             if (self->current().token_kind() ==
+    //                 __TOKEN_TYPES_N::PUNCTUATION_COMMA) {  // (',' string)*
+    //                 // 0.10102
+    //                 error::Panic(error::CodeError{.pof = &self->current(), .err_code = 0.10102});
+    //                 // TODO: add parsing if needed (might not look cohesive)
+    //                 //       don't forget to advance after parsing out multiple
+    //             }
 
-            // ';' at this point it should only be a semicolon
-            if (self->current().token_kind() != __TOKEN_TYPES_N::PUNCTUATION_SEMICOLON) {
-                auto bad_token = self->peek_back().value();
-                error::Panic(error::CodeError{
-                    .pof       = &bad_token,
-                    .err_code  = 4.0001,
-                    .mark_pof  = false,
-                    .opt_fixes = {
-                        {__TOKEN_N::bare_token(__TOKEN_TYPES_N::PUNCTUATION_SEMICOLON), -1}}});
-            }
+    //             // ';' at this point it should only be a semicolon
+    //             if (self->current().token_kind() != __TOKEN_TYPES_N::PUNCTUATION_SEMICOLON) {
+    //                 auto bad_token = self->peek_back().value();
+    //                 error::Panic(error::CodeError{
+    //                     .pof       = &bad_token,
+    //                     .err_code  = 4.0001,
+    //                     .mark_pof  = false,
+    //                     .opt_fixes = {
+    //                         {__TOKEN_N::bare_token(__TOKEN_TYPES_N::PUNCTUATION_SEMICOLON),
+    //                         -1}}});
+    //             }
 
-            advance_and_continue();  // skip ; or ,
+    //             advance_and_continue();  // skip ; or ,
 
-            if (goto_caller == "ffi") {
-                return;  // import completed
-            }
+    //             if (goto_caller == "ffi") {
+    //                 return;  // import completed
+    //             }
 
-            break;
+    //             break;
 
-        case __TOKEN_TYPES_N::PUNCTUATION_SEMICOLON:
-            advance_and_continue();  // skip ;'s
-            break;
+    //         case __TOKEN_TYPES_N::PUNCTUATION_SEMICOLON:
+    //             advance_and_continue();  // skip ;'s
+    //             break;
 
-        default:
-            if (brace_count > 0) {
-                advance_and_continue();  // skip ;
-                break;
-            } else {
-                error::Panic(error::CodeError{.pof = &self->current(), .err_code = 0.0001});
-            }
-    }
+    //         default:
+    //             if (brace_count > 0) {
+    //                 advance_and_continue();  // skip ;
+    //                 break;
+    //             } else {
+    //                 error::Panic(error::CodeError{.pof = &self->current(), .err_code = 0.0001});
+    //             }
+    //     }
 
-    if (jump_back) {
-        jump_back = false;
-        goto iter_body;
-    }
+    //     if (jump_back) {
+    //         jump_back = false;
+    //         goto iter_body;
+    //     }
 }
 
 void parse_define(Preprocessor *self) {

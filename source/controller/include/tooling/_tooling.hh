@@ -66,23 +66,22 @@ __CONTROLLER_TOOL_BEGIN {
     class ExecutableGenerator;
     class ObjectGenerator;
 
-    
     class CompilationUnit {
       public:
-      /**
- * @brief the main constructor for a compilation unit. takes the command-line
- *        arguments and gets the whole thing going.
- * @param argc number of command-line arguments
- * @param argv array of argument strings
- */
+        /**
+         * @brief the main constructor for a compilation unit. takes the command-line
+         *        arguments and gets the whole thing going.
+         * @param argc number of command-line arguments
+         * @param argv array of argument strings
+         */
         CompilationUnit(int argc, const char **argv);
-        
+
         explicit CompilationUnit(InvocationManager &invocation);
-        
+
         template <std::size_t N>
         explicit CompilationUnit(std::array<const char *, N> &argv)
             : CompilationUnit(argv.size(), argv.data()) {}
-        
+
         template <std::size_t N>
         explicit CompilationUnit(std::array<std::string, N> &argv)
             : CompilationUnit(argv.size(), argv.data()) {}

@@ -211,6 +211,7 @@ __AST_NODE_BEGIN {
         BASE_CORE_METHODS(FFIDecl);
 
         // FFIDecl :=  VisDecl? 'ffi' L.StringLiteral D
+        explicit FFIDecl(bool /* unused */) {}
 
         Modifiers          vis = Modifiers(Modifiers::ExpectedModifier::AccessSpec);
         NodeT<LiteralExpr> name;
