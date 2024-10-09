@@ -13,15 +13,15 @@
 #ifndef __CONTROLLER_CONFIG_DEF__
 #define __CONTROLLER_CONFIG_DEF__
 
-#define __CONTROLLER_BEGIN namespace controller
-#define __CONTROLLER_FS_BEGIN namespace controller::file_system
-#define __CONTROLLER_CLI_BEGIN namespace controller::cli
-#define __CONTROLLER_TOOL_BEGIN namespace controller::tool
+#define __CONTROLLER_N controller
 
-#define __CONTROLLER_N         controller
-#define __CONTROLLER_FS_N      __CONTROLLER_N::file_system
-#define __CONTROLLER_CLI_N     __CONTROLLER_N::cli
+#define __CONTROLLER_BEGIN namespace __CONTROLLER_N
+#define __CONTROLLER_FS_BEGIN namespace __CONTROLLER_N::file_system
+#define __CONTROLLER_CLI_BEGIN namespace __CONTROLLER_N::cli
+#define __CONTROLLER_TOOL_BEGIN namespace __CONTROLLER_N::tooling
 
+#define __CONTROLLER_FS_N __CONTROLLER_N::file_system
+#define __CONTROLLER_CLI_N __CONTROLLER_N::cli
 
 // #define __CONTROLLER_NODE_BEGIN namespace parser::ast::node
 // #define __CONTROLLER_VISITOR_BEGIN namespace parser::ast::visitor
