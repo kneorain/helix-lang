@@ -1,3 +1,14 @@
-fn hi(a:int) -> int {
+ffi "c++" import "cstdio";
+ffi "c++" import "memory";
+
+fn hi(a: int) -> int {
     return a;
+}
+
+fn main() -> int {
+    let a = 1;
+    let b = hi(a);
+
+    printf("Hello, World! %d\n", b);
+    return 0;
 }

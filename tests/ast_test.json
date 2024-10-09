@@ -2,56 +2,377 @@
     "ast": {
         "Decls": [
             {
+                "FFIDecl": {}
+            },
+            {
                 "FuncDecl": {
                     "body": {
                         "SuiteState": {
                             "BlockState": [
                                 {
-                                    "ExprState": {
-                                        "FunctionCallExpr": {
-                                            "args": {
-                                                "ArgumentListExpr": [
-                                                    {
-                                                        "ArgumentExpr": {
+                                    "ReturnState": {
+                                        "IdentExpr": {
+                                            "kind": "_",
+                                            "length": 1,
+                                            "loc": {
+                                                "column_number": 11,
+                                                "filename": "/Volumes/Devolpment/Projects/Helix/helix-lang/tests/main.hlx",
+                                                "line_number": 4,
+                                                "offset": 61
+                                            },
+                                            "value": "a"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "generics": {},
+                    "modifiers": {
+                        "modifiers": {}
+                    },
+                    "name": {
+                        "PathExpr": {
+                            "path": {
+                                "IdentExpr": {
+                                    "kind": "_",
+                                    "length": 2,
+                                    "loc": {
+                                        "column_number": 3,
+                                        "filename": "/Volumes/Devolpment/Projects/Helix/helix-lang/tests/main.hlx",
+                                        "line_number": 3,
+                                        "offset": 33
+                                    },
+                                    "value": "hi"
+                                }
+                            },
+                            "type": 2
+                        }
+                    },
+                    "params": [
+                        {
+                            "VarDecl": {
+                                "value": {},
+                                "var": {
+                                    "NamedVarSpecifier": {
+                                        "path": {
+                                            "IdentExpr": {
+                                                "kind": "_",
+                                                "length": 1,
+                                                "loc": {
+                                                    "column_number": 6,
+                                                    "filename": "/Volumes/Devolpment/Projects/Helix/helix-lang/tests/main.hlx",
+                                                    "line_number": 3,
+                                                    "offset": 35
+                                                },
+                                                "value": "a"
+                                            }
+                                        },
+                                        "type": {
+                                            "Type": {
+                                                "generics": {},
+                                                "specifiers": {
+                                                    "modifiers": {}
+                                                },
+                                                "value": {
+                                                    "IdentExpr": {
+                                                        "kind": "_",
+                                                        "length": 3,
+                                                        "loc": {
+                                                            "column_number": 8,
+                                                            "filename": "/Volumes/Devolpment/Projects/Helix/helix-lang/tests/main.hlx",
+                                                            "line_number": 3,
+                                                            "offset": 39
+                                                        },
+                                                        "value": "int"
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    ],
+                    "qualifiers": {
+                        "modifiers": {}
+                    },
+                    "returns": {
+                        "Type": {
+                            "generics": {},
+                            "specifiers": {
+                                "modifiers": {}
+                            },
+                            "value": {
+                                "IdentExpr": {
+                                    "kind": "_",
+                                    "length": 3,
+                                    "loc": {
+                                        "column_number": 16,
+                                        "filename": "/Volumes/Devolpment/Projects/Helix/helix-lang/tests/main.hlx",
+                                        "line_number": 3,
+                                        "offset": 47
+                                    },
+                                    "value": "int"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            {
+                "FuncDecl": {
+                    "body": {
+                        "SuiteState": {
+                            "BlockState": [
+                                {
+                                    "LetDecl": {
+                                        "modifiers": {
+                                            "modifiers": {}
+                                        },
+                                        "vars": [
+                                            {
+                                                "VarDecl": {
+                                                    "value": {
+                                                        "LiteralExpr": {
                                                             "type": 0,
                                                             "value": {
-                                                                "LiteralExpr": {
-                                                                    "type": 0,
-                                                                    "value": {
-                                                                        "kind": "/* string */",
-                                                                        "length": 16,
-                                                                        "loc": {
-                                                                            "column_number": 10,
-                                                                            "filename": "tests/main.hlx",
-                                                                            "line_number": 2,
-                                                                            "offset": 37
-                                                                        },
-                                                                        "value": "\"THIS IS A TEST\""
+                                                                "kind": "/* int */",
+                                                                "length": 1,
+                                                                "loc": {
+                                                                    "column_number": 12,
+                                                                    "filename": "/Volumes/Devolpment/Projects/Helix/helix-lang/tests/main.hlx",
+                                                                    "line_number": 8,
+                                                                    "offset": 94
+                                                                },
+                                                                "value": "1"
+                                                            }
+                                                        }
+                                                    },
+                                                    "var": {
+                                                        "NamedVarSpecifier": {
+                                                            "path": {
+                                                                "IdentExpr": {
+                                                                    "kind": "_",
+                                                                    "length": 1,
+                                                                    "loc": {
+                                                                        "column_number": 8,
+                                                                        "filename": "/Volumes/Devolpment/Projects/Helix/helix-lang/tests/main.hlx",
+                                                                        "line_number": 8,
+                                                                        "offset": 90
+                                                                    },
+                                                                    "value": "a"
+                                                                }
+                                                            },
+                                                            "type": {}
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        ],
+                                        "vis": {
+                                            "modifiers": {}
+                                        }
+                                    }
+                                },
+                                {
+                                    "LetDecl": {
+                                        "modifiers": {
+                                            "modifiers": {}
+                                        },
+                                        "vars": [
+                                            {
+                                                "VarDecl": {
+                                                    "value": {
+                                                        "FunctionCallExpr": {
+                                                            "args": {
+                                                                "ArgumentListExpr": [
+                                                                    {
+                                                                        "ArgumentExpr": {
+                                                                            "type": 0,
+                                                                            "value": {
+                                                                                "IdentExpr": {
+                                                                                    "kind": "_",
+                                                                                    "length": 1,
+                                                                                    "loc": {
+                                                                                        "column_number": 15,
+                                                                                        "filename": "/Volumes/Devolpment/Projects/Helix/helix-lang/tests/main.hlx",
+                                                                                        "line_number": 9,
+                                                                                        "offset": 111
+                                                                                    },
+                                                                                    "value": "a"
+                                                                                }
+                                                                            }
+                                                                        }
                                                                     }
+                                                                ]
+                                                            },
+                                                            "generics": {},
+                                                            "path": {
+                                                                "PathExpr": {
+                                                                    "path": {
+                                                                        "IdentExpr": {
+                                                                            "kind": "_",
+                                                                            "length": 2,
+                                                                            "loc": {
+                                                                                "column_number": 12,
+                                                                                "filename": "/Volumes/Devolpment/Projects/Helix/helix-lang/tests/main.hlx",
+                                                                                "line_number": 9,
+                                                                                "offset": 109
+                                                                            },
+                                                                            "value": "hi"
+                                                                        }
+                                                                    },
+                                                                    "type": 2
                                                                 }
                                                             }
                                                         }
-                                                    }
-                                                ]
-                                            },
-                                            "generics": {},
-                                            "path": {
-                                                "PathExpr": {
-                                                    "path": {
-                                                        "IdentExpr": {
-                                                            "kind": "_",
-                                                            "length": 5,
-                                                            "loc": {
-                                                                "column_number": 4,
-                                                                "filename": "tests/main.hlx",
-                                                                "line_number": 2,
-                                                                "offset": 20
+                                                    },
+                                                    "var": {
+                                                        "NamedVarSpecifier": {
+                                                            "path": {
+                                                                "IdentExpr": {
+                                                                    "kind": "_",
+                                                                    "length": 1,
+                                                                    "loc": {
+                                                                        "column_number": 8,
+                                                                        "filename": "/Volumes/Devolpment/Projects/Helix/helix-lang/tests/main.hlx",
+                                                                        "line_number": 9,
+                                                                        "offset": 104
+                                                                    },
+                                                                    "value": "b"
+                                                                }
                                                             },
-                                                            "value": "print"
+                                                            "type": {}
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        ],
+                                        "vis": {
+                                            "modifiers": {}
+                                        }
+                                    }
+                                },
+                                {
+                                    "ExprState": {
+                                        "ScopePathExpr": {
+                                            "lhs": {
+                                                "IdentExpr": {
+                                                    "kind": "_",
+                                                    "length": 3,
+                                                    "loc": {
+                                                        "column_number": 4,
+                                                        "filename": "/Volumes/Devolpment/Projects/Helix/helix-lang/tests/main.hlx",
+                                                        "line_number": 11,
+                                                        "offset": 120
+                                                    },
+                                                    "value": "std"
+                                                }
+                                            },
+                                            "rhs": {
+                                                "ScopePathExpr": {
+                                                    "lhs": {
+                                                        "BinaryExpr": {
+                                                            "lhs": {
+                                                                "BinaryExpr": {
+                                                                    "lhs": {
+                                                                        "IdentExpr": {
+                                                                            "kind": "_",
+                                                                            "length": 4,
+                                                                            "loc": {
+                                                                                "column_number": 9,
+                                                                                "filename": "/Volumes/Devolpment/Projects/Helix/helix-lang/tests/main.hlx",
+                                                                                "line_number": 11,
+                                                                                "offset": 126
+                                                                            },
+                                                                            "value": "cout"
+                                                                        }
+                                                                    },
+                                                                    "op": {
+                                                                        "kind": "<<",
+                                                                        "length": 2,
+                                                                        "loc": {
+                                                                            "column_number": 14,
+                                                                            "filename": "/Volumes/Devolpment/Projects/Helix/helix-lang/tests/main.hlx",
+                                                                            "line_number": 11,
+                                                                            "offset": 129
+                                                                        },
+                                                                        "value": "<<"
+                                                                    },
+                                                                    "rhs": {
+                                                                        "IdentExpr": {
+                                                                            "kind": "_",
+                                                                            "length": 1,
+                                                                            "loc": {
+                                                                                "column_number": 17,
+                                                                                "filename": "/Volumes/Devolpment/Projects/Helix/helix-lang/tests/main.hlx",
+                                                                                "line_number": 11,
+                                                                                "offset": 131
+                                                                            },
+                                                                            "value": "b"
+                                                                        }
+                                                                    }
+                                                                }
+                                                            },
+                                                            "op": {
+                                                                "kind": "<<",
+                                                                "length": 2,
+                                                                "loc": {
+                                                                    "column_number": 19,
+                                                                    "filename": "/Volumes/Devolpment/Projects/Helix/helix-lang/tests/main.hlx",
+                                                                    "line_number": 11,
+                                                                    "offset": 134
+                                                                },
+                                                                "value": "<<"
+                                                            },
+                                                            "rhs": {
+                                                                "IdentExpr": {
+                                                                    "kind": "_",
+                                                                    "length": 3,
+                                                                    "loc": {
+                                                                        "column_number": 22,
+                                                                        "filename": "/Volumes/Devolpment/Projects/Helix/helix-lang/tests/main.hlx",
+                                                                        "line_number": 11,
+                                                                        "offset": 138
+                                                                    },
+                                                                    "value": "std"
+                                                                }
+                                                            }
                                                         }
                                                     },
-                                                    "type": 2
+                                                    "rhs": {
+                                                        "IdentExpr": {
+                                                            "kind": "_",
+                                                            "length": 4,
+                                                            "loc": {
+                                                                "column_number": 27,
+                                                                "filename": "/Volumes/Devolpment/Projects/Helix/helix-lang/tests/main.hlx",
+                                                                "line_number": 11,
+                                                                "offset": 144
+                                                            },
+                                                            "value": "endl"
+                                                        }
+                                                    }
                                                 }
+                                            }
+                                        }
+                                    }
+                                },
+                                {
+                                    "ReturnState": {
+                                        "LiteralExpr": {
+                                            "type": 0,
+                                            "value": {
+                                                "kind": "/* int */",
+                                                "length": 1,
+                                                "loc": {
+                                                    "column_number": 11,
+                                                    "filename": "/Volumes/Devolpment/Projects/Helix/helix-lang/tests/main.hlx",
+                                                    "line_number": 12,
+                                                    "offset": 157
+                                                },
+                                                "value": "1"
                                             }
                                         }
                                     }
@@ -71,66 +392,11 @@
                                     "length": 4,
                                     "loc": {
                                         "column_number": 3,
-                                        "filename": "tests/main.hlx",
-                                        "line_number": 1,
-                                        "offset": 7
+                                        "filename": "/Volumes/Devolpment/Projects/Helix/helix-lang/tests/main.hlx",
+                                        "line_number": 7,
+                                        "offset": 70
                                     },
                                     "value": "main"
-                                }
-                            },
-                            "type": 2
-                        }
-                    },
-                    "params": {},
-                    "qualifiers": {
-                        "modifiers": {}
-                    },
-                    "returns": {}
-                }
-            },
-            {
-                "FuncDecl": {
-                    "body": {
-                        "SuiteState": {
-                            "BlockState": [
-                                {
-                                    "ReturnState": {
-                                        "LiteralExpr": {
-                                            "type": 0,
-                                            "value": {
-                                                "kind": "/* int */",
-                                                "length": 1,
-                                                "loc": {
-                                                    "column_number": 11,
-                                                    "filename": "tests/main.hlx",
-                                                    "line_number": 6,
-                                                    "offset": 73
-                                                },
-                                                "value": "0"
-                                            }
-                                        }
-                                    }
-                                }
-                            ]
-                        }
-                    },
-                    "generics": {},
-                    "modifiers": {
-                        "modifiers": {}
-                    },
-                    "name": {
-                        "PathExpr": {
-                            "path": {
-                                "IdentExpr": {
-                                    "kind": "_",
-                                    "length": 7,
-                                    "loc": {
-                                        "column_number": 3,
-                                        "filename": "tests/main.hlx",
-                                        "line_number": 5,
-                                        "offset": 50
-                                    },
-                                    "value": "test_fn"
                                 }
                             },
                             "type": 2
@@ -148,1037 +414,17 @@
                             },
                             "value": {
                                 "IdentExpr": {
-                                    "kind": "i32",
+                                    "kind": "_",
                                     "length": 3,
                                     "loc": {
-                                        "column_number": 16,
-                                        "filename": "tests/main.hlx",
-                                        "line_number": 5,
-                                        "offset": 59
+                                        "column_number": 13,
+                                        "filename": "/Volumes/Devolpment/Projects/Helix/helix-lang/tests/main.hlx",
+                                        "line_number": 7,
+                                        "offset": 79
                                     },
-                                    "value": "i32"
+                                    "value": "int"
                                 }
                             }
-                        }
-                    }
-                }
-            },
-            {
-                "ClassDecl": {
-                    "body": {
-                        "SuiteState": {
-                            "BlockState": [
-                                {
-                                    "LetDecl": {
-                                        "modifiers": {
-                                            "modifiers": {}
-                                        },
-                                        "vars": [
-                                            {
-                                                "VarDecl": {
-                                                    "value": {},
-                                                    "var": {
-                                                        "NamedVarSpecifier": {
-                                                            "path": {
-                                                                "IdentExpr": {
-                                                                    "kind": "_",
-                                                                    "length": 1,
-                                                                    "loc": {
-                                                                        "column_number": 8,
-                                                                        "filename": "tests/main.hlx",
-                                                                        "line_number": 10,
-                                                                        "offset": 117
-                                                                    },
-                                                                    "value": "x"
-                                                                }
-                                                            },
-                                                            "type": {
-                                                                "Type": {
-                                                                    "generics": {},
-                                                                    "specifiers": {
-                                                                        "modifiers": {}
-                                                                    },
-                                                                    "value": {
-                                                                        "IdentExpr": {
-                                                                            "kind": "_",
-                                                                            "length": 1,
-                                                                            "loc": {
-                                                                                "column_number": 11,
-                                                                                "filename": "tests/main.hlx",
-                                                                                "line_number": 10,
-                                                                                "offset": 120
-                                                                            },
-                                                                            "value": "T"
-                                                                        }
-                                                                    }
-                                                                }
-                                                            }
-                                                        }
-                                                    }
-                                                }
-                                            }
-                                        ],
-                                        "vis": {
-                                            "modifiers": {}
-                                        }
-                                    }
-                                },
-                                {
-                                    "LetDecl": {
-                                        "modifiers": {
-                                            "modifiers": [
-                                                {
-                                                    "marker": {
-                                                        "kind": "static",
-                                                        "length": 6,
-                                                        "loc": {
-                                                            "column_number": 8,
-                                                            "filename": "tests/main.hlx",
-                                                            "line_number": 11,
-                                                            "offset": 135
-                                                        },
-                                                        "value": "static"
-                                                    },
-                                                    "type": 2
-                                                }
-                                            ]
-                                        },
-                                        "vars": [
-                                            {
-                                                "VarDecl": {
-                                                    "value": {},
-                                                    "var": {
-                                                        "NamedVarSpecifier": {
-                                                            "path": {
-                                                                "IdentExpr": {
-                                                                    "kind": "_",
-                                                                    "length": 1,
-                                                                    "loc": {
-                                                                        "column_number": 15,
-                                                                        "filename": "tests/main.hlx",
-                                                                        "line_number": 11,
-                                                                        "offset": 137
-                                                                    },
-                                                                    "value": "y"
-                                                                }
-                                                            },
-                                                            "type": {
-                                                                "Type": {
-                                                                    "generics": {},
-                                                                    "specifiers": {
-                                                                        "modifiers": {}
-                                                                    },
-                                                                    "value": {
-                                                                        "IdentExpr": {
-                                                                            "kind": "i32",
-                                                                            "length": 3,
-                                                                            "loc": {
-                                                                                "column_number": 18,
-                                                                                "filename": "tests/main.hlx",
-                                                                                "line_number": 11,
-                                                                                "offset": 142
-                                                                            },
-                                                                            "value": "i32"
-                                                                        }
-                                                                    }
-                                                                }
-                                                            }
-                                                        }
-                                                    }
-                                                }
-                                            }
-                                        ],
-                                        "vis": {
-                                            "modifiers": {}
-                                        }
-                                    }
-                                },
-                                {
-                                    "FuncDecl": {
-                                        "body": {
-                                            "SuiteState": {
-                                                "BlockState": [
-                                                    {
-                                                        "ExprState": {
-                                                            "DotPathExpr": {
-                                                                "lhs": {
-                                                                    "IdentExpr": {
-                                                                        "kind": "_",
-                                                                        "length": 4,
-                                                                        "loc": {
-                                                                            "column_number": 8,
-                                                                            "filename": "tests/main.hlx",
-                                                                            "line_number": 14,
-                                                                            "offset": 182
-                                                                        },
-                                                                        "value": "self"
-                                                                    }
-                                                                },
-                                                                "rhs": {
-                                                                    "BinaryExpr": {
-                                                                        "lhs": {
-                                                                            "IdentExpr": {
-                                                                                "kind": "_",
-                                                                                "length": 1,
-                                                                                "loc": {
-                                                                                    "column_number": 13,
-                                                                                    "filename": "tests/main.hlx",
-                                                                                    "line_number": 14,
-                                                                                    "offset": 184
-                                                                                },
-                                                                                "value": "x"
-                                                                            }
-                                                                        },
-                                                                        "op": {
-                                                                            "kind": "=",
-                                                                            "length": 1,
-                                                                            "loc": {
-                                                                                "column_number": 15,
-                                                                                "filename": "tests/main.hlx",
-                                                                                "line_number": 14,
-                                                                                "offset": 186
-                                                                            },
-                                                                            "value": "="
-                                                                        },
-                                                                        "rhs": {
-                                                                            "LiteralExpr": {
-                                                                                "type": 0,
-                                                                                "value": {
-                                                                                    "kind": "/* int */",
-                                                                                    "length": 1,
-                                                                                    "loc": {
-                                                                                        "column_number": 17,
-                                                                                        "filename": "tests/main.hlx",
-                                                                                        "line_number": 14,
-                                                                                        "offset": 188
-                                                                                    },
-                                                                                    "value": "0"
-                                                                                }
-                                                                            }
-                                                                        }
-                                                                    }
-                                                                }
-                                                            }
-                                                        }
-                                                    },
-                                                    {
-                                                        "ExprState": {
-                                                            "ScopePathExpr": {
-                                                                "lhs": {
-                                                                    "IdentExpr": {
-                                                                        "kind": "_",
-                                                                        "length": 12,
-                                                                        "loc": {
-                                                                            "column_number": 8,
-                                                                            "filename": "tests/main.hlx",
-                                                                            "line_number": 15,
-                                                                            "offset": 209
-                                                                        },
-                                                                        "value": "WithGenerics"
-                                                                    }
-                                                                },
-                                                                "rhs": {
-                                                                    "BinaryExpr": {
-                                                                        "lhs": {
-                                                                            "IdentExpr": {
-                                                                                "kind": "_",
-                                                                                "length": 1,
-                                                                                "loc": {
-                                                                                    "column_number": 22,
-                                                                                    "filename": "tests/main.hlx",
-                                                                                    "line_number": 15,
-                                                                                    "offset": 212
-                                                                                },
-                                                                                "value": "y"
-                                                                            }
-                                                                        },
-                                                                        "op": {
-                                                                            "kind": "=",
-                                                                            "length": 1,
-                                                                            "loc": {
-                                                                                "column_number": 24,
-                                                                                "filename": "tests/main.hlx",
-                                                                                "line_number": 15,
-                                                                                "offset": 214
-                                                                            },
-                                                                            "value": "="
-                                                                        },
-                                                                        "rhs": {
-                                                                            "LiteralExpr": {
-                                                                                "type": 0,
-                                                                                "value": {
-                                                                                    "kind": "/* int */",
-                                                                                    "length": 1,
-                                                                                    "loc": {
-                                                                                        "column_number": 26,
-                                                                                        "filename": "tests/main.hlx",
-                                                                                        "line_number": 15,
-                                                                                        "offset": 216
-                                                                                    },
-                                                                                    "value": "0"
-                                                                                }
-                                                                            }
-                                                                        }
-                                                                    }
-                                                                }
-                                                            }
-                                                        }
-                                                    }
-                                                ]
-                                            }
-                                        },
-                                        "generics": {},
-                                        "modifiers": {
-                                            "modifiers": {}
-                                        },
-                                        "name": {
-                                            "PathExpr": {
-                                                "path": {
-                                                    "IdentExpr": {
-                                                        "kind": "_",
-                                                        "length": 12,
-                                                        "loc": {
-                                                            "column_number": 7,
-                                                            "filename": "tests/main.hlx",
-                                                            "line_number": 13,
-                                                            "offset": 162
-                                                        },
-                                                        "value": "WithGenerics"
-                                                    }
-                                                },
-                                                "type": 2
-                                            }
-                                        },
-                                        "params": [
-                                            {
-                                                "VarDecl": {
-                                                    "value": {},
-                                                    "var": {
-                                                        "NamedVarSpecifier": {
-                                                            "path": {
-                                                                "IdentExpr": {
-                                                                    "kind": "_",
-                                                                    "length": 4,
-                                                                    "loc": {
-                                                                        "column_number": 20,
-                                                                        "filename": "tests/main.hlx",
-                                                                        "line_number": 13,
-                                                                        "offset": 167
-                                                                    },
-                                                                    "value": "self"
-                                                                }
-                                                            },
-                                                            "type": {}
-                                                        }
-                                                    }
-                                                }
-                                            }
-                                        ],
-                                        "qualifiers": {
-                                            "modifiers": {}
-                                        },
-                                        "returns": {}
-                                    }
-                                }
-                            ]
-                        }
-                    },
-                    "derives": {},
-                    "generics": {
-                        "RequiresDecl": {
-                            "bounds": {},
-                            "params": {
-                                "RequiresParamList": [
-                                    {
-                                        "RequiresParamDecl": {
-                                            "is_const": "false",
-                                            "value": {},
-                                            "var": {
-                                                "NamedVarSpecifier": {
-                                                    "path": {
-                                                        "IdentExpr": {
-                                                            "kind": "_",
-                                                            "length": 1,
-                                                            "loc": {
-                                                                "column_number": 29,
-                                                                "filename": "tests/main.hlx",
-                                                                "line_number": 9,
-                                                                "offset": 105
-                                                            },
-                                                            "value": "T"
-                                                        }
-                                                    },
-                                                    "type": {}
-                                                }
-                                            }
-                                        }
-                                    }
-                                ]
-                            }
-                        }
-                    },
-                    "modifiers": {
-                        "modifiers": {}
-                    },
-                    "name": {
-                        "IdentExpr": {
-                            "kind": "_",
-                            "length": 12,
-                            "loc": {
-                                "column_number": 6,
-                                "filename": "tests/main.hlx",
-                                "line_number": 9,
-                                "offset": 93
-                            },
-                            "value": "WithGenerics"
-                        }
-                    }
-                }
-            },
-            {
-                "ClassDecl": {
-                    "body": {
-                        "SuiteState": {
-                            "BlockState": [
-                                {
-                                    "LetDecl": {
-                                        "modifiers": {
-                                            "modifiers": {}
-                                        },
-                                        "vars": [
-                                            {
-                                                "VarDecl": {
-                                                    "value": {},
-                                                    "var": {
-                                                        "NamedVarSpecifier": {
-                                                            "path": {
-                                                                "IdentExpr": {
-                                                                    "kind": "_",
-                                                                    "length": 1,
-                                                                    "loc": {
-                                                                        "column_number": 12,
-                                                                        "filename": "tests/main.hlx",
-                                                                        "line_number": 20,
-                                                                        "offset": 290
-                                                                    },
-                                                                    "value": "x"
-                                                                }
-                                                            },
-                                                            "type": {
-                                                                "Type": {
-                                                                    "generics": {},
-                                                                    "specifiers": {
-                                                                        "modifiers": {}
-                                                                    },
-                                                                    "value": {
-                                                                        "IdentExpr": {
-                                                                            "kind": "_",
-                                                                            "length": 1,
-                                                                            "loc": {
-                                                                                "column_number": 15,
-                                                                                "filename": "tests/main.hlx",
-                                                                                "line_number": 20,
-                                                                                "offset": 293
-                                                                            },
-                                                                            "value": "T"
-                                                                        }
-                                                                    }
-                                                                }
-                                                            }
-                                                        }
-                                                    }
-                                                }
-                                            }
-                                        ],
-                                        "vis": {
-                                            "modifiers": [
-                                                {
-                                                    "marker": {
-                                                        "kind": "pub",
-                                                        "length": 3,
-                                                        "loc": {
-                                                            "column_number": 4,
-                                                            "filename": "tests/main.hlx",
-                                                            "line_number": 20,
-                                                            "offset": 284
-                                                        },
-                                                        "value": "pub"
-                                                    },
-                                                    "type": 0
-                                                }
-                                            ]
-                                        }
-                                    }
-                                },
-                                {
-                                    "LetDecl": {
-                                        "modifiers": {
-                                            "modifiers": {}
-                                        },
-                                        "vars": [
-                                            {
-                                                "VarDecl": {
-                                                    "value": {},
-                                                    "var": {
-                                                        "NamedVarSpecifier": {
-                                                            "path": {
-                                                                "IdentExpr": {
-                                                                    "kind": "_",
-                                                                    "length": 1,
-                                                                    "loc": {
-                                                                        "column_number": 12,
-                                                                        "filename": "tests/main.hlx",
-                                                                        "line_number": 21,
-                                                                        "offset": 307
-                                                                    },
-                                                                    "value": "y"
-                                                                }
-                                                            },
-                                                            "type": {
-                                                                "Type": {
-                                                                    "generics": {},
-                                                                    "specifiers": {
-                                                                        "modifiers": {}
-                                                                    },
-                                                                    "value": {
-                                                                        "IdentExpr": {
-                                                                            "kind": "i32",
-                                                                            "length": 3,
-                                                                            "loc": {
-                                                                                "column_number": 15,
-                                                                                "filename": "tests/main.hlx",
-                                                                                "line_number": 21,
-                                                                                "offset": 312
-                                                                            },
-                                                                            "value": "i32"
-                                                                        }
-                                                                    }
-                                                                }
-                                                            }
-                                                        }
-                                                    }
-                                                }
-                                            }
-                                        ],
-                                        "vis": {
-                                            "modifiers": [
-                                                {
-                                                    "marker": {
-                                                        "kind": "pub",
-                                                        "length": 3,
-                                                        "loc": {
-                                                            "column_number": 4,
-                                                            "filename": "tests/main.hlx",
-                                                            "line_number": 21,
-                                                            "offset": 301
-                                                        },
-                                                        "value": "pub"
-                                                    },
-                                                    "type": 0
-                                                }
-                                            ]
-                                        }
-                                    }
-                                },
-                                {
-                                    "FuncDecl": {
-                                        "body": {
-                                            "SuiteState": {
-                                                "BlockState": [
-                                                    {
-                                                        "ExprState": {
-                                                            "DotPathExpr": {
-                                                                "lhs": {
-                                                                    "IdentExpr": {
-                                                                        "kind": "_",
-                                                                        "length": 4,
-                                                                        "loc": {
-                                                                            "column_number": 8,
-                                                                            "filename": "tests/main.hlx",
-                                                                            "line_number": 24,
-                                                                            "offset": 357
-                                                                        },
-                                                                        "value": "self"
-                                                                    }
-                                                                },
-                                                                "rhs": {
-                                                                    "BinaryExpr": {
-                                                                        "lhs": {
-                                                                            "IdentExpr": {
-                                                                                "kind": "_",
-                                                                                "length": 1,
-                                                                                "loc": {
-                                                                                    "column_number": 13,
-                                                                                    "filename": "tests/main.hlx",
-                                                                                    "line_number": 24,
-                                                                                    "offset": 359
-                                                                                },
-                                                                                "value": "x"
-                                                                            }
-                                                                        },
-                                                                        "op": {
-                                                                            "kind": "=",
-                                                                            "length": 1,
-                                                                            "loc": {
-                                                                                "column_number": 15,
-                                                                                "filename": "tests/main.hlx",
-                                                                                "line_number": 24,
-                                                                                "offset": 361
-                                                                            },
-                                                                            "value": "="
-                                                                        },
-                                                                        "rhs": {
-                                                                            "LiteralExpr": {
-                                                                                "type": 0,
-                                                                                "value": {
-                                                                                    "kind": "/* int */",
-                                                                                    "length": 1,
-                                                                                    "loc": {
-                                                                                        "column_number": 17,
-                                                                                        "filename": "tests/main.hlx",
-                                                                                        "line_number": 24,
-                                                                                        "offset": 363
-                                                                                    },
-                                                                                    "value": "0"
-                                                                                }
-                                                                            }
-                                                                        }
-                                                                    }
-                                                                }
-                                                            }
-                                                        }
-                                                    },
-                                                    {
-                                                        "ExprState": {
-                                                            "ScopePathExpr": {
-                                                                "lhs": {
-                                                                    "IdentExpr": {
-                                                                        "kind": "_",
-                                                                        "length": 17,
-                                                                        "loc": {
-                                                                            "column_number": 8,
-                                                                            "filename": "tests/main.hlx",
-                                                                            "line_number": 25,
-                                                                            "offset": 389
-                                                                        },
-                                                                        "value": "WithGenericsBound"
-                                                                    }
-                                                                },
-                                                                "rhs": {
-                                                                    "BinaryExpr": {
-                                                                        "lhs": {
-                                                                            "IdentExpr": {
-                                                                                "kind": "_",
-                                                                                "length": 1,
-                                                                                "loc": {
-                                                                                    "column_number": 27,
-                                                                                    "filename": "tests/main.hlx",
-                                                                                    "line_number": 25,
-                                                                                    "offset": 392
-                                                                                },
-                                                                                "value": "y"
-                                                                            }
-                                                                        },
-                                                                        "op": {
-                                                                            "kind": "=",
-                                                                            "length": 1,
-                                                                            "loc": {
-                                                                                "column_number": 29,
-                                                                                "filename": "tests/main.hlx",
-                                                                                "line_number": 25,
-                                                                                "offset": 394
-                                                                            },
-                                                                            "value": "="
-                                                                        },
-                                                                        "rhs": {
-                                                                            "LiteralExpr": {
-                                                                                "type": 0,
-                                                                                "value": {
-                                                                                    "kind": "/* int */",
-                                                                                    "length": 1,
-                                                                                    "loc": {
-                                                                                        "column_number": 31,
-                                                                                        "filename": "tests/main.hlx",
-                                                                                        "line_number": 25,
-                                                                                        "offset": 396
-                                                                                    },
-                                                                                    "value": "0"
-                                                                                }
-                                                                            }
-                                                                        }
-                                                                    }
-                                                                }
-                                                            }
-                                                        }
-                                                    }
-                                                ]
-                                            }
-                                        },
-                                        "generics": {},
-                                        "modifiers": {
-                                            "modifiers": {}
-                                        },
-                                        "name": {
-                                            "PathExpr": {
-                                                "path": {
-                                                    "IdentExpr": {
-                                                        "kind": "_",
-                                                        "length": 17,
-                                                        "loc": {
-                                                            "column_number": 7,
-                                                            "filename": "tests/main.hlx",
-                                                            "line_number": 23,
-                                                            "offset": 337
-                                                        },
-                                                        "value": "WithGenericsBound"
-                                                    }
-                                                },
-                                                "type": 2
-                                            }
-                                        },
-                                        "params": [
-                                            {
-                                                "VarDecl": {
-                                                    "value": {},
-                                                    "var": {
-                                                        "NamedVarSpecifier": {
-                                                            "path": {
-                                                                "IdentExpr": {
-                                                                    "kind": "_",
-                                                                    "length": 4,
-                                                                    "loc": {
-                                                                        "column_number": 25,
-                                                                        "filename": "tests/main.hlx",
-                                                                        "line_number": 23,
-                                                                        "offset": 342
-                                                                    },
-                                                                    "value": "self"
-                                                                }
-                                                            },
-                                                            "type": {}
-                                                        }
-                                                    }
-                                                }
-                                            }
-                                        ],
-                                        "qualifiers": {
-                                            "modifiers": {}
-                                        },
-                                        "returns": {}
-                                    }
-                                },
-                                {
-                                    "FuncDecl": {
-                                        "body": {
-                                            "SuiteState": {
-                                                "BlockState": [
-                                                    {
-                                                        "ExprState": {
-                                                            "FunctionCallExpr": {
-                                                                "args": {
-                                                                    "ArgumentListExpr": [
-                                                                        {
-                                                                            "ArgumentExpr": {
-                                                                                "type": 0,
-                                                                                "value": {
-                                                                                    "LiteralExpr": {
-                                                                                        "type": 0,
-                                                                                        "value": {
-                                                                                            "kind": "/* string */",
-                                                                                            "length": 15,
-                                                                                            "loc": {
-                                                                                                "column_number": 14,
-                                                                                                "filename": "tests/main.hlx",
-                                                                                                "line_number": 29,
-                                                                                                "offset": 485
-                                                                                            },
-                                                                                            "value": "\"Hello, World!\""
-                                                                                        }
-                                                                                    }
-                                                                                }
-                                                                            }
-                                                                        }
-                                                                    ]
-                                                                },
-                                                                "generics": {},
-                                                                "path": {
-                                                                    "PathExpr": {
-                                                                        "path": {
-                                                                            "IdentExpr": {
-                                                                                "kind": "_",
-                                                                                "length": 5,
-                                                                                "loc": {
-                                                                                    "column_number": 8,
-                                                                                    "filename": "tests/main.hlx",
-                                                                                    "line_number": 29,
-                                                                                    "offset": 469
-                                                                                },
-                                                                                "value": "print"
-                                                                            }
-                                                                        },
-                                                                        "type": 2
-                                                                    }
-                                                                }
-                                                            }
-                                                        }
-                                                    }
-                                                ]
-                                            }
-                                        },
-                                        "generics": {},
-                                        "modifiers": {
-                                            "modifiers": [
-                                                {
-                                                    "marker": {
-                                                        "kind": "pub",
-                                                        "length": 3,
-                                                        "loc": {
-                                                            "column_number": 4,
-                                                            "filename": "tests/main.hlx",
-                                                            "line_number": 28,
-                                                            "offset": 409
-                                                        },
-                                                        "value": "pub"
-                                                    },
-                                                    "type": 0
-                                                }
-                                            ]
-                                        },
-                                        "name": {
-                                            "PathExpr": {
-                                                "path": {
-                                                    "IdentExpr": {
-                                                        "kind": "_",
-                                                        "length": 9,
-                                                        "loc": {
-                                                            "column_number": 11,
-                                                            "filename": "tests/main.hlx",
-                                                            "line_number": 28,
-                                                            "offset": 422
-                                                        },
-                                                        "value": "something"
-                                                    }
-                                                },
-                                                "type": 2
-                                            }
-                                        },
-                                        "params": [
-                                            {
-                                                "VarDecl": {
-                                                    "value": {},
-                                                    "var": {
-                                                        "NamedVarSpecifier": {
-                                                            "path": {
-                                                                "IdentExpr": {
-                                                                    "kind": "_",
-                                                                    "length": 4,
-                                                                    "loc": {
-                                                                        "column_number": 21,
-                                                                        "filename": "tests/main.hlx",
-                                                                        "line_number": 28,
-                                                                        "offset": 427
-                                                                    },
-                                                                    "value": "self"
-                                                                }
-                                                            },
-                                                            "type": {}
-                                                        }
-                                                    }
-                                                }
-                                            },
-                                            {
-                                                "VarDecl": {
-                                                    "value": {},
-                                                    "var": {
-                                                        "NamedVarSpecifier": {
-                                                            "path": {
-                                                                "IdentExpr": {
-                                                                    "kind": "_",
-                                                                    "length": 1,
-                                                                    "loc": {
-                                                                        "column_number": 27,
-                                                                        "filename": "tests/main.hlx",
-                                                                        "line_number": 28,
-                                                                        "offset": 430
-                                                                    },
-                                                                    "value": "a"
-                                                                }
-                                                            },
-                                                            "type": {
-                                                                "Type": {
-                                                                    "generics": {},
-                                                                    "specifiers": {
-                                                                        "modifiers": {}
-                                                                    },
-                                                                    "value": {
-                                                                        "IdentExpr": {
-                                                                            "kind": "_",
-                                                                            "length": 3,
-                                                                            "loc": {
-                                                                                "column_number": 30,
-                                                                                "filename": "tests/main.hlx",
-                                                                                "line_number": 28,
-                                                                                "offset": 435
-                                                                            },
-                                                                            "value": "int"
-                                                                        }
-                                                                    }
-                                                                }
-                                                            }
-                                                        }
-                                                    }
-                                                }
-                                            },
-                                            {
-                                                "VarDecl": {
-                                                    "value": {
-                                                        "LiteralExpr": {
-                                                            "type": 0,
-                                                            "value": {
-                                                                "kind": "/* float */",
-                                                                "length": 5,
-                                                                "loc": {
-                                                                    "column_number": 46,
-                                                                    "filename": "tests/main.hlx",
-                                                                    "line_number": 28,
-                                                                    "offset": 453
-                                                                },
-                                                                "value": "19.21"
-                                                            }
-                                                        }
-                                                    },
-                                                    "var": {
-                                                        "NamedVarSpecifier": {
-                                                            "path": {
-                                                                "IdentExpr": {
-                                                                    "kind": "_",
-                                                                    "length": 1,
-                                                                    "loc": {
-                                                                        "column_number": 35,
-                                                                        "filename": "tests/main.hlx",
-                                                                        "line_number": 28,
-                                                                        "offset": 438
-                                                                    },
-                                                                    "value": "y"
-                                                                }
-                                                            },
-                                                            "type": {
-                                                                "Type": {
-                                                                    "generics": {},
-                                                                    "specifiers": {
-                                                                        "modifiers": {}
-                                                                    },
-                                                                    "value": {
-                                                                        "IdentExpr": {
-                                                                            "kind": "_",
-                                                                            "length": 5,
-                                                                            "loc": {
-                                                                                "column_number": 38,
-                                                                                "filename": "tests/main.hlx",
-                                                                                "line_number": 28,
-                                                                                "offset": 445
-                                                                            },
-                                                                            "value": "float"
-                                                                        }
-                                                                    }
-                                                                }
-                                                            }
-                                                        }
-                                                    }
-                                                }
-                                            }
-                                        ],
-                                        "qualifiers": {
-                                            "modifiers": {}
-                                        },
-                                        "returns": {}
-                                    }
-                                }
-                            ]
-                        }
-                    },
-                    "derives": {},
-                    "generics": {
-                        "RequiresDecl": {
-                            "bounds": {
-                                "TypeBoundList": [
-                                    {
-                                        "InstOfExpr": {
-                                            "op": 0,
-                                            "type": {
-                                                "IdentExpr": {
-                                                    "kind": "_",
-                                                    "length": 6,
-                                                    "loc": {
-                                                        "column_number": 46,
-                                                        "filename": "tests/main.hlx",
-                                                        "line_number": 19,
-                                                        "offset": 275
-                                                    },
-                                                    "value": "Number"
-                                                }
-                                            },
-                                            "value": {
-                                                "IdentExpr": {
-                                                    "kind": "_",
-                                                    "length": 1,
-                                                    "loc": {
-                                                        "column_number": 40,
-                                                        "filename": "tests/main.hlx",
-                                                        "line_number": 19,
-                                                        "offset": 264
-                                                    },
-                                                    "value": "T"
-                                                }
-                                            }
-                                        }
-                                    }
-                                ]
-                            },
-                            "params": {
-                                "RequiresParamList": [
-                                    {
-                                        "RequiresParamDecl": {
-                                            "is_const": "false",
-                                            "value": {},
-                                            "var": {
-                                                "NamedVarSpecifier": {
-                                                    "path": {
-                                                        "IdentExpr": {
-                                                            "kind": "_",
-                                                            "length": 1,
-                                                            "loc": {
-                                                                "column_number": 34,
-                                                                "filename": "tests/main.hlx",
-                                                                "line_number": 19,
-                                                                "offset": 258
-                                                            },
-                                                            "value": "T"
-                                                        }
-                                                    },
-                                                    "type": {}
-                                                }
-                                            }
-                                        }
-                                    }
-                                ]
-                            }
-                        }
-                    },
-                    "modifiers": {
-                        "modifiers": {}
-                    },
-                    "name": {
-                        "IdentExpr": {
-                            "kind": "_",
-                            "length": 17,
-                            "loc": {
-                                "column_number": 6,
-                                "filename": "tests/main.hlx",
-                                "line_number": 19,
-                                "offset": 246
-                            },
-                            "value": "WithGenericsBound"
                         }
                     }
                 }

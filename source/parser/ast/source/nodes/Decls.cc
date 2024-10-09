@@ -93,13 +93,16 @@
 #include <utility>
 #include <vector>
 
+#include "neo-pprint/include/hxpprint.hh"
 #include "parser/ast/include/config/AST_config.def"
 #include "parser/ast/include/nodes/AST_expressions.hh"
+#include "parser/ast/include/nodes/AST_statements.hh"
 #include "parser/ast/include/private/AST_generate.hh"
 #include "parser/ast/include/types/AST_jsonify_visitor.hh"
 #include "parser/ast/include/types/AST_modifiers.hh"
 #include "parser/ast/include/types/AST_types.hh"
 #include "token/include/Token.hh"
+#include "token/include/private/Token_generate.hh"
 
 AST_NODE_IMPL(Declaration, RequiresParamDecl) {
     IS_NOT_EMPTY;
@@ -806,7 +809,33 @@ AST_NODE_IMPL(Declaration, FFIDecl, const std::shared_ptr<__TOKEN_N::TokenList> 
     IS_NOT_EMPTY;
     // FFIDecl := Modifiers 'ffi' L.StringLiteral D
 
-    NOT_IMPLEMENTED;
+    NodeT<FFIDecl> node = make_node<FFIDecl>(true);
+
+    if (modifiers != nullptr) {
+        for (auto &tok : *modifiers) {
+            if (!node->vis.find_add(tok.current().get())) {
+                return std::unexpected(
+                    PARSE_ERROR(tok.current().get(), "invalid modifier for ffi"));
+            }
+        }
+    } else {
+        while (node->vis.find_add(CURRENT_TOK)) {
+            iter.advance();  // skip modifier
+        }
+    }
+
+    IS_EXCEPTED_TOKEN(__TOKEN_N::KEYWORD_FFI);
+    iter.advance();  // skip 'ffi'
+
+    IS_EXCEPTED_TOKEN(__TOKEN_N::LITERAL_STRING);
+    node->name = expr_parser.parse<LiteralExpr>().value();
+
+    ParseResult<SingleImportState> ext_import = state_parser.parse<SingleImportState>();
+    RETURN_IF_ERROR(ext_import);
+
+    node->value = ext_import.value();
+
+    return node;
 }
 
 AST_NODE_IMPL_VISITOR(Jsonify, FFIDecl) { json.section("FFIDecl"); }
@@ -941,6 +970,12 @@ AST_BASE_IMPL(Declaration, parse) {
     while (Modifiers::is_modifier(tok)) {
         if (modifiers == nullptr || modifiers->empty()) {
             modifiers = std::make_shared<__TOKEN_N::TokenList>();
+        }
+
+        if (tok == __TOKEN_N::KEYWORD_FFI &&
+            (HAS_NEXT_TOK &&
+             (NEXT_TOK == __TOKEN_N::LITERAL_STRING || NEXT_TOK == __TOKEN_N::LITERAL_CHAR))) {
+            break;
         }
 
         modifiers->push_back(tok);  /// add the modifier to the list
