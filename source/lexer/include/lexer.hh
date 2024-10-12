@@ -23,10 +23,11 @@ class Lexer {
     // TODO: Investigate if we can make this string not a copy
     Lexer(std::string source, const std::string &filename);
     explicit Lexer(const __TOKEN_N::Token &token);
-    Lexer(const Lexer &lexer)            = delete;
+    Lexer() = default;
+    Lexer(const Lexer &lexer)            = default;
     Lexer(Lexer &&lexer)                 = delete;
-    Lexer &operator=(const Lexer &lexer) = delete;
-    Lexer &operator=(Lexer &&lexer)      = delete;
+    Lexer &operator=(const Lexer &lexer) = default;
+    Lexer &operator=(Lexer &&lexer)      = default;
     ~Lexer()                             = default;
 
     __TOKEN_N::TokenList tokenize();
