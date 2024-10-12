@@ -84,7 +84,7 @@
 /// [ ] * LambdaExpr                * LE -> 'fn' TODO                                            ///
 ///                                                                                              ///
 ///                                /* generics */                                                ///
-/// [ ] * GenericInvokeExpr         * GI -> '<' TY? ( ',' TY )* '>'                             ///
+/// [ ] * GenericInvokeExpr         * GI -> '<' TY? ( ',' TY )* '>'                              ///
 /// [ ] * GenericInvokePathExpr     * PGE -> PE GI                                               ///
 ///                                                                                              ///
 ///                                                                                              ///
@@ -117,6 +117,7 @@
 #include <unordered_set>
 #include <vector>
 
+#include "neo-pprint/include/hxpprint.hh"
 #include "parser/ast/include/config/AST_config.def"
 #include "parser/ast/include/nodes/AST_expressions.hh"
 #include "parser/ast/include/private/AST_generate.hh"
@@ -125,6 +126,7 @@
 #include "parser/ast/include/types/AST_modifiers.hh"
 #include "parser/ast/include/types/AST_types.hh"
 #include "token/include/config/Token_cases.def"
+#include "token/include/private/Token_generate.hh"
 
 // ---------------------------------------------------------------------------------------------- //
 
@@ -415,7 +417,7 @@ AST_NODE_IMPL(Expression, BinaryExpr, ParseResult<> lhs, int min_precedence) {
 
         iter.advance();
 
-        ParseResult<> rhs = parse_primary();
+        ParseResult<> rhs = parse();
         RETURN_IF_ERROR(rhs);
 
         tok = CURRENT_TOK;
@@ -665,26 +667,63 @@ AST_NODE_IMPL(Expression, GenericInvokePathExpr) {
 AST_NODE_IMPL(Expression, ScopePathExpr, ParseResult<> lhs) {
     IS_NOT_EMPTY;
 
-    // := E '::' E
+    // := (E) ('::' E)*
+
+    ParseResult<IdentExpr> first;
 
     IS_NULL_RESULT(lhs) {
-        lhs = parse();
+        if (CURRENT_TOKEN_IS(__TOKEN_N::OPERATOR_SCOPE)) {
+            return std::unexpected(PARSE_ERROR_MSG("expected an identifier, but found nothing"));
+        }
+        
+        first = parse<IdentExpr>();
+        RETURN_IF_ERROR(first);
+    } else {
         RETURN_IF_ERROR(lhs);
+
+        if (lhs.value()->getNodeType() != nodes::IdentExpr) {
+            auto visitor = visitor::Jsonify();
+            lhs.value()->accept(visitor);
+            print("lhs: ", visitor.json);
+            return std::unexpected(PARSE_ERROR_MSG("expected an identifier, but found nothing"));
+        }
+
+        first = std::static_pointer_cast<IdentExpr>(lhs.value());
     }
 
-    IS_EXCEPTED_TOKEN(__TOKEN_N::OPERATOR_SCOPE);
-    iter.advance();  // skip '::'
+    NodeT<ScopePathExpr> path = make_node<ScopePathExpr>(first.value());
 
-    ParseResult<> rhs = parse();
-    RETURN_IF_ERROR(rhs);
+    while
+        CURRENT_TOKEN_IS(__TOKEN_N::OPERATOR_SCOPE) {
+            iter.advance();  // skip '::'
 
-    return make_node<ScopePathExpr>(lhs.value(), rhs.value());
+            if (CURRENT_TOKEN_IS_NOT(__TOKEN_N::IDENTIFIER) || (HAS_NEXT_TOK && NEXT_TOK != __TOKEN_N::OPERATOR_SCOPE)) {
+                ParseResult<> rhs = parse_primary();
+                RETURN_IF_ERROR(rhs);
+
+                path->access = rhs.value();
+                break;
+            }
+
+            ParseResult<IdentExpr> rhs = parse<IdentExpr>();
+            RETURN_IF_ERROR(rhs);
+
+            path->path.push_back(rhs.value());
+        }
+    
+    return path;
 }
 
 AST_NODE_IMPL_VISITOR(Jsonify, ScopePathExpr) {
+    std::vector<neo::json> path;
+
+    for (const auto &p : node.path) {
+        path.push_back(get_node_json(p));
+    }
+
     json.section("ScopePathExpr")
-        .add("lhs", get_node_json(node.lhs))
-        .add("rhs", get_node_json(node.rhs));
+        .add("path", path)
+        .add("access", get_node_json(node.access));
 }
 
 // ---------------------------------------------------------------------------------------------- //
@@ -1599,3 +1638,33 @@ bool is_storage_specifier(const __TOKEN_N::Token &tok) {
                         __TOKEN_N::KEYWORD_ASYNC,
                         __TOKEN_N::KEYWORD_EVAL});
 };
+
+template <typename T>
+T exec(const char *cmd) {
+    std::string result;
+    FILE       *pipe = _popen(cmd, "r");
+
+    if (!pipe) {
+        throw std::runtime_error("popen() failed!");
+    }
+
+    try {
+        char buffer[128];
+        while (fgets(buffer, sizeof(buffer), pipe) != nullptr) {
+            result += buffer;
+        }
+    } catch (...) {
+        _pclose(pipe);
+        throw;
+    }
+
+    int exitCode = _pclose(pipe);
+
+    if constexpr (std::is_same_v<T, std::string>) {
+        return result;
+    } else if constexpr (std::is_same_v<T, int>) {
+        return exitCode;
+    } else {
+        throw std::runtime_error("invalid type");
+    }
+}

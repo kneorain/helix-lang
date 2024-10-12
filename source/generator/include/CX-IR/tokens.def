@@ -123,6 +123,7 @@
     GENERATE(CXX_CORE_LITERAL,      "/* literal */"     ) \
     GENERATE(CXX_CORE_IDENTIFIER,   "/* identifier */"  ) \
     GENERATE(CXX_CORE_PUNCTUATION,  "/* punctuation */" ) \
+    GENERATE(CXX_ANNOTATION,        "/* annotation */"  ) \
     /* preprocessor */                                    \
     GENERATE(CXX_PP_DEFINE,         "#define"           ) \
     GENERATE(CXX_PP_INCLUDE,        "#include"          ) \

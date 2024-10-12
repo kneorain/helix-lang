@@ -94,7 +94,7 @@ __AST_NODE_BEGIN {
 
         explicit ArgumentExpr(NodeT<> value)
             : value(std::move(value))
-            , type(ArgumentType::Positional) {};
+            , type(ArgumentType::Positional){};
 
         enum class ArgumentType {
             Positional,
@@ -141,12 +141,10 @@ __AST_NODE_BEGIN {
     class ScopePathExpr final : public Node {  // := E '::' E
         BASE_CORE_METHODS(ScopePathExpr);
 
-        ScopePathExpr(NodeT<> lhs, NodeT<> rhs)
-            : lhs(std::move(lhs))
-            , rhs(std::move(rhs)) {}
+        explicit ScopePathExpr(NodeT<IdentExpr> first) { path.emplace_back(std::move(first)); }
 
-        NodeT<> lhs;
-        NodeT<> rhs;
+        NodeV<IdentExpr> path;
+        NodeT<>          access;
     };
 
     class DotPathExpr final : public Node {  // := E '.' E

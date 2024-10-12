@@ -14,9 +14,13 @@
 #define __AST_BASE_H__
 
 #include <string>
+#include <neo-pprint/include/hxpprint.hh>
 
 #include "parser/ast/include/config/AST_config.def"
+#include "parser/ast/include/private/base/AST_base_declaration.hh"
+#include "parser/ast/include/types/AST_types.hh"
 #include "parser/ast/include/types/AST_visitor.hh"
+
 __AST_NODE_BEGIN {
     class Node {  // base node
       public:
@@ -30,6 +34,56 @@ __AST_NODE_BEGIN {
         Node &operator=(const Node &) = default;
         Node(Node &&)                 = default;
         Node &operator=(Node &&)      = default;
+    };
+
+    class Program : public Node {
+      public:
+        Program()                           = delete;
+        ~Program() override                 = default;
+        Program(const Program &)            = default;  // no move or copy semantics
+        Program &operator=(const Program &) = delete;
+        Program(Program &&)                 = delete;
+        Program &operator=(Program &&)      = delete;
+
+        Program(__TOKEN_N::TokenList &source_tokens)
+            : source_tokens(source_tokens) {}
+
+        void accept(parser ::ast ::visitor ::Visitor &visitor) const override {
+            visitor.visit(*this);
+        }
+
+        [[nodiscard]] nodes        getNodeType() const override { return nodes::Program; }
+        [[nodiscard]] std ::string getNodeName() const override { return "Program"; };
+
+        Program &parse() {
+            auto iter = source_tokens.begin();
+
+            ParseResult<> expr;
+
+            while (iter.remaining_n() != 0) {
+                auto decl = node::Declaration(iter);
+                expr      = decl.parse();
+
+                if (!expr.has_value()) {
+                    expr.error().panic();
+                    print(std::string(colors::fg16::red),
+                          "error: ",
+                          std::string(colors::reset),
+                          expr.error().what());
+                    return *this;
+                }
+
+                children.emplace_back(expr.value());
+            }
+
+            return *this;
+        }
+
+        NodeV<> children;
+        NodeV<> annotations;
+
+      private:
+        __TOKEN_N::TokenList &source_tokens;
     };
 }  //  namespace __AST_NODE_BEGIN
 
