@@ -103,6 +103,15 @@
 #include "parser/ast/include/types/AST_types.hh"
 #include "token/include/Token.hh"
 #include "token/include/private/Token_generate.hh"
+#include "parser/ast/include/private/base/AST_base_expression.hh"
+#include "parser/ast/include/private/base/AST_base_statement.hh"
+
+__AST_NODE_BEGIN {
+    __TOKEN_N::TokenList::TokenListIter *__decls_iter;
+    
+    Statement  __decls_state_parser;
+    Expression __decls_expr_parser;
+}
 
 AST_NODE_IMPL(Declaration, RequiresParamDecl) {
     IS_NOT_EMPTY;
@@ -116,7 +125,7 @@ AST_NODE_IMPL(Declaration, RequiresParamDecl) {
         node->is_const = true;
     }
 
-    var = state_parser.parse<NamedVarSpecifier>(node->is_const);  // force type if is_const is true
+    var = __decls_state_parser.parse<NamedVarSpecifier>(node->is_const);  // force type if is_const is true
     RETURN_IF_ERROR(var);
 
     node->var = var.value();
@@ -124,7 +133,7 @@ AST_NODE_IMPL(Declaration, RequiresParamDecl) {
     if CURRENT_TOKEN_IS (__TOKEN_N::OPERATOR_ASSIGN) {
         iter.advance();  // skip '='
 
-        ParseResult<> value = expr_parser.parse();
+        ParseResult<> value = __decls_expr_parser.parse();
         RETURN_IF_ERROR(value);
 
         node->value = value.value();
@@ -184,7 +193,7 @@ AST_NODE_IMPL(Declaration, EnumMemberDecl) {
     // EnumMemberDecl := E.IdentExpr ('=' E)?
     IS_EXCEPTED_TOKEN(__TOKEN_N::IDENTIFIER);
 
-    ParseResult<IdentExpr> name = expr_parser.parse<IdentExpr>();
+    ParseResult<IdentExpr> name = __decls_expr_parser.parse<IdentExpr>();
     RETURN_IF_ERROR(name);
 
     NodeT<EnumMemberDecl> node = make_node<EnumMemberDecl>(name.value());
@@ -192,7 +201,7 @@ AST_NODE_IMPL(Declaration, EnumMemberDecl) {
     if (CURRENT_TOKEN_IS(__TOKEN_N::OPERATOR_ASSIGN)) {
         iter.advance();  // skip '='
 
-        ParseResult<> value = expr_parser.parse();
+        ParseResult<> value = __decls_expr_parser.parse();
         RETURN_IF_ERROR(value);
 
         node->value = value.value();
@@ -223,7 +232,7 @@ AST_NODE_IMPL(Declaration, UDTDeriveDecl) {
         access = AccessSpecifier(CURRENT_TOK);
     }
 
-    ParseResult<Type> type = expr_parser.parse<Type>();
+    ParseResult<Type> type = __decls_expr_parser.parse<Type>();
     RETURN_IF_ERROR(type);
 
     NodeT<UDTDeriveDecl> node = make_node<UDTDeriveDecl>(std::make_pair(type.value(), access));
@@ -237,7 +246,7 @@ AST_NODE_IMPL(Declaration, UDTDeriveDecl) {
             access = AccessSpecifier(CURRENT_TOK);
         }
 
-        ParseResult<Type> next = expr_parser.parse<Type>();
+        ParseResult<Type> next = __decls_expr_parser.parse<Type>();
         RETURN_IF_ERROR(next);
 
         node->derives.emplace_back(next.value(), access);
@@ -263,7 +272,7 @@ AST_NODE_IMPL(Declaration, TypeBoundList) {
     IS_NOT_EMPTY;
     // TypeBoundList := InstOfExpr (',' InstOfExpr)*)?
 
-    ParseResult<InstOfExpr> bound = expr_parser.parse<InstOfExpr>(expr_parser.parse_primary());
+    ParseResult<InstOfExpr> bound = __decls_expr_parser.parse<InstOfExpr>(__decls_expr_parser.parse_primary());
     RETURN_IF_ERROR(bound);
 
     NodeT<TypeBoundList> node = make_node<TypeBoundList>(bound.value());
@@ -271,7 +280,7 @@ AST_NODE_IMPL(Declaration, TypeBoundList) {
     while (CURRENT_TOKEN_IS(__TOKEN_N::PUNCTUATION_COMMA)) {
         iter.advance();  // skip ','
 
-        ParseResult<InstOfExpr> next = expr_parser.parse<InstOfExpr>(expr_parser.parse_primary());
+        ParseResult<InstOfExpr> next = __decls_expr_parser.parse<InstOfExpr>(__decls_expr_parser.parse_primary());
         RETURN_IF_ERROR(next);
 
         node->bounds.emplace_back(next.value());
@@ -362,7 +371,7 @@ AST_NODE_IMPL(Declaration, StructDecl, const std::shared_ptr<__TOKEN_N::TokenLis
     IS_EXCEPTED_TOKEN(__TOKEN_N::KEYWORD_STRUCT);
     iter.advance();  // skip 'struct'
 
-    ParseResult<IdentExpr> name = expr_parser.parse<IdentExpr>();
+    ParseResult<IdentExpr> name = __decls_expr_parser.parse<IdentExpr>();
     RETURN_IF_ERROR(name);
 
     node->name = name.value();
@@ -386,7 +395,7 @@ AST_NODE_IMPL(Declaration, StructDecl, const std::shared_ptr<__TOKEN_N::TokenLis
         return node;
     }
 
-    ParseResult<SuiteState> body = state_parser.parse<SuiteState>();
+    ParseResult<SuiteState> body = __decls_state_parser.parse<SuiteState>();
     RETURN_IF_ERROR(body);
 
     node->body = body.value();
@@ -438,7 +447,7 @@ AST_NODE_IMPL(Declaration, ClassDecl, const std::shared_ptr<__TOKEN_N::TokenList
     IS_EXCEPTED_TOKEN(__TOKEN_N::KEYWORD_CLASS);
     iter.advance();  // skip 'class'
 
-    ParseResult<IdentExpr> name = expr_parser.parse<IdentExpr>();
+    ParseResult<IdentExpr> name = __decls_expr_parser.parse<IdentExpr>();
     RETURN_IF_ERROR(name);
 
     node->name = name.value();
@@ -462,7 +471,7 @@ AST_NODE_IMPL(Declaration, ClassDecl, const std::shared_ptr<__TOKEN_N::TokenList
         return node;
     }
 
-    ParseResult<SuiteState> body = state_parser.parse<SuiteState>();
+    ParseResult<SuiteState> body = __decls_state_parser.parse<SuiteState>();
     RETURN_IF_ERROR(body);
 
     node->body = body.value();
@@ -503,7 +512,7 @@ AST_NODE_IMPL(Declaration, InterDecl, const std::shared_ptr<__TOKEN_N::TokenList
     IS_EXCEPTED_TOKEN(__TOKEN_N::KEYWORD_INTERFACE);
     iter.advance();  // skip 'interface'
 
-    ParseResult<IdentExpr> name = expr_parser.parse<IdentExpr>();
+    ParseResult<IdentExpr> name = __decls_expr_parser.parse<IdentExpr>();
     RETURN_IF_ERROR(name);
 
     node->name = name.value();
@@ -527,7 +536,7 @@ AST_NODE_IMPL(Declaration, InterDecl, const std::shared_ptr<__TOKEN_N::TokenList
             PARSE_ERROR(CURRENT_TOK, "forward declaration's are not allowed for interface's"));
     }
 
-    ParseResult<SuiteState> body = state_parser.parse<SuiteState>();
+    ParseResult<SuiteState> body = __decls_state_parser.parse<SuiteState>();
     RETURN_IF_ERROR(body);
 
     node->body = body.value();
@@ -569,7 +578,7 @@ AST_NODE_IMPL(Declaration, EnumDecl, const std::shared_ptr<__TOKEN_N::TokenList>
     IS_EXCEPTED_TOKEN(__TOKEN_N::KEYWORD_ENUM);
     iter.advance();  // skip 'enum'
 
-    ParseResult<IdentExpr> name = expr_parser.parse<IdentExpr>();
+    ParseResult<IdentExpr> name = __decls_expr_parser.parse<IdentExpr>();
     RETURN_IF_ERROR(name);
 
     node->name = name.value();
@@ -577,7 +586,7 @@ AST_NODE_IMPL(Declaration, EnumDecl, const std::shared_ptr<__TOKEN_N::TokenList>
     if (CURRENT_TOKEN_IS(__TOKEN_N::KEYWORD_DERIVES)) {
         iter.advance();  // skip 'derives'
 
-        ParseResult<Type> derives = expr_parser.parse<Type>();
+        ParseResult<Type> derives = __decls_expr_parser.parse<Type>();
         RETURN_IF_ERROR(derives);
 
         node->derives = derives.value();
@@ -677,7 +686,7 @@ AST_NODE_IMPL(Declaration, FuncDecl, const std::shared_ptr<__TOKEN_N::TokenList>
     IS_EXCEPTED_TOKEN(__TOKEN_N::KEYWORD_FUNCTION);
     iter.advance();  // skip 'fn'
 
-    ParseResult<PathExpr> name = expr_parser.parse<PathExpr>();
+    ParseResult<PathExpr> name = __decls_expr_parser.parse<PathExpr>();
     RETURN_IF_ERROR(name);
 
     if (name.value()->type == PathExpr::PathType::Dot) {
@@ -724,7 +733,7 @@ AST_NODE_IMPL(Declaration, FuncDecl, const std::shared_ptr<__TOKEN_N::TokenList>
     if (CURRENT_TOKEN_IS(__TOKEN_N::OPERATOR_ARROW)) {
         iter.advance();  // skip '->'
 
-        ParseResult<Type> returns = expr_parser.parse<Type>();
+        ParseResult<Type> returns = __decls_expr_parser.parse<Type>();
         RETURN_IF_ERROR(returns);
 
         node->returns = returns.value();
@@ -742,7 +751,7 @@ AST_NODE_IMPL(Declaration, FuncDecl, const std::shared_ptr<__TOKEN_N::TokenList>
         IS_EXCEPTED_TOKEN(__TOKEN_N::PUNCTUATION_SEMICOLON);
         iter.advance();  // skip ';'
     } else if (CURRENT_TOKEN_IS(__TOKEN_N::PUNCTUATION_OPEN_BRACE)) {
-        ParseResult<SuiteState> body = state_parser.parse<SuiteState>();
+        ParseResult<SuiteState> body = __decls_state_parser.parse<SuiteState>();
         RETURN_IF_ERROR(body);
 
         node->body = body.value();
@@ -776,13 +785,13 @@ AST_NODE_IMPL(Declaration, VarDecl, bool force_type, bool force_value) {
     IS_NOT_EMPTY;
     // VarDecl := S.NamedVarSpecifier ('=' E)? ~ also pass in a bool to force type need
 
-    ParseResult<NamedVarSpecifier> var = state_parser.parse<NamedVarSpecifier>(force_type);
+    ParseResult<NamedVarSpecifier> var = __decls_state_parser.parse<NamedVarSpecifier>(force_type);
     RETURN_IF_ERROR(var);
 
     if (CURRENT_TOKEN_IS(__TOKEN_N::OPERATOR_ASSIGN)) {
         iter.advance();  // skip '='
 
-        ParseResult<> value = expr_parser.parse();
+        ParseResult<> value = __decls_expr_parser.parse();
         RETURN_IF_ERROR(value);
 
         NodeT<VarDecl> node = make_node<VarDecl>(var.value(), value.value());
@@ -828,9 +837,9 @@ AST_NODE_IMPL(Declaration, FFIDecl, const std::shared_ptr<__TOKEN_N::TokenList> 
     iter.advance();  // skip 'ffi'
 
     IS_EXCEPTED_TOKEN(__TOKEN_N::LITERAL_STRING);
-    node->name = expr_parser.parse<LiteralExpr>().value();
+    node->name = __decls_expr_parser.parse<LiteralExpr>().value();
 
-    ParseResult<SingleImportState> ext_import = state_parser.parse<SingleImportState>();
+    ParseResult<SingleImportState> ext_import = __decls_state_parser.parse<SingleImportState>();
     RETURN_IF_ERROR(ext_import);
 
     node->value = ext_import.value();
@@ -940,10 +949,10 @@ AST_NODE_IMPL(Declaration, ModuleDecl, const std::shared_ptr<__TOKEN_N::TokenLis
     IS_EXCEPTED_TOKEN(__TOKEN_N::KEYWORD_MODULE);
     iter.advance();  // skip 'module'
 
-    ParseResult<PathExpr> name = expr_parser.parse<PathExpr>();
+    ParseResult<PathExpr> name = __decls_expr_parser.parse<PathExpr>();
     RETURN_IF_ERROR(name);
 
-    ParseResult<SuiteState> body = state_parser.parse<SuiteState>();
+    ParseResult<SuiteState> body = __decls_state_parser.parse<SuiteState>();
     RETURN_IF_ERROR(body);
 
     NodeT<ModuleDecl> node = make_node<ModuleDecl>(name.value(), body.value(), inline_module);
@@ -1015,6 +1024,11 @@ AST_BASE_IMPL(Declaration, parse) {
         case __TOKEN_N::KEYWORD_MODULE:
             return parse<ModuleDecl>(modifiers);
         default:
-            return state_parser.parse();
+            return __decls_state_parser.parse();
     }
+}
+
+parser ::ast ::node ::Declaration(__TOKEN_N ::TokenList ::TokenListIter &iter) {
+    __decls_state_parser = parser::ast::node::Statement(iter);
+    __decls_expr_parser  = parser::ast::node::Expression(iter);
 }

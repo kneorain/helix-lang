@@ -13,7 +13,10 @@
 #include <clang/Format/Format.h>
 #include <llvm/ADT/StringRef.h>
 
+#include <filesystem>
+#include <fstream>
 #include <regex>
+
 #include "neo-pprint/include/hxpprint.hh"
 
 using namespace clang;
@@ -150,7 +153,7 @@ __CXIR_CODEGEN_BEGIN {
             , column(tok.column_number())
             , length(tok.length())
             , type(set_type)
-            , file_name(tok.file_name())
+            , file_name(std::filesystem::path(tok.file_name()).generic_string())
             , value(std::string(tok.value())) {}
 
         explicit CX_Token(cxir_tokens type)
@@ -251,7 +254,7 @@ __CXIR_CODEGEN_BEGIN {
             return format_cxir(cxir);
         }
 
-        [[nodiscard]] static std::string format_cxir(const std::string &cxir)  {
+        [[nodiscard]] static std::string format_cxir(const std::string &cxir) {
             // Get the configuration as a string
             std::string config = get_neo_clang_format_config();
 

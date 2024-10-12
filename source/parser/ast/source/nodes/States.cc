@@ -452,7 +452,7 @@ AST_NODE_IMPL(Statement, ForCStatementCore, bool skip_start) {
     }
 
     if (CURRENT_TOKEN_IS_NOT(__TOKEN_N::PUNCTUATION_SEMICOLON)) {
-        ParseResult<> init = parse();
+        ParseResult<> init = decl_parser.parse();
         RETURN_IF_ERROR(init);
 
         node->init = init.value();  // next semi colon has been skipped
@@ -527,7 +527,7 @@ AST_NODE_IMPL(Statement, ForState) {
         iter.advance();  // skip '('
     }
 
-    /// here we can do a few checs now to see if we are parsing a python or c style for loop
+    /// here we can do a few checks now to see if we are parsing a python or c style for loop
     /// if the curent token is not a ident we are in a c style loop
     /// if the token is a ident then parse a NamedVarSpecifier* then if theres 'in' then its a
     /// python style loop

@@ -16,6 +16,7 @@
 #include "parser/ast/include/config/AST_config.def"
 #include "parser/ast/include/private/AST_generate.hh"
 #include "parser/ast/include/types/AST_types.hh"
+#include "token/include/Token.hh"
 
 __AST_NODE_BEGIN {}  //  namespace __AST_NODE_BEGIN
 

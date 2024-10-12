@@ -12,9 +12,25 @@
 
 #include "neo-json/include/json.hh"
 #include "parser/ast/include/config/AST_config.def"
+#include "parser/ast/include/private/base/AST_base.hh"
 #include "parser/ast/include/types/AST_jsonify_visitor.hh"
 
 __AST_VISITOR_BEGIN {
     void Jsonify::visit(const parser ::ast ::node ::GenericInvokePathExpr & /*unused*/) {}
+    void Jsonify::visit(const parser ::ast ::node ::Program & node) {
+        neo::json children("children");
+        neo::json annotations("annotations");
+
+        for (const auto &child : node.children) {
+            children.add(get_node_json(child));
+        }
+
+        for (const auto &annotation : node.annotations) {
+            annotations.add(get_node_json(annotation));
+        }
+
+        json.section("Program")
+            .add("children", children);
+    }
 
 }  // namespace __AST_BEGIN

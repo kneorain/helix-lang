@@ -15,6 +15,8 @@
 
 #include "parser/ast/include/private/AST_generate.hh"
 
+__AST_NODE_BEGIN { class Program; }
+
 __AST_VISITOR_BEGIN {
     class Visitor {
       public:
