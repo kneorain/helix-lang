@@ -47,11 +47,16 @@ ffi "c++" import "token/include/Token.hh";
 
 fn compile_CXIR(emitter: &generator::CXIR::CXIR, const out: &std::string, is_debug: bool = false) {
     /// compile the c++ using an in-memory buffer and invoke clang++
-    let cxx: std::string = emitter.to_CXIR();
+    let cxx  = emitter.to_CXIR();
     let path = std::filesystem::path(__CONTROLLER_FS_N::get_cwd());
     let file = std::ofstream(path / "_H1HJA9ZLO_17.helix-compiler.cc");
+    let cmd  = std::string("c++ -std=c++23 ") + (is_debug ? "-g" : "") + " -O0       "
+                           "-fno-omit-frame-pointer  -Wl,-w,-rpath,/usr/local/lib    " +
+                          (path / "_H1HJA9ZLO_17.helix-compiler.cc").string() + " -o " +
+                          (path / out).string();
     
-    finally: std::filesystem::remove(path / "_H1HJA9ZLO_17.helix-compiler.cc");
+    finally:
+        std::filesystem::remove(path / "_H1HJA9ZLO_17.helix-compiler.cc");
 
     if !file {
         print("error creating _H1HJA9ZLO_17.helix-compiler.cc file");
@@ -61,18 +66,12 @@ fn compile_CXIR(emitter: &generator::CXIR::CXIR, const out: &std::string, is_deb
     file << cxx;
     file.close();
 
-    let cmd: std::string = std::string("c++ -std=c++23 ") + (is_debug ? "-g" : "") +
-                        " -O0 -fno-omit-frame-pointer -Wl,-w,-rpath,/usr/local/lib " +
-                        (path / "_H1HJA9ZLO_17.helix-compiler.cc").string() + " -o " + (path / out).string();
-
-    let compileCommand: const *char = cmd.c_str();
-
-    if system(compileCommand) != 0 {
+    if system(cmd.c_str()) != 0 {
         print("compilation failed");
         return;
     }
 
-    std::cout << "compiled to " << path / out << std::endl;
+    std::cout << "compiled to " << (path / out) << std::endl;
 }
 
 fn compile(argc: int, argv: **char) -> int {

@@ -215,11 +215,6 @@ https://helix-lang.com/ for more information.
                 return;
             }
 
-            if (verbose) {
-                std::cout << colors::fg16::red << "Verbose output enabled." << colors::reset
-                          << '\n';
-            }
-
             if (release) {
                 build_mode = MODE::RELEASE;
             }
@@ -261,33 +256,46 @@ https://helix-lang.com/ for more information.
             this->link_libraries = args::get(link_libraries);
             this->module_dirs    = args::get(module_dirs);
 
-            this->get_all_flags += "Flags: \n";
-            this->get_all_flags += "    Verbose: " + std::to_string(verbose) + ", \n";
-            this->get_all_flags += "    Quiet: " + std::to_string(quiet) + ", \n";
-            this->get_all_flags += "    Emit Tokens: " + std::to_string(emit_tokens) + ", \n";
-            this->get_all_flags += "    Emit LLVM: " + std::to_string(emit_llvm) + ", \n";
-            this->get_all_flags += "    Emit ASM: " + std::to_string(emit_asm) + ", \n";
-            this->get_all_flags += "    Emit AST: " + std::to_string(emit_ast) + ", \n";
-            this->get_all_flags += "    Emit CST: " + std::to_string(emit_cst) + ", \n";
-            this->get_all_flags += "    Emit IR: " + std::to_string(emit_ir) + ", \n";
-            this->get_all_flags += "    Emit Doc: " + std::to_string(emit_doc) + ", \n";
-            this->get_all_flags += "    Release: " + std::to_string(release) + ", \n";
-            this->get_all_flags += "    Debug: " + std::to_string(debug) + ", \n";
-            this->get_all_flags += "    Lib: " + std::to_string(lib) + ", \n";
-            this->get_all_flags += "    Python ABI: " + std::to_string(python_abi) + ", \n";
-            this->get_all_flags += "    Rust ABI: " + std::to_string(rust_abi) + ", \n";
-            this->get_all_flags += "    CXX ABI: " + std::to_string(cxx_abi) + ", \n";
-            this->get_all_flags += "    Helix ABI: " + std::to_string(helix_abi) + ", \n";
+            this->get_all_flags += "flags: \n";
+            this->get_all_flags +=
+                "    verbose: " + std::to_string(static_cast<int>(verbose)) + ", \n";
+            this->get_all_flags += "    quiet: " + std::to_string(static_cast<int>(quiet)) + ", \n";
+            this->get_all_flags +=
+                "    emit tokens: " + std::to_string(static_cast<int>(emit_tokens)) + ", \n";
+            this->get_all_flags +=
+                "    emit llvm: " + std::to_string(static_cast<int>(emit_llvm)) + ", \n";
+            this->get_all_flags +=
+                "    emit asm: " + std::to_string(static_cast<int>(emit_asm)) + ", \n";
+            this->get_all_flags +=
+                "    emit ast: " + std::to_string(static_cast<int>(emit_ast)) + ", \n";
+            this->get_all_flags +=
+                "    emit cst: " + std::to_string(static_cast<int>(emit_cst)) + ", \n";
+            this->get_all_flags +=
+                "    emit ir: " + std::to_string(static_cast<int>(emit_ir)) + ", \n";
+            this->get_all_flags +=
+                "    emit doc: " + std::to_string(static_cast<int>(emit_doc)) + ", \n";
+            this->get_all_flags +=
+                "    release: " + std::to_string(static_cast<int>(release)) + ", \n";
+            this->get_all_flags += "    debug: " + std::to_string(static_cast<int>(debug)) + ", \n";
+            this->get_all_flags += "    lib: " + std::to_string(static_cast<int>(lib)) + ", \n";
+            this->get_all_flags +=
+                "    python abi: " + std::to_string(static_cast<int>(python_abi)) + ", \n";
+            this->get_all_flags +=
+                "    rust abi: " + std::to_string(static_cast<int>(rust_abi)) + ", \n";
+            this->get_all_flags +=
+                "    cxx abi: " + std::to_string(static_cast<int>(cxx_abi)) + ", \n";
+            this->get_all_flags +=
+                "    helix abi: " + std::to_string(static_cast<int>(helix_abi)) + ", \n";
 
-            this->get_all_flags += "    Config File: " + config_file.Get() + ", \n";
-            this->get_all_flags += "    Output File: " + output_file.Get() + ", \n";
-            this->get_all_flags += "    Toolchain Target: " + toolchain_target.Get() + ", \n";
-            this->get_all_flags += "    Toolchain Arch: " + toolchain_arch.Get() + ", \n";
-            this->get_all_flags += "    Toolchain CPU: " + toolchain_cpu.Get() + ", \n";
-            this->get_all_flags += "    Toolchain SDK: " + toolchain_sdk.Get() + ", \n";
+            this->get_all_flags += "    config file: " + config_file.Get() + ", \n";
+            this->get_all_flags += "    output file: " + output_file.Get() + ", \n";
+            this->get_all_flags += "    toolchain target: " + toolchain_target.Get() + ", \n";
+            this->get_all_flags += "    toolchain arch: " + toolchain_arch.Get() + ", \n";
+            this->get_all_flags += "    toolchain cpu: " + toolchain_cpu.Get() + ", \n";
+            this->get_all_flags += "    toolchain sdk: " + toolchain_sdk.Get() + ", \n";
 
             this->get_all_flags +=
-                "    Include Dir: [" + std::string(!include_dirs.Get().empty() ? "\n" : " ");
+                "    include dir: [" + std::string(!include_dirs.Get().empty() ? "\n" : " ");
             ;
             for (auto &dir : include_dirs.Get()) {
                 this->get_all_flags += dir + ", \n    ";
@@ -295,21 +303,21 @@ https://helix-lang.com/ for more information.
 
             this->get_all_flags += "    ], \n";
             this->get_all_flags +=
-                "    Library Dir: [" + std::string(!library_dirs.Get().empty() ? "\n" : " ");
+                "    library dir: [" + std::string(!library_dirs.Get().empty() ? "\n" : " ");
             for (auto &dir : library_dirs.Get()) {
                 this->get_all_flags += dir + ", \n    ";
             }
 
             this->get_all_flags += "    ], \n";
             this->get_all_flags +=
-                "    Link Libraries: [" + std::string(!link_libraries.Get().empty() ? "\n" : " ");
+                "    link libraries: [" + std::string(!link_libraries.Get().empty() ? "\n" : " ");
             for (auto &lib : link_libraries.Get()) {
                 this->get_all_flags += lib + ", \n    ";
             }
 
             this->get_all_flags += "    ], \n";
             this->get_all_flags +=
-                "    Module Dir: [" + std::string(!module_dirs.Get().empty() ? "\n" : " ");
+                "    module dir: [" + std::string(!module_dirs.Get().empty() ? "\n" : " ");
             for (auto &mod : module_dirs.Get()) {
                 this->get_all_flags += mod + ", \n    ";
             }
