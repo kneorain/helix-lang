@@ -16,7 +16,6 @@
 #include "parser/ast/include/config/AST_config.def"
 #include "parser/ast/include/private/AST_generate.hh"
 #include "parser/ast/include/types/AST_types.hh"
-#include "token/include/Token.hh"
 
 __AST_NODE_BEGIN {
     /*
@@ -37,21 +36,7 @@ __AST_NODE_BEGIN {
      *     NodeT<...> node = expr.parse<...>();
      */
     class Expression {  // THIS IS NOT A NODE
-        template <typename T = Node>
-        using p_r = parser ::ast ::ParseResult<T>;
-        token ::TokenList ::TokenListIter &iter;
-        std ::vector<p_r<>>                parse_stack;
-
-      public:
-        Expression()                              = default;
-        Expression(const Expression &)            = default;
-        Expression &operator=(const Expression &) = default;
-        Expression(Expression &&)                 = default;
-        Expression &operator=(Expression &&)      = default;
-        ~Expression()                             = default;
-        p_r<> parse();
-        explicit Expression(token ::TokenList ::TokenListIter &iter)
-            : iter(iter){};
+        AST_CLASS_BASE(Expression, EXPRS) {};
 
         ParseResult<> parse_primary();
         template <typename T, typename... Args>

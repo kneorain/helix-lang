@@ -14,15 +14,11 @@
 #define __AST_BASE_STATEMENT_H__
 
 #include "parser/ast/include/config/AST_config.def"
-#include "parser/ast/include/private/base/AST_base_declaration.hh"
 #include "parser/ast/include/private/AST_generate.hh"
 #include "parser/ast/include/private/base/AST_base_expression.hh"
 #include "parser/ast/include/types/AST_types.hh"
-#include "token/include/Token.hh"
-
 
 __AST_NODE_BEGIN {
-    class Declaration;
     /*
      *  Statement class
      *
@@ -41,23 +37,7 @@ __AST_NODE_BEGIN {
      *     NodeT<...> node = state.parse<...>();
      */
     class Statement {  // THIS IS NOT A NODE
-        template <typename T = Node>
-        using p_r = parser ::ast ::ParseResult<T>;
-        token ::TokenList ::TokenListIter &iter;
-        std ::vector<p_r<>>                parse_stack;
-
-      public:
-        Statement()                             = default;
-        Statement(const Statement &)            = default;
-        Statement &operator=(const Statement &) = default;
-        Statement(Statement &&)                 = default;
-        Statement &operator=(Statement &&)      = default;
-        ~Statement()                            = default;
-        p_r<> parse();
-        explicit Statement(token ::TokenList ::TokenListIter &iter)
-            : iter(iter)
-            , expr_parser(iter)
-            , decl_parser(iter){};
+        AST_CLASS_BASE(Statement, STATES), expr_parser(iter) {};
 
         template <typename T, typename... Args>
         ParseResult<T> parse(Args &&...args) { /* NOLINT */
@@ -119,7 +99,6 @@ __AST_NODE_BEGIN {
       private:
         std::vector<__TOKEN_N::Token> modifiers;
         Expression                    expr_parser;
-        Declaration                   decl_parser;
 
         ParseResult<NamedVarSpecifier>     parse_NamedVarSpecifier(bool force_type = false);
         ParseResult<NamedVarSpecifierList> parse_NamedVarSpecifierList(bool force_types = false);

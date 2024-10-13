@@ -153,7 +153,13 @@ CX_VISIT_IMPL(DotPathExpr) {
     ADD_NODE_PARAM(rhs);
 }
 
-CX_VISIT_IMPL(ArrayAccessExpr) { CXIR_NOT_IMPLEMENTED; }
+CX_VISIT_IMPL(ArrayAccessExpr) {
+    // -> array '[' index ']'
+    ADD_NODE_PARAM(lhs);
+    ADD_TOKEN(CXX_LBRACKET);
+    ADD_NODE_PARAM(rhs);
+    ADD_TOKEN(CXX_RBRACKET);
+}
 
 CX_VISIT_IMPL(PathExpr) {  // TODO
     ADD_NODE_PARAM(path);
@@ -246,7 +252,7 @@ CX_VISIT_IMPL(NamedVarSpecifier) {
     ADD_NODE_PARAM(path);
 }
 
-CX_VISIT_IMPL(NamedVarSpecifierList) { CXIR_NOT_IMPLEMENTED; }
+CX_VISIT_IMPL(NamedVarSpecifierList) { COMMA_SEP(vars); }
 
 CX_VISIT_IMPL(ForPyStatementCore) {
     // := NamedVarSpecifier 'in 'expr' Suite

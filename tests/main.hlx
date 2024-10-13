@@ -44,7 +44,7 @@ fn main() -> int {
     printf("Factorial: %d\n", fact);
 
     // Working with a C++ vector
-    let mut numbers = std::vector<int>();
+    let numbers: std::vector::<int> = [1, 2, 3, 4];
     numbers.push_back(10);
     numbers.push_back(20);
     numbers.push_back(30);

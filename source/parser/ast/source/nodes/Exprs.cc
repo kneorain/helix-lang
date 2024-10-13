@@ -1638,33 +1638,3 @@ bool is_storage_specifier(const __TOKEN_N::Token &tok) {
                         __TOKEN_N::KEYWORD_ASYNC,
                         __TOKEN_N::KEYWORD_EVAL});
 };
-
-template <typename T>
-T exec(const char *cmd) {
-    std::string result;
-    FILE       *pipe = _popen(cmd, "r");
-
-    if (!pipe) {
-        throw std::runtime_error("popen() failed!");
-    }
-
-    try {
-        char buffer[128];
-        while (fgets(buffer, sizeof(buffer), pipe) != nullptr) {
-            result += buffer;
-        }
-    } catch (...) {
-        _pclose(pipe);
-        throw;
-    }
-
-    int exitCode = _pclose(pipe);
-
-    if constexpr (std::is_same_v<T, std::string>) {
-        return result;
-    } else if constexpr (std::is_same_v<T, int>) {
-        return exitCode;
-    } else {
-        throw std::runtime_error("invalid type");
-    }
-}
