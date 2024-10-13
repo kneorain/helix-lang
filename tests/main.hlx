@@ -1,7 +1,3 @@
-ffi "c++" import "cstdio";
-ffi "c++" import "iostream";
-ffi "c++" import "vector";
-ffi "c++" import "string";
 
 // Function to add two integers
 fn add(a: int, b: int) -> int {
@@ -44,7 +40,7 @@ fn main() -> int {
     printf("Factorial: %d\n", fact);
 
     // Working with a C++ vector
-    let numbers: std::vector::<int> = [1, 2, 3, 4];
+    let numbers: std::vector<int> = [1, 2, 3, 4];
     numbers.push_back(10);
     numbers.push_back(20);
     numbers.push_back(30);

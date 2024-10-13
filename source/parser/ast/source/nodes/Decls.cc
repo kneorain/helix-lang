@@ -517,11 +517,39 @@ AST_NODE_IMPL(Declaration, InterDecl, const std::shared_ptr<__TOKEN_N::TokenList
         node->derives = derives.value();
     }
 
+    parser::ast::node::RequiresParamDecl self_param{false};
+    
+    parser::ast::node::IdentExpr self_ident{__TOKEN_N::Token{0, 0, 4, 0, "Self", "Self.internal.hlx", "identifer"}};
+    NodeT<parser::ast::node::IdentExpr> self_ident_node = parser::ast::make_node<parser::ast::node::IdentExpr>(self_ident);
+    
+    parser::ast::node::NamedVarSpecifier self_name_var{self_ident_node };
+    NodeT<parser::ast::node::NamedVarSpecifier> self_name_var_node = parser::ast::make_node<parser::ast::node::NamedVarSpecifier>(self_name_var);
+    
+    // Set the identifier.
+    self_param.var.swap(self_name_var_node);
+
+    NodeT<parser::ast::node::RequiresParamDecl> self_param_node =
+        make_node<parser::ast::node::RequiresParamDecl>(self_param);
+
     if (CURRENT_TOKEN_IS(__TOKEN_N::KEYWORD_REQUIRES)) {
         ParseResult<RequiresDecl> generics = parse<RequiresDecl>();
         RETURN_IF_ERROR(generics);
 
         node->generics = generics.value();
+
+        node->generics->params->params.insert(node->generics->params->params.begin(),
+                                              self_param_node);
+
+    } else {
+        // Create the node as it does not exist
+        parser::ast::node::RequiresParamList        rpl{self_param_node};
+        NodeT<parser::ast::node::RequiresParamList> rpl_node =
+            make_node<parser::ast::node::RequiresParamList>(rpl);
+        parser::ast::node::RequiresDecl        dcl{rpl_node};
+        NodeT<parser::ast::node::RequiresDecl> dcl_node =
+            make_node<parser::ast::node::RequiresDecl>(dcl);
+
+        node->generics.swap(dcl_node);
     }
 
     if (CURRENT_TOKEN_IS(__TOKEN_N::PUNCTUATION_SEMICOLON)) {  // forward declaration

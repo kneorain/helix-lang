@@ -268,7 +268,7 @@ class CXIRCompiler {
 class CompilationUnit {
   public:
     int compile(int argc, char **argv) {
-        std::chrono::time_point<std::chrono::steady_clock> start;
+        std::chrono::time_point<std::chrono::high_resolution_clock> start;
         parser::ast::NodeT<parser::ast::node::Program>     ast;
         std::filesystem::path                              in_file_path;
         generator::CXIR::CXIR                              emitter;
