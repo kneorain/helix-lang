@@ -11,6 +11,8 @@
 #include "parser/ast/include/nodes/AST_statements.hh"
 #include "parser/ast/include/private/AST_generate.hh"
 #include "parser/ast/include/types/AST_modifiers.hh"
+#include "parser/ast/include/types/AST_types.hh"
+#include "token/include/private/Token_base.hh"
 #include "token/include/private/Token_generate.hh"
 
 #define CXIR_NOT_IMPLEMENTED throw std::runtime_error(GET_DEBUG_INFO + "Not implemented yet")
@@ -41,10 +43,7 @@
             sep                                         \
         }
 
-#define UNLESS_NULL(nullable_val, ...)  \
-    if (node.nullable_val != nullptr) { \
-        __VA_ARGS__                     \
-    }
+#define UNLESS_NULL(nullable_val) if (node.nullable_val != nullptr)
 
 #define ADD_ALL_PARAMS(params)         \
     for (const auto &param : params) { \
@@ -143,7 +142,7 @@ CX_VISIT_IMPL(FunctionCallExpr) {
 
     ADD_NODE_PARAM(path);
 
-    UNLESS_NULL(generic, ADD_NODE_PARAM(generic););
+    UNLESS_NULL(generic) { ADD_NODE_PARAM(generic); };
     ADD_NODE_PARAM(args);
 }
 
@@ -206,16 +205,15 @@ CX_VISIT_IMPL(AsyncThreading) {
 CX_VISIT_IMPL(Type) {  // TODO Modifiers
 
     ADD_NODE_PARAM(value);
+    // TODO: make *null into null_ptr
 
-    UNLESS_NULL(generics, ADD_NODE_PARAM(generics););
+    UNLESS_NULL(generics) ADD_NODE_PARAM(generics);
 }
 
 CX_VISIT_IMPL(NamedVarSpecifier) {
     // (type | auto) name
 
-    UNLESS_NULL(type,  //
-                ADD_NODE_PARAM(type);
-                /**/)
+    UNLESS_NULL(type) { ADD_NODE_PARAM(type); }
     else {
         ADD_TOKEN(CXX_AUTO);
     }
@@ -242,9 +240,12 @@ CX_VISIT_IMPL(ForPyStatementCore) {
 }
 
 CX_VISIT_IMPL(ForCStatementCore) {
-    PAREN_DELIMIT(ADD_NODE_PARAM(init); ADD_TOKEN(CXX_SEMICOLON); ADD_NODE_PARAM(condition);
-                  ADD_TOKEN(CXX_SEMICOLON);
-                  ADD_NODE_PARAM(update);
+    PAREN_DELIMIT(                  //
+        ADD_NODE_PARAM(init);       //
+        ADD_TOKEN(CXX_SEMICOLON);   //
+        ADD_NODE_PARAM(condition);  //
+        ADD_TOKEN(CXX_SEMICOLON);   //
+        ADD_NODE_PARAM(update);     //
 
     );
     ADD_NODE_PARAM(body);
@@ -263,7 +264,9 @@ CX_VISIT_IMPL(WhileState) {
 
     ADD_TOKEN(CXX_WHILE);
 
-    PAREN_DELIMIT(ADD_NODE_PARAM(condition););
+    PAREN_DELIMIT(                  //
+        ADD_NODE_PARAM(condition);  //
+    );
     ADD_NODE_PARAM(body);
 }
 
@@ -273,30 +276,77 @@ CX_VISIT_IMPL(ElseState) {
 
     if (node.type != parser::ast::node::ElseState::ElseType::Else) {
         ADD_TOKEN(CXX_IF);
+        PAREN_DELIMIT(  //
+            if (node.type != parser::ast::node::ElseState::ElseType::ElseUnless) {
+                ADD_TOKEN(CXX_EXCLAMATION);
+            }
 
-        PAREN_DELIMIT(if (node.type != parser::ast::node::ElseState::ElseType::ElseUnless)
-                          ADD_TOKEN(CXX_EXCLAMATION);
-
-                      PAREN_DELIMIT(ADD_NODE_PARAM(condition);););
+            PAREN_DELIMIT(                  //
+                ADD_NODE_PARAM(condition);  //
+            );                              //
+        );
     }
     ADD_NODE_PARAM(body);
 }
 
 CX_VISIT_IMPL(IfState) {
     ADD_TOKEN(CXX_IF);
-    PAREN_DELIMIT(
-        // this is bad
-        if (node.type == parser::ast::node::IfState::IfType::Unless) { ADD_TOKEN(CXX_NOT); }
 
-        PAREN_DELIMIT(ADD_NODE_PARAM(condition);););
+    if (node.type == parser::ast::node::IfState::IfType::Unless) {  //
+        PAREN_DELIMIT(                                              //
+            ADD_TOKEN(CXX_EXCLAMATION); PAREN_DELIMIT(              //
+                ADD_NODE_PARAM(condition);                          //
+            );                                                      //
+        );                                                          //
+    } else {
+        PAREN_DELIMIT(                  //
+            ADD_NODE_PARAM(condition);  //
+        );                              //
+    }
+
     ADD_NODE_PARAM(body);
 
     ADD_ALL_NODE_PARAMS(else_body);
 }
 
-CX_VISIT_IMPL(SwitchCaseState) { CXIR_NOT_IMPLEMENTED; }
+CX_VISIT_IMPL(SwitchCaseState) {
 
-CX_VISIT_IMPL(SwitchState) { CXIR_NOT_IMPLEMENTED; }
+    switch (node.type) {
+
+        case parser::ast::node::SwitchCaseState::CaseType::Case:
+            ADD_TOKEN(CXX_CASE);
+            ADD_NODE_PARAM(condition);
+
+        case parser::ast::node::SwitchCaseState::CaseType::Fallthrough:
+            ADD_TOKEN(CXX_CASE);
+
+            ADD_NODE_PARAM(condition);
+            ADD_TOKEN(CXX_COLON);
+
+            BRACKET_DELIMIT(                                                 //
+                BRACKET_DELIMIT(                                             //
+                    ADD_TOKEN_AS_VALUE(CXX_CORE_IDENTIFIER, "fallthrough");  //
+                );                                                           //
+            );                                                               //
+
+            break;
+
+        case parser::ast::node::SwitchCaseState::CaseType::Default:
+            ADD_TOKEN(CXX_DEFAULT);
+    }
+}
+
+CX_VISIT_IMPL(SwitchState) {
+    ADD_TOKEN(CXX_SWITCH);
+
+    PAREN_DELIMIT(                  //
+        ADD_NODE_PARAM(condition);  //
+    );
+
+    BRACE_DELIMIT(                   //
+        ADD_ALL_NODE_PARAMS(cases);  //
+    );
+}
 
 CX_VISIT_IMPL(YieldState) {
     ADD_TOKEN(CXX_CO_YIELD);
@@ -319,7 +369,6 @@ CX_VISIT_IMPL(MultiImportState) { CXIR_NOT_IMPLEMENTED; }
 CX_VISIT_IMPL(ImportState) { CXIR_NOT_IMPLEMENTED; }
 
 CX_VISIT_IMPL(ReturnState) {
-
     ADD_TOKEN(CXX_RETURN);  // TODO co_return for generator contexts?
     ADD_NODE_PARAM(value);
     ADD_TOKEN(CXX_SEMICOLON);
@@ -337,14 +386,18 @@ CX_VISIT_IMPL(BlockState) {
 
 CX_VISIT_IMPL(SuiteState) {
     // -> '{' body '}'
-    BRACE_DELIMIT(ADD_NODE_PARAM(body););
+    BRACE_DELIMIT(             //
+        ADD_NODE_PARAM(body);  //
+    );
 }
 
 CX_VISIT_IMPL(ContinueState) { ADD_TOKEN(CXX_CONTINUE); }
 
 CX_VISIT_IMPL(CatchState) {
     ADD_TOKEN(CXX_CATCH);
-    PAREN_DELIMIT(ADD_NODE_PARAM(catch_state););
+    PAREN_DELIMIT(                    //
+        ADD_NODE_PARAM(catch_state);  //
+    );                                //
     ADD_NODE_PARAM(body);
 }
 
@@ -362,11 +415,9 @@ CX_VISIT_IMPL(FinallyState) {
 CX_VISIT_IMPL(TryState) {
 
     // Is this nullable?
-    UNLESS_NULL(finally_state,
-                //
-                ADD_NODE_PARAM(finally_state);
-                //
-    );
+    UNLESS_NULL(finally_state) {        //
+        ADD_NODE_PARAM(finally_state);  //
+    }
 
     ADD_TOKEN(CXX_TRY);
     ADD_NODE_PARAM(body);
@@ -386,27 +437,25 @@ CX_VISIT_IMPL(ExprState) {
 
 CX_VISIT_IMPL(RequiresParamDecl) {
     if (node.is_const) {
-        UNLESS_NULL(var,
-                    // PANIC?
-                    PARSE_ERROR(node.var->path->name, "Const requires a type");
-                    return;
-                    //
-        );
+        UNLESS_NULL(var) {
+            PARSE_ERROR(node.var->path->name, "Const requires a type");  //
+            return;                                                      //
+        };
     }
 
-    UNLESS_NULL(var,  //
-                ADD_NODE_PARAM(var->type);
-                /**/)
+    UNLESS_NULL(var) {              //
+        ADD_NODE_PARAM(var->type);  //
+    }
     else {
         ADD_TOKEN(CXX_TYPENAME);  // template <typename
     }
 
     ADD_NODE_PARAM(var);
 
-    UNLESS_NULL(value,  //
-                ADD_TOKEN_AS_VALUE(CXX_CORE_OPERATOR, "=");
-                ADD_NODE_PARAM(value);
-                /**/);
+    UNLESS_NULL(value) {                             //
+        ADD_TOKEN_AS_VALUE(CXX_CORE_OPERATOR, "=");  //
+        ADD_NODE_PARAM(value);                       //
+    };
 }
 
 CX_VISIT_IMPL(RequiresParamList) {  // -> (param (',' param)*)?
@@ -415,10 +464,10 @@ CX_VISIT_IMPL(RequiresParamList) {  // -> (param (',' param)*)?
 
 CX_VISIT_IMPL(EnumMemberDecl) {
     ADD_NODE_PARAM(name);
-    UNLESS_NULL(value, /**/
-                ADD_TOKEN_AS_VALUE(CXX_CORE_OPERATOR, "=");
-                ADD_NODE_PARAM(value);
-                /**/);
+    UNLESS_NULL(value) {
+        ADD_TOKEN_AS_VALUE(CXX_CORE_OPERATOR, "=");
+        ADD_NODE_PARAM(value);
+    };
 }
 
 CX_VISIT_IMPL(UDTDeriveDecl) {
@@ -468,27 +517,34 @@ CX_VISIT_IMPL(RequiresDecl) {
     // -> 'template' '<' params '>'
     ADD_TOKEN(CXX_TEMPLATE);
 
-    ANGLE_DELIMIT(ADD_NODE_PARAM(params););
+    ANGLE_DELIMIT(               //
+        ADD_NODE_PARAM(params);  //
+    );
 }
 
 CX_VISIT_IMPL(ModuleDecl) {
 
-    if (node.inline_module)
+    if (node.inline_module) {
         ADD_TOKEN(CXX_INLINE);
+    }
 
     ADD_TOKEN(CXX_NAMESPACE);
 
     ADD_NODE_PARAM(body);
 }
 
-CX_VISIT_IMPL(StructDecl) {
+CX_VISIT_IMPL(StructDecl) {  // TODO: only enums, types, and unions
     // TODO: Modifiers
-    UNLESS_NULL(generics, ADD_NODE_PARAM(generics););
+    UNLESS_NULL(generics) {        //
+        ADD_NODE_PARAM(generics);  //
+    };
     ADD_TOKEN(CXX_STRUCT);
     ADD_NODE_PARAM(name);
 
-    UNLESS_NULL(derives, ADD_TOKEN(CXX_COLON);
-                ADD_NODE_PARAM(derives);)  // should be its own generator
+    UNLESS_NULL(derives) {
+        ADD_TOKEN(CXX_COLON);
+        ADD_NODE_PARAM(derives);  // should be its own generator
+    }
     ADD_NODE_PARAM(body);
     ADD_TOKEN(CXX_SEMICOLON);
 
@@ -498,22 +554,122 @@ CX_VISIT_IMPL(StructDecl) {
 
 CX_VISIT_IMPL(ConstDecl) { CXIR_NOT_IMPLEMENTED; }
 
-CX_VISIT_IMPL(ClassDecl) { CXIR_NOT_IMPLEMENTED; }
+CX_VISIT_IMPL(ClassDecl) {
+
+    UNLESS_NULL(generics) {        //
+        ADD_NODE_PARAM(generics);  //
+    };
+
+    ADD_TOKEN(CXX_CLASS);
+    ADD_NODE_PARAM(name);
+
+    UNLESS_NULL(derives) {
+        ADD_TOKEN(CXX_COLON);
+        ADD_NODE_PARAM(derives);  // should be its own generator
+    }
+    ADD_NODE_PARAM(body);
+    ADD_TOKEN(CXX_SEMICOLON);
+}
 
 CX_VISIT_IMPL(InterDecl) {
+    // can have let const eval, type and functions, default impl functions...
+    // TODO: Modifiers
     // InterDecl := 'const'? VisDecl? 'interface' E.IdentExpr UDTDeriveDecl? RequiresDecl?
     // S.Suite
     // ADD_NODE_PARAM(generics); // WE need a custom generics impl here as Self is the first generic
 
-    // if (node.generics != nullptr) {
-    //     if (node.generics->getNodeType() == parser::ast::node::nodes::RequiresDecl) {
-    //         parser::ast::node::RequiresDecl req =
-    //             static_cast<parser::ast::node::RequiresDecl>(*node.generics);
+    ADD_NODE_PARAM(generics);  // not null, as I (@jrcarl624) went into the ast and made this change
+                               // for interfaces
+    ADD_TOKEN(CXX_CONCEPT);
 
-    //         req.params
-    //     }
-    // }
-    CXIR_NOT_IMPLEMENTED;
+    ADD_NODE_PARAM(name);
+
+    ADD_TOKEN_AS_VALUE(CXX_CORE_OPERATOR, "=");
+    if (!(node.derives->derives.empty())) {
+
+#define INSERT_AT_FRONT(i)                                      \
+    node.derives->derives[i].first->generics->args.insert(      \
+        node.derives->derives[i].first->generics->args.begin(), \
+        node.generics->params->params.front())
+
+        INSERT_AT_FRONT(0);
+
+        ADD_PARAM(node.derives->derives[0].first);
+
+        for (size_t i = 1; i < node.derives->derives.size(); ++i) {
+
+            // TODO: accses Spes
+
+            INSERT_AT_FRONT(i);
+
+            ADD_PARAM(node.derives->derives[i].first);
+
+            ADD_TOKEN(CXX_AND);
+        }
+
+        UNLESS_NULL(body) { ADD_TOKEN(CXX_AND); }
+    }
+
+    ADD_NODE_PARAM(body);
+
+    // bool not_added_req = true;  // there is prob a better way to do this...
+    // when we have context we will know if there is a function on the interface...
+
+    if (node.body->body) {
+
+        for (size_t i = 0; i < node.body->body->body.size(); ++i) {
+
+            if (node.body->body->body[i]->getNodeName() != "FuncDecl")
+                continue;  // TODO: Error? no error?
+
+            parser::ast::NodeT<parser::ast::node::FuncDecl> fn =
+                std::static_pointer_cast<parser::ast::node::FuncDecl>(node.body->body->body[i]);
+
+            if (fn->body != nullptr) {
+                // TODO: ERROR
+            };
+
+            ADD_TOKEN(CXX_REQUIRES);
+            PAREN_DELIMIT(                                        //
+                ADD_TOKEN_AS_VALUE(CXX_CORE_IDENTIFIER, "Self");  //
+                ADD_TOKEN_AS_VALUE(CXX_CORE_IDENTIFIER, "self");  //
+                for (auto &param
+                     : fn->params) {              //
+                    ADD_TOKEN(CXX_COMMA);         //
+                    ADD_PARAM(param->var->type);  //
+                    ADD_PARAM(param->var->path);  //
+                }  //
+            );
+
+            // TODO: The only way to derive an interface is to use
+            // static_assert(CONCEPT<CLASSNAME>); but this requires that there is context of the
+            // interfaces.
+            BRACE_DELIMIT(                                            // The outer
+                BRACE_DELIMIT(                                        //
+                    ADD_TOKEN_AS_VALUE(CXX_CORE_IDENTIFIER, "self");  //
+                    ADD_TOKEN(CXX_DOT);                               //
+                    ADD_PARAM(fn->name);                              //
+                    PAREN_DELIMIT(                                    //
+                        for (auto &param                              //
+                             : fn->params) {                          //
+                            ADD_TOKEN(CXX_COMMA);                     //
+                            ADD_PARAM(param->var->path);              // The
+                        }  //
+                    );                         //
+                );                             //
+                ADD_TOKEN(CXX_PTR_ACC);        //
+                if (fn->returns != nullptr) {  //
+                    ADD_PARAM(fn->returns);    //
+                } else {                       //
+                    ADD_TOKEN(CXX_VOID);       //
+                }  //
+            );
+            ADD_TOKEN(CXX_LOGICAL_AND);
+        }
+        ADD_TOKEN(CXX_TRUE); // This is just to prevent a syntax error, will be removed in the 
+        // future
+        ADD_TOKEN(CXX_SEMICOLON);
+    }
 }
 
 CX_VISIT_IMPL(EnumDecl) {
@@ -521,9 +677,15 @@ CX_VISIT_IMPL(EnumDecl) {
     ADD_TOKEN(CXX_ENUM);
     ADD_NODE_PARAM(name);
 
-    UNLESS_NULL(derives, ADD_TOKEN(CXX_COLON); ADD_NODE_PARAM(derives););
+    UNLESS_NULL(derives) {        //
+        ADD_TOKEN(CXX_COLON);     //
+        ADD_NODE_PARAM(derives);  //
+    };
 
-    BRACE_DELIMIT(COMMA_SEP(members););
+    BRACE_DELIMIT(           //
+        COMMA_SEP(members);  //
+    );
+
     ADD_TOKEN(CXX_SEMICOLON);
 }
 
@@ -536,9 +698,16 @@ CX_VISIT_IMPL(TypeDecl) {
 }
 
 CX_VISIT_IMPL(FuncDecl) {
-    UNLESS_NULL(generics, ADD_NODE_PARAM(generics););
+    UNLESS_NULL(generics) {  //
+        ADD_NODE_PARAM(generics);
+    };
 
-    UNLESS_NULL(returns, ADD_NODE_PARAM(returns);) else { ADD_TOKEN(CXX_VOID); }
+    UNLESS_NULL(returns) {  //
+        ADD_NODE_PARAM(returns);
+    }
+    else {
+        ADD_TOKEN(CXX_VOID);
+    }
 
     // if (node.name == nullptr) {
     //     print("error");
@@ -546,7 +715,9 @@ CX_VISIT_IMPL(FuncDecl) {
     // }
 
     ADD_NODE_PARAM(name);
-    PAREN_DELIMIT(COMMA_SEP(params););
+    PAREN_DELIMIT(          //
+        COMMA_SEP(params);  //
+    );
 
     ADD_NODE_PARAM(body);
 }
@@ -556,7 +727,10 @@ CX_VISIT_IMPL(VarDecl) {
 
     ADD_NODE_PARAM(var);
 
-    UNLESS_NULL(value, ADD_TOKEN_AS_VALUE(CXX_CORE_OPERATOR, "="); ADD_NODE_PARAM(value);)
+    UNLESS_NULL(value) {
+        ADD_TOKEN_AS_VALUE(CXX_CORE_OPERATOR, "=");
+        ADD_NODE_PARAM(value);
+    }
 }
 
 CX_VISIT_IMPL(FFIDecl) { CXIR_NOT_IMPLEMENTED; }
