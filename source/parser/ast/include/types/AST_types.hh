@@ -39,7 +39,14 @@
 #include "parser/ast/include/types/AST_parse_error.hh"
 #include "token/include/Token.hh"
 
-__AST_NODE_BEGIN { class Node; }
+__AST_NODE_BEGIN {
+    class Node;
+    class Declaration;
+    class Expression;
+    class Statement;
+    class Annotation;
+    class Program;
+}  // namespace __AST_NODE
 
 __AST_BEGIN {
     /// NodeT is a unique pointer to a T (where T is a AST node)

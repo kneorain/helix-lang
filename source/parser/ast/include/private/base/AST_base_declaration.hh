@@ -15,8 +15,8 @@
 
 #include "parser/ast/include/config/AST_config.def"
 #include "parser/ast/include/private/AST_generate.hh"
-#include "parser/ast/include/types/AST_types.hh"
-#include "token/include/Token.hh"
+#include "parser/ast/include/private/base/AST_base_expression.hh"
+#include "parser/ast/include/private/base/AST_base_statement.hh"
 
 __AST_NODE_BEGIN {
     /*
@@ -37,20 +37,7 @@ __AST_NODE_BEGIN {
      *     NodeT<...> node = decl.parse<...>();
      */
     class Declaration {
-        template <typename T = Node>
-        using p_r = parser ::ast ::ParseResult<T>;
-        __TOKEN_N ::TokenList ::TokenListIter &iter;
-        std ::vector<p_r<>>                    parse_stack;
-
-      public:
-        Declaration()                               = default;
-        Declaration(const Declaration &)            = default;
-        Declaration &operator=(const Declaration &) = default;
-        Declaration(Declaration &&)                 = default;
-        Declaration &operator=(Declaration &&)      = default;
-        ~Declaration()                              = default;
-        p_r<> parse();
-        explicit Declaration(__TOKEN_N ::TokenList ::TokenListIter &iter);
+        AST_CLASS_BASE(Declaration, DECLS), state_parser(iter), expr_parser(iter) {};
 
         template <typename T, typename... Args>
         ParseResult<T> parse(Args &&...args) { /* NOLINT */
@@ -96,6 +83,9 @@ __AST_NODE_BEGIN {
         }
 
       private:
+        Statement  state_parser;
+        Expression expr_parser;
+
         ParseResult<RequiresParamDecl> parse_RequiresParamDecl();
         ParseResult<RequiresParamList> parse_RequiresParamList();
         ParseResult<EnumMemberDecl>    parse_EnumMemberDecl();

@@ -452,7 +452,9 @@ AST_NODE_IMPL(Statement, ForCStatementCore, bool skip_start) {
     }
 
     if (CURRENT_TOKEN_IS_NOT(__TOKEN_N::PUNCTUATION_SEMICOLON)) {
-        ParseResult<> init = decl_parser.parse();
+        auto* decl_parser = new Declaration(iter);
+        ParseResult<> init = decl_parser->parse();
+        delete decl_parser;
         RETURN_IF_ERROR(init);
 
         node->init = init.value();  // next semi colon has been skipped
