@@ -338,16 +338,18 @@ CX_VISIT_IMPL(IfState) {
 }
 
 CX_VISIT_IMPL(SwitchCaseState) {
-
+    // What are case markers?? TODO: Implement them
     switch (node.type) {
 
         case parser::ast::node::SwitchCaseState::CaseType::Case:
             ADD_TOKEN(CXX_CASE);
             ADD_NODE_PARAM(condition);
+            ADD_TOKEN(CXX_COLON);
+            ADD_NODE_PARAM(body);
+            break;
 
         case parser::ast::node::SwitchCaseState::CaseType::Fallthrough:
             ADD_TOKEN(CXX_CASE);
-
             ADD_NODE_PARAM(condition);
             ADD_TOKEN(CXX_COLON);
 
@@ -361,6 +363,8 @@ CX_VISIT_IMPL(SwitchCaseState) {
 
         case parser::ast::node::SwitchCaseState::CaseType::Default:
             ADD_TOKEN(CXX_DEFAULT);
+            ADD_TOKEN(CXX_COLON);
+            ADD_NODE_PARAM  (body);
     }
 }
 
