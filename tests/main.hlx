@@ -1,3 +1,7 @@
+ffi "c++" import "cstdio";
+ffi "c++" import "iostream";
+ffi "c++" import "vector";
+ffi "c++" import "string";
 
 // Function to add two integers
 fn add(a: int, b: int) -> int {
