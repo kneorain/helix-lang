@@ -22,7 +22,9 @@
 #include "parser/ast/include/private/AST_generate.hh"
 #include "parser/ast/include/private/AST_matcher.hh"
 #include "parser/ast/include/private/AST_nodes.hh"
+#include "parser/ast/include/private/base/AST_base.hh"
 #include "parser/ast/include/types/AST_jsonify_visitor.hh"
+#include "parser/ast/include/types/AST_modifiers.hh"
 #include "parser/ast/include/types/AST_types.hh"
 #include "parser/ast/include/types/AST_visitor.hh"
 

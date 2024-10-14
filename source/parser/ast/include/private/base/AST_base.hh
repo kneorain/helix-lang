@@ -16,6 +16,7 @@
 #include <string>
 #include <neo-pprint/include/hxpprint.hh>
 
+#include "neo-pprint/include/ansi_colors.hh"
 #include "parser/ast/include/config/AST_config.def"
 #include "parser/ast/include/private/base/AST_base_declaration.hh"
 #include "parser/ast/include/types/AST_types.hh"

@@ -565,6 +565,45 @@ __AST_BEGIN {
             modifiers.erase(modifiers.begin() + index);
         }
 
+        [[nodiscard]] bool contains(const token::tokens &token_kind) {
+            return std::ranges::any_of(modifiers, [&](const auto &modifier) {
+                if (std::holds_alternative<StorageSpecifier>(modifier)) {
+                    return std::get<StorageSpecifier>(modifier).marker.token_kind() == token_kind;
+                }
+
+                if (std::holds_alternative<FFIQualifier>(modifier)) {
+                    return std::get<FFIQualifier>(modifier).marker.token_kind() == token_kind;
+                }
+
+                if (std::holds_alternative<TypeSpecifier>(modifier)) {
+                    return std::get<TypeSpecifier>(modifier).marker.token_kind() == token_kind;
+                }
+
+                if (std::holds_alternative<AccessSpecifier>(modifier)) {
+                    return std::get<AccessSpecifier>(modifier).marker.token_kind() == token_kind;
+                }
+
+                if (std::holds_alternative<FunctionSpecifier>(modifier)) {
+                    return std::get<FunctionSpecifier>(modifier).marker.token_kind() == token_kind;
+                }
+
+                if (std::holds_alternative<FunctionQualifier>(modifier)) {
+                    return std::get<FunctionQualifier>(modifier).marker.token_kind() == token_kind;
+                }
+
+                if (std::holds_alternative<ClassSpecifier>(modifier)) {
+                    return std::get<ClassSpecifier>(modifier).marker.token_kind() == token_kind;
+                }
+
+                return false;
+            });
+        }
+
+        template <typename T>
+        void add(T modifier) {
+            modifiers.push_back(modifier);
+        }
+
         TO_NEO_JSON_IMPL {
             neo::json              json("Modifiers");
             std::vector<neo::json> modifiers_json;

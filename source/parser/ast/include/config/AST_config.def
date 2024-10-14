@@ -77,20 +77,20 @@
 
 #define PARSE_ERROR(tok, msg) parser::ast::ParseError(tok, GET_DEBUG_INFO + msg)
 #define PARSE_ERROR_MSG(msg) parser::ast::ParseError(CURRENT_TOK, GET_DEBUG_INFO + msg)
-#define IS_EXCEPTED_TOKEN(tok)                                                           \
-    if (iter.remaining_n() == 0) {                                                       \
-        return std::unexpected(                                                          \
-            parser::ast::ParseError(PREVIOUS_TOK,                                                     \
-                       GET_DEBUG_INFO + "expected a " +                                  \
-                           std::string(__TOKEN_N::tokens_map.at(tok).value_or("unknown")) +  \
-                           " token, but found nothing"));                                \
-    }                                                                                    \
-    if (CURRENT_TOK != tok) {                                                            \
-        iter.advance();                                                                  \
-        return std::unexpected(PARSE_ERROR(                                              \
-            PREVIOUS_TOK,                                                                \
+#define IS_EXCEPTED_TOKEN(tok)                                                               \
+    if (iter.remaining_n() == 0) {                                                           \
+        return std::unexpected(parser::ast::ParseError(                                      \
+            PREVIOUS_TOK,                                                                    \
+            GET_DEBUG_INFO + "expected a " +                                                 \
+                std::string(__TOKEN_N::tokens_map.at(tok).value_or("unknown")) +             \
+                " token, but found nothing"));                                               \
+    }                                                                                        \
+    if (CURRENT_TOK != tok) {                                                                \
+        iter.advance();                                                                      \
+        return std::unexpected(PARSE_ERROR(                                                  \
+            PREVIOUS_TOK,                                                                    \
             "expected a " + std::string(__TOKEN_N::tokens_map.at(tok).value_or("unknown")) + \
-                " token, but found: " + PREVIOUS_TOK.token_kind_repr()));                \
+                " token, but found: " + PREVIOUS_TOK.token_kind_repr()));                    \
     }
 
 #define IS_NOT_EXCEPTED_TOKEN(tok)                                                            \
@@ -108,7 +108,7 @@
         auto        tokens = toks;                                                                 \
         std::string tokens_str;                                                                    \
         for (auto &t : tokens) {                                                                   \
-            tokens_str += std::string(__TOKEN_N::tokens_map.at(t).value_or("unknown")) + ", ";         \
+            tokens_str += std::string(__TOKEN_N::tokens_map.at(t).value_or("unknown")) + ", ";     \
         }                                                                                          \
         return std::unexpected(PARSE_ERROR(PREVIOUS_TOK,                                           \
                                            "expected one of the following tokens: " + tokens_str + \
@@ -118,7 +118,7 @@
         auto        tokens = toks;                                                                 \
         std::string tokens_str;                                                                    \
         for (auto &t : tokens) {                                                                   \
-            tokens_str += std::string(__TOKEN_N::tokens_map.at(t).value_or("unknown")) + ", ";         \
+            tokens_str += std::string(__TOKEN_N::tokens_map.at(t).value_or("unknown")) + ", ";     \
         }                                                                                          \
         iter.advance();                                                                            \
         return std::unexpected(                                                                    \
@@ -134,22 +134,22 @@
 #define IS_NULL_RESULT(x) if (x == nullptr || !x.has_value())
 #define IS_NOT_NULL_RESULT(x) if (x != nullptr && x.has_value())
 
-#define AST_CLASS_BASE(name, MACRO)                      \
-    template <typename T = Node>                         \
-    using p_r = parser::ast::ParseResult<T>;             \
-                                                         \
+#define AST_CLASS_BASE(name, MACRO)                          \
+    template <typename T = Node>                             \
+    using p_r = parser::ast::ParseResult<T>;                 \
+                                                             \
     __TOKEN_N::TokenList::TokenListIter &iter; /* NOLINT */  \
-    std::vector<p_r<>>               parse_stack;        \
-                                                         \
-  public:                                                \
-    name()                        = delete;              \
-    name(const name &)            = default;             \
-    name &operator=(const name &) = delete;              \
-    name(name &&)                 = default;             \
-    name &operator=(name &&)      = delete;              \
-    ~name()                       = default;             \
-    p_r<> parse();                                       \
-                                                         \
+    std::vector<p_r<>>                   parse_stack;        \
+                                                             \
+  public:                                                    \
+    name()                        = delete;                  \
+    name(const name &)            = default;                 \
+    name &operator=(const name &) = delete;                  \
+    name(name &&)                 = default;                 \
+    name &operator=(name &&)      = delete;                  \
+    ~name()                       = default;                 \
+    p_r<> parse();                                           \
+                                                             \
     explicit name(__TOKEN_N::TokenList::TokenListIter &iter) \
         : iter(iter)
 
@@ -170,7 +170,9 @@
 #define GENERATE_NODES_ENUM enum class nodes { GENERATE_MACRO_HELPER(NODE_ENUM) Program };
 #define GENERATE_NODES_FORWARD_DECLS GENERATE_MACRO_HELPER(FORWARD_DECL)
 #define GENERATE_PARSE_FUNCS
-#define GENERATE_VISIT_FUNCS GENERATE_MACRO_HELPER(VISIT_FUNC) virtual void visit(const __AST_NODE::Program &) = 0;
-#define GENERATE_VISIT_EXTENDS GENERATE_MACRO_HELPER(VISIT_EXTEND) void visit(const __AST_NODE::Program &) override;
+#define GENERATE_VISIT_FUNCS \
+    GENERATE_MACRO_HELPER(VISIT_FUNC) virtual void visit(const __AST_NODE::Program &) = 0;
+#define GENERATE_VISIT_EXTENDS \
+    GENERATE_MACRO_HELPER(VISIT_EXTEND) void visit(const __AST_NODE::Program &) override;
 
 #endif  // __AST_CONFIG_DEF__

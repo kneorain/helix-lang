@@ -189,32 +189,31 @@
     GENERATE(CXX_BACKTICK,          "`"                 ) \
     GENERATE(CXX_SPACE,             " "                 ) \
     GENERATE(CXX_NEWLINE,           "\n"                ) \
-    GENERATE(CXX_PTR_ACC,           "->"                ) \ 
-    GENERATE(CXX_PTR_REF,           ".*"                ) \ 
-    GENERATE(CXX_INC,               "++"                ) \ 
-    GENERATE(CXX_DEC,               "--"                ) \ 
-    GENERATE(CXX_LOGICAL_AND,       "&&"                ) \ 
-    GENERATE(CXX_LOGICAL_OR,        "||"                ) \ 
-    GENERATE(CXX_LEFT_SHIFT,        "<<"                ) \ 
-    GENERATE(CXX_RIGHT_SHIFT,       ">>"                ) \ 
-    GENERATE(CXX_EQUAL_TO,          "=="                ) \ 
-    GENERATE(CXX_NOT_EQUAL_TO,      "!="                ) \ 
-    GENERATE(CXX_LESS_THAN,         "<"                 ) \ 
-    GENERATE(CXX_LESS_THAN_EQUAL,   "<="                ) \ 
-    GENERATE(CXX_GREATER_THAN,      ">"                 ) \ 
-    GENERATE(CXX_GREATER_THAN_EQUAL,">="                ) \ 
-    GENERATE(CXX_ASSIGN,            "="                 ) \ 
-    GENERATE(CXX_ADD_ASSIGN,        "+="                ) \ 
-    GENERATE(CXX_SUB_ASSIGN,        "-="                ) \ 
-    GENERATE(CXX_MUL_ASSIGN,        "*="                ) \ 
-    GENERATE(CXX_DIV_ASSIGN,        "/="                ) \ 
-    GENERATE(CXX_MOD_ASSIGN,        "%="                ) \ 
-    GENERATE(CXX_LEFT_SHIFT_ASSIGN, "<<="               ) \ 
-    GENERATE(CXX_RIGHT_SHIFT_ASSIGN,">>="               ) \ 
-    GENERATE(CXX_AND_ASSIGN,        "&="                ) \ 
-    GENERATE(CXX_OR_ASSIGN,         "|="                ) \ 
-    GENERATE(CXX_XOR_ASSIGN,        "^="                ) \  
-    GENERATE(CXX_SCOPE_RESOLUTION,  "::"                )  
+    GENERATE(CXX_PTR_ACC,           "->"                ) \
+    GENERATE(CXX_PTR_REF,           ".*"                ) \
+    GENERATE(CXX_INC,               "++"                ) \
+    GENERATE(CXX_DEC,               "--"                ) \
+    GENERATE(CXX_LOGICAL_AND,       "&&"                ) \
+    GENERATE(CXX_LOGICAL_OR,        "||"                ) \
+    GENERATE(CXX_LEFT_SHIFT,        "<<"                ) \
+    GENERATE(CXX_RIGHT_SHIFT,       ">>"                ) \
+    GENERATE(CXX_EQUAL_TO,          "=="                ) \
+    GENERATE(CXX_NOT_EQUAL_TO,      "!="                ) \
+    GENERATE(CXX_LESS_THAN,         "<"                 ) \
+    GENERATE(CXX_LESS_THAN_EQUAL,   "<="                ) \
+    GENERATE(CXX_GREATER_THAN,      ">"                 ) \
+    GENERATE(CXX_GREATER_THAN_EQUAL,">="                ) \
+    GENERATE(CXX_ASSIGN,            "="                 ) \
+    GENERATE(CXX_ADD_ASSIGN,        "+="                ) \
+    GENERATE(CXX_SUB_ASSIGN,        "-="                ) \
+    GENERATE(CXX_MUL_ASSIGN,        "*="                ) \
+    GENERATE(CXX_DIV_ASSIGN,        "/="                ) \
+    GENERATE(CXX_MOD_ASSIGN,        "%="                ) \
+    GENERATE(CXX_LEFT_SHIFT_ASSIGN, "<<="               ) \
+    GENERATE(CXX_RIGHT_SHIFT_ASSIGN,">>="               ) \
+    GENERATE(CXX_AND_ASSIGN,        "&="                ) \
+    GENERATE(CXX_OR_ASSIGN,         "|="                ) \
+    GENERATE(CXX_XOR_ASSIGN,        "^="                )
 
 
 
