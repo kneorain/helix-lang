@@ -94,7 +94,7 @@ __AST_NODE_BEGIN {
 
         explicit ArgumentExpr(NodeT<> value)
             : value(std::move(value))
-            , type(ArgumentType::Positional){};
+            , type(ArgumentType::Positional) {};
 
         enum class ArgumentType {
             Positional,
@@ -176,14 +176,31 @@ __AST_NODE_BEGIN {
             : path(std::move(path))
             , type(PathType::Identifier) {}
 
-        enum class PathType {
+        enum class PathType : char {
             Scope,
             Dot,
             Identifier,
         };
 
         NodeT<>  path;
-        PathType type;
+        PathType type = PathType::Identifier;
+
+        // -- Helper Functions -- //
+
+        [[nodiscard]] token::Token get_back_name() const {
+            switch (type) {
+                case PathType::Scope:
+                    return std::static_pointer_cast<parser::ast::node::ScopePathExpr>(path)
+                        ->path.back()
+                        ->name;
+                    break;
+                case PathType::Identifier:
+                    return std::static_pointer_cast<parser::ast::node::IdentExpr>(path)->name;
+                    break;
+                default:
+                    print("failed default path", (int)type);
+            }
+        }
     };
 
     class FunctionCallExpr final : public Node {  // := PathExpr GenericInvokeExpr? ArgumentListExpr
