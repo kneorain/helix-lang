@@ -1,4 +1,3 @@
-
 //===------------------------------------------ C++ ------------------------------------------====//
 //                                                                                                //
 //  Part of the Helix Project, under the Attribution 4.0 International license (CC BY 4.0).       //
@@ -57,7 +56,7 @@
             sep                                         \
         }
 
-#define UNLESS_NULL(nullable_val) if (node.nullable_val != nullptr)
+#define UNLESS_NULL (node.nullable_val) if (node.nullable_val != nullptr)
 
 #define ADD_ALL_PARAMS(params)         \
     for (const auto &param : params) { \
@@ -85,7 +84,11 @@ CX_VISIT_IMPL(LiteralExpr) {
 
 CX_VISIT_IMPL(LetDecl) {
 
-    // for (auto &var : node.modifiers.) {}
+    // for (int i =0; i<node.modifiers.get<parser::ast::TypeSpecifier>().size(); ++i) {
+
+    //     // node.modifiers.
+
+    // }
 
     ADD_ALL_NODE_PARAMS(vars);
 }
@@ -114,8 +117,10 @@ CX_VISIT_IMPL(IdentExpr) { ADD_TOKEN_AS_TOKEN(CXX_CORE_IDENTIFIER, node.name); }
 CX_VISIT_IMPL(NamedArgumentExpr) {
     // -> name '=' value
     ADD_NODE_PARAM(name);
-    ADD_TOKEN_AS_VALUE(CXX_CORE_OPERATOR, "=");
-    ADD_NODE_PARAM(value);
+    if (node.value) {
+        ADD_TOKEN_AS_VALUE(CXX_CORE_OPERATOR, "=");
+        ADD_NODE_PARAM(value);
+    }
 }
 
 CX_VISIT_IMPL(ArgumentExpr) { ADD_NODE_PARAM(value); }
@@ -138,7 +143,7 @@ CX_VISIT_IMPL(ScopePathExpr) {
 
     for (const parser::ast::NodeT<parser::ast::node::IdentExpr> &ident : node.path) {
         ident->accept(*this);
-        ADD_TOKEN_AS_VALUE(CXX_CORE_OPERATOR, "::");
+        ADD_TOKEN(CXX_SCOPE_RESOLUTION);
     }
 
     ADD_NODE_PARAM(access);
@@ -154,9 +159,9 @@ CX_VISIT_IMPL(DotPathExpr) {
 CX_VISIT_IMPL(ArrayAccessExpr) {
     // -> array '[' index ']'
     ADD_NODE_PARAM(lhs);
-    ADD_TOKEN(CXX_LBRACKET);
-    ADD_NODE_PARAM(rhs);
-    ADD_TOKEN(CXX_RBRACKET);
+    BRACKET_DELIMIT(          //
+        ADD_NODE_PARAM(rhs);  //
+    );
 }
 
 CX_VISIT_IMPL(PathExpr) {  // TODO
@@ -170,7 +175,9 @@ CX_VISIT_IMPL(FunctionCallExpr) {
 
     ADD_NODE_PARAM(path);
 
-    UNLESS_NULL(generic) { ADD_NODE_PARAM(generic); };
+    if (node.generic) {
+        ADD_NODE_PARAM(generic);
+    };
     ADD_NODE_PARAM(args);
 }
 
@@ -184,35 +191,76 @@ CX_VISIT_IMPL(MapPairExpr) { CXIR_NOT_IMPLEMENTED; }
 
 CX_VISIT_IMPL(MapLiteralExpr) { CXIR_NOT_IMPLEMENTED; }
 
-CX_VISIT_IMPL(ObjInitExpr) { CXIR_NOT_IMPLEMENTED; }
+CX_VISIT_IMPL(ObjInitExpr) {
+
+    if (node.path) {
+        ADD_NODE_PARAM(path);
+    }
+    BRACE_DELIMIT(  //
+        if (!node.kwargs.empty()) {
+            ADD_NODE_PARAM(kwargs[0]->value);
+
+            for (size_t i = 1; i < node.kwargs.size(); ++i) {
+                ADD_TOKEN(CXX_COMMA);
+                ADD_NODE_PARAM(kwargs[i]->value);
+            }
+        }  //
+    );
+}
 
 CX_VISIT_IMPL(LambdaExpr) { CXIR_NOT_IMPLEMENTED; }
 
-CX_VISIT_IMPL(TernaryExpr) { CXIR_NOT_IMPLEMENTED; }
+CX_VISIT_IMPL(TernaryExpr) {
+
+    PAREN_DELIMIT(                  //
+        ADD_NODE_PARAM(condition);  //
+    );
+    ADD_TOKEN(CXX_QUESTION);
+    ADD_NODE_PARAM(if_true);
+    ADD_TOKEN(CXX_COLON);
+    ADD_NODE_PARAM(if_false);
+}
 
 CX_VISIT_IMPL(ParenthesizedExpr) { PAREN_DELIMIT(ADD_NODE_PARAM(value);); }
 
 CX_VISIT_IMPL(CastExpr) {
 
     // TODO: WHAT KIND OF CAST???
+    // static for now...
+    ADD_TOKEN(CXX_STATIC_CAST);
 
-    PAREN_DELIMIT(PAREN_DELIMIT(ADD_NODE_PARAM(type);); ADD_NODE_PARAM(value););
+    ANGLE_DELIMIT(             //
+        ADD_NODE_PARAM(type);  //
+    );
+
+    PAREN_DELIMIT(              //
+        ADD_NODE_PARAM(value);  //
+    );
 }
 
-// := E ('has' | 'derives') E
+// := E ('in' | 'derives') E
 CX_VISIT_IMPL(InstOfExpr) {
     switch (node.op) {
         case parser::ast::node::InstOfExpr::InstanceType::Derives:
+            // TODO: make it so it does not require that it is a class
+            /// std::is_base_of<A, B>::value
+            ADD_TOKEN_AS_VALUE(CXX_CORE_IDENTIFIER, "std");
+            ADD_TOKEN(CXX_SCOPE_RESOLUTION);
+            ADD_TOKEN_AS_VALUE(CXX_CORE_IDENTIFIER, "is_base_of");
+            ANGLE_DELIMIT(              //
+                ADD_NODE_PARAM(type);   //
+                ADD_TOKEN(CXX_COMMA);   //
+                ADD_NODE_PARAM(value);  //
+            );
+            ADD_TOKEN(CXX_SCOPE_RESOLUTION);
+            ADD_TOKEN_AS_VALUE(CXX_CORE_IDENTIFIER, "value");
 
-            ADD_NODE_PARAM(type);
-
-            ADD_NODE_PARAM(value);
-
+            break;
         case parser::ast::node::InstOfExpr::InstanceType::In:
             // In flip flops the type and value
             ADD_NODE_PARAM(value);
 
-            ADD_NODE_PARAM(type);
+            ANGLE_DELIMIT(ADD_NODE_PARAM(type););  // TODO: This is temp
     }
 }
 
@@ -235,14 +283,16 @@ CX_VISIT_IMPL(Type) {  // TODO Modifiers
     ADD_NODE_PARAM(value);
     // TODO: make *null into null_ptr
 
-    UNLESS_NULL(generics) ADD_NODE_PARAM(generics);
+    if (node.generics)
+        ADD_NODE_PARAM(generics);
 }
 
 CX_VISIT_IMPL(NamedVarSpecifier) {
     // (type | auto) name
 
-    UNLESS_NULL(type) { ADD_NODE_PARAM(type); }
-    else {
+    if (node.type) {
+        ADD_NODE_PARAM(type);
+    } else {
         ADD_TOKEN(CXX_AUTO);
     }
 
@@ -274,7 +324,6 @@ CX_VISIT_IMPL(ForCStatementCore) {
         ADD_NODE_PARAM(condition);  //
         ADD_TOKEN(CXX_SEMICOLON);   //
         ADD_NODE_PARAM(update);     //
-
     );
     ADD_NODE_PARAM(body);
 }
@@ -322,7 +371,8 @@ CX_VISIT_IMPL(IfState) {
 
     if (node.type == parser::ast::node::IfState::IfType::Unless) {  //
         PAREN_DELIMIT(                                              //
-            ADD_TOKEN(CXX_EXCLAMATION); PAREN_DELIMIT(              //
+            ADD_TOKEN(CXX_EXCLAMATION);                             //
+            PAREN_DELIMIT(                                          //
                 ADD_NODE_PARAM(condition);                          //
             );                                                      //
         );                                                          //
@@ -364,7 +414,7 @@ CX_VISIT_IMPL(SwitchCaseState) {
         case parser::ast::node::SwitchCaseState::CaseType::Default:
             ADD_TOKEN(CXX_DEFAULT);
             ADD_TOKEN(CXX_COLON);
-            ADD_NODE_PARAM  (body);
+            ADD_NODE_PARAM(body);
     }
 }
 
@@ -418,11 +468,11 @@ CX_VISIT_IMPL(BlockState) {
 
 CX_VISIT_IMPL(SuiteState) {
     // -> '{' body '}'
-    BRACE_DELIMIT(             //
-        ADD_NODE_PARAM(body);  //
+    BRACE_DELIMIT(  //
+
+        if (node.body) { ADD_NODE_PARAM(body); }  //
     );
 }
-
 CX_VISIT_IMPL(ContinueState) { ADD_TOKEN(CXX_CONTINUE); }
 
 CX_VISIT_IMPL(CatchState) {
@@ -447,7 +497,7 @@ CX_VISIT_IMPL(FinallyState) {
 CX_VISIT_IMPL(TryState) {
 
     // Is this nullable?
-    UNLESS_NULL(finally_state) {        //
+    if (node.finally_state) {           //
         ADD_NODE_PARAM(finally_state);  //
     }
 
@@ -469,22 +519,21 @@ CX_VISIT_IMPL(ExprState) {
 
 CX_VISIT_IMPL(RequiresParamDecl) {
     if (node.is_const) {
-        UNLESS_NULL(var) {
+        if (node.var) {
             PARSE_ERROR(node.var->path->name, "Const requires a type");  //
             return;                                                      //
         };
     }
 
-    UNLESS_NULL(var) {              //
-        ADD_NODE_PARAM(var->type);  //
-    }
-    else {
+    if (node.var->type) {           //
+        ADD_NODE_PARAM(var->type);  // TODO: verify
+    } else {
         ADD_TOKEN(CXX_TYPENAME);  // template <typename
     }
 
-    ADD_NODE_PARAM(var);
+    ADD_NODE_PARAM(var->path);
 
-    UNLESS_NULL(value) {                             //
+    if (node.value) {                                //
         ADD_TOKEN_AS_VALUE(CXX_CORE_OPERATOR, "=");  //
         ADD_NODE_PARAM(value);                       //
     };
@@ -496,7 +545,7 @@ CX_VISIT_IMPL(RequiresParamList) {  // -> (param (',' param)*)?
 
 CX_VISIT_IMPL(EnumMemberDecl) {
     ADD_NODE_PARAM(name);
-    UNLESS_NULL(value) {
+    if (node.value) {
         ADD_TOKEN_AS_VALUE(CXX_CORE_OPERATOR, "=");
         ADD_NODE_PARAM(value);
     };
@@ -541,9 +590,15 @@ CX_VISIT_IMPL(UDTDeriveDecl) {
     }
 }
 
-CX_VISIT_IMPL(TypeBoundList) { CXIR_NOT_IMPLEMENTED; }
+CX_VISIT_IMPL(TypeBoundList){
 
-CX_VISIT_IMPL(TypeBoundDecl) { CXIR_NOT_IMPLEMENTED; }
+    SEP(bounds, ADD_TOKEN(CXX_LOGICAL_AND))
+
+}
+
+CX_VISIT_IMPL(TypeBoundDecl) {
+    ADD_NODE_PARAM(bound);
+}
 
 CX_VISIT_IMPL(RequiresDecl) {
     // -> 'template' '<' params '>'
@@ -552,6 +607,10 @@ CX_VISIT_IMPL(RequiresDecl) {
     ANGLE_DELIMIT(               //
         ADD_NODE_PARAM(params);  //
     );
+    if (node.bounds) {
+        ADD_TOKEN(CXX_REQUIRES);
+        ADD_NODE_PARAM(bounds);
+    }
 }
 
 CX_VISIT_IMPL(ModuleDecl) {
@@ -569,16 +628,21 @@ CX_VISIT_IMPL(ModuleDecl) {
 
 CX_VISIT_IMPL(StructDecl) {  // TODO: only enums, types, and unions
     // TODO: Modifiers
-    UNLESS_NULL(generics) {        //
+    if (node.generics) {           //
         ADD_NODE_PARAM(generics);  //
     };
+
+    // ADD_TOKEN(CXX_TYPEDEF);
+
     ADD_TOKEN(CXX_STRUCT);
+
     ADD_NODE_PARAM(name);
 
-    UNLESS_NULL(derives) {
+    if (node.derives) {
         ADD_TOKEN(CXX_COLON);
         ADD_NODE_PARAM(derives);  // should be its own generator
     }
+
     ADD_NODE_PARAM(body);
     ADD_TOKEN(CXX_SEMICOLON);
 
@@ -590,14 +654,14 @@ CX_VISIT_IMPL(ConstDecl) { CXIR_NOT_IMPLEMENTED; }
 
 CX_VISIT_IMPL(ClassDecl) {
 
-    UNLESS_NULL(generics) {        //
+    if (node.generics) {           //
         ADD_NODE_PARAM(generics);  //
     };
 
     ADD_TOKEN(CXX_CLASS);
     ADD_NODE_PARAM(name);
 
-    UNLESS_NULL(derives) {
+    if (node.derives) {
         ADD_TOKEN(CXX_COLON);
         ADD_NODE_PARAM(derives);  // should be its own generator
     }
@@ -619,32 +683,57 @@ CX_VISIT_IMPL(InterDecl) {
     ADD_NODE_PARAM(name);
 
     ADD_TOKEN_AS_VALUE(CXX_CORE_OPERATOR, "=");
-    if (!(node.derives->derives.empty())) {
+    if (node.derives != nullptr)
+        if (!node.derives->derives.empty()) {
 
-#define INSERT_AT_FRONT(i)                                      \
-    node.derives->derives[i].first->generics->args.insert(      \
-        node.derives->derives[i].first->generics->args.begin(), \
-        node.generics->params->params.front())
-
-        INSERT_AT_FRONT(0);
-
-        ADD_PARAM(node.derives->derives[0].first);
-
-        for (size_t i = 1; i < node.derives->derives.size(); ++i) {
-
-            // TODO: accses Spes
-
-            INSERT_AT_FRONT(i);
-
-            ADD_PARAM(node.derives->derives[i].first);
-
-            ADD_TOKEN(CXX_AND);
-        }
-
-        UNLESS_NULL(body) { ADD_TOKEN(CXX_AND); }
+#define INSERT_AT_FRONT_GEN(i)                                              \
+    if (node.derives->derives[i].first->generics != nullptr) {              \
+        node.derives->derives[i].first->generics->args.insert(              \
+            node.derives->derives[i].first->generics->args.begin(),         \
+            node.generics->params->params.front());                         \
+    } else {                                                                \
+        parser::ast::NodeT<parser::ast::node::GenericInvokeExpr> gie_node = \
+            parser::ast::make_node<parser::ast::node::GenericInvokeExpr>(   \
+                node.generics->params->params.front());                     \
+        node.derives->derives[i].first->generics.swap(gie_node);            \
     }
 
-    ADD_NODE_PARAM(body);
+            // if null, swap ^^
+
+            INSERT_AT_FRONT_GEN(0);
+            ADD_PARAM(node.derives->derives[0].first->value);
+            ANGLE_DELIMIT(  //
+                for (auto &node
+                     : node.derives->derives[0].first->generics->args) {
+                    if (node->getNodeName() != "RequiresParamDecl")
+                        continue;
+
+                    parser::ast::NodeT<parser::ast::node::RequiresParamDecl> gen =
+                        std::static_pointer_cast<parser::ast::node::RequiresParamDecl>(node);
+
+                    ADD_PARAM(gen->var->path);  //
+                    ADD_TOKEN(CXX_COMMA);
+                }  //
+                this->tokens.pop_back();  // TODO: make better: remove last comma
+
+            );
+
+            for (size_t i = 1; i < node.derives->derives.size(); ++i) {
+
+                // TODO: accses Spes
+
+                INSERT_AT_FRONT_GEN(i);
+                ADD_PARAM(node.derives->derives[i].first->value);
+
+                ADD_TOKEN(CXX_LOGICAL_AND);
+            }
+
+            if (node.body) {
+                ADD_TOKEN(CXX_LOGICAL_AND);
+            }
+        }
+
+    // ADD_NODE_PARAM(body);
 
     // bool not_added_req = true;  // there is prob a better way to do this...
     // when we have context we will know if there is a function on the interface...
@@ -659,7 +748,7 @@ CX_VISIT_IMPL(InterDecl) {
             parser::ast::NodeT<parser::ast::node::FuncDecl> fn =
                 std::static_pointer_cast<parser::ast::node::FuncDecl>(node.body->body->body[i]);
 
-            if (fn->body != nullptr) {
+            if (fn->body) {
                 // TODO: ERROR
             };
 
@@ -689,18 +778,23 @@ CX_VISIT_IMPL(InterDecl) {
                             ADD_TOKEN(CXX_COMMA);                     //
                             ADD_PARAM(param->var->path);              // The
                         }  //
-                    );                         //
-                );                             //
-                ADD_TOKEN(CXX_PTR_ACC);        //
-                if (fn->returns != nullptr) {  //
-                    ADD_PARAM(fn->returns);    //
-                } else {                       //
-                    ADD_TOKEN(CXX_VOID);       //
-                }  //
-            );
+                    );                                               //
+                );                                                   //
+                ADD_TOKEN(CXX_PTR_ACC);                              //
+                ADD_TOKEN_AS_VALUE(CXX_CORE_IDENTIFIER, "std");      //
+                ADD_TOKEN(CXX_SCOPE_RESOLUTION);                     //
+                ADD_TOKEN_AS_VALUE(CXX_CORE_IDENTIFIER, "same_as");  //
+                ANGLE_DELIMIT(                                       //
+                    if (fn->returns != nullptr) {                    //
+                        ADD_PARAM(fn->returns);                      //
+                    } else {                                         //
+                        ADD_TOKEN(CXX_VOID);                         //
+                    }  //
+                );
+                ADD_TOKEN(CXX_SEMICOLON););
             ADD_TOKEN(CXX_LOGICAL_AND);
         }
-        ADD_TOKEN(CXX_TRUE); // This is just to prevent a syntax error, will be removed in the 
+        this->tokens.pop_back();  // TODO: make better: remove last &&, make better in the
         // future
         ADD_TOKEN(CXX_SEMICOLON);
     }
@@ -709,12 +803,26 @@ CX_VISIT_IMPL(InterDecl) {
 CX_VISIT_IMPL(EnumDecl) {
 
     ADD_TOKEN(CXX_ENUM);
+    ADD_TOKEN(CXX_STRUCT);  // Same as enum class, but it makes more sense here to be a struct
     ADD_NODE_PARAM(name);
+    ADD_TOKEN(CXX_COLON);
 
-    UNLESS_NULL(derives) {        //
-        ADD_TOKEN(CXX_COLON);     //
+    // bool has_neg= false;
+
+    // for (auto& mem : node.members) {
+    //     if (mem->value) {
+    //         mem->value.get().
+    //     }
+    // }
+
+    if (node.derives) {           //
         ADD_NODE_PARAM(derives);  //
-    };
+    } else {                      // TODO: after sign is checked use: ADD_TOKEN(CXX_UNSIGNED);
+        // if (node.members.size() >=256 )      { ADD_TOKEN(CXX_CHAR);}
+        // else if (node.members.size()  ) { ADD_TOKEN(CXX_SHORT);}
+        // else if (node.members.size()  ) { ADD_TOKEN(CXX_CHAR);}
+        // TODO: SIZING restrictions based on number of elements
+    }
 
     BRACE_DELIMIT(           //
         COMMA_SEP(members);  //
@@ -731,15 +839,14 @@ CX_VISIT_IMPL(TypeDecl) {
     ADD_NODE_PARAM(value);
 }
 
-CX_VISIT_IMPL(FuncDecl) {
-    UNLESS_NULL(generics) {  //
+CX_VISIT_IMPL(FuncDecl) {  // if yield is in the return type, make the function use coreturn
+    if (node.generics) {   //
         ADD_NODE_PARAM(generics);
     };
 
-    UNLESS_NULL(returns) {  //
+    if (node.returns) {  //
         ADD_NODE_PARAM(returns);
-    }
-    else {
+    } else {
         ADD_TOKEN(CXX_VOID);
     }
 
@@ -752,16 +859,17 @@ CX_VISIT_IMPL(FuncDecl) {
     PAREN_DELIMIT(          //
         COMMA_SEP(params);  //
     );
-
-    ADD_NODE_PARAM(body);
+    if (node.body) {
+        ADD_NODE_PARAM(body);  // TODO: should only error in interfaces
+    };
 }
 
 CX_VISIT_IMPL(VarDecl) {
-    // UNLESS_NULL(var->type, ADD_PARAM(node.var->type);) else { ADD_TOKEN(CXX_AUTO); }
+    // if (node.var->type, ADD_PARAM(node.var->type);) else { ADD_TOKEN(CXX_AUTO); }
 
     ADD_NODE_PARAM(var);
 
-    UNLESS_NULL(value) {
+    if (node.value) {
         ADD_TOKEN_AS_VALUE(CXX_CORE_OPERATOR, "=");
         ADD_NODE_PARAM(value);
     }
@@ -785,7 +893,54 @@ CX_VISIT_IMPL(FFIDecl) {
     }
 }
 
-CX_VISIT_IMPL(OpDecl) { CXIR_NOT_IMPLEMENTED; }
+CX_VISIT_IMPL(OpDecl) {
+
+    // Add the function normally
+    ADD_NODE_PARAM(func);
+
+    if (node.func->generics) {  //
+        ADD_NODE_PARAM(func->generics);
+    };
+
+    ADD_TOKEN(CXX_INLINE);     // inline the operator
+    if (node.func->returns) {  //
+        ADD_NODE_PARAM(func->returns);
+    } else {
+        ADD_TOKEN(CXX_VOID);
+    }
+
+    // if (node.func->name == nullptr) {
+    //     print("error");
+    //     throw std::runtime_error("This is bad");
+    // }
+
+    ADD_TOKEN(CXX_OPERATOR);
+
+    for (auto &tok : node.op) {
+        ADD_TOKEN_AS_VALUE(CXX_CORE_OPERATOR, tok.value());
+    }
+
+    PAREN_DELIMIT(                //
+        COMMA_SEP(func->params);  //
+    );
+
+    if (node.func->body) {
+        // ADD_NODE_PARAM(func->body);  // TODO: should only error in interfaces
+        BRACE_DELIMIT(
+            ADD_TOKEN(CXX_RETURN);       //
+            ADD_NODE_PARAM(func->name);  //
+            PAREN_DELIMIT(               //
+
+                for (auto &param
+                     : node.func->params) {
+                    ADD_PARAM(param->var->path);
+                    ADD_TOKEN(CXX_COMMA);
+                } this->tokens
+                    .pop_back();  // TODO: make better: remove last `,` , make better in the
+            );
+            ADD_TOKEN(CXX_SEMICOLON););
+    };
+}
 
 CX_VISIT_IMPL(Program) {
     ADD_TOKEN_AS_VALUE(

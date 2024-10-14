@@ -1299,7 +1299,7 @@ AST_NODE_IMPL(Expression, CastExpr, ParseResult<> lhs) {
     IS_EXCEPTED_TOKEN(__TOKEN_N::KEYWORD_AS);
     iter.advance();  // skip 'as'
 
-    ParseResult<> rhs = parse();
+    ParseResult<> rhs = parse<Type>();
     RETURN_IF_ERROR(rhs);
 
     return make_node<CastExpr>(lhs.value(), rhs.value());
@@ -1360,11 +1360,15 @@ AST_NODE_IMPL(Expression, Type) {  // TODO - REMAKE using the new Modifiers and 
     // enums: StorageSpecifier, FFISpecifier, TypeQualifier, AccessSpecifier, FunctionSpecifier,
     // FunctionQualifier
     IS_NOT_EMPTY;
+    Modifiers   type_specifiers(Modifiers::ExpectedModifier::TypeSpec);
 
-    Modifiers   fn_specifiers(Modifiers::ExpectedModifier::FuncSpec);
     NodeT<Type> node = make_node<Type>(true);
 
+    
+
     if (CURRENT_TOKEN_IS(__TOKEN_N::KEYWORD_FUNCTION)) {
+        Modifiers   fn_specifiers(Modifiers::ExpectedModifier::FuncSpec);
+
         iter.advance();  // skip 'fn'
         NodeT<LambdaExpr> lambda = make_node<LambdaExpr>(iter.peek_back()->get());
 

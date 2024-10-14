@@ -233,10 +233,11 @@ __AST_NODE_BEGIN {
         BASE_CORE_METHODS(OpDecl);
 
         // OpDecl :=  SharedModifiers? 'op' T FuncDecl[no_SharedModifiers=true]
+        explicit OpDecl(bool /* unused */) {}
 
         Modifiers        modifiers = Modifiers(Modifiers::ExpectedModifier::FuncSpec,
                                         Modifiers::ExpectedModifier::AccessSpec);
-        __TOKEN_N::Token op;
+        std::vector<__TOKEN_N::Token> op;
         NodeT<FuncDecl>  func;
     };
 

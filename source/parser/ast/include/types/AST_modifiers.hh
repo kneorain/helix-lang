@@ -361,7 +361,7 @@ __AST_BEGIN {
         enum class ExpectedModifier : char {
             StorageSpec,  ///< 'ffi' | 'static'
             FfiSpec,      ///< 'class' | 'interface' | 'struct' | 'enum' | 'union' | 'type'
-            TypeSpec,     ///< 'const' | 'module' | 'yield' | 'async' | 'ffi'
+            TypeSpec,     ///< 'const' | 'module' | 'yield' | 'async' | 'ffi' 
             AccessSpec,   ///< 'pub' | 'priv' | 'prot' | 'intl'
             FuncSpec,     ///< 'inline' | 'async' | 'static' | 'const' | 'eval'
             FuncQual,     ///< 'default' | 'panic' | 'delete' | 'const'

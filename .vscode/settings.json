@@ -111,4 +111,15 @@
     },
     "cmake.configureOnOpen": false,
     "C_Cpp.errorSquiggles": "disabled",
+    "workbench.colorCustomizations": {
+        "editor.lineHighlightBackground": "#1073cf2d",
+        "editor.lineHighlightBorder": "#9fced11f",
+        "statusBar.background": "#8FBCBB",
+        "statusBar.noFolderBackground": "#8FBCBB",
+        "statusBar.debuggingBackground": "#8FBCBB",
+        "statusBar.foreground": "#000",
+        "statusBar.debuggingForeground": "#000",
+        "minimap.background": "#00000000",
+        "scrollbar.shadow": "#00000000"
+    },
 }

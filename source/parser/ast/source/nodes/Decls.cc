@@ -87,6 +87,7 @@
 /// TODO: should unions be Statements in the form of anonymous unions or concrete type decls???  ///
 //===-----------------------------------------------------------------------------------------====//
 
+#include <cstdio>
 #include <expected>
 #include <memory>
 #include <unordered_set>
@@ -95,16 +96,17 @@
 
 #include "neo-pprint/include/hxpprint.hh"
 #include "parser/ast/include/config/AST_config.def"
+#include "parser/ast/include/nodes/AST_declarations.hh"
 #include "parser/ast/include/nodes/AST_expressions.hh"
 #include "parser/ast/include/nodes/AST_statements.hh"
 #include "parser/ast/include/private/AST_generate.hh"
+#include "parser/ast/include/private/base/AST_base_expression.hh"
+#include "parser/ast/include/private/base/AST_base_statement.hh"
 #include "parser/ast/include/types/AST_jsonify_visitor.hh"
 #include "parser/ast/include/types/AST_modifiers.hh"
 #include "parser/ast/include/types/AST_types.hh"
 #include "token/include/Token.hh"
 #include "token/include/private/Token_generate.hh"
-#include "parser/ast/include/private/base/AST_base_expression.hh"
-#include "parser/ast/include/private/base/AST_base_statement.hh"
 
 AST_NODE_IMPL(Declaration, RequiresParamDecl) {
     IS_NOT_EMPTY;
@@ -518,13 +520,27 @@ AST_NODE_IMPL(Declaration, InterDecl, const std::shared_ptr<__TOKEN_N::TokenList
     }
 
     parser::ast::node::RequiresParamDecl self_param{false};
-    
-    parser::ast::node::IdentExpr self_ident{__TOKEN_N::Token{0, 0, 4, 0, "Self", "Self.internal.hlx", "identifer"}};
-    NodeT<parser::ast::node::IdentExpr> self_ident_node = parser::ast::make_node<parser::ast::node::IdentExpr>(self_ident);
-    
-    parser::ast::node::NamedVarSpecifier self_name_var{self_ident_node };
-    NodeT<parser::ast::node::NamedVarSpecifier> self_name_var_node = parser::ast::make_node<parser::ast::node::NamedVarSpecifier>(self_name_var);
-    
+
+    parser::ast::node::IdentExpr self_ident{
+        __TOKEN_N::Token{0, 0, 4, 0, "Self", "Self.internal.hlx", "identifer"}};
+    NodeT<parser::ast::node::IdentExpr> self_ident_node =
+        parser::ast::make_node<parser::ast::node::IdentExpr>(self_ident);
+
+    // parser::ast::node::IdentExpr typename_ident{
+    //     __TOKEN_N::Token{0, 0, 4, 0, "typename", "typename.internal.hlx", "identifer"}};
+    // NodeT<parser::ast::node::IdentExpr> typename_ident_node =
+    //     parser::ast::make_node<parser::ast::node::IdentExpr>(typename_ident);
+
+    // parser::ast::node::Type        typename_type{typename_ident_node};
+    // NodeT<parser::ast::node::Type> typename_type_node =
+    //     parser::ast::make_node<parser::ast::node::Type>(typename_type);
+
+    parser::ast::node::NamedVarSpecifier self_name_var{
+        self_ident_node,
+    };  //
+    NodeT<parser::ast::node::NamedVarSpecifier> self_name_var_node =
+        parser::ast::make_node<parser::ast::node::NamedVarSpecifier>(self_name_var);
+
     // Set the identifier.
     self_param.var.swap(self_name_var_node);
 
@@ -942,7 +958,37 @@ AST_NODE_IMPL(Declaration, OpDecl, const std::shared_ptr<__TOKEN_N::TokenList> &
     IS_NOT_EMPTY;
     // OpDecl := Modifiers 'op' T FuncDecl[no_SharedModifiers=true]
 
-    NOT_IMPLEMENTED;
+    NodeT<OpDecl> node = make_node<OpDecl>(true);
+
+    if (modifiers != nullptr) {
+        for (auto &tok : *modifiers) {
+            if (!node->modifiers.find_add(tok.current().get())) {
+                return std::unexpected(
+                    PARSE_ERROR(tok.current().get(), "invalid modifier for an operator"));
+            }
+        }
+    } else {
+        while (node->modifiers.find_add(CURRENT_TOK)) {
+            iter.advance();  // skip modifier
+        }
+    }
+    
+
+    IS_EXCEPTED_TOKEN(__TOKEN_N::KEYWORD_OPERATOR);
+
+    // TODO: Find a better way to do this... 
+    while (iter.advance().get().token_kind() != token::KEYWORD_FUNCTION)    {
+        node->op.push_back(CURRENT_TOK); // skip token and push it
+    }
+    ParseResult<FuncDecl> fn = parse<FuncDecl>();
+    
+    RETURN_IF_ERROR(fn);
+
+    // NodeT<FuncDecl> fn_node = make_node<FuncDecl>();
+
+    node->func.swap(fn.value());
+    
+    return node;
 }
 
 AST_NODE_IMPL_VISITOR(Jsonify, OpDecl) { json.section("OpDecl"); }
