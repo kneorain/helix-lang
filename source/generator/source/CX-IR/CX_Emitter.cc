@@ -16,14 +16,12 @@
 #include <stdexcept>
 
 #include "generator/include/CX-IR/CXIR.hh"
+#include "neo-panic/include/error.hh"
 #include "neo-pprint/include/hxpprint.hh"
-#include "parser/ast/include/config/AST_config.def"
+#include "parser/ast/include/AST.hh"
 #include "parser/ast/include/nodes/AST_declarations.hh"
 #include "parser/ast/include/nodes/AST_expressions.hh"
-#include "parser/ast/include/nodes/AST_statements.hh"
 #include "parser/ast/include/private/AST_generate.hh"
-#include "parser/ast/include/private/base/AST_base.hh"
-#include "parser/ast/include/types/AST_modifiers.hh"
 #include "parser/ast/include/types/AST_types.hh"
 #include "token/include/private/Token_base.hh"
 #include "token/include/private/Token_generate.hh"
@@ -56,7 +54,7 @@
             sep                                         \
         }
 
-#define UNLESS_NULL (node.nullable_val) if (node.nullable_val != nullptr)
+#define UNLESS_NULL(x) (node.x) if (node.x != nullptr)
 
 #define ADD_ALL_PARAMS(params)         \
     for (const auto &param : params) { \
@@ -112,7 +110,18 @@ CX_VISIT_IMPL(UnaryExpr) {
                   PAREN_DELIMIT(ADD_NODE_PARAM(opd);););
 }
 
-CX_VISIT_IMPL(IdentExpr) { ADD_TOKEN_AS_TOKEN(CXX_CORE_IDENTIFIER, node.name); }
+CX_VISIT_IMPL(IdentExpr) {
+    // if self then set to (*this)
+    if (node.name.value() == "self") {
+        ADD_TOKEN(CXX_LPAREN);
+        ADD_TOKEN(CXX_ASTERISK);
+        ADD_TOKEN(CXX_THIS);
+        ADD_TOKEN(CXX_RPAREN);
+        return;
+    }
+
+    ADD_TOKEN_AS_TOKEN(CXX_CORE_IDENTIFIER, node.name);
+}
 
 CX_VISIT_IMPL(NamedArgumentExpr) {
     // -> name '=' value
@@ -653,19 +662,98 @@ CX_VISIT_IMPL(StructDecl) {  // TODO: only enums, types, and unions
 CX_VISIT_IMPL(ConstDecl) { CXIR_NOT_IMPLEMENTED; }
 
 CX_VISIT_IMPL(ClassDecl) {
+    auto check_self_and_static =
+        [&](const parser::ast::NodeT<parser::ast::node::FuncDecl> &func_decl)
+        -> std::pair<bool, bool> {
+        std::pair<bool, bool>                          found_self_static = {false, false};
+        parser::ast::NodeT<parser::ast::node::VarDecl> self_arg          = nullptr;
 
-    if (node.generics) {           //
-        ADD_NODE_PARAM(generics);  //
+        if (func_decl->params.size() > 0 && func_decl->params[0] != nullptr) {
+            self_arg = func_decl->params[0];
+
+            if (self_arg->var->path->name.value() == "self") {
+                if (self_arg->var->type != nullptr || self_arg->value != nullptr) {
+                    throw error::Panic(
+                        error::CodeError{.pof = &self_arg->var->path->name, .err_code = 0.3006});
+                }
+
+                found_self_static.first = true;  // found 'self'
+            }
+        }
+
+        if (func_decl->modifiers.contains(token::tokens::KEYWORD_STATIC)) {
+            found_self_static.second = true;  // found 'static'
+        }
+
+        return found_self_static;
     };
+
+    auto process_func_decl = [&](const parser::ast::NodeT<parser::ast::node::FuncDecl> &func_decl,
+                                 token::Token                                          &pof) {
+        auto [has_self, has_static] = check_self_and_static(func_decl);
+
+        if (!has_static) {
+            if (!has_self) {
+                error::Panic(error::CodeError{.pof      = &pof,
+                                              .err_code = 0.3004});  // Warn: static should be added
+                func_decl->modifiers.add(parser::ast::FunctionSpecifier(
+                    token::Token(token::tokens::KEYWORD_STATIC, "helix_internal.file")));
+            }
+        } else if (has_self) {
+            throw error::Panic(error::CodeError{
+                .pof = &pof, .err_code = 0.3005});  // Error: both 'self' and 'static' found
+        }
+
+        if (has_self) {
+            func_decl->params.erase(func_decl->params.begin());  // Remove 'self'
+        }
+    };
+
+    if (node.generics != nullptr) {
+        ADD_NODE_PARAM(generics);
+    }
 
     ADD_TOKEN(CXX_CLASS);
     ADD_NODE_PARAM(name);
 
     if (node.derives) {
         ADD_TOKEN(CXX_COLON);
-        ADD_NODE_PARAM(derives);  // should be its own generator
+        ADD_NODE_PARAM(derives);
     }
-    ADD_NODE_PARAM(body);
+
+    if (node.body != nullptr) {
+        BRACE_DELIMIT(  //
+            for (auto &child
+                 : node.body->body->body) {
+                if (child->getNodeType() == parser::ast::node::nodes::FuncDecl) {
+                    auto func_decl = std::static_pointer_cast<parser::ast::node::FuncDecl>(child);
+                    token::Token func_name = func_decl->name->get_back_name();
+
+                    process_func_decl(func_decl, func_name);
+                    
+                    if (func_decl->modifiers.contains(token::tokens::KEYWORD_PUBLIC)) {
+                        ADD_TOKEN(CXX_PUBLIC);
+                        ADD_TOKEN(CXX_COLON);
+                    } else if (func_decl->modifiers.contains(token::tokens::KEYWORD_PROTECTED)) {
+                        ADD_TOKEN(CXX_PROTECTED);
+                        ADD_TOKEN(CXX_COLON);
+                    } else if (func_decl->modifiers.contains(token::tokens::KEYWORD_PRIVATE)) {
+                        ADD_TOKEN(CXX_PRIVATE);
+                        ADD_TOKEN(CXX_COLON);
+                    } else { // public by default
+                        ADD_TOKEN(CXX_PUBLIC);
+                        ADD_TOKEN(CXX_COLON);
+                    }
+
+                    visit(*func_decl, func_name.value() == node.name->name.value());
+                } else {
+                    ADD_PARAM(child);
+                    ADD_TOKEN(CXX_SEMICOLON);
+                }
+            }  //
+        );
+    }
+
     ADD_TOKEN(CXX_SEMICOLON);
 }
 
@@ -742,7 +830,7 @@ CX_VISIT_IMPL(InterDecl) {
 
         for (size_t i = 0; i < node.body->body->body.size(); ++i) {
 
-            if (node.body->body->body[i]->getNodeName() != "FuncDecl")
+            if (node.body->body->body[i]->getNodeType() != parser::ast::node::nodes::FuncDecl)
                 continue;  // TODO: Error? no error?
 
             parser::ast::NodeT<parser::ast::node::FuncDecl> fn =
@@ -794,7 +882,8 @@ CX_VISIT_IMPL(InterDecl) {
                 ADD_TOKEN(CXX_SEMICOLON););
             ADD_TOKEN(CXX_LOGICAL_AND);
         }
-        this->tokens.pop_back();  // TODO: make better: remove last &&, make better in the
+        ADD_TOKEN(CXX_TRUE);  // This is just to prevent a syntax error, will be removed in the
+        // MAYBE this->tokens.pop_back();
         // future
         ADD_TOKEN(CXX_SEMICOLON);
     }
@@ -839,15 +928,18 @@ CX_VISIT_IMPL(TypeDecl) {
     ADD_NODE_PARAM(value);
 }
 
-CX_VISIT_IMPL(FuncDecl) {  // if yield is in the return type, make the function use coreturn
-    if (node.generics) {   //
+CX_VISIT_IMPL_VA(FuncDecl, bool no_return_t) {
+    if (node.generics != nullptr) {  //
         ADD_NODE_PARAM(generics);
     };
 
-    if (node.returns) {  //
-        ADD_NODE_PARAM(returns);
-    } else {
-        ADD_TOKEN(CXX_VOID);
+    if (!no_return_t) {
+        if (node.returns != nullptr) {  //
+            ADD_NODE_PARAM(returns);
+        }
+        else {
+            ADD_TOKEN(CXX_VOID);
+        }
     }
 
     // if (node.name == nullptr) {

@@ -14,7 +14,7 @@
 #define __CXX_TOKENS_DEF__
 
 // Count should be updated based on actual number of tokens added
-#define CXX_TOKENS_COUNT 191  // Update based on total number of tokens
+#define CXX_TOKENS_COUNT 200  // Update based on total number of tokens
 
 // Macro to generate all C++ tokens, including new C++23 tokens
 #define CXX_TOKENS(GENERATE)                              \
@@ -190,6 +190,7 @@
     GENERATE(CXX_SPACE,             " "                 ) \
     GENERATE(CXX_NEWLINE,           "\n"                ) \
     GENERATE(CXX_PTR_ACC,           "->"                ) \
+    GENERATE(CXX_SCOPE_RESOLUTION,  "::"                ) \
     GENERATE(CXX_PTR_REF,           ".*"                ) \
     GENERATE(CXX_INC,               "++"                ) \
     GENERATE(CXX_DEC,               "--"                ) \

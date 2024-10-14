@@ -235,10 +235,10 @@ op == fn equals(a: Fraction, b: Fraction) -> bool {
 
 
 // Recursive function to calculate factorial
-fn factorial(n:int) -> int {
-    if n <= 1 {
+fn factorial(n: int) -> int {
+    if n <= 1:
         return 1;
-    }
+
     return n * factorial(n - 1);
 }
 
@@ -290,6 +290,23 @@ fn print_vector(v: std::vector<int>) -> void {
     }
 }
 
+
+class ABC {
+    let a: int;
+    let b: int;
+    let c: int;
+
+    fn ABC(self, a: int, b: int, c: int) {
+        self.a = a;
+        self.b = b;
+        self.c = c;
+    }
+
+    fn print(self) -> void {
+        printf("a: %d, b: %d, c: %d\n", self.a, self.b, self.c);
+    }
+}
+
 fn main() -> int {
     // Adding two numbers
     let sum = add(5, 7);
@@ -336,5 +353,9 @@ fn main() -> int {
 
     // Calling the function call operator to get the fraction as float
     // printf("f1 as float: %f\n", f1());
+    // Creating an object of class ABC
+    let obj = ABC(10, 20, 30);
+    obj.print();
+
     return 0;
 }
