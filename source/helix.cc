@@ -331,8 +331,8 @@ class CompilationUnit {
             log<LogLevel::Debug>(json_visitor.json.to_string());
         }
 
-        if (parsed_args.lsp_mode) {
-            LSP_MODE = true;
+        if (error::HAS_ERRORED || parsed_args.lsp_mode) {
+            LSP_MODE = parsed_args.lsp_mode;
             return 0;
         }
 
@@ -407,26 +407,33 @@ class CompilationUnit {
 };
 
 int main(int argc, char **argv) {
+    auto compiler = CompilationUnit();
+    int  result = 1;
+
     try {
-        return CompilationUnit().compile(argc, argv);
-    } catch (error::Panic &) {
-        if (error::HAS_ERRORED) {
-            for (const auto &err : error::ERRORS) {
-                log<LogLevel::Error>(err.to_json());
-            }
-        }
+        result = compiler.compile(argc, argv);
+    } catch (error::Panic &) { // hard error
+        return 69;             // nice
     }
 
     if (LSP_MODE && error::HAS_ERRORED) {
         for (const auto &err : error::ERRORS) {
-            log<LogLevel::Error>(err.to_json());
+            print(err.to_json());
         }
 
-        return 1;
+        return 1; // soft error
     }
 
-    return 0;
+    return result;
 }
+
+
+
+
+
+
+
+
 
 /*
 using the new toolchain the entire process can happen like this:

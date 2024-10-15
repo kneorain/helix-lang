@@ -704,6 +704,7 @@ AST_NODE_IMPL(Declaration, FuncDecl, const std::shared_ptr<__TOKEN_N::TokenList>
 
     // one rule to follow is we cant have keyword arguments after positional arguments
     bool has_keyword = false;
+    bool found_requires = false;
 
     NodeT<FuncDecl> node = make_node<FuncDecl>(true);
 
@@ -765,6 +766,7 @@ AST_NODE_IMPL(Declaration, FuncDecl, const std::shared_ptr<__TOKEN_N::TokenList>
         RETURN_IF_ERROR(generics);
 
         node->generics = generics.value();
+        found_requires = true;
     }
 
     if (CURRENT_TOKEN_IS(__TOKEN_N::OPERATOR_ARROW)) {
@@ -774,6 +776,17 @@ AST_NODE_IMPL(Declaration, FuncDecl, const std::shared_ptr<__TOKEN_N::TokenList>
         RETURN_IF_ERROR(returns);
 
         node->returns = returns.value();
+    
+        if (CURRENT_TOKEN_IS(__TOKEN_N::KEYWORD_REQUIRES)) {
+            if (found_requires) {
+                return std::unexpected(PARSE_ERROR(CURRENT_TOK, "duplicate requires clause"));
+            }
+            
+            ParseResult<RequiresDecl> generics = parse<RequiresDecl>();
+            RETURN_IF_ERROR(generics);
+
+            node->generics = generics.value();
+        }
     }
 
     if (CURRENT_TOKEN_IS(__TOKEN_N::PUNCTUATION_SEMICOLON)) {

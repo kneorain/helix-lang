@@ -200,6 +200,8 @@ __AST_NODE_BEGIN {
                 default:
                     print("failed default path", (int)type);
             }
+
+            throw std::runtime_error("invalid path type, possible memory corruption");
         }
     };
 
