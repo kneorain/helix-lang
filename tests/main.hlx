@@ -284,7 +284,7 @@ class Fish requires <T> if Bar in T, T derives Fuzz {
 
 // Function to print elements of a vector
 // TODO: implement range-based for loop
-fn print_vector(v: std::vector<int>) -> void {
+fn print_vector(v: std::vector<int>
     for i in range(v.size()) {
         printf("Vector element %d: %d\n", i, v[i]);
     }

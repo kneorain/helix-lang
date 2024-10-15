@@ -59,6 +59,8 @@ Thank you for using Helix!
             parser, "emit-tokens", "Output tokenized source code", {"emit-tokens"});
         args::Flag emit_llvm(
             parser, "emit-llvm", "Output LLVM Intermediate Representation (IR)", {"emit-llvm"});
+        args::Flag lsp_mode(
+            parser, "lsp-mode", "Enable Language Server Protocol (LSP) mode", {"lsp-mode"});
         args::Flag emit_asm(parser, "emit-asm", "Output assembly code", {"emit-asm"});
         args::Flag emit_ast(
             parser, "emit-ast", "Output Abstract Syntax Tree (AST) in JSON format", {"emit-ast"});
@@ -201,6 +203,7 @@ https://helix-lang.com/ for more information.
             this->quiet       = quiet;
             this->emit_tokens = emit_tokens;
             this->emit_llvm   = emit_llvm;
+            this->lsp_mode    = lsp_mode;
             this->emit_asm    = emit_asm;
             this->emit_ast    = emit_ast;
             this->emit_cst    = emit_cst;

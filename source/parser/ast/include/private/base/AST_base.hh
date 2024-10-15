@@ -67,10 +67,12 @@ __AST_NODE_BEGIN {
 
                 if (!expr.has_value()) {
                     expr.error().panic();
+                    #ifdef DEBUG
                     print(std::string(colors::fg16::red),
                           "error: ",
                           std::string(colors::reset),
                           expr.error().what());
+                    #endif
                     return *this;
                 }
 

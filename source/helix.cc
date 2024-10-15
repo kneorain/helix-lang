@@ -41,9 +41,15 @@
 #include "parser/preprocessor/include/preprocessor.hh"
 
 enum class LogLevel { Debug, Info, Warning, Error };
+inline bool NO_LOGS  = false;
+inline bool LSP_MODE = false;
 
 template <LogLevel l, typename... Args>
 void log(Args &&...args) {
+    if (NO_LOGS) {
+        return;
+    }
+
     if constexpr (l == LogLevel::Debug) {
         print(std::string(colors::fg16::gray),
               "debug: ",
@@ -278,6 +284,11 @@ class CompilationUnit {
         __CONTROLLER_CLI_N::CLIArgs parsed_args(argc, argv, "0.0.1-alpha-2012");
         check_exit(parsed_args);
 
+        if (parsed_args.quiet || parsed_args.lsp_mode) {
+            NO_LOGS = true;
+            error::SHOW_ERROR = false;
+        }
+
         if (parsed_args.verbose) {
             log<LogLevel::Debug>(parsed_args.get_all_flags);
         }
@@ -312,7 +323,17 @@ class CompilationUnit {
             parser::ast::visitor::Jsonify json_visitor;
             ast->accept(json_visitor);
 
+            if (parsed_args.lsp_mode) {
+                print(json_visitor.json.to_string());
+                return 0;
+            }
+
             log<LogLevel::Debug>(json_visitor.json.to_string());
+        }
+
+        if (parsed_args.lsp_mode) {
+            LSP_MODE = true;
+            return 0;
         }
 
         ast->accept(emitter);
@@ -395,6 +416,16 @@ int main(int argc, char **argv) {
             }
         }
     }
+
+    if (LSP_MODE && error::HAS_ERRORED) {
+        for (const auto &err : error::ERRORS) {
+            log<LogLevel::Error>(err.to_json());
+        }
+
+        return 1;
+    }
+
+    return 0;
 }
 
 /*

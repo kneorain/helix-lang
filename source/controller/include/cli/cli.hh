@@ -118,6 +118,7 @@ __CONTROLLER_CLI_BEGIN {
 
         bool emit_tokens = false;
         bool emit_llvm   = false;
+        bool lsp_mode    = false;
         bool emit_asm    = false;
         bool emit_ast    = false;
         bool emit_cst    = false;
