@@ -37,13 +37,11 @@ while [ "$1" != "" ]; do
 done
 
 if [ "$IS_LLDB" = true ]; then
-    echo -e "(\x1b[1;32minfo\x1b[0m) exec cmd: \x1b[1;33m'run$ARGS'\x1b[0m"
-    lldb $PATH_TO_BINARY
+    lldb $PATH_TO_BINARY -o "settings set target.run-args $ARGS"
     exit 0
 fi
 if [ "$IS_GDB" = true ]; then
-    echo -e "(\x1b[1;32minfo\x1b[0m) exec cmd: \x1b[1;33m'run$ARGS'\x1b[0m"
-    gdb $PATH_TO_BINARY
+    gdb $PATH_TO_BINARY -ex "set args $ARGS"
     exit 0
 fi
 

@@ -1,0 +1,94 @@
+//===----------------------------------------- Helix -----------------------------------------====//
+//                                                                                                //
+//  Part of the Helix Project, under the Attribution 4.0 International license (CC BY 4.0).       //
+//  You are allowed to use, modify, redistribute, and create derivative works, even for           //
+//  commercial purposes, provided that you give appropriate credit, and indicate if changes       //
+//   were made. For more information, please visit: https://creativecommons.org/licenses/by/4.0/  //
+//                                                                                                //
+//  SPDX-License-Identifier: CC-BY-4.0                                                            //
+//  Copyright (c) 2024 (CC BY 4.0)                                                                //
+//                                                                                                //
+//====----------------------------------------------------------------------------------------====//
+//                                                                                                //
+// \brief This is the range module, it provides a range generator class that can be used to       //
+//        generate ranges of any type that can be iterated over.                                  //
+//                                                                                                //
+//====----------------------------------------------------------------------------------------====//
+
+/// usage:
+///
+/// import range;
+///
+/// for i in range(0, 10) {
+///     print(i);
+/// }
+///
+/// for i in range('a', 'z') {
+///     print(i);
+/// }
+///
+
+interface Rangeable {
+    op ++ fn inc() -> Self;
+}
+
+
+class Range requires <Elem_t> if Rangeable in Elem_t {
+    priv let start: T;
+    priv let end: T;
+
+    class Iterator {
+        priv let current: T;
+
+        fn Iterator(self, current: T) {
+            self.current = current;
+        }
+
+        op * fn deref(self) -> T {
+            return self.current;
+        }
+
+        op ++ fn inc(self) -> Iterator {
+            ++(self.current);
+            return self;
+        }
+
+        // Comparison operators
+        op != fn ne(self, other: Iterator) -> bool {
+            return self.current != other.current;
+        }
+    }
+
+    fn Range(self, start: T, end: T) {
+        self.start = start;
+        self.end = end;
+    }
+
+    fn begin(self) -> Iterator {
+        return Iterator(self.start);
+    }
+
+    fn end(self) -> Iterator {
+        return Iterator(self.end);
+    }
+
+    fn size(self) -> usize {
+        return self.end - self.start;
+    }
+}
+
+fn range(start: T, end: T) -> Range<T> requires <T> {
+    return Range(start, end);
+}
+
+fn main() -> int {
+    for i in range(0, 10) {
+        print(i);
+    }
+
+    for i in range('a', 'z') {
+        print(i);
+    }
+
+    return 0;
+}

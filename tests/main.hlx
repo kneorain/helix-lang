@@ -1,3 +1,15 @@
+//===----------------------------------------- Helix -----------------------------------------====//
+//                                                                                                //
+//  Part of the Helix Project, under the Attribution 4.0 International license (CC BY 4.0).       //
+//  You are allowed to use, modify, redistribute, and create derivative works, even for           //
+//  commercial purposes, provided that you give appropriate credit, and indicate if changes       //
+//   were made. For more information, please visit: https://creativecommons.org/licenses/by/4.0/  //
+//                                                                                                //
+//  SPDX-License-Identifier: CC-BY-4.0                                                            //
+//  Copyright (c) 2024 (CC BY 4.0)                                                                //
+//                                                                                                //
+//====----------------------------------------------------------------------------------------====//
+
 ffi "c++" import "cstdio";
 ffi "c++" import "iostream";
 ffi "c++" import "vector";
@@ -20,7 +32,8 @@ fn add(a: int, b: int) -> int {
 op + fn add(a: Fraction, b: Fraction) -> Fraction {
     let new_n = add(a.n + b.d, b.n + a.d);
     let new_d = a.d * b.d;
-    return Fraction { n= new_n, d = new_d };
+    return { .n = new_n,
+             .d = new_d };
 }
 
 op - fn subtract(a: Fraction, b: Fraction) -> Fraction {
@@ -260,7 +273,7 @@ interface Bar derives Foo {
     fn bar() -> int;
 }
 class Fuzz {
-    fn foo() -> int {
+    static fn foo() -> int {
         return 0;
     }
 }
@@ -284,7 +297,7 @@ class Fish requires <T> if Bar in T, T derives Fuzz {
 
 // Function to print elements of a vector
 // TODO: implement range-based for loop
-fn print_vector(v: std::vector<int>
+fn print_vector(v: std::vector<int>) -> void {
     for i in range(v.size()) {
         printf("Vector element %d: %d\n", i, v[i]);
     }
@@ -307,7 +320,8 @@ class ABC {
     }
 }
 
-fn main() -> int {
+
+fn main( -> int {
     // Adding two numbers
     let sum = add(5, 7);
     printf("Sum: %d\n", sum);
@@ -337,8 +351,10 @@ fn main() -> int {
     } else {
         printf("Factorial is greater than or equal to sum.\n");
     }
-    let f1:Fraction = Fraction { n=1, d= 2 };
-    let f2:Fraction = Fraction { n= 3, d=4 };
+
+    let f1: Fraction = { .n=1, .d=2 };
+    let f2: Fraction = { .n=3, .d=4 };
+    
     let f3 = f1 + f2;
 
     // Use C-style printf for output
@@ -354,6 +370,7 @@ fn main() -> int {
     // Calling the function call operator to get the fraction as float
     // printf("f1 as float: %f\n", f1());
     // Creating an object of class ABC
+
     let obj = ABC(10, 20, 30);
     obj.print();
 
