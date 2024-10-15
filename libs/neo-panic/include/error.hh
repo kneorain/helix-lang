@@ -20,6 +20,7 @@
 #include <utility>
 #include <vector>
 
+#include "neo-json/include/json.hh"
 #include "neo-types/include/hxint.hh"
 #include "token/include/Token.hh"
 
@@ -50,20 +51,20 @@ struct _internal_error {
         string json;
 
         json += "{";
-        json += R"("color_mode": ")" + color_mode + "\", ";
-        json += R"("error_type": ")" + error_type + "\", ";
-        json += R"("level": ")" + level + "\", ";
-        json += R"("file": ")" + file + "\", ";
-        json += R"("msg": ")" + msg + "\", ";
-        json += R"("fix": ")" + fix + "\", ";
-        json += R"("display": ")" + display + "\", ";
+        json += R"("color_mode": ")" + neo::json::escape(color_mode) + "\", ";
+        json += R"("error_type": ")" + neo::json::escape(error_type) + "\", ";
+        json += R"("level": ")" + neo::json::escape(level) + "\", ";
+        json += R"("file": ")" + neo::json::escape(file) + "\", ";
+        json += R"("msg": ")" + neo::json::escape(msg) + "\", ";
+        json += R"("fix": ")" + neo::json::escape(fix) + "\", ";
+        json += R"("display": ")" + neo::json::escape(display) + "\", ";
         json += R"("line": )" + std::to_string(line) + ", ";
         json += R"("col": )" + std::to_string(col) + ", ";
         json += R"("offset": )" + std::to_string(offset) + ", ";
         json += R"("quick_fix": [)";
 
         for (size_t i = 0; i < quick_fix.size(); ++i) {
-            json += R"({"fix": ")" + quick_fix[i].first + R"(", "loc": )" +
+            json += R"({"fix": ")" + neo::json::escape(quick_fix[i].first) + R"(", "loc": )" +
                     std::to_string(quick_fix[i].second) + "}";
             if (i < quick_fix.size() - 1) {
                 json += ", ";

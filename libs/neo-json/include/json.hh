@@ -21,48 +21,13 @@ namespace neo {
 inline namespace _json {
     class Json;
 
-    constexpr inline std::string escape(const std::string &val) {
-        std::string result;
-        result.reserve(val.size());
-
-        for (char car : val) {
-            switch (car) {
-                case '"':
-                    result += "\\\"";
-                    break;
-                case '\\':
-                    result += "\\\\";
-                    break;
-                case '\n':
-                    result += "\\n";
-                    break;
-                case '\t':
-                    result += "\\t";
-                    break;
-                case '\r':
-                    result += "\\r";
-                    break;
-                case '\b':
-                    result += "\\b";
-                    break;
-                case '\f':
-                    result += "\\f";
-                    break;
-                default:
-                    result += car;
-                    break;
-            }
-        }
-        return result;
-    }
-
     template <typename _jsonable>
     concept Jsonable = requires(_jsonable a) {
         { a.to_json() } -> std::same_as<Json>;
     };
 
     using JsonVec_t = std::vector<Json>;
-    using data_t = std::variant<std::string, Json, JsonVec_t>;
+    using data_t    = std::variant<std::string, Json, JsonVec_t>;
     using std::string;
 
     class Json {
@@ -79,7 +44,7 @@ inline namespace _json {
                 return Json("\"" + escape(string(val)) + "\"", true);
             } else if constexpr (std::is_same_v<T, Json>) {
                 return val;
-            } else if constexpr (std::ranges::input_range<T> &&! std::is_same_v<T, string>) {
+            } else if constexpr (std::ranges::input_range<T> && !std::is_same_v<T, string>) {
                 return Json(process_iterable(val));  // Handle arrays of non-strings
             } else {
                 return Json(std::to_string(val), true);
@@ -118,8 +83,8 @@ inline namespace _json {
         }
 
         Json &add(const string &key, const string &val) ADD_STRING;
-        Json &add(const string &key, const char *val)   ADD_STRING;
-        Json &add(const string &key, char *val)         ADD_STRING;
+        Json &add(const string &key, const char *val) ADD_STRING;
+        Json &add(const string &key, char *val) ADD_STRING;
 
         template <typename T>
         Json &add(const string &key, const T &val) {
@@ -201,6 +166,61 @@ inline namespace _json {
             result += "}";
             if (is_base) {
                 result += "}";
+            }
+
+            return result;
+        }
+
+        constexpr static inline std::string escape(const std::string &val) {
+            std::string result;
+            result.reserve(val.size());
+
+            bool is_unicode_color = false;
+
+            for (char car : val) {
+                if (is_unicode_color) {
+                    // end ANSI escape sequence if the character is in the range 'A..Z' or 'a..z'
+                    if ((car >= 'A' && car <= 'Z') || (car >= 'a' && car <= 'z')) {
+                        is_unicode_color = false;
+                    }
+
+                    continue;
+                }
+
+                if (car == '\x1b') {
+                    is_unicode_color = true;
+                    continue;
+                }
+
+                switch (car) {
+                    case '"':
+                        result += "\\\"";
+                        break;
+                    case '\\':
+                        result += "\\\\";
+                        break;
+                    case '\n':
+                        result += "\\n";
+                        break;
+                    case '\t':
+                        result += "\\t";
+                        break;
+                    case '\r':
+                        result += "\\r";
+                        break;
+                    case '\b':
+                        result += "\\b";
+                        break;
+                    case '\f':
+                        result += "\\f";
+                        break;
+                    case '\a':
+                        result += "\\a";
+                        break;
+                    default:
+                        result += car;
+                        break;
+                }
             }
 
             return result;

@@ -320,25 +320,29 @@ size_t set_level(string &level, const float &err_level) {
 Panic::Panic(const CodeError &err)
     : level_len(set_level(final_err.level, err.err_code))
     , mark_pof(err.mark_pof) {
-    if (ERROR_MAP.at(err.err_code) == std::nullopt) {
+    auto err_map_at = ERROR_MAP.at(err.err_code);
+
+    if (err_map_at == std::nullopt) {
         throw std::runtime_error("err code \'" + std::to_string(err.err_code) + "\' not found");
     }
 
-    HAS_ERRORED = true;
+    if (err_map_at->level >= ERR) {
+        HAS_ERRORED = true;
+    }
 
     final_err.color_mode = "16bit";
     final_err.error_type = "code";
 
     final_err.file = err.pof->file_name();
 
-    final_err.msg = ERROR_MAP.at(err.err_code)->err;
+    final_err.msg = err_map_at->err;
     if (!err.err_fmt_args.empty()) {
-        final_err.msg = fmt_string(ERROR_MAP.at(err.err_code)->err, err.err_fmt_args);
+        final_err.msg = fmt_string(err_map_at->err, err.err_fmt_args);
     }
 
-    final_err.fix = ERROR_MAP.at(err.err_code)->fix;
+    final_err.fix = err_map_at->fix;
     if (!err.fix_fmt_args.empty()) {
-        final_err.fix = fmt_string(ERROR_MAP.at(err.err_code)->fix, err.fix_fmt_args);
+        final_err.fix = fmt_string(err_map_at->fix, err.fix_fmt_args);
     }
 
     final_err.line   = err.pof->line_number();
@@ -363,19 +367,27 @@ Panic::Panic(const CodeError &err)
 
 Panic::Panic(const CompilerError &err)
     : level_len(set_level(final_err.level, err.err_code)) {
-    HAS_ERRORED = true;
+    auto err_map_at = ERROR_MAP.at(err.err_code);
+
+    if (err_map_at == std::nullopt) {
+        throw std::runtime_error("err code \'" + std::to_string(err.err_code) + "\' not found");
+    }
+
+    if (err_map_at->level >= ERR) {
+        HAS_ERRORED = true;
+    }
 
     final_err.color_mode = "16bit";
     final_err.error_type = "compiler";
 
-    final_err.msg = ERROR_MAP.at(err.err_code)->err;
+    final_err.msg = err_map_at->err;
     if (err.err_fmt_args.empty()) {
-        final_err.msg = fmt_string(ERROR_MAP.at(err.err_code)->err, err.err_fmt_args);
+        final_err.msg = fmt_string(err_map_at->err, err.err_fmt_args);
     }
 
-    final_err.fix = ERROR_MAP.at(err.err_code)->fix;
+    final_err.fix = err_map_at->fix;
     if (err.fix_fmt_args.empty()) {
-        final_err.fix = fmt_string(ERROR_MAP.at(err.err_code)->fix, err.fix_fmt_args);
+        final_err.fix = fmt_string(err_map_at->fix, err.fix_fmt_args);
     }
 
     this->mark_pof = false;
