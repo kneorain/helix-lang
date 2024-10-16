@@ -28,14 +28,15 @@
 /// }
 ///
 
-interface Rangeable {
-    op ++ fn inc() -> Self;
-}
 
 
-class Range requires <Elem_t> if Rangeable in Elem_t {
+/// OP's in class defs need to ignore self parm and work without self while calling as well.
+
+ffi "c++" import "cstdio";
+
+class Range requires <T> {
     priv let start: T;
-    priv let end: T;
+    priv let _end: T;
 
     class Iterator {
         priv let current: T;
@@ -44,7 +45,7 @@ class Range requires <Elem_t> if Rangeable in Elem_t {
             self.current = current;
         }
 
-        op * fn deref(self) -> T {
+        op * fn deref(self, a: int) -> T {
             return self.current;
         }
 
@@ -59,9 +60,9 @@ class Range requires <Elem_t> if Rangeable in Elem_t {
         }
     }
 
-    fn Range(self, start: T, end: T) {
+    fn Range(self, start: T, _end: T) {
         self.start = start;
-        self.end = end;
+        self._end = _end;
     }
 
     fn begin(self) -> Iterator {
@@ -69,11 +70,11 @@ class Range requires <Elem_t> if Rangeable in Elem_t {
     }
 
     fn end(self) -> Iterator {
-        return Iterator(self.end);
+        return Iterator(self._end);
     }
 
-    fn size(self) -> usize {
-        return self.end - self.start;
+    fn size(self) -> size_t {
+        return self._end - self.start;
     }
 }
 
@@ -83,11 +84,11 @@ fn range(start: T, end: T) -> Range<T> requires <T> {
 
 fn main() -> int {
     for i in range(0, 10) {
-        print(i);
+        printf("%d\n", i);
     }
 
     for i in range('a', 'z') {
-        print(i);
+        printf("%c\n", i);
     }
 
     return 0;

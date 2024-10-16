@@ -730,7 +730,7 @@ CX_VISIT_IMPL(ClassDecl) {
                     token::Token func_name = func_decl->name->get_back_name();
 
                     process_func_decl(func_decl, func_name);
-                    
+
                     if (func_decl->modifiers.contains(token::tokens::KEYWORD_PUBLIC)) {
                         ADD_TOKEN(CXX_PUBLIC);
                         ADD_TOKEN(CXX_COLON);
@@ -740,12 +740,33 @@ CX_VISIT_IMPL(ClassDecl) {
                     } else if (func_decl->modifiers.contains(token::tokens::KEYWORD_PRIVATE)) {
                         ADD_TOKEN(CXX_PRIVATE);
                         ADD_TOKEN(CXX_COLON);
-                    } else { // public by default
+                    } else {  // public by default
                         ADD_TOKEN(CXX_PUBLIC);
                         ADD_TOKEN(CXX_COLON);
                     }
 
                     visit(*func_decl, func_name.value() == node.name->name.value());
+                } else if (child->getNodeType() == parser::ast::node::nodes::OpDecl) {
+                    auto op_decl = std::static_pointer_cast<parser::ast::node::OpDecl>(child);
+                    token::Token op_name = op_decl->func->name->get_back_name();
+
+                    process_func_decl(op_decl->func, op_name);
+
+                    if (op_decl->modifiers.contains(token::tokens::KEYWORD_PUBLIC)) {
+                        ADD_TOKEN(CXX_PUBLIC);
+                        ADD_TOKEN(CXX_COLON);
+                    } else if (op_decl->modifiers.contains(token::tokens::KEYWORD_PROTECTED)) {
+                        ADD_TOKEN(CXX_PROTECTED);
+                        ADD_TOKEN(CXX_COLON);
+                    } else if (op_decl->modifiers.contains(token::tokens::KEYWORD_PRIVATE)) {
+                        ADD_TOKEN(CXX_PRIVATE);
+                        ADD_TOKEN(CXX_COLON);
+                    } else {  // public by default
+                        ADD_TOKEN(CXX_PUBLIC);
+                        ADD_TOKEN(CXX_COLON);
+                    }
+
+                    visit(*op_decl);
                 } else {
                     ADD_PARAM(child);
                     ADD_TOKEN(CXX_SEMICOLON);
@@ -802,8 +823,10 @@ CX_VISIT_IMPL(InterDecl) {
                     ADD_PARAM(gen->var->path);  //
                     ADD_TOKEN(CXX_COMMA);
                 }  //
-                this->tokens.pop_back();  // TODO: make better: remove last comma
 
+                if (!node.derives->derives[0].first->generics->args.empty()) {
+                    tokens.pop_back();
+                }
             );
 
             for (size_t i = 1; i < node.derives->derives.size(); ++i) {
@@ -936,8 +959,7 @@ CX_VISIT_IMPL_VA(FuncDecl, bool no_return_t) {
     if (!no_return_t) {
         if (node.returns != nullptr) {  //
             ADD_NODE_PARAM(returns);
-        }
-        else {
+        } else {
             ADD_TOKEN(CXX_VOID);
         }
     }
@@ -994,7 +1016,7 @@ CX_VISIT_IMPL(OpDecl) {
         ADD_NODE_PARAM(func->generics);
     };
 
-    ADD_TOKEN(CXX_INLINE);     // inline the operator
+    ADD_TOKEN(CXX_INLINE);  // inline the operator
     if (node.func->returns) {  //
         ADD_NODE_PARAM(func->returns);
     } else {
@@ -1027,8 +1049,11 @@ CX_VISIT_IMPL(OpDecl) {
                      : node.func->params) {
                     ADD_PARAM(param->var->path);
                     ADD_TOKEN(CXX_COMMA);
-                } this->tokens
-                    .pop_back();  // TODO: make better: remove last `,` , make better in the
+                }
+                
+                if (node.func->params.size() > 0) {
+                    this->tokens.pop_back();  // TODO: make better: remove last `,` , make better in the
+                }
             );
             ADD_TOKEN(CXX_SEMICOLON););
     };

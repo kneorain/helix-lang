@@ -220,11 +220,25 @@ __CXIR_CODEGEN_BEGIN {
 
         [[nodiscard]] std::string to_CXIR() const {
             std::string cxir;
+            u64         current_line_no = 0;
 
-            // Build the CXIR string from tokens
-
-            for (const auto &token : tokens) {
-                cxir += token->to_CXIR();
+            // normalize tokens
+            // if tokens has a line number, add a new line
+            for (u64 i = 0; i < tokens.size(); ++i) {
+                // normalize so there arent multiple #line
+                if (tokens[i]->get_value()[0] == '#') {
+                    cxir +=  "\n" + tokens[i]->get_value() + " " + tokens[i+1]->get_value() + "\n";
+                    ++i;
+                } else if (tokens[i]->get_value() == ";") {
+                    cxir +=  " " + tokens[i]->get_value() + "\n";
+                } else if (tokens[i]->get_line() == 0 || tokens[i]->get_line() == current_line_no) {
+                    cxir += " " + tokens[i]->get_value() + " ";
+                } else {
+                    cxir += "\n#line " + std::to_string(tokens[i]->get_line()) + " \"" +
+                            tokens[i]->get_file_name() + "\"\n";
+                    cxir += " " + tokens[i]->get_value() + " ";
+                    current_line_no = tokens[i]->get_line();
+                }
             }
 
             // If cxir is empty, log and return early
@@ -359,9 +373,9 @@ __CXIR_CODEGEN_BEGIN {
         void visit(const parser ::ast ::node ::FFIDecl &node) override;
         void visit(const parser ::ast ::node ::LetDecl &node) override;
         void visit(const parser ::ast ::node ::OpDecl &node) override;
+        void visit(const parser ::ast ::node ::OpDecl &node, bool remove_self) {};
         void visit(const parser ::ast ::node ::Program &node) override;
-        void visit(const parser ::ast ::node ::FuncDecl &node) override { visit(node, false); }
-        ;
+        void visit(const parser ::ast ::node ::FuncDecl &node) override { visit(node, false); };
     };
 
     // inline CXIR get_node_json(const __AST_VISITOR::NodeT<> &node) {

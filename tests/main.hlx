@@ -14,7 +14,7 @@ ffi "c++" import "cstdio";
 ffi "c++" import "iostream";
 ffi "c++" import "vector";
 ffi "c++" import "string";
-ffi "c++" import "concepts"; 
+ffi "c++" import "concepts";
 // TODO: Make this is only to be added if interfaces are used that return types
 
 // Define the Fraction struct with n and d (numerator and denominator)
@@ -321,7 +321,7 @@ class ABC {
 }
 
 
-fn main( -> int {
+fn main() -> int {
     // Adding two numbers
     let sum = add(5, 7);
     printf("Sum: %d\n", sum);
@@ -354,6 +354,7 @@ fn main( -> int {
 
     let f1: Fraction = { .n=1, .d=2 };
     let f2: Fraction = { .n=3, .d=4 };
+    let
     
     let f3 = f1 + f2;
 
@@ -361,7 +362,7 @@ fn main( -> int {
     printf("f1: %d/%d\n", f1.n, f1.d);
     printf("f2: %d/%d\n", f2.n, f2.d);
     printf("f3 (f1 + f2): %d/%d\n", f3.n, f3.d);
-    printf("f1 == f2: %s\n", f1 == f2 ? "True" : "False");
+    printf("f1 == f2: %s\n",  "True" if f1 == f2 else "False");
 
     // Accessing elements using the subscript operator
     // printf("f1 numerator (f1[0]): %d\n", f1[0]);
