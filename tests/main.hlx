@@ -354,7 +354,6 @@ fn main() -> int {
 
     let f1: Fraction = { .n=1, .d=2 };
     let f2: Fraction = { .n=3, .d=4 };
-    let
     
     let f3 = f1 + f2;
 

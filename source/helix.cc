@@ -250,8 +250,22 @@ class CXIRCompiler {
         file << cxx;
         file.close();
 
-        std::string compile_flags = "-std=c++23 ";
+        std::string compiler        = "c++";
+        auto        compiler_result = exec<std::string>(compiler + " --version");
+        std::string compile_flags   = "-std=c++23 ";
         compile_flags += is_debug ? "-g " : "-O2 ";
+
+        if (compiler_result.output.find("clang") != std::string::npos) {
+            log<LogLevel::Info>("using system's 'clang' compiler");
+            compile_flags += "-fdiagnostics-format=json ";
+        } else if (compiler_result.output.find("gcc") != std::string::npos) {
+            log<LogLevel::Info>("using system's 'gcc' compiler");
+            compile_flags += "-fdiagnostics-parseable-fixits ";
+        } else {
+            log<LogLevel::Error>("aborting. unknown compiler: " + compiler_result.output);
+            return;
+        }
+
         compile_flags += "-fno-omit-frame-pointer -Wl,-w,-rpath,/usr/local/lib ";
         compile_flags += "\"" + source_file.string() + "\" -o \"" + (path / out).string() + "\"";
 
@@ -275,17 +289,17 @@ class CompilationUnit {
   public:
     int compile(int argc, char **argv) {
         std::chrono::time_point<std::chrono::high_resolution_clock> start;
-        parser::ast::NodeT<parser::ast::node::Program>     ast;
-        std::filesystem::path                              in_file_path;
-        generator::CXIR::CXIR                              emitter;
-        parser::lexer::Lexer                               lexer;
-        __TOKEN_N::TokenList                               tokens;
+        parser::ast::NodeT<parser::ast::node::Program>              ast;
+        std::filesystem::path                                       in_file_path;
+        generator::CXIR::CXIR                                       emitter;
+        parser::lexer::Lexer                                        lexer;
+        __TOKEN_N::TokenList                                        tokens;
 
         __CONTROLLER_CLI_N::CLIArgs parsed_args(argc, argv, "0.0.1-alpha-2012");
         check_exit(parsed_args);
 
         if (parsed_args.quiet || parsed_args.lsp_mode) {
-            NO_LOGS = true;
+            NO_LOGS           = true;
             error::SHOW_ERROR = false;
         }
 
@@ -375,7 +389,8 @@ class CompilationUnit {
         if (verbose) {
             log<LogLevel::Debug>("\n", colors::fg16::yellow, emitter.to_CXIR(), colors::reset);
         } else {
-            log<LogLevel::Info>("\n", colors::fg16::yellow, emitter.to_readable_CXIR(), colors::reset);
+            log<LogLevel::Info>(
+                "\n", colors::fg16::yellow, emitter.to_readable_CXIR(), colors::reset);
         }
     }
 
@@ -408,12 +423,12 @@ class CompilationUnit {
 
 int main(int argc, char **argv) {
     auto compiler = CompilationUnit();
-    int  result = 1;
+    int  result   = 1;
 
     try {
         result = compiler.compile(argc, argv);
-    } catch (error::Panic &) { // hard error
-        return 69;             // nice
+    } catch (error::Panic &) {  // hard error
+        return 69;              // nice
     }
 
     if (LSP_MODE && error::HAS_ERRORED) {
@@ -421,19 +436,11 @@ int main(int argc, char **argv) {
             print(err.to_json());
         }
 
-        return 1; // soft error
+        return 1;  // soft error
     }
 
     return result;
 }
-
-
-
-
-
-
-
-
 
 /*
 using the new toolchain the entire process can happen like this:
