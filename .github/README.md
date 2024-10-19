@@ -4,9 +4,10 @@
 
 | [Website](https://www.helix-lang.com) | [Introduction](#helix-programming-language) | [Why Helix?](#why-helix) | [Features](#features) | [Syntax Examples](#helix-syntax-examples) | [Quick Start](#quick-start) | [Goals](#goals) | [Community and Contributing](#community-and-contributing) | [License](#license) | [Acknowledgements](#acknowledgements) | [Links](#links) |
 
-# Helix Programming Language
+# Helix Programming Language: A Modern, High-Performance Language combining Rust, Python, and C++
 
-Helix is an experimental programming language designed for high-performance, safety, and seamless interoperability with Python, C, C++, and Rust. It provides developers with a clean syntax, a robust feature set, and a focus on efficient code writing and maintenance. Helix aims to simplify the development process while maximizing performance, making it ideal for systems programming and application development.
+## Why Helix?
+Helix is designed to address several limitations found in other modern languages like Rust and Zig:
 
 ---
 
@@ -14,23 +15,32 @@ Helix is an experimental programming language designed for high-performance, saf
   <img src="../assets/showcase.png" width="450" align="right" alt="Code Example">
 </div>
 
-## Why Helix?
+### Key Goals of Helix:
+- **High-performance**: Designed to match or surpass the speed of C.
+- **Safety**:           Focused on safe memory management without sacrificing developer productivity and freedom.
+- **Robustness**:       Provides tools and features that ensure code stability and reduce runtime errors.
 
-Helix is designed to address several limitations found in other modern languages like Rust and Zig:
+### Design Philosophy:
+- **Modern syntax**:    Inspired by Rust, but simpler, and understandable for anyone.
+- **General-purpose**:  Suitable for a wide range of applications, from systems programming to game development and artificial intelligence.
+- **Ease of use**:      Balances power with usability, making it friendly for both beginners and experienced developers.
 
-- **Performance:** Helix is optimized for speed and efficiency, making it ideal for performance-critical applications.
-- **Interoperability:** Seamless integration with Python, C++, Rust, and more allows developers to leverage existing codebases without sacrificing performance.
-- **Developer Productivity:** Advanced tooling, such as a robust standard library, package manager, and build system, streamlines the development process.
-- **Safety:** Helix includes a strong type system and error handling mechanisms to catch bugs at both compile-time and runtime, ensuring safer code.
+### Key Features:
+- **Performance-centric**:  Designed to compete with C in terms of performance.
+- **Expressive syntax**:    Combines Python's simplicity with Rust's modern constructs and C++'s power.
+- **Type safety**:          Strong type system, but with the flexibility of python type annotations.
+- **Concurrency**:          Built-in support for concurrency to take advantage of modern multicore architectures.
 
-## Key Features
+### Memory Safety in Helix:
+- **Borrow checker**:   Ensures safe memory management, similar to Rust's model.
+- **Non-blocking**:     Unlike stricter models, Helix treats **invalid borrows and ownership violations** as **warnings** rather than errors, allowing the program to compile and run.
+- **Reference-counted pointers**:   When an invalid borrow is detected, Helix automatically switches to a reference-counted pointer, maintaining functionality but potentially introducing a **performance hit**.
+- **Performance-conscious**:        Developers are informed through warnings about possible performance penalties, allowing them to decide when to optimize without being impeded by rigid safety rules. while still maintaining a high level of memory safety.
 
-- **Concurrency Support:** Helix offers easy-to-use `async` and `await` for writing concurrent programs.
-- **Pattern Matching:** A powerful pattern-matching system simplifies complex conditional logic.
-- **Macros and Processors:** Extensible macros and processors for code generation and optimization.
-- **Object-Oriented Programming (OOP):** Full OOP support with classes, inheritance, and polymorphism.
-- **Rich Error Reporting:** Detailed error messages to guide developers through debugging and optimization.
-- **Cross-Platform Interoperability:** Native support for Python, C, C++, and Rust out of the box.
+### Applications:
+- **Systems programming**:  Designed to work efficiently at the low level, close to hardware, while giving developers the freedom.
+- **Game development**:     Provides the tools necessary for fast, real-time performance in complex applications.
+- **AI development**:       Efficient enough for resource-intensive tasks like machine learning and artificial intelligence.
 
 ## Syntax Examples
 
@@ -68,7 +78,7 @@ While both Rust and Zig are excellent languages, they come with certain trade-of
 - **Strict Safety Mechanisms (Rust):** While Rust's borrow checker is a powerful tool, it can sometimes be too strict, leading to complex refactoring for developers.
 - **Limited Features (Zig):** Zig, while performant, lacks certain features like a macro processor that Helix provides.
 
-### Advantages of Helix
+### Helix: The Best of Both Worlds
 
 Helix draws inspiration from Rust, Python, and C++, combining the strengths of these languages while addressing their weaknesses:
 - **Balanced Safety:** Helix features a borrow checker, but with a less strict enforcement, offering flexibility without sacrificing safety.
@@ -122,7 +132,7 @@ $ Invoke-Expression (Invoke-Webrequest 'https://xmake.io/psget.text' -UseBasicPa
 1. Install [Python](https://www.python.org/downloads/)
    
 2. Install Xmake (bash or zsh):
-```sh
+```ps
 curl -fsSL https://xmake.io/shget.text | bash
 ```
 
@@ -131,18 +141,18 @@ curl -fsSL https://xmake.io/shget.text | bash
 ##### All Platforms (After following platform specific steps)
 
 1. Make a directory for the project and clone the repo
-```sh
+```ps
 $ git clone https://github.com/kneorain/helix-lang.git
 $ cd helix-lang
 ```
 
 2. Build Helix along with the LLVM backend, Clang, Tests, and the Helix Compiler Toolchain API (~30 minutes on a 8-core CPU)
-```sh
+```ps
 $ xmake build
 ```
 
 3. Run the tests or the compiler
-```sh
+```ps
 $ xmake run tests
 $ xmake run helix -h
 ```
@@ -160,22 +170,37 @@ print("Hello, World!");
 
 To compile then run the source:
 
-```bash
-path/to/helix hello_world.hlx
-./hello_world
+```ps
+$ ./build/.../bin/helix hello_world.hlx
+or
+$ helix hello_world.hlx
+$ ./hello_world
 ```
 
 ---
 
-## Goals
+## Project Status and Roadmap
 
-Helix is built with the following goals in mind:
+Helix is currently in the early stages of development, currently focusing on the toolchain and compiler. The project is under active development, and we are working hard to bring you a 0.0.1 release soon.
 
-- **Interoperability:** Seamless interop with Python, C, C++, and Rust.
-- **Performance:** High-performance code generation with optimizations for speed.
-- **Simplicity:** Modern syntax inspired by Python for ease of use.
-- **Comprehensive Feature Set:** Robust support for error handling, concurrency, and more.
-- **Community-Driven Development:** Helix is open-source and encourages contributions from the community.
+### Checklist for the 0.0.1 release:
+#### Compiler
+- [x] Lexer
+- [ ] Preprocessor
+- [ ] AST Parser
+- [ ] CST Parser
+- [ ] Semantic Analyzer
+- [ ] Code Generator
+- [ ] Optimizer
+- [ ] Linker
+- [ ] Compiler API
+- [ ] Compiler CLI
+- [ ] Compiler Tests
+- [ ] Compiler Documentation
+
+#### Standard Library
+
+
 
 ---
 

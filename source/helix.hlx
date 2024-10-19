@@ -202,13 +202,43 @@ fn compile(argc: int, argv: **char) -> int {
     return 0;
 }
 
-fn main(int argc, char **argv) -> int {
-    try:
-        compile(argc, argv);
-    
-    catch (err: &error::Panic):
-        if error::HAS_ERRORED:
-            for err in error::ERRORS:
-                print(err.to_json());
+fn main(argc: int, argv: **char) -> int {
+    try: compile(argc, argv);
+    catch (err: &error::Panic): if error::HAS_ERRORED: for err in error::ERRORS: print(err.to_json());
+    catch: print("unknown error occurred");
 }
+
+test "this is main.hlx" {
+    let a: int;
+    let b: int;
+    let c: int;
+
+    print("a: %d, b: %d, c: %d\n", a, b, c);
+
+    let abc = ABC(1, 2, 3);
+    abc.print();
+
+    let sum = add(5, 7);
+}
+
+/* other.hlx
+```helix
+
+import main;
+
+fn run_tests() {
+    test main; // runs all tests defined in main.hlx
+    test main["this is main.hlx"]; // runs the test with the given name
+}
+
+fn main() -> int {
+    run_tests();
+
+    // everything else
+
+    return 0;
+}
+
+```
+*/
 

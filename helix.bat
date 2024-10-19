@@ -22,9 +22,14 @@ if "%1"=="" goto endloop
 
 :endloop
 
-rem Get the path of the binary
-for /f "tokens=2" %%a in ('xmake show -t helix ^| findstr "targetfile"') do (
-    set "PATH_TO_BINARY=%%a"
+rem Get the path of the binary using xmake and filter by targetfile
+for /f "tokens=3" %%a in ('xmake show -t helix ^| findstr "targetfile"') do (
+    set "RAW_PATH=%%a"
+)
+
+rem Strip ANSI color codes and non-printable characters using PowerShell
+for /f %%b in ('powershell -command "$input = '%RAW_PATH%'; $cleanPath = $input -replace '\x1B\[[0-9;]*[a-zA-Z]', ''; $cleanPath.Trim()"') do (
+    set "PATH_TO_BINARY=%%b"
 )
 
 rem Convert to an absolute path using for loop to append to current directory
