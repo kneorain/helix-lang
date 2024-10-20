@@ -87,8 +87,10 @@
 /// TODO: should unions be Statements in the form of anonymous unions or concrete type decls???  ///
 //===-----------------------------------------------------------------------------------------====//
 
+#include <cstddef>
 #include <cstdio>
 #include <expected>
+#include <iterator>
 #include <memory>
 #include <unordered_set>
 #include <utility>
@@ -409,14 +411,70 @@ AST_NODE_IMPL_VISITOR(Jsonify, StructDecl) {
 
 // ---------------------------------------------------------------------------------------------- //
 
-AST_NODE_IMPL(Declaration, ConstDecl) { /* TODO - MAYBE REMOVE */
+AST_NODE_IMPL(Declaration, ConstDecl, const std::shared_ptr<__TOKEN_N::TokenList> &modifiers) { /* TODO - MAYBE REMOVE */
     IS_NOT_EMPTY;
     // ConstDecl := Modifiers 'const' Modifiers VarDecl* ';'
 
-    NOT_IMPLEMENTED;
+    NodeT<ConstDecl> node = make_node<ConstDecl>(true);
+
+
+    // ignore const modifer
+    if (modifiers != nullptr) {
+        for (auto &tok : *modifiers) {
+            if (!node->vis.find_add(tok.current().get())) {
+                return std::unexpected(
+                    PARSE_ERROR(tok.current().get(), "invalid modifier for const"));
+            }
+        }
+    } else {
+        while (node->vis.find_add(CURRENT_TOK)) {
+            iter.advance();  // skip modifier
+        }
+
+        IS_EXCEPTED_TOKEN(__TOKEN_N::KEYWORD_CONST);
+        iter.advance();  // skip 'const'
+    }
+
+    while (node->modifiers.find_add(CURRENT_TOK)) {
+        iter.advance();  // skip modifier
+    }
+
+    while
+        CURRENT_TOKEN_IS(__TOKEN_N::IDENTIFIER) {
+            ParseResult<VarDecl> var = parse<VarDecl>(true, true); // force type and value
+            RETURN_IF_ERROR(var);
+
+            // if no value is provided type is required
+            if ((var.value()->value == nullptr) && (var.value()->var->type == nullptr)) {
+                return std::unexpected(
+                    PARSE_ERROR(var.value()->var->path->name, "expected a type or value for const"));
+            }
+
+            node->vars.emplace_back(var.value());
+
+            if (CURRENT_TOKEN_IS(__TOKEN_N::PUNCTUATION_COMMA)) {
+                iter.advance();  // skip ','
+            }
+        }
+
+    IS_EXCEPTED_TOKEN(__TOKEN_N::PUNCTUATION_SEMICOLON);
+    iter.advance();  // skip ';'
+
+    return node;
 }
 
-AST_NODE_IMPL_VISITOR(Jsonify, ConstDecl) { json.section("ConstDecl"); }
+AST_NODE_IMPL_VISITOR(Jsonify, ConstDecl) {
+    std::vector<neo::json> vars;
+
+    for (const auto &var : node.vars) {
+        vars.push_back(get_node_json(var));
+    }
+
+    json.section("ConstDecl")
+        .add("vars", vars)
+        .add("vis", node.vis.to_json())
+        .add("modifiers", node.modifiers.to_json());
+}
 
 // ---------------------------------------------------------------------------------------------- //
 
@@ -1073,9 +1131,19 @@ AST_BASE_IMPL(Declaration, parse) {
         tok = CURRENT_TOK;  /// get the next token
     }
 
+    if (tok.token_kind() == __TOKEN_N::IDENTIFIER) {
+        if (modifiers != nullptr) {
+            for (std::iter_difference_t<__TOKEN_N::TokenList> i = 0; i < static_cast<std::iter_difference_t<__TOKEN_N::TokenList>>(modifiers->size()); i++) {
+                if (modifiers->at(i).token_kind() == __TOKEN_N::KEYWORD_CONST) {
+                    //remove the const modifier from the list
+                    modifiers->erase(modifiers->cbegin() + i);
+                    return parse<ConstDecl>(modifiers);
+                }
+            }
+        }
+    }
+
     switch (tok.token_kind()) {
-        case __TOKEN_N::KEYWORD_CONST:
-            return parse<ConstDecl>();
         case __TOKEN_N::KEYWORD_CLASS:
             return parse<ClassDecl>(modifiers);
         case __TOKEN_N::KEYWORD_ENUM:

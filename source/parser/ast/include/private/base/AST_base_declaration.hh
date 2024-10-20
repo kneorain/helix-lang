@@ -97,7 +97,8 @@ __AST_NODE_BEGIN {
         parse_ModuleDecl(const std::shared_ptr<__TOKEN_N::TokenList> &modifiers = nullptr);
         ParseResult<StructDecl>
         parse_StructDecl(const std::shared_ptr<__TOKEN_N::TokenList> &modifiers = nullptr);
-        ParseResult<ConstDecl> parse_ConstDecl();
+        ParseResult<ConstDecl>
+        parse_ConstDecl(const std::shared_ptr<__TOKEN_N::TokenList> &modifiers = nullptr);
         ParseResult<ClassDecl>
         parse_ClassDecl(const std::shared_ptr<__TOKEN_N::TokenList> &modifiers = nullptr);
         ParseResult<InterDecl>

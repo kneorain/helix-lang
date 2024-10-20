@@ -344,6 +344,7 @@ fn hi_there() -> (int, string) {
 fn main() -> i32 {
     // Adding two numbers
     let sum = add(5, 7);
+    const x: i32 = 10;
     printf("Sum: %d\n", sum);
 
     // Calculating factorial

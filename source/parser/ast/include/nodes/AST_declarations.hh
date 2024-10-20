@@ -115,10 +115,12 @@ __AST_NODE_BEGIN {
     class ConstDecl final : public Node {
         BASE_CORE_METHODS(ConstDecl);
 
-        // ConstDecl :=  VisDecl? 'const' SharedModifiers VarDecl* ';'
+        // LetDecl :=  VisDecl? 'let'   SharedModifiers VarDecl* ';'
+        explicit ConstDecl(bool /* unused */) {}
 
-        NodeV<VarDecl> vars;
         Modifiers      modifiers = Modifiers(Modifiers::ExpectedModifier::FuncSpec);
+        Modifiers      vis       = Modifiers(Modifiers::ExpectedModifier::AccessSpec);
+        NodeV<VarDecl> vars;
     };
 
     class ClassDecl final : public Node {

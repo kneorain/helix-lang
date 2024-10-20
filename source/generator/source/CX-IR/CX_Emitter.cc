@@ -743,7 +743,12 @@ CX_VISIT_IMPL(StructDecl) {  // TODO: only enums, types, and unions
     // enums should be able to as well... idea?
 }
 
-CX_VISIT_IMPL(ConstDecl) { CXIR_NOT_IMPLEMENTED; }
+CX_VISIT_IMPL(ConstDecl) {
+    for (const auto &param : node.vars) {
+        ADD_TOKEN(CXX_CONST);
+        param->accept(*this);
+    };
+}
 
 CX_VISIT_IMPL(ClassDecl) {
     auto check_self_and_static =

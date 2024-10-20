@@ -20,7 +20,7 @@
 - [x] Parse functions
 - [x] Parse structs
 - [x] Parse enums
-- [ ] Parse constants
+- [x] Parse constants
 - [x] Parse variables
 - [x] Parse Operator Overloads
 - [x] Parse Interfaces
