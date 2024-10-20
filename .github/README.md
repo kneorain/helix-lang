@@ -2,7 +2,7 @@
   <img src="../assets/helix-logo.svg" alt="Helix Programming Language Logo" width="100%">
 </div>
 
-| [Website](https://www.helix-lang.com) | [Introduction](#helix-programming-language) | [Why Helix?](#why-helix) | [Features](#features) | [Syntax Examples](#helix-syntax-examples) | [Quick Start](#quick-start) | [Goals](#goals) | [Community and Contributing](#community-and-contributing) | [License](#license) | [Acknowledgements](#acknowledgements) | [Links](#links) |
+| [Website](https://www.helix-lang.com) | [Introduction](#helix-programming-language-a-modern-high-performance-language-combining-rust-python-and-c) | [Quick Start](#quick-start) | [Project Status and Roadmap](#project-status-and-roadmap) | [Community and Contributing](#community-and-contributing) | [License](#license) | [Acknowledgements](#acknowledgements) | [Links](#links) |
 
 # Helix Programming Language: A Modern, High-Performance Language combining Rust, Python, and C++
 
@@ -29,20 +29,13 @@ Helix is designed to address several limitations found in other modern languages
 - **Performance-centric**:  Designed to compete with C in terms of performance.
 - **Expressive syntax**:    Combines Python's simplicity with Rust's modern constructs and C++'s power.
 - **Type safety**:          Strong type system, but with the flexibility of python type annotations.
-- **Concurrency**:          Built-in support for concurrency to take advantage of modern multicore architectures.
-
-### Memory Safety in Helix:
-- **Borrow checker**:   Ensures safe memory management, similar to Rust's model.
-- **Non-blocking**:     Unlike stricter models, Helix treats **invalid borrows and ownership violations** as **warnings** rather than errors, allowing the program to compile and run.
-- **Reference-counted pointers**:   When an invalid borrow is detected, Helix automatically switches to a reference-counted pointer, maintaining functionality but potentially introducing a **performance hit**.
-- **Performance-conscious**:        Developers are informed through warnings about possible performance penalties, allowing them to decide when to optimize without being impeded by rigid safety rules. while still maintaining a high level of memory safety.
+- **Interoperability**:     Seamless integration starting with C and C++, then expanding to other languages. With a extendable FFI system that allows for easy integration with any other languages.
+- **Non-Erroring Borrow checker**: Ensures safe memory management, similar to Rust's borrow checker but, Helix treats **invalid borrows and ownership violations** as **warnings** rather than errors, allowing the program to compile and run. but in a performance degraded mode, while still maintaining memory safety.
 
 ### Applications:
 - **Systems programming**:  Designed to work efficiently at the low level, close to hardware, while giving developers the freedom.
 - **Game development**:     Provides the tools necessary for fast, real-time performance in complex applications.
 - **AI development**:       Efficient enough for resource-intensive tasks like machine learning and artificial intelligence.
-
-## Syntax Examples
 
 ### Error Reporting
 Helix provides detailed and informative error messages to help with debugging:
@@ -183,24 +176,55 @@ $ ./hello_world
 
 Helix is currently in the early stages of development, currently focusing on the toolchain and compiler. The project is under active development, and we are working hard to bring you a 0.0.1 release soon.
 
+At this point the compiler is usable, but errors only extend to syntax errors, any errors related to code are not yet implemented such as type errors, undefined variables, etc.
+
 ### Checklist for the 0.0.1 release:
 #### Compiler
-- [x] Lexer
-- [ ] Preprocessor
-- [ ] AST Parser
-- [ ] CST Parser
-- [ ] Semantic Analyzer
-- [ ] Code Generator
-- [ ] Optimizer
-- [ ] Linker
-- [ ] Compiler API
-- [ ] Compiler CLI
-- [ ] Compiler Tests
-- [ ] Compiler Documentation
+- [x] lexer
+- [ ] preprocessor
+- [x] ast parser
+- [ ] cst parser
+- [ ] semantic analyzer
+- [x] code generator
+- [ ] optimizer
+- [ ] linker
+- [ ] compiler api
+- [x] compiler cli
+- [ ] compiler tests
+- [ ] compiler documentation
 
-#### Standard Library
-
-
+#### Language
+- [x] basic syntax
+- [x] functions
+- [x] classes
+- [ ] modules
+- [x] generics (requires)
+- [x] type bounds
+- [x] enums
+- [x] structs
+- [ ] async/await
+- [ ] spawn/thread
+- [x] ffi c
+- [x] ffi c++
+- [ ] ffi python
+- [ ] ffi rust
+- [x] error handling
+- [ ] macros
+- [ ] attributes
+- [ ] concurrency
+- [x] pointers
+- [x] references
+- [x] modules
+- [x] operator overloading
+- [x] type inference
+- [ ] type aliases
+- [x] type casting
+- [ ] type checking
+- [ ] interfaces
+- [x] inheritance
+- [ ] extends keyword
+- [ ] imports
+- [ ] test keyword (language level testing framework)
 
 ---
 

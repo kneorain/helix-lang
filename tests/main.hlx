@@ -19,12 +19,12 @@ ffi "c++" import "concepts";
 
 // Define the Fraction struct with n and d (numerator and denominator)
 struct Fraction {
-    let n: int;
-    let d: int;
+    let n: i32;
+    let d: i32;
 }
 
 // Add function at the global scope
-fn add(a: int, b: int) -> int {
+fn add(a: i32, b: i32) -> i32 {
     return a + b;
 }
 
@@ -195,7 +195,7 @@ op >= fn greater_than_or_equal(a: Fraction, b: Fraction) -> bool {
     return a.n * b.d >= b.n * a.d;
 }
 
-// op <=> fn three_way_comparison(a: Fraction, b: Fraction) -> int {
+// op <=> fn three_way_comparison(a: Fraction, b: Fraction) -> i32 {
 //     if a.n * b.d < b.n * a.d {
 //         return -1;
 //     } else if a.n * b.d > b.n * a.d {
@@ -223,7 +223,7 @@ op == fn equals(a: Fraction, b: Fraction) -> bool {
 }
 
 // // Overload the subscript operator for Fraction (returning numerator or denominator)
-// op [] fn access_element(a: Fraction, index: int) -> int {
+// op [] fn access_element(a: Fraction, index: i32) -> i32 {
 //     if index == 0 {
 //         return a.n;
 //     } else if index == 1 {
@@ -237,7 +237,7 @@ op == fn equals(a: Fraction, b: Fraction) -> bool {
 // op () fn fraction_to_float(a: Fraction) -> float {
 //     return a.n as float / a.d as float;
 // }
-// TODO: references do not work
+// TODO: references do not work - THEY DO NOW!!!!
 // Overload the stream insertion operator (for printing)
 // op << fn stream_insert(out: std::ostream , a: Fraction) -> std::ostream {
 //     return out << a.n << "/" << a.d;
@@ -248,17 +248,17 @@ op == fn equals(a: Fraction, b: Fraction) -> bool {
 
 
 // Recursive function to calculate factorial
-fn factorial(n: int) -> int {
+fn factorial(n: i32) -> i32 {
     if n <= 1:
         return 1;
 
     return n * factorial(n - 1);
 }
 
-const eval fn range(n: int) -> std::vector<int> {
-    let v: std::vector<int>;
+const eval fn range(n: i32) -> std::vector::<i32> {
+    let v: std::vector::<i32>;
 
-    for (let i: int = 0; i < n; i++) {
+    for (let i: i32 = 0; i < n; i++) {
         v.push_back(i);
     }
     
@@ -266,14 +266,14 @@ const eval fn range(n: int) -> std::vector<int> {
 }
 
 interface Foo {
-    fn foo() -> int;
+    fn foo() -> i32;
 }
 
 interface Bar derives Foo {
-    fn bar() -> int;
+    fn bar() -> i32;
 }
 class Fuzz {
-    static fn foo() -> int {
+    static fn foo() -> i32 {
         return 0;
     }
 }
@@ -297,7 +297,7 @@ class Fish requires <T> if Bar in T, T derives Fuzz {
 
 // Function to print elements of a vector
 // TODO: implement range-based for loop
-fn print_vector(v: std::vector<int>) -> void {
+fn print_vector(v: std::vector::<i32>) -> void {
     for i in range(v.size()) {
         printf("Vector element %d: %d\n", i, v[i]);
     }
@@ -305,11 +305,11 @@ fn print_vector(v: std::vector<int>) -> void {
 
 
 class ABC {
-    let a: int;
-    let b: int;
-    let c: int;
+    let a: i32;
+    let b: i32;
+    let c: i32;
 
-    fn ABC(self, a: int, b: int, c: int) {
+    fn ABC(self, a: i32, b: i32, c: i32) {
         self.a = a;
         self.b = b;
         self.c = c;
@@ -321,7 +321,27 @@ class ABC {
 }
 
 
-fn main() -> int {
+/// WARNING: THIS ONLY FREES AT END OF SCOPE
+/// use __sfree! to free stack memory in local scope like a loop
+/// otherwise, use heap memory
+// macro __salloc!(name, typ, size) {
+//     let name: *typ = alloca(size * sizeof(typ));
+// }
+
+// macro __sfree!(name) {
+//     free(name)
+// }
+
+class array requires <T, const N: u32> {
+    let data: *T = alloca(N * sizeof(T)) as *T;
+    let size: u32 = N;
+}
+
+fn hi_there() -> (int, string) {
+    return (10, "Hello");
+}
+
+fn main() -> i32 {
     // Adding two numbers
     let sum = add(5, 7);
     printf("Sum: %d\n", sum);
@@ -331,12 +351,40 @@ fn main() -> int {
     printf("Factorial: %d\n", fact);
 
     // Working with a C++ vector
-    let numbers: std::vector<int> = [1, 2, 3, 4];
+    let numbers: std::vector::<i32> = [1, 2, 3, 4];
     numbers.push_back(10);
     numbers.push_back(20);
     numbers.push_back(30);
     numbers.push_back(40);
     numbers.push_back(50);
+    
+    let a: i32 = 10;
+    let bp: *i32 = &a;
+
+    let xy = hi_there();
+    printf("x: %d, y: %s\n", std::get::<0>(xy), std::get::<1>(xy).c_str());
+
+    let primitive_numbers: *u32 = alloca(5 * sizeof(u32)) as *u32;
+    primitive_numbers[0] = 1;
+    primitive_numbers[1] = 2;
+    primitive_numbers[2] = 3;
+    primitive_numbers[3] = 4;
+    primitive_numbers[4] = 5;
+    
+
+    for i in range(5) {
+        printf("Primitive number %d: %d\n", i, primitive_numbers[i]);
+    }
+
+    printf("Primitive numbers freed\n");
+
+    let windows_open_adder: *i32 = 0x00000000 as *i32;
+
+    printf("windows_open_adder: %p\n", bp);
+    printf("windows_open: %d\n", a);
+
+    printf("bp: %d\n", *bp);
+    printf("bp address: %p\n", bp);
 
     // Printing vector elements
     print_vector(numbers);
@@ -362,6 +410,12 @@ fn main() -> int {
     printf("f2: %d/%d\n", f2.n, f2.d);
     printf("f3 (f1 + f2): %d/%d\n", f3.n, f3.d);
     printf("f1 == f2: %s\n",  "True" if f1 == f2 else "False");
+
+    printf("%s\n", "true" if (3 + 2 * 5    == 13) else "false");
+    printf("%s\n", "true" if ((3 + 2) * 5  == 25) else "false");
+    printf("%s\n", "true" if (10 / 2 + 3   == 8 ) else "false");
+    printf("%s\n", "true" if (10 / (2 + 3) == 2 ) else "false");
+    printf("%s\n", "true" if (5 + 4 - 3    == 6 ) else "false");
 
     // Accessing elements using the subscript operator
     // printf("f1 numerator (f1[0]): %d\n", f1[0]);

@@ -1,22 +1,97 @@
-# Todo list of all the things remaining to be done in the short term.
+# Todo list of all the things remaining to be done in the short term. (high to low priority)
 
-# - [ ] Parse simple macros and invocations
-# - [ ] Parse basic helix imports (star imports only for now)
-# - [ ] Parse and codegen reference and pointer types along with nullability
-# - [ ] Get CXIR compile messages to convert to helix errors
-# - [ ] Codegen C++ headers to allow C++ to call helix code
-# - [ ] Parse TurboFish syntax (temporary until the symbol table is implemented)
-# - [ ] Make test syntax work for definitions and usages
-# - [ ] Parse and codegen catch blocks with no catch type
-
+- [x] Parse TurboFish syntax (temporary until the symbol table is implemented)
+- [x] Parse and codegen reference and pointer types along with nullability
+- [ ] Parse and codegen function pointers
+- [x] Parse Tuple types and codegen them
+- [ ] Add support for packing and unpacking functions and destructuring
+- [ ] Parse simple macros and invocations
+- [ ] Parse eval if statements
+- [ ] Get CXIR compile messages to convert to helix errors
+- [ ] Parse basic helix imports (star imports only for now)
+- [ ] Codegen C++ headers to allow C++ to call helix code
+- [ ] Parse and codegen catch blocks with no catch type
+- [ ] Make test syntax work for definitions and usages
+- [ ] Make classes immutable by default
 
 # Completed:
-# Parser:
-#    - [x] Parse types
-#    - [x] Parse functions
-#    - [x] Parse structs
-#    - [x] Parse enums
-#    - [ ] Parse constants
-#    - [x] Parse variables
-#    - [x] Parse Operator Overloads
-#    - [x] Parse Interfaces
+### Parser:
+- [x] Parse types
+- [x] Parse functions
+- [x] Parse structs
+- [x] Parse enums
+- [ ] Parse constants
+- [x] Parse variables
+- [x] Parse Operator Overloads
+- [x] Parse Interfaces
+
+# draft: **Merging Pointers and References**
+### Rule Set (safe pointers):
+- **`*i32`:**
+  - Behaves like a reference: accessed without explicit dereferencing.
+  - Can be uninitialized initially but must be initialized before usage. (checked at compile-time)
+  - Must always point to a valid memory address. (enforced by not being allowed to set a custom location to point to)
+  - Cannot be set to `&null`.
+  - Internally auto-dereferences during code generation.
+
+```rs
+let a: i32 = 123;
+let a_ptr: *i32 = &a;
+
+print(a_ptr); // prints 123
+a_ptr + 2;    // a_ptr = 125
+```
+
+- **`*i32?`:**
+  - Similar to a reference: accessed without explicit dereferencing.
+  - Can be uninitialized initially but must be initialized before usage. (checked at compile-time)
+  - Can point to `&null`, and this can be checked using `... != &null`. (compile-time warning if not checked for null)
+  - Must always point to a valid memory address. (enforced by not being allowed to set a custom location to point to)
+  - Internally auto-dereferences during code generation.
+
+```rs
+let a: i32 = 123;
+let a_ptr: *i32? = &null;
+
+a_ptr = &a; // a_ptr = 123
+
+if a_ptr != &null {
+    print(a_ptr); // prints 123
+    a_ptr + 2;    // a_ptr = 125
+}
+```
+
+### Rule Set (unsafe pointers):
+- **`unsafe *i32`:**
+  - Requires explicit dereferencing for access.
+  - Must be initialized before usage. (checked at compile-time)
+  - Can be set to `&null` and does not need to point to a valid memory address.
+
+```rs
+let a: i32 = 123;
+let a_ptr: unsafe *i32 = 0xAB12 as *i32; // a_ptr points to 0xAB12
+
+print(*a_ptr); // if 0xAB12 is uninitialized then segfault or undefined behavior, else reads data in 0xAB12
+
+a_ptr = &a; // reassign to a address
+```
+
+- **`unsafe *i32?`:**
+  - Requires explicit dereferencing for access.
+  - Doesn’t need to be initialized by the time of usage.
+  - Can be set to `&null` and does not need to point to a valid memory address.
+
+```rs
+let a: i32 = 123;
+let a_ptr: unsafe *i32?; // a_ptr points to 0xAB12
+
+a_ptr = 0xAB12 as *i32;
+
+print(*a_ptr); // if 0xAB12 is uninitialized then segfault or undefined behavior, else reads data in 0xAB12
+
+a_ptr = &a; // reassign to a address
+```
+
+- **`&i32?` | `&i32`:**
+  - Should be disallowed completely.
+  - If a user needs a version of `*i32` that cannot be uninitialized, they should use `reference<i32>` instead.
