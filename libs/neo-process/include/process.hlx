@@ -1,0 +1,175 @@
+
+// similar to python subprocess
+/// \brief this allows a user to start a new process, connect to its input/output/error pipes,
+///        and obtain its return code. while also allowing the user to send input to the process
+///        and capture its output.
+
+eval if defined(_WIN32) || defined(WIN32) || defined(_WIN64) || defined(WIN64) {
+    macro __NEO_WINDOWS__;
+} else {
+    macro __NEO_UNIX__;
+}
+
+ffi "c++" import "iostream";
+ffi "c++" import "string";
+ffi "c++" import "vector";
+
+eval if defined(__NEO_WINDOWS__) {
+    ffi "c++" import "windows.h";
+} else {
+    ffi "c++" import "sys/wait.h";
+    ffi "c++" import "unistd.h";
+}
+
+module neo {
+    inline module detail {
+        struct process_handle {
+            eval if defined(__NEO_WINDOWS__) {
+                let hProcess: HANDLE;
+                let hThread: HANDLE;
+            } else {
+                let pid: pid_t;
+            }
+        }
+
+        struct pipe_handle {
+            eval if defined(__NEO_WINDOWS__) {
+                let hRead: HANDLE;
+                let hWrite: HANDLE;
+            } else {
+                let fd: *int = salloc(sizeof(int) * 2);
+            }
+        }
+
+        class process_info {
+            let handle: process_handle?;
+            let stdin:  pipe_handle?;
+            let stdout: pipe_handle?;
+            let stderr: pipe_handle?;
+
+            inline fn create_pipe() -> pipe_handle {
+                let pipe: pipe_handle;
+
+                eval if defined(__NEO_WINDOWS__) {
+                    let saAttr: SECURITY_ATTRIBUTES;
+                    saAttr.nLength              = sizeof(SECURITY_ATTRIBUTES);
+                    saAttr.bInheritHandle       = TRUE;
+                    saAttr.lpSecurityDescriptor = &null;
+
+                    if !CreatePipe(&pipe.hRead, &pipe.hWrite, &saAttr, 0) {
+                        panic std::runtime_error("failed to create pipe");
+                    }
+
+                } else {
+                    if pipe(pipe.fd) == -1 {
+                        panic std::runtime_error("failed to create pipe");
+                    }
+                }
+
+                return pipe;
+            }
+        }
+
+        inline fn close_pipe(pipe: &pipe_handle) {
+            eval if defined(__NEO_WINDOWS__) {
+                CloseHandle(pipe.hRead);
+                CloseHandle(pipe.hWrite);
+            } else {
+                close(pipe.fd[0]);
+                close(pipe.fd[1]);
+            }
+        }
+
+        inline fn create_process(const command: &std::string) -> process_handle {
+            let handle: process_handle;
+
+            eval if defined(__NEO_WINDOWS__) {
+                let si: STARTUPINFO;
+                let pi: PROCESS_INFORMATION;
+
+                ZeroMemory(&si, sizeof(si));
+                si.cb = sizeof(si);
+                ZeroMemory(&pi, sizeof(pi));
+
+                if !CreateProcess(&null, (command.c_str() as const *char), &null, &null,
+                                   true, 0, &null, &null, &si, &pi) {
+                    panic std::runtime_error("failed to create process");
+                }
+
+                handle.hProcess = pi.hProcess;
+                handle.hThread  = pi.hThread;
+
+            } else {
+                let pid = fork();
+
+                if pid == -1 {
+                    panic std::runtime_error("failed to create process");
+                }
+
+                if pid == 0 {
+                    execl("/bin/sh", "sh", "-c", command.c_str(), &null);
+                    exit(127);
+                }
+
+                handle.pid = pid;
+                
+            }
+            return handle;
+        }
+
+        inline fn close_process(handle: &process_handle) -> void {
+            eval if defined(__NEO_WINDOWS__) {
+                CloseHandle(handle.hProcess);
+                CloseHandle(handle.hThread);
+            } else {
+                waitpid(handle.pid, &null, 0);
+            }
+        }
+
+        inline fn write_to_pipe(pipe: &pipe_handle, const data: &std::string) -> void {
+            eval if defined(__NEO_WINDOWS__) {
+                let bytes_written: DWORD;
+                WriteFile(pipe.hWrite, data.c_str(), data.size(), &bytes_written, &null);
+            } else {
+                write(pipe.fd[1], data.c_str(), data.size());
+            }
+        }
+
+        inline fn read_from_pipe(pipe: &pipe_handle) -> std::string {
+            let data: std::string;
+
+            eval if defined(__NEO_WINDOWS__) {
+                let bytes_read: DWORD;
+                let buffer[4096]: CHAR;
+
+                while (true) {
+                    if (!ReadFile(pipe.hRead, buffer, sizeof(buffer), &bytes_read, &null) ||
+                        bytes_read == 0) {
+                        break;
+                    }
+                    
+                    data.append(buffer, bytes_read);
+                }
+
+            } else {
+                let buffer[4096]: char;
+                let bytes_read: size_t;
+
+                while (true) {
+                    bytes_read = read(pipe.fd[0], buffer, sizeof(buffer));
+                    
+                    if (bytes_read <= 0) {
+                        break;
+                    }
+                    
+                    data.append(buffer, bytes_read);
+                }
+            }
+            return data;
+        }
+    }  // module detail
+
+    class process {
+        
+    }
+}  // module neo::process

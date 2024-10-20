@@ -121,11 +121,11 @@
 #include "parser/ast/include/config/AST_config.def"
 #include "parser/ast/include/nodes/AST_expressions.hh"
 #include "parser/ast/include/private/AST_generate.hh"
-#include "parser/ast/include/private/AST_nodes.hh"
 #include "parser/ast/include/types/AST_jsonify_visitor.hh"
 #include "parser/ast/include/types/AST_modifiers.hh"
 #include "parser/ast/include/types/AST_types.hh"
 #include "token/include/config/Token_cases.def"
+#include "token/include/config/Token_config.def"
 #include "token/include/private/Token_generate.hh"
 
 // ---------------------------------------------------------------------------------------------- //
@@ -161,6 +161,13 @@ AST_BASE_IMPL(Expression, parse_primary) {  // NOLINT(readability-function-cogni
                                                   /// further analysis to determine which one it
                                                   /// is
             iter.advance();                       /// skip '('
+
+            if (CURRENT_TOK.token_kind() == __TOKEN_N::PUNCTUATION_CLOSE_PAREN) {
+                return std::unexpected(
+                    PARSE_ERROR_MSG("tuple literals must have at least one element, for a blank "
+                                    "tuples are not allowed."));
+            }
+
             ParseResult<> expr = parse();
             RETURN_IF_ERROR(expr);
 
@@ -183,7 +190,16 @@ AST_BASE_IMPL(Expression, parse_primary) {  // NOLINT(readability-function-cogni
 
             iter.advance();  // skip '{'
 
-            if (CURRENT_TOK == __TOKEN_N::PUNCTUATION_DOT) {
+            if (CURRENT_TOK.token_kind() == __TOKEN_N::PUNCTUATION_CLOSE_BRACE) {
+                if (iter.peek_back(2).has_value() &&
+                    iter.peek_back(2).value().get() != __TOKEN_N::IDENTIFIER) {
+                    return std::unexpected(
+                        PARSE_ERROR_MSG("blank brace statements are disallowed due to ambiguity in "
+                                        "parsing, use a more explict initializer"));
+                }
+
+                node = parse<ObjInitExpr>(true);
+            } else if (CURRENT_TOK == __TOKEN_N::PUNCTUATION_DOT) {
                 node = parse<ObjInitExpr>(true);
             } else {
                 ParseResult<> first = parse();
@@ -248,12 +264,13 @@ AST_BASE_IMPL(Expression, parse) {  // NOLINT(readability-function-cognitive-com
                             /// CURRENT_TOK
 
         switch (tok.token_kind()) {
-            // case __TOKEN_N::PUNCTUATION_OPEN_ANGLE:  /// what to do if its ident '<' parms
-            //                                      /// '>' '(' args ')' its now either a
-            //                                      /// function call w a generic or its a
-            //                                      /// binary expression may god help me
-            //     NOT_IMPLEMENTED;
-            // SOLUTION: 2 pass compiler
+                // case __TOKEN_N::PUNCTUATION_OPEN_ANGLE:  /// what to do if its ident '<' parms
+                //                                      /// '>' '(' args ')' its now either a
+                //                                      /// function call w a generic or its a
+                //                                      /// binary expression may god help me
+                //     NOT_IMPLEMENTED;
+                // SOLUTION: turbofish syntax
+
             case __TOKEN_N::PUNCTUATION_OPEN_PAREN:
                 expr = parse<FunctionCallExpr>(expr);
                 RETURN_IF_ERROR(expr);
@@ -270,13 +287,29 @@ AST_BASE_IMPL(Expression, parse) {  // NOLINT(readability-function-cognitive-com
                 break;
 
             case __TOKEN_N::OPERATOR_SCOPE:
-                expr = parse<ScopePathExpr>(expr);
-                RETURN_IF_ERROR(expr);
+                if (HAS_NEXT_TOK && NEXT_TOK == __TOKEN_N::PUNCTUATION_OPEN_ANGLE) {
+                    iter.advance();  // skip '::'
+
+                    ParseResult<GenericInvokeExpr> gen_expr = parse<GenericInvokeExpr>();
+                    RETURN_IF_ERROR(gen_expr);
+
+                    expr = parse<FunctionCallExpr>(expr, gen_expr.value());
+                } else {
+                    expr = parse<ScopePathExpr>(expr);
+                    RETURN_IF_ERROR(expr);
+                }
                 break;
 
             case __TOKEN_N::PUNCTUATION_OPEN_BRACE:
+                if (iter.peek().has_value() && (iter.peek().value().get().token_kind() ==
+                                                __TOKEN_TYPES_N::PUNCTUATION_CLOSE_BRACE)) {
+                    expr = parse<ObjInitExpr>(false, expr);
+                    RETURN_IF_ERROR(expr);
+                    break;
+                }
+
                 if (iter.peek().has_value() &&
-                    iter.peek().value().get().token_kind() != __TOKEN_TYPES_N::IDENTIFIER) {
+                    (iter.peek().value().get().token_kind() != __TOKEN_TYPES_N::IDENTIFIER)) {
                     continue_loop = false;
                     break;
                 }
@@ -442,23 +475,30 @@ AST_NODE_IMPL_VISITOR(Jsonify, BinaryExpr) {
 
 // ---------------------------------------------------------------------------------------------- //
 
-AST_NODE_IMPL(Expression, UnaryExpr, ParseResult<> lhs) {
+AST_NODE_IMPL(Expression, UnaryExpr, ParseResult<> lhs, bool in_type) {
     IS_NOT_EMPTY;
 
     // := op E | E op
 
     IS_IN_EXCEPTED_TOKENS(IS_UNARY_OPERATOR);
     __TOKEN_N::Token op = CURRENT_TOK;
-    iter.advance();
+    iter.advance();  // skip the op
 
     IS_NULL_RESULT(lhs) {
-        ParseResult<> rhs = parse();
+        ParseResult<> rhs = in_type ? parse<Type>() : parse();
         RETURN_IF_ERROR(rhs);
 
-        return make_node<UnaryExpr>(rhs.value(), op, UnaryExpr::PosType::PreFix);
+        if (rhs.value()->getNodeType() == nodes::UnaryExpr) {
+            NodeT<UnaryExpr> rhs_unary = std::static_pointer_cast<UnaryExpr>(rhs.value());
+            rhs_unary->in_type         = in_type;
+
+            return make_node<UnaryExpr>(rhs_unary, op, UnaryExpr::PosType::PreFix, in_type);
+        }
+
+        return make_node<UnaryExpr>(rhs.value(), op, UnaryExpr::PosType::PreFix, in_type);
     }
 
-    return make_node<UnaryExpr>(lhs.value(), op, UnaryExpr::PosType::PostFix);
+    return make_node<UnaryExpr>(lhs.value(), op, UnaryExpr::PosType::PostFix, in_type);
 }
 
 AST_NODE_IMPL_VISITOR(Jsonify, UnaryExpr) {
@@ -675,16 +715,21 @@ AST_NODE_IMPL(Expression, ScopePathExpr, ParseResult<> lhs) {
         if (CURRENT_TOKEN_IS(__TOKEN_N::OPERATOR_SCOPE)) {
             return std::unexpected(PARSE_ERROR_MSG("expected an identifier, but found nothing"));
         }
-        
+
         first = parse<IdentExpr>();
         RETURN_IF_ERROR(first);
-    } else {
+    }
+    else {
         RETURN_IF_ERROR(lhs);
 
-        if (lhs.value()->getNodeType() != nodes::IdentExpr) {
-            auto visitor = visitor::Jsonify();
-            lhs.value()->accept(visitor);
-            print("lhs: ", visitor.json);
+        if (lhs.value()->getNodeType() == nodes::PathExpr) {
+            NodeT<PathExpr> path = std::static_pointer_cast<PathExpr>(lhs.value());
+
+            if (path->type != PathExpr::PathType::Identifier) {
+                return std::unexpected(
+                    PARSE_ERROR_MSG("expected an identifier, but found nothing"));
+            }
+        } else if (lhs.value()->getNodeType() != nodes::IdentExpr) {
             return std::unexpected(PARSE_ERROR_MSG("expected an identifier, but found nothing"));
         }
 
@@ -697,7 +742,17 @@ AST_NODE_IMPL(Expression, ScopePathExpr, ParseResult<> lhs) {
         CURRENT_TOKEN_IS(__TOKEN_N::OPERATOR_SCOPE) {
             iter.advance();  // skip '::'
 
-            if (CURRENT_TOKEN_IS_NOT(__TOKEN_N::IDENTIFIER) || (HAS_NEXT_TOK && NEXT_TOK != __TOKEN_N::OPERATOR_SCOPE)) {
+            if CURRENT_TOKEN_IS (__TOKEN_N::PUNCTUATION_OPEN_ANGLE) {  // turbofish
+                path->access = path->path.back();
+                path->path.pop_back();
+
+                iter.reverse();
+
+                break;
+            }
+
+            if (CURRENT_TOKEN_IS_NOT(__TOKEN_N::IDENTIFIER) ||
+                HAS_NEXT_TOK && HAS_NEXT_TOK != __TOKEN_N::OPERATOR_SCOPE) {
                 ParseResult<> rhs = parse_primary();
                 RETURN_IF_ERROR(rhs);
 
@@ -710,7 +765,7 @@ AST_NODE_IMPL(Expression, ScopePathExpr, ParseResult<> lhs) {
 
             path->path.push_back(rhs.value());
         }
-    
+
     return path;
 }
 
@@ -721,9 +776,7 @@ AST_NODE_IMPL_VISITOR(Jsonify, ScopePathExpr) {
         path.push_back(get_node_json(p));
     }
 
-    json.section("ScopePathExpr")
-        .add("path", path)
-        .add("access", get_node_json(node.access));
+    json.section("ScopePathExpr").add("path", path).add("access", get_node_json(node.access));
 }
 
 // ---------------------------------------------------------------------------------------------- //
@@ -823,7 +876,10 @@ AST_NODE_IMPL_VISITOR(Jsonify, PathExpr) {
 
 // ---------------------------------------------------------------------------------------------- //
 
-AST_NODE_IMPL(Expression, FunctionCallExpr, ParseResult<> lhs) {
+AST_NODE_IMPL(Expression,
+              FunctionCallExpr,
+              ParseResult<>            lhs,
+              NodeT<GenericInvokeExpr> generic_invoke) {
     IS_NOT_EMPTY;
 
     /*
@@ -844,12 +900,10 @@ AST_NODE_IMPL(Expression, FunctionCallExpr, ParseResult<> lhs) {
     path = parse<PathExpr>(lhs.value());
     RETURN_IF_ERROR(path);
 
-    // TODO: add support for generics
-
     ParseResult<ArgumentListExpr> args = parse<ArgumentListExpr>();
     RETURN_IF_ERROR(args);
 
-    return make_node<FunctionCallExpr>(path.value(), args.value());
+    return make_node<FunctionCallExpr>(path.value(), args.value(), generic_invoke);
 }
 
 AST_NODE_IMPL_VISITOR(Jsonify, FunctionCallExpr) {
@@ -872,7 +926,9 @@ AST_NODE_IMPL(Expression, ArrayLiteralExpr) {
 
     if CURRENT_TOKEN_IS (__TOKEN_N::PUNCTUATION_CLOSE_BRACKET) {
         iter.advance();  // skip ']'
-        return std::unexpected(PARSE_ERROR_MSG("array literals must have at least one element"));
+        return std::unexpected(PARSE_ERROR_MSG(
+            "list literals must have at least one element, for a blank list use 'list::<...>()' - "
+            "replace ... with a type - or default initializer instead."));
     }
 
     ParseResult<> first = parse();
@@ -1135,8 +1191,17 @@ AST_NODE_IMPL(Expression, ObjInitExpr, bool skip_start_brace, ParseResult<> obj_
     }
 
     if CURRENT_TOKEN_IS (__TOKEN_N::PUNCTUATION_CLOSE_BRACE) {
-        return std::unexpected(PARSE_ERROR(
-            CURRENT_TOK, "expected a keyword argument, but got an empty object initializer"));
+        if (!is_anonymous) {
+            NodeT<ObjInitExpr> obj = make_node<ObjInitExpr>(false);
+            obj->path              = obj_path.value();
+
+            iter.advance();  // skip '}'
+            return obj;
+        }
+
+        return std::unexpected(
+            PARSE_ERROR_MSG("blank object initializers are disallowed due to ambiguity in "
+                            "parsing, use a more explict initializer"));
     }
 
     ParseResult<NamedArgumentExpr> first = parse<NamedArgumentExpr>(is_anonymous);
@@ -1360,31 +1425,21 @@ AST_NODE_IMPL(Expression, Type) {  // TODO - REMAKE using the new Modifiers and 
     // enums: StorageSpecifier, FFISpecifier, TypeQualifier, AccessSpecifier, FunctionSpecifier,
     // FunctionQualifier
     IS_NOT_EMPTY;
-    Modifiers   type_specifiers(Modifiers::ExpectedModifier::TypeSpec);
+    Modifiers type_specifiers(Modifiers::ExpectedModifier::TypeSpec);
 
     NodeT<Type> node = make_node<Type>(true);
 
-    
-
     if (CURRENT_TOKEN_IS(__TOKEN_N::KEYWORD_FUNCTION)) {
-        Modifiers   fn_specifiers(Modifiers::ExpectedModifier::FuncSpec);
+        NOT_IMPLEMENTED;
+    }
 
-        iter.advance();  // skip 'fn'
-        NodeT<LambdaExpr> lambda = make_node<LambdaExpr>(iter.peek_back()->get());
+    while (node->specifiers.find_add(CURRENT_TOK)) {
+        iter.advance();  // TODO: Handle 'ffi' ('class' | 'interface' | 'struct' | 'enum' | 'union'
+                         // | 'type')
+    }
 
-        IS_EXCEPTED_TOKEN(__TOKEN_N::PUNCTUATION_OPEN_PAREN);
-        iter.advance();  // skip '('
-
-        if CURRENT_TOKEN_IS (__TOKEN_N::PUNCTUATION_CLOSE_PAREN) {
-            iter.advance();  // skip ')'
-            return make_node<Type>(lambda);
-        }
-
-        ParseResult<> first = parse<Type>();
-        RETURN_IF_ERROR(first);
-
-        lambda->args.push_back(first.value());
-
+    auto __parse_tuple = [&](NodeT<Type> elm1) -> ParseResult<> {
+        NodeT<TupleLiteralExpr> tuple = make_node<TupleLiteralExpr>(elm1);
         while
             CURRENT_TOKEN_IS(__TOKEN_N::PUNCTUATION_COMMA) {
                 iter.advance();  // skip ','
@@ -1396,75 +1451,92 @@ AST_NODE_IMPL(Expression, Type) {  // TODO - REMAKE using the new Modifiers and 
                 ParseResult<> next = parse<Type>();
                 RETURN_IF_ERROR(next);
 
-                lambda->args.push_back(next.value());
+                tuple->values.push_back(next.value());
             }
 
         IS_EXCEPTED_TOKEN(__TOKEN_N::PUNCTUATION_CLOSE_PAREN);
         iter.advance();  // skip ')'
 
-        if CURRENT_TOKEN_IS (__TOKEN_N::OPERATOR_ARROW) {
-            iter.advance();  // skip '->'
+        return tuple;
+    };
 
-            ParseResult<> ret = parse<Type>();
-            RETURN_IF_ERROR(ret);
+    ParseResult<> EXPR;
+    switch (CURRENT_TOK.token_kind()) {
+        case __TOKEN_N::OPERATOR_MUL:
+        case __TOKEN_N::OPERATOR_BITWISE_AND:
+            EXPR = parse<UnaryExpr>(EXPR, true);
+            break;
 
-            lambda->ret = ret.value();
+        case __TOKEN_N::PUNCTUATION_OPEN_PAREN: {
+            // identify if its a tuple or a parenthesized type
+            iter.advance();  // skip '('
+
+            if CURRENT_TOKEN_IS (__TOKEN_N::PUNCTUATION_CLOSE_PAREN) {  // ()
+                iter.advance();                                         // skip ')'
+                return std::unexpected(PARSE_ERROR(
+                    CURRENT_TOK, "expected a type, or a parenthesized type, but found nothing"));
+            }
+
+            auto elm1 = parse<Type>();
+            RETURN_IF_ERROR(elm1);
+
+            switch (CURRENT_TOK.token_kind()) {
+                case __TOKEN_N::PUNCTUATION_CLOSE_PAREN:
+                    iter.advance();  // skip ')'
+                    EXPR = elm1;
+                    break;
+
+                case __TOKEN_N::PUNCTUATION_COMMA:
+                    EXPR = __parse_tuple(elm1.value());
+                    break;
+
+                default:
+                    return std::unexpected(PARSE_ERROR(CURRENT_TOK,
+                                                       "expected a ')' or ',', but found: " +
+                                                           CURRENT_TOK.token_kind_repr()));
+            }
+
+            break;
         }
 
-        return make_node<Type>(lambda);
+        default:
+            EXPR = parse_primary();
+            break;
     }
 
-    while (node->specifiers.find_add(CURRENT_TOK)) {
-        iter.advance();  // TODO: Handle 'ffi' ('class' | 'interface' | 'struct' | 'enum' | 'union'
-                         // | 'type')
-    }
-
-    ParseResult<> EXPR = parse_primary();
     RETURN_IF_ERROR(EXPR);
 
     bool continue_loop = true;
-
     while (continue_loop) {
         const __TOKEN_N::Token &tok = CURRENT_TOK;
 
         switch (tok.token_kind()) {
-            // case __TOKEN_N::PUNCTUATION_OPEN_ANGLE:  /// what to do if its ident '<' parms
-            //                                      /// '>' '(' args ')' its now either a
-            //                                      /// function call w a generic or its a
-            //                                      /// binary expression may god help me
-            //     NOT_IMPLEMENTED;
-            // SOLUTION: 2 pass compiler
             case __TOKEN_N::PUNCTUATION_OPEN_PAREN:
-                EXPR = parse<FunctionCallExpr>(EXPR);
-                RETURN_IF_ERROR(EXPR);
-                break;
+                return std::unexpected(
+                    PARSE_ERROR(tok, "expected a type, but found a function call"));
 
             case __TOKEN_N::PUNCTUATION_OPEN_BRACKET:
-                EXPR = parse<ArrayAccessExpr>(EXPR);
-                RETURN_IF_ERROR(EXPR);
-                break;
+                return std::unexpected(PARSE_ERROR(tok,
+                                                   "expected a type, but found an array specifier, "
+                                                   "use a pointer or std::array instead"));
 
             case __TOKEN_N::OPERATOR_SCOPE:
+                // there may be turbofish here
+                if (HAS_NEXT_TOK && NEXT_TOK == __TOKEN_N::PUNCTUATION_OPEN_ANGLE) {
+                    iter.advance();  // skip '::'
+                    goto parse_generic_in_type;
+                }
+
                 EXPR = parse<ScopePathExpr>(EXPR);
                 RETURN_IF_ERROR(EXPR);
                 break;
 
-            case __TOKEN_N::KEYWORD_IN:
-            case __TOKEN_N::KEYWORD_DERIVES:
-                return std::unexpected(
-                    PARSE_ERROR(tok, "expected a type, but found a 'in' or 'derives' keyword"));
-
-            case __TOKEN_N::PUNCTUATION_QUESTION_MARK:
-            case __TOKEN_N::KEYWORD_IF:
-                EXPR = parse<TernaryExpr>(EXPR);
-                RETURN_IF_ERROR(EXPR);
-                break;
-
-            case __TOKEN_N::KEYWORD_AS:
-                return std::unexpected(
-                    PARSE_ERROR(tok, "expected a type, but found a 'as' keyword"));
             case __TOKEN_N::PUNCTUATION_OPEN_ANGLE:  // generic lol
-            {
+                return std::unexpected(
+                    PARSE_ERROR(tok,
+                                "use turbofish syntax instead for generic invocations, this will "
+                                "change in a future release."));
+            parse_generic_in_type: {
                 ParseResult<GenericInvokeExpr> generic = parse<GenericInvokeExpr>();
                 RETURN_IF_ERROR(generic);
 
@@ -1475,7 +1547,7 @@ AST_NODE_IMPL(Expression, Type) {  // TODO - REMAKE using the new Modifiers and 
 
             default:
                 if (is_excepted(tok, IS_UNARY_OPERATOR)) {
-                    EXPR = parse<UnaryExpr>(EXPR);
+                    EXPR = parse<UnaryExpr>(EXPR, true);
                     RETURN_IF_ERROR(EXPR);
                 } else if (tok == __TOKEN_N::PUNCTUATION_OPEN_PAREN) {
                     iter.advance();                         // skip '('
@@ -1498,7 +1570,9 @@ AST_NODE_IMPL_VISITOR(Jsonify, Type) {
     json.section("Type")
         .add("value", get_node_json(node.value))
         .add("generics", get_node_json(node.generics))
-        .add("specifiers", node.specifiers.to_json());
+        .add("specifiers", node.specifiers.to_json())
+        .add("is_fn_ptr", node.is_fn_ptr ? "true" : "false")
+        .add("nullable", node.nullable ? "true" : "false");
 }
 
 // ---------------------------------------------------------------------------------------------- //

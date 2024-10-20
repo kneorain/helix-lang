@@ -255,11 +255,8 @@ class CXIRCompiler {
         std::string compile_flags   = "-std=c++23 ";
         compile_flags += is_debug ? "-g " : "-O2 ";
 
-        if (compiler_result.output.find("clang") != std::string::npos) {
-            log<LogLevel::Info>("using system's 'clang' compiler");
-            compile_flags += "-fdiagnostics-format=json ";
-        } else if (compiler_result.output.find("gcc") != std::string::npos) {
-            log<LogLevel::Info>("using system's 'gcc' compiler");
+        if ((compiler_result.output.find("clang") != std::string::npos) || (compiler_result.output.find("gcc") != std::string::npos)) {
+            log<LogLevel::Info>("using system's '" + std::string((compiler_result.output.find("clang") != std::string::npos) ? "clang" : "gcc") + "' compiler, with the '" + ((compiler_result.output.find("clang") != std::string::npos) ? "lld" : "ld") + "' linker");
             compile_flags += "-fdiagnostics-parseable-fixits ";
         } else {
             log<LogLevel::Error>("aborting. unknown compiler: " + compiler_result.output);
@@ -359,6 +356,11 @@ class CompilationUnit {
 
         std::string out_file = determine_output_file(parsed_args, in_file_path);
         log<LogLevel::Info>("output file: " + out_file);
+
+        if (error::HAS_ERRORED) {
+            log<LogLevel::Error>("aborting... due to previous errors");
+            return 1;
+        }
 
         compiler.compile_CXIR(
             emitter, out_file, parsed_args.build_mode == __CONTROLLER_CLI_N::CLIArgs::MODE::DEBUG_);

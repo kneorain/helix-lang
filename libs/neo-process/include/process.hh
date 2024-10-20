@@ -24,13 +24,16 @@
 #endif
 
 #pragma warning(push)
+#ifdef __NEO_WINDOWS__
 #pragma warning(disable: _UCRT_DISABLED_WARNINGS)
 _UCRT_DISABLE_CLANG_WARNINGS
+#endif
 
 namespace neo {
 inline namespace detail {
     struct process_handle {
 #ifdef __NEO_WINDOWS__
+    };
         HANDLE hProcess;
         HANDLE hThread;
 #else
@@ -49,10 +52,9 @@ inline namespace detail {
 
     struct process_info {
         process_handle handle;
-        pipe_handle    stdin();
+        pipe_handle    stdin;
         pipe_handle    stdout;
         pipe_handle    stderr;
-    };
 
     inline pipe_handle create_pipe() {
         pipe_handle pipe;
@@ -66,7 +68,7 @@ inline namespace detail {
             throw std::runtime_error("failed to create pipe");
         }
 #else
-        if (pipe(fd) == -1) {
+        if (pipe(pipe.fd) == -1) {
             throw std::runtime_error("failed to create pipe");
         }
 #endif
@@ -173,6 +175,8 @@ class process {
 };
 }  // namespace neo::process
 
+#ifdef __NEO_WINDOWS__
 _UCRT_RESTORE_CLANG_WARNINGS
 #pragma warning(pop) // _UCRT_DISABLED_WARNINGS
+#endif
 #endif  // __NEO_PROCESS_HH__

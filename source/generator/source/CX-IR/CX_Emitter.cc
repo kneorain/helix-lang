@@ -19,6 +19,7 @@
 #include "neo-panic/include/error.hh"
 #include "neo-pprint/include/hxpprint.hh"
 #include "parser/ast/include/AST.hh"
+#include "parser/ast/include/config/AST_config.def"
 #include "parser/ast/include/nodes/AST_declarations.hh"
 #include "parser/ast/include/nodes/AST_expressions.hh"
 #include "parser/ast/include/private/AST_generate.hh"
@@ -103,6 +104,77 @@ CX_VISIT_IMPL(BinaryExpr) {
 
 CX_VISIT_IMPL(UnaryExpr) {
     // -> '(' op '(' opd ')' ')' | '(' opd ')'
+
+    /// if op = '&' and value is a IdentExpr with value "null" then it is a nullptr
+    /// if op = '*' and value is a IdentExpr with value "null" error
+
+    if (node.in_type) {
+        if (node.type == parser::ast::node::UnaryExpr::PosType::PostFix) {
+            if (node.op.token_kind() != token::PUNCTUATION_QUESTION_MARK) {  // if foo*
+                CODEGEN_ERROR(node.op, "type cannot have postfix specifier");
+            }
+
+            if (node.op.token_kind() == token::PUNCTUATION_QUESTION_MARK) {
+                node.op.get_value() = "";
+            }
+
+            return;
+        }
+
+        // prefix
+        if (node.opd->getNodeType() == parser::ast::node::nodes::Type) [[likely]] {
+            auto type = parser::ast::node::Node::as<parser::ast::node::Type>(node.opd);
+
+            if (type->value->getNodeType() == parser::ast::node::nodes::LiteralExpr) [[unlikely]] {
+                auto ident =
+                    parser::ast::node::Node::as<parser::ast::node::LiteralExpr>(type->value)->value;
+
+                if (ident.value() == "null") [[unlikely]] {
+                    CODEGEN_ERROR(ident, "null is not a valid type, use 'void' instead");
+                    return;
+                }
+            }
+        }
+
+        switch (node.op.token_kind()) {
+            case token::OPERATOR_BITWISE_AND:
+            case token::OPERATOR_MUL:
+                break;
+
+            default:
+                CODEGEN_ERROR(node.op, "invalid specifier for type");
+                return;
+        }
+
+        ADD_NODE_PARAM(opd);
+        ADD_TOKEN_AS_TOKEN(CXX_CORE_OPERATOR, node.op);
+
+        return;
+    }
+
+    if (node.opd->getNodeType() == parser::ast::node::nodes::LiteralExpr) {
+        auto ident = parser::ast::node::Node::as<parser::ast::node::LiteralExpr>(node.opd)->value;
+
+        if (ident.value() == "null") [[unlikely]] {
+            switch (node.op.token_kind()) {
+                case token::OPERATOR_BITWISE_AND:
+                    break;
+
+                case token::OPERATOR_MUL:
+                    CODEGEN_ERROR(node.op, "cannot dereference null");
+                    return;
+
+                default:
+                    CODEGEN_ERROR(node.op, "invalid specifier for null");
+                    return;
+            }
+
+            ident.get_value() = "nullptr";
+            ADD_TOKEN_AS_TOKEN(CXX_CORE_OPERATOR, ident);
+
+            return;
+        }
+    }
 
     PAREN_DELIMIT(if (node.op.token_kind() != token::PUNCTUATION_QUESTION_MARK)
                       ADD_TOKEN_AS_TOKEN(CXX_CORE_OPERATOR, node.op);
@@ -190,9 +262,22 @@ CX_VISIT_IMPL(FunctionCallExpr) {
     ADD_NODE_PARAM(args);
 }
 
-CX_VISIT_IMPL(ArrayLiteralExpr) { BRACE_DELIMIT(COMMA_SEP(values);); }
+CX_VISIT_IMPL(ArrayLiteralExpr) {
+    BRACE_DELIMIT(COMMA_SEP(values););
+}
 
-CX_VISIT_IMPL(TupleLiteralExpr) { BRACE_DELIMIT(COMMA_SEP(values);); }
+CX_VISIT_IMPL(TupleLiteralExpr) {
+    if (!node.values.empty() && (node.values.size() > 0) &&
+        (node.values[0]->getNodeType() == parser::ast::node::nodes::Type)) {
+
+        ADD_TOKEN_AS_VALUE(CXX_CORE_IDENTIFIER, "tuple");
+        ANGLE_DELIMIT(COMMA_SEP(values););
+
+        return;
+    }
+
+    BRACE_DELIMIT(COMMA_SEP(values););
+}
 /// TODO: is this even imlpementad in the current stage?
 CX_VISIT_IMPL(SetLiteralExpr) { BRACE_DELIMIT(COMMA_SEP(values);); }
 
@@ -288,12 +373,11 @@ CX_VISIT_IMPL(AsyncThreading) {
 }
 
 CX_VISIT_IMPL(Type) {  // TODO Modifiers
-
     ADD_NODE_PARAM(value);
-    // TODO: make *null into null_ptr
 
-    if (node.generics)
+    if (node.generics) {
         ADD_NODE_PARAM(generics);
+    }
 }
 
 CX_VISIT_IMPL(NamedVarSpecifier) {
@@ -528,9 +612,9 @@ CX_VISIT_IMPL(ExprState) {
 
 CX_VISIT_IMPL(RequiresParamDecl) {
     if (node.is_const) {
-        if (node.var) {
-            PARSE_ERROR(node.var->path->name, "Const requires a type");  //
-            return;                                                      //
+        if (node.var && !node.var->type) {
+            CODEGEN_ERROR(node.var->path->name, "const requires a type");
+            return;
         };
     }
 
@@ -826,8 +910,7 @@ CX_VISIT_IMPL(InterDecl) {
 
                 if (!node.derives->derives[0].first->generics->args.empty()) {
                     tokens.pop_back();
-                }
-            );
+                });
 
             for (size_t i = 1; i < node.derives->derives.size(); ++i) {
 
@@ -1016,7 +1099,7 @@ CX_VISIT_IMPL(OpDecl) {
         ADD_NODE_PARAM(func->generics);
     };
 
-    ADD_TOKEN(CXX_INLINE);  // inline the operator
+    ADD_TOKEN(CXX_INLINE);     // inline the operator
     if (node.func->returns) {  //
         ADD_NODE_PARAM(func->returns);
     } else {
@@ -1050,11 +1133,11 @@ CX_VISIT_IMPL(OpDecl) {
                     ADD_PARAM(param->var->path);
                     ADD_TOKEN(CXX_COMMA);
                 }
-                
+
                 if (node.func->params.size() > 0) {
-                    this->tokens.pop_back();  // TODO: make better: remove last `,` , make better in the
-                }
-            );
+                    this->tokens
+                        .pop_back();  // TODO: make better: remove last `,` , make better in the
+                });
             ADD_TOKEN(CXX_SEMICOLON););
     };
 }
@@ -1078,6 +1161,57 @@ CX_VISIT_IMPL(Program) {
             R"( [unix-timestamp]
 ///
 ///*--- Helix ---*
+
+/// language primitive types
+#include <set>
+#include <map>
+#include <tuple>
+#include <limits>
+#include <string>
+#include <vector>
+#include <memory>
+#include <cstdint>
+#include <variant>
+#include <optional>
+#include <iostream>
+#include <stdexcept>
+#include <type_traits>
+
+// ensure cross-platform compatibility for 128-bit and 256-bit types.
+// gcc/clang support these types, but MSVC may not. We can conditionally include them.
+
+using u8   = unsigned char;
+using i8   = signed char;
+using u16  = unsigned short;
+using i16  = signed short;
+using u32  = unsigned int;
+using i32  = signed int;
+using u64  = unsigned long long;
+using i64  = signed long long;
+
+#if !defined(_MSC_VER)
+    using u128 = __uint128_t;
+    using i128 = __int128_t;
+#endif
+
+using f32 = float;
+using f64 = double;
+using f80 = long double;
+
+using usize = std::size_t;
+using isize = std::ptrdiff_t;
+
+using byte = std::byte;
+using string = std::string;
+
+template <typename ...Args>
+using tuple = std::tuple<Args...>;
+template <typename ...Args>
+using list = std::vector<Args...>;
+template <typename ...Args>
+using set = std::set<Args...>;
+template <typename ...Args>
+using map = std::map<Args...>;
 )");
 
     for (const auto &child : node.children) {
