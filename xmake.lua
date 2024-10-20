@@ -404,3 +404,5 @@ target("helix-api")
         file:close()
     end)
 target_end()
+
+-- -fexperimental-new-constant-interpreter

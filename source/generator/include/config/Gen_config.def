@@ -17,9 +17,10 @@
 
 #define __CXIR_CODEGEN_N generator::CXIR
 
-#define CX_VISIT_IMPL(type) void __CXIR_CODEGEN_N::CXIR::visit(const __AST_NODE::type &node /* NOLINT */)
-#define CX_VISIT_IMPL_VA(type, ...) void __CXIR_CODEGEN_N::CXIR::visit(const __AST_NODE::type &node /* NOLINT */, __VA_ARGS__)
-
+#define CX_VISIT_IMPL(type) \
+    void __CXIR_CODEGEN_N::CXIR::visit(const __AST_NODE::type &node /* NOLINT */)
+#define CX_VISIT_IMPL_VA(type, ...) \
+    void __CXIR_CODEGEN_N::CXIR::visit(const __AST_NODE::type &node /* NOLINT */, __VA_ARGS__)
 
 #define MAKE_CXIR_TOKEN(name, string) name,
 #define MAKE_CXIR_TOKEN_PAIR(name, string) std::pair{name, string},
@@ -32,5 +33,13 @@
         constexpr token::Mapping<cxir_tokens, CXX_TOKENS_COUNT> cxir_tokens_map{ \
             {CXX_TOKENS(MAKE_CXIR_TOKEN_PAIR)}};                                 \
     }
+
+#define CODEGEN_ERROR(tok, msg)                                                     \
+    error::Panic(error::CodeError{.pof      = const_cast<__TOKEN_N::Token *>(&tok), \
+                                  .err_code = 0.0001,                               \
+                                  .mark_pof = true,                                 \
+                                  .fix_fmt_args{},                                  \
+                                  .err_fmt_args{GET_DEBUG_INFO + msg},              \
+                                  .opt_fixes{}});
 
 #endif  // __CODEGEN_CONFIG_DEF__

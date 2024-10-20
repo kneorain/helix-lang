@@ -42,7 +42,8 @@
     name &operator=(name &&)      = default;                                               \
     void  accept(__AST_VISITOR::Visitor &visitor) const override { visitor.visit(*this); } \
     [[nodiscard]] nodes       getNodeType() const override { return nodes::name; }         \
-    [[nodiscard]] std::string getNodeName() const override { return #name; }
+    [[nodiscard]] std::string getNodeName() const override { return #name; } \
+    [[nodiscard]] bool        is(nodes node) const override { return getNodeType() == node; }
 
 #define IS_PEEK(x) iter.peek().has_value() && iter.peek().value().get().token_kind() == (x)
 #define RETURN_IF_ERROR(x)                 \

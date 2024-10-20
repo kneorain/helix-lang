@@ -13,8 +13,8 @@
 #ifndef __AST_BASE_H__
 #define __AST_BASE_H__
 
-#include <string>
 #include <neo-pprint/include/hxpprint.hh>
+#include <string>
 
 #include "neo-pprint/include/ansi_colors.hh"
 #include "parser/ast/include/config/AST_config.def"
@@ -30,6 +30,11 @@ __AST_NODE_BEGIN {
         virtual void                      accept(__AST_VISITOR::Visitor &visitor) const = 0;
         [[nodiscard]] virtual nodes       getNodeType() const                           = 0;
         [[nodiscard]] virtual std::string getNodeName() const                           = 0;
+        [[nodiscard]] virtual bool        is(nodes node) const                          = 0;
+        template <typename T, typename U>
+        [[nodiscard]] static NodeT<T> as(U &from) {
+            return std::static_pointer_cast<T>(from);
+        }
 
         Node(const Node &)            = default;
         Node &operator=(const Node &) = default;
@@ -46,7 +51,7 @@ __AST_NODE_BEGIN {
         Program(Program &&)                 = delete;
         Program &operator=(Program &&)      = delete;
 
-        Program(__TOKEN_N::TokenList &source_tokens)
+        explicit Program(__TOKEN_N::TokenList &source_tokens)
             : source_tokens(source_tokens) {}
 
         void accept(parser ::ast ::visitor ::Visitor &visitor) const override {
@@ -55,6 +60,7 @@ __AST_NODE_BEGIN {
 
         [[nodiscard]] nodes        getNodeType() const override { return nodes::Program; }
         [[nodiscard]] std ::string getNodeName() const override { return "Program"; };
+        [[nodiscard]] bool         is(nodes node) const override { return node == nodes::Program; }
 
         Program &parse() {
             auto iter = source_tokens.begin();
@@ -67,12 +73,12 @@ __AST_NODE_BEGIN {
 
                 if (!expr.has_value()) {
                     expr.error().panic();
-                    #ifdef DEBUG
+#ifdef DEBUG
                     print(std::string(colors::fg16::red),
                           "error: ",
                           std::string(colors::reset),
                           expr.error().what());
-                    #endif
+#endif
                     return *this;
                 }
 

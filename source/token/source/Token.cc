@@ -117,6 +117,12 @@ __TOKEN_BEGIN {
         return *this;
     }
 
+    Token &Token::operator=(const std::string &other) {
+        this->val = std::string(other);
+        this->len = this->val.length();
+        return *this;
+    }
+
     // Destructor
     Token::~Token() = default;
 
@@ -131,6 +137,8 @@ __TOKEN_BEGIN {
     tokens Token::token_kind() const { return kind; }
 
     std::string Token::value() const { return val; }
+
+    std::string &Token::get_value() const { return val; }
 
     std::string Token::token_kind_repr() const { return std::string(tokens_map.at(kind).value()); }
 

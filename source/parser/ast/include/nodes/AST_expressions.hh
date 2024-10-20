@@ -57,14 +57,24 @@ __AST_NODE_BEGIN {
 
         enum class PosType { PreFix, PostFix };
 
-        UnaryExpr(NodeT<> opd, __TOKEN_N::Token op, PosType type)
+        UnaryExpr(NodeT<> opd, __TOKEN_N::Token op, PosType type, bool in_type = false)
             : opd(std::move(opd))
             , op(std::move(op))
-            , type(type) {}
+            , type(type)
+            , in_type(in_type) {}
 
         NodeT<>          opd;
         __TOKEN_N::Token op;
-        PosType          type = PosType::PreFix;
+        PosType          type    = PosType::PreFix;
+        bool             in_type = false;
+
+        void mark_in_type(bool as) {
+            in_type = as;
+
+            if (opd->getNodeType() == nodes::UnaryExpr) {
+                std::static_pointer_cast<UnaryExpr>(opd)->mark_in_type(as);
+            }
+        }
     };
 
     class IdentExpr final : public Node {  // := T
@@ -271,6 +281,8 @@ __AST_NODE_BEGIN {
             this->kwargs.emplace_back(std::move(args));
         }
 
+        explicit ObjInitExpr(bool /* unused */) {}
+
         NodeV<NamedArgumentExpr> kwargs;
         NodeT<>                  path;
     };
@@ -350,6 +362,8 @@ __AST_NODE_BEGIN {
 
         NodeT<>                  value;
         NodeT<GenericInvokeExpr> generics;
+        bool                     nullable   = false;
+        bool                     is_fn_ptr  = false;
         Modifiers                specifiers = Modifiers(Modifiers::ExpectedModifier::TypeSpec);
     };
 

@@ -29,13 +29,13 @@ __TOKEN_BEGIN {
     */
     struct Token {
       private:
-        u32         line{};     ///< line number where the token is located
-        u32         column{};   ///< column number where the token starts
-        u32         len{};      ///< length of the token
-        u32         _offset{};  ///< offset from the beginning of the file
-        tokens      kind{};     ///< kind of the token
-        std::string val;        ///< string value of the token
-        std::string filename;   ///< name of the file
+        u32                 line{};     ///< line number where the token is located
+        u32                 column{};   ///< column number where the token starts
+        u32                 len{};      ///< length of the token
+        u32                 _offset{};  ///< offset from the beginning of the file
+        tokens              kind{};     ///< kind of the token
+        mutable std::string val;        ///< string value of the token
+        std::string         filename;   ///< name of the file
 
       public:
         Token(u64                line,
@@ -56,15 +56,16 @@ __TOKEN_BEGIN {
         ~Token();
 
         /* ====-------------------------- getters ---------------------------==== */
-        u32         line_number() const;
-        u32         column_number() const;
-        u32         length() const;
-        u32         offset() const;
-        tokens      token_kind() const;
-        std::string value() const;
-        std::string token_kind_repr() const;
-        std::string file_name() const;
-        std::string to_string() const;
+        u32                        line_number() const;
+        u32                        column_number() const;
+        u32                        length() const;
+        u32                        offset() const;
+        tokens                     token_kind() const;
+        std::string                value() const;
+        [[nodiscard]] std::string &get_value() const;
+        std::string                token_kind_repr() const;
+        std::string                file_name() const;
+        std::string                to_string() const;
 
         bool          operator==(const Token &rhs) const;
         bool          operator==(const tokens &rhs) const;

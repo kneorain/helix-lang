@@ -55,7 +55,7 @@ __AST_BEGIN {
                 .err_code = 0.0001,
                 .mark_pof = true,
                 .fix_fmt_args{},
-                .err_fmt_args{},
+                .err_fmt_args{msg},
                 .opt_fixes{},
                 
                 });

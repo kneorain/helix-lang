@@ -101,7 +101,7 @@ __AST_NODE_BEGIN {
       private:
         ParseResult<NamedArgumentExpr>     parse_NamedArgumentExpr(bool is_anonymous = false);
         ParseResult<PathExpr>              parse_PathExpr(ParseResult<> simple_path = nullptr);
-        ParseResult<UnaryExpr>             parse_UnaryExpr(ParseResult<> lhs = nullptr);
+        ParseResult<UnaryExpr>             parse_UnaryExpr(ParseResult<> lhs = nullptr, bool in_type = false);
         ParseResult<BinaryExpr>            parse_BinaryExpr(ParseResult<> lhs, int min_precedence);
         ParseResult<LiteralExpr>           parse_LiteralExpr(ParseResult<> str_concat = nullptr);
         ParseResult<ArgumentExpr>          parse_ArgumentExpr();
@@ -127,7 +127,7 @@ __AST_NODE_BEGIN {
         ParseResult<InstOfExpr>        parse_InstOfExpr(ParseResult<> lhs = nullptr);
         ParseResult<Type>              parse_Type();
         ParseResult<AsyncThreading>    parse_AsyncThreading();
-        ParseResult<FunctionCallExpr>  parse_FunctionCallExpr(ParseResult<> lhs = nullptr);
+        ParseResult<FunctionCallExpr>  parse_FunctionCallExpr(ParseResult<> lhs = nullptr, NodeT<GenericInvokeExpr> generic_invoke = nullptr);
     };
 }  //  namespace __AST_NODE_BEGIN
 
