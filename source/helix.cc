@@ -10,11 +10,14 @@
 //                                                                                                //
 //====----------------------------------------------------------------------------------------====//
 
+#include <glaze-json/include/glaze/glaze.hpp>
+
 #include "controller/include/config/Controller_config.def"
 #include "controller/include/shared/file_system.hh"
 #include "parser/ast/include/private/base/AST_base.hh"
 #include "parser/ast/include/types/AST_jsonify_visitor.hh"
 #include "parser/ast/include/types/AST_types.hh"
+#include "token/include/private/Token_base.hh"
 
 #define _SILENCE_CXX23_ALIGNED_UNION_DEPRECATION_WARNING
 #define _SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING
@@ -30,14 +33,14 @@
 #include <filesystem>
 #include <iostream>
 #include <memory>
+#include <neo-panic/include/error.hh>
+#include <neo-pprint/include/hxpprint.hh>
 #include <string>
 #include <vector>
 
 #include "controller/include/Controller.hh"
 #include "generator/include/CX-IR/CXIR.hh"
 #include "lexer/include/lexer.hh"
-#include "neo-panic/include/error.hh"
-#include "neo-pprint/include/hxpprint.hh"
 #include "parser/preprocessor/include/preprocessor.hh"
 
 enum class LogLevel { Debug, Info, Warning, Error };
@@ -77,52 +80,53 @@ void log(Args &&...args) {
 
 class CXIRCompiler {
   public:
+#if defined(_WIN32) || defined(WIN32) || defined(_WIN64) || defined(WIN64)
     template <typename T>
     struct ExecResult {
         T   output;
         int return_code{};
     };
-
     template <typename T>
-    [[nodiscard]] ExecResult<T> exec(const std::string &cmd) const {
-        ExecResult<T>         result;
-        std::array<char, 128> buffer{};
-        std::string           data;
-
-        // Use platform-specific popen and pclose
-#if defined(_WIN32) || defined(WIN32) || defined(_WIN64) || defined(WIN64)
-        std::unique_ptr<FILE, decltype(&_pclose)> pipe(_popen(cmd.c_str(), "r"), _pclose);
+    [[nodiscard]] ExecResult<T> exec(const std::string &cmd) const;
 #else
-        std::unique_ptr<FILE, decltype(&pclose)> pipe(popen(cmd.c_str(), "r"), pclose);
-#endif
+    struct ExecResult {
+        std::string output;
+        int         return_code{};
+    };
+    [[nodiscard]] static ExecResult exec(const std::string &cmd) {
+        std::array<char, 128> buffer;
+        std::string           result;
+
+        auto *pipe = popen(cmd.c_str(), "r");  // get rid of shared_ptr
+
         if (!pipe) {
-            result.return_code = -1;
-            return result;
+            throw std::runtime_error("popen() failed!");
         }
 
-        while (fgets(buffer.data(), static_cast<int>(buffer.size()), pipe.get()) != nullptr) {
-            data += buffer.data();
+        while (feof(pipe) == 0) {
+            if (fgets(buffer.data(), buffer.size(), pipe) != nullptr) {
+                result += buffer.data();
+            }
         }
 
-        int rc = 0;
-#if defined(_WIN32) || defined(WIN32) || defined(_WIN64) || defined(WIN64)
-        rc = _pclose(pipe.release());
-#else
-        rc = pclose(pipe.release());
-#endif
-        result.output      = static_cast<T>(data);
-        result.return_code = rc;
+        auto rc = pclose(pipe);
 
-        return result;
+        if (rc == EXIT_SUCCESS) {
+            return {result, 0};
+        }
+
+        return {result, 1};
     }
+#endif
 
     void compile_CXIR(generator::CXIR::CXIR &emitter,
                       const std::string     &out,
-                      bool                   is_debug = false) const {
+                      bool                   is_debug   = false,
+                      bool                   is_verbose = false) const {
 #if defined(_WIN32) || defined(WIN32) || defined(_WIN64) || defined(WIN64)
         compile_CXIR_Windows(emitter, out, is_debug);
 #else
-        compile_CXIR_NonWindows(emitter, out, is_debug);
+        compile_CXIR_NonWindows(emitter, out, is_debug, is_verbose);
 #endif
     }
 
@@ -153,7 +157,7 @@ class CXIRCompiler {
         {
             std::string vswhere_cmd =
                 R"("C:\Program Files (x86)\Microsoft Visual Studio\Installer\vswhere.exe" -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath)";
-            auto vs_result = exec<std::string>(vswhere_cmd);
+            auto vs_result = exec(vswhere_cmd);
 
             if (vs_result.return_code != 0 || vs_result.output.empty()) {
                 log<LogLevel::Error>("visual studio not found or vswhere failed");
@@ -186,7 +190,7 @@ class CXIRCompiler {
             compile_cmd += "\"" + source_file.string() + "\"";    // Source file
             compile_cmd += "\"";
 
-            ExecResult<std::string> compile_result = exec<std::string>(compile_cmd);
+            ExecResult compile_result = exec(compile_cmd);
 
             if (compile_result.return_code != 0) {
                 log<LogLevel::Error>("compilation failed with return code " +
@@ -233,9 +237,30 @@ class CXIRCompiler {
         }
     }
 
+    std::tuple<token::Token, std::string, std::string>
+    parse_clang_err(std::string clang_out) const {
+        std::string filePath;
+        int         lineNumber   = 0;
+        int         columnNumber = 0;
+        std::string message;
+
+        std::istringstream stream(clang_out);
+        std::getline(stream, filePath, ':');  // Extract file path
+        stream >> lineNumber;                 // Extract line number
+        stream.ignore();                      // Ignore the next colon
+        stream >> columnNumber;               // Extract column number
+        stream.ignore();                      // Ignore the next colon
+        std::getline(stream, message);        // Extract the message
+
+        auto pof = token::Token(lineNumber, 0, 1, columnNumber, "/*error*/", filePath, "<other>");
+
+        return {pof, message, filePath};
+    }
+
     void compile_CXIR_NonWindows(generator::CXIR::CXIR &emitter,
                                  const std::string     &out,
-                                 bool                   is_debug) const {
+                                 bool                   is_debug,
+                                 bool                   is_verbose = false) const {
         std::string cxx = emitter.to_CXIR();
 
         std::filesystem::path path        = __CONTROLLER_FS_N::get_cwd();
@@ -251,13 +276,26 @@ class CXIRCompiler {
         file.close();
 
         std::string compiler        = "c++";
-        auto        compiler_result = exec<std::string>(compiler + " --version");
+        auto        compiler_result = exec(compiler + " --version");
         std::string compile_flags   = "-std=c++23 ";
         compile_flags += is_debug ? "-g " : "-O2 ";
 
-        if ((compiler_result.output.find("clang") != std::string::npos) || (compiler_result.output.find("gcc") != std::string::npos)) {
-            log<LogLevel::Info>("using system's '" + std::string((compiler_result.output.find("clang") != std::string::npos) ? "clang" : "gcc") + "' compiler, with the '" + ((compiler_result.output.find("clang") != std::string::npos) ? "lld" : "ld") + "' linker");
-            compile_flags += "-fdiagnostics-parseable-fixits ";
+        if ((compiler_result.output.find("clang") != std::string::npos) ||
+            (compiler_result.output.find("gcc") != std::string::npos)) {
+            log<LogLevel::Info>(
+                "using system's '" +
+                std::string((compiler_result.output.find("clang") != std::string::npos) ? "clang"
+                                                                                        : "gcc") +
+                "' compiler, with the '" +
+                ((compiler_result.output.find("clang") != std::string::npos) ? "lld" : "ld") +
+                "' linker");
+
+            // -fdiagnostics-format=json << gcc
+            /// -fdiagnostics-show-hotness -fdiagnostics-print-source-range-info  << clang
+            compile_flags += " -fcaret-diagnostics-max-lines=0 -fno-diagnostics-fixit-info "
+                             "-fno-elide-type -fno-diagnostics-show-line-numbers "
+                             "-fno-color-diagnostics -fno-diagnostics-show-option ";
+
         } else {
             log<LogLevel::Error>("aborting. unknown compiler: " + compiler_result.output);
             return;
@@ -266,15 +304,70 @@ class CXIRCompiler {
         compile_flags += "-fno-omit-frame-pointer -Wl,-w,-rpath,/usr/local/lib ";
         compile_flags += "\"" + source_file.string() + "\" -o \"" + (path / out).string() + "\"";
 
-        ExecResult<std::string> compile_result = exec<std::string>("c++ " + compile_flags);
+        auto compile_result = exec("c++ " + compile_flags + " 2>&1");
 
         if (compile_result.return_code != 0) {
-            log<LogLevel::Error>("compilation failed");
-            log<LogLevel::Error>("compiler output:\n" + compile_result.output);
+            std::vector<std::string> lines;
+            std::istringstream       stream(compile_result.output);
+
+            for (std::string line; std::getline(stream, line);) {
+                if (line.starts_with('/')) {
+                    lines.push_back(line);
+                }
+            }
+
+            for (auto &line : lines) {
+                auto err = parse_clang_err(line);
+
+                if (!std::filesystem::exists(std::get<2>(err))) {
+                    error::Panic(error::CompilerError{
+                        .err_code     = 0.8245,
+                        .err_fmt_args = {"error at: " + std::get<2>(err) + std::get<1>(err)},
+                    });
+
+                    continue;
+                }
+
+                std::pair<size_t, size_t> err_t = {std::get<1>(err).find_first_not_of(' '),
+                                                   std::get<1>(err).find(':') -
+                                                       std::get<1>(err).find_first_not_of(' ')};
+
+                error::Level level = std::map<string, error::Level>{
+                    {"error", error::Level::ERR},                       //
+                    {"warning", error::Level::WARN},                    //
+                    {"note", error::Level::NOTE}                        //
+                }[std::get<1>(err).substr(err_t.first, err_t.second)];  //
+
+                std::string msg = std::get<1>(err).substr(err_t.first + err_t.second + 1);
+
+                msg = msg.substr(msg.find_first_not_of(' '));
+
+                error::Panic(error::CodeError{
+                    .pof          = &std::get<0>(err),
+                    .err_code     = 0.8245,
+                    .err_fmt_args = {msg},
+                    .mark_pof     = false,
+                    .level        = level,
+                    .indent       = static_cast<size_t>((level == error::NOTE) ? 1 : 0),
+                });
+            }
+
+            if (is_verbose || !error::HAS_ERRORED) {
+                log<LogLevel::Info>("compilation passed");
+                log<LogLevel::Error>((is_verbose ? "compiler output:\n" : "linker failed. ") +
+                                     compile_result.output);
+            } else {
+                log<LogLevel::Error>("compilation failed");
+            }
+
+            log<LogLevel::Error>("aborting...");
             goto cleanup;
         }
 
-        log<LogLevel::Info>("compiled cxir from " + source_file.string());
+        log<LogLevel::Info>("lowered " +
+                            (emitter.get_file_name().has_value() ? emitter.get_file_name().value()
+                                                                 : source_file.string()) +
+                            " and compiled cxir");
         log<LogLevel::Info>("compiled successfully to " + (path / out).string());
 
     cleanup:
@@ -362,8 +455,10 @@ class CompilationUnit {
             return 1;
         }
 
-        compiler.compile_CXIR(
-            emitter, out_file, parsed_args.build_mode == __CONTROLLER_CLI_N::CLIArgs::MODE::DEBUG_);
+        compiler.compile_CXIR(emitter,
+                              out_file,
+                              parsed_args.build_mode == __CONTROLLER_CLI_N::CLIArgs::MODE::DEBUG_,
+                              parsed_args.verbose);
 
         log_time(start, parsed_args.verbose, std::chrono::high_resolution_clock::now());
         return 0;

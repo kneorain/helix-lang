@@ -22,6 +22,7 @@
 using namespace clang;
 
 #include <memory>
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -209,7 +210,7 @@ __CXIR_CODEGEN_BEGIN {
     class CXIR : public __AST_VISITOR::Visitor {
       private:
         std::vector<std::unique_ptr<CX_Token>> tokens;
-
+        
       public:
         CXIR()                        = default;
         CXIR(const CXIR &)            = default;
@@ -217,6 +218,20 @@ __CXIR_CODEGEN_BEGIN {
         CXIR &operator=(const CXIR &) = default;
         CXIR &operator=(CXIR &&)      = delete;
         ~CXIR() override              = default;
+
+        [[nodiscard]] std::optional<std::string> get_file_name() const {
+            if (tokens.empty()) {
+                return std::nullopt;
+            }
+
+            for (const auto &token : tokens) {
+                if (token->get_line() != 0) {
+                    return token->get_file_name();
+                }
+            }
+
+            return std::nullopt;
+        }
 
         [[nodiscard]] std::string to_CXIR() const {
             std::string cxir;
@@ -247,7 +262,7 @@ __CXIR_CODEGEN_BEGIN {
                 return cxir;
             }
 
-            return format_cxir(cxir);
+            return cxir;
         }
 
         [[nodiscard]] std::string to_readable_CXIR() const {
