@@ -299,7 +299,7 @@ class Fish requires <T> if Bar in T, T derives Fuzz {
 // TODO: implement range-based for loop
 fn print_vector(v: std::vector::<i32>) -> void {
     for i in range(v.size()) {
-        printf("Vector element %d: %d\n", i, v[i]);
+        print(f"Vector element {i}: {v[i]}");
     }
 }
 
@@ -316,7 +316,7 @@ class ABC {
     }
 
     fn print(self) -> void {
-        printf("a: %d, b: %d, c: %d\n", self.a, self.b, self.c);
+        ::print(f"a: {self.a}, b: {self.b}, c: {self.c}");
     }
 }
 
@@ -341,15 +341,19 @@ fn hi_there() -> (int, string) {
     return (10, "Hello");
 }
 
+fn call_function() -> u32 {
+    return 0x120ABA1;
+}
+
 fn main() -> i32 {
     // Adding two numbers
     let sum = add(5, 7);
     const x: i32 = 10;
-    printf("Sum: %d\n", sum);
+    print(f"Sum: {sum}");
 
     // Calculating factorial
     let fact = factorial(5);
-    printf("Factorial: %d\n", fact);
+    print(f"Factorial: {fact}");
 
     // Working with a C++ vector
     let numbers: std::vector::<i32> = [1, 2, 3, 4];
@@ -363,7 +367,7 @@ fn main() -> i32 {
     let bp: *i32 = &a;
 
     let xy = hi_there();
-    printf("x: %d, y: %s\n", std::get::<0>(xy), std::get::<1>(xy).c_str());
+    print(f"x: {std::get::<0>(xy)}, y: {std::get::<1>(xy).c_str()}");
 
     let primitive_numbers: *u32 = alloca(5 * sizeof(u32)) as *u32;
     primitive_numbers[0] = 1;
@@ -374,18 +378,18 @@ fn main() -> i32 {
     
 
     for i in range(5) {
-        printf("Primitive number %d: %d\n", i, primitive_numbers[i]);
+        print(f"Primitive number {i}: {primitive_numbers[i]}");
     }
 
-    printf("Primitive numbers freed\n");
+    print("Primitive numbers freed");
 
-    let windows_open_adder: *i32 = 0x00000000 as *i32;
+    let windows_open_adder: *i32 = 0xAB128 as unsafe *i32;
 
-    printf("windows_open_adder: %p\n", bp);
-    printf("windows_open: %d\n", a);
+    print(f"windows_open_adder: {windows_open_adder}");
+    print(f"windows_open: {a}");
 
-    printf("bp: %d\n", *bp);
-    printf("bp address: %p\n", bp);
+    print(f"bp: {*bp}");
+    print(f"bp address: {bp}");
 
     // Printing vector elements
     print_vector(numbers);
@@ -396,9 +400,9 @@ fn main() -> i32 {
 
     // Conditional check
     if sum > fact {
-        printf("Sum is greater than factorial.\n");
+        print("Sum is greater than factorial.");
     } else {
-        printf("Factorial is greater than or equal to sum.\n");
+        print("Factorial is greater than or equal to sum.");
     }
 
     let f1: Fraction = { .n=1, .d=2 };
@@ -407,16 +411,16 @@ fn main() -> i32 {
     let f3 = f1 + f2;
 
     // Use C-style printf for output
-    printf("f1: %d/%d\n", f1.n, f1.d);
-    printf("f2: %d/%d\n", f2.n, f2.d);
-    printf("f3 (f1 + f2): %d/%d\n", f3.n, f3.d);
-    printf("f1 == f2: %s\n",  "True" if f1 == f2 else "False");
+    print(f"f1: {f1.n}/{f1.d}");
+    print(f"f2: {f2.n}/{f2.d}");
+    print(f"f3 (f1 + f2): {f3.n}/{f3.d}");
+    print(f"f1 == f2: {"true" if f1 == f2 else "false"}");
 
-    printf("%s\n", "true" if (3 + 2 * 5    == 13) else "false");
-    printf("%s\n", "true" if ((3 + 2) * 5  == 25) else "false");
-    printf("%s\n", "true" if (10 / 2 + 3   == 8 ) else "false");
-    printf("%s\n", "true" if (10 / (2 + 3) == 2 ) else "false");
-    printf("%s\n", "true" if (5 + 4 - 3    == 6 ) else "false");
+    print("true" if (3 + 2 * 5    == 13) else "false");
+    print("true" if ((3 + 2) * 5  == 25) else "false");
+    print("true" if (10 / 2 + 3   == 8 ) else "false");
+    print("true" if (10 / (2 + 3) == 2 ) else "false");
+    print("true" if (5 + 4 - 3    == 6 ) else "false");
 
     // Accessing elements using the subscript operator
     // printf("f1 numerator (f1[0]): %d\n", f1[0]);
@@ -428,6 +432,8 @@ fn main() -> i32 {
 
     let obj = ABC(10, 20, 30);
     obj.print();
+
+    print(f"testing \{ wooo \} {call_function() + 182 + 21991} hhhjjj ");
 
     return 0;
 }
