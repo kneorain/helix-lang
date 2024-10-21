@@ -78,7 +78,32 @@
 #define ANGLE_DELIMIT(...) DELIMIT(CXX_LESS, CXX_GREATER, __VA_ARGS__)
 
 CX_VISIT_IMPL(LiteralExpr) {
-    tokens.push_back(std::make_unique<CX_Token>(node.value, cxir_tokens::CXX_CORE_LITERAL));
+    if (node.contains_format_args) {
+        // helix::std::format_string(node.value, (format_arg)...)
+        ADD_TOKEN_AS_VALUE(CXX_CORE_IDENTIFIER, "helix");
+        ADD_TOKEN(CXX_SCOPE_RESOLUTION);
+        ADD_TOKEN_AS_VALUE(CXX_CORE_IDENTIFIER, "std");
+        ADD_TOKEN(CXX_SCOPE_RESOLUTION);
+        ADD_TOKEN_AS_VALUE(CXX_CORE_IDENTIFIER, "format_string");
+        ADD_TOKEN(CXX_LPAREN);
+        ADD_TOKEN_AS_TOKEN(CXX_CORE_LITERAL, node.value);
+        ADD_TOKEN(CXX_COMMA);
+
+        for (auto &format_spec : node.format_args) {
+            PAREN_DELIMIT(format_spec->accept(*this););
+            ADD_TOKEN(CXX_COMMA);
+        }
+
+        if (node.format_args.size() > 0) {
+            tokens.pop_back();  // remove trailing comma
+        }
+
+        ADD_TOKEN(CXX_RPAREN);
+
+        return;
+    }
+
+    ADD_TOKEN_AS_TOKEN(CXX_CORE_LITERAL, node.value);
 }
 
 CX_VISIT_IMPL(LetDecl) {
@@ -222,6 +247,10 @@ CX_VISIT_IMPL(GenericInvokePathExpr) {
 CX_VISIT_IMPL(ScopePathExpr) {
     // -> path ('::' path)*
 
+    if (node.global_scope) {
+        ADD_TOKEN(CXX_SCOPE_RESOLUTION);
+    }
+
     for (const parser::ast::NodeT<parser::ast::node::IdentExpr> &ident : node.path) {
         ident->accept(*this);
         ADD_TOKEN(CXX_SCOPE_RESOLUTION);
@@ -262,9 +291,7 @@ CX_VISIT_IMPL(FunctionCallExpr) {
     ADD_NODE_PARAM(args);
 }
 
-CX_VISIT_IMPL(ArrayLiteralExpr) {
-    BRACE_DELIMIT(COMMA_SEP(values););
-}
+CX_VISIT_IMPL(ArrayLiteralExpr) { BRACE_DELIMIT(COMMA_SEP(values);); }
 
 CX_VISIT_IMPL(TupleLiteralExpr) {
     if (!node.values.empty() && (node.values.size() > 0) &&
@@ -321,7 +348,12 @@ CX_VISIT_IMPL(CastExpr) {
 
     // TODO: WHAT KIND OF CAST???
     // static for now...
-    ADD_TOKEN(CXX_STATIC_CAST);
+
+    if (node.type->specifiers.contains(token::tokens::KEYWORD_UNSAFE)) {
+        ADD_TOKEN(CXX_REINTERPRET_CAST);
+    } else {
+        ADD_TOKEN(CXX_STATIC_CAST);
+    }
 
     ANGLE_DELIMIT(             //
         ADD_NODE_PARAM(type);  //
@@ -1167,23 +1199,29 @@ CX_VISIT_IMPL(Program) {
 ///
 ///*--- Helix ---*
 
-/// language primitive types
+// auto c++ includes for the core of the language
 #include <set>
 #include <map>
 #include <tuple>
+#include <array>
 #include <limits>
 #include <string>
 #include <vector>
 #include <memory>
 #include <cstdint>
 #include <variant>
+#include <sstream>
+#include <utility>
+#include <concepts>
 #include <optional>
 #include <iostream>
 #include <stdexcept>
 #include <type_traits>
 
-// ensure cross-platform compatibility for 128-bit and 256-bit types.
-// gcc/clang support these types, but MSVC may not. We can conditionally include them.
+/// language primitive types
+
+/// ensure cross-platform compatibility for 128-bit and 256-bit types.
+/// gcc/clang support these types, but MSVC may not. We can conditionally include them.
 
 using u8   = unsigned char;
 using i8   = signed char;
@@ -1217,6 +1255,153 @@ template <typename ...Args>
 using set = std::set<Args...>;
 template <typename ...Args>
 using map = std::map<Args...>;
+
+#if __cplusplus < 202002L
+static_assert(false, "helix requires c++20 or higher");
+#endif
+
+/// \include belongs to the helix standard library.
+/// \brief namespace for helix standard library in c++
+namespace helix {
+/// \include belongs to the helix standard library.
+/// \brief namespace for helix standard library
+namespace std {
+/// \include belongs to the helix standard library.
+/// \brief namespace for internal interfaces
+namespace __internal_interfaces {
+    /// \include belongs to the helix standard library.
+    /// \brief concept for converting a type to a string
+    ///
+    /// This concept checks if a type has a to_string method that returns a string
+    ///
+    template <typename T>
+    concept ToString = requires(T a) {
+        { a.to_string() } -> ::std::convertible_to<::string>;
+    };
+
+    /// \include belongs to the helix standard library.
+    /// \brief concept for converting a type to a ostream
+    ///
+    /// This concept checks if a type has an ostream operator
+    ///
+    template <typename T>
+    concept OStream = requires(::std::ostream &os, T a) {
+        { os << a } -> ::std::convertible_to<::std::ostream &>;
+    };
+
+    /// \include belongs to the helix standard library.
+    /// \brief concept for converting a type to a string
+    ///
+    /// This concept checks if a type can be converted to a string
+    ///
+    template <typename T>
+    concept CanConvertToStringForm = ToString<T> || OStream<T>;
+}  // namespace __internal_interfaces
+
+/// \include belongs to the helix standard library.
+/// \brief convert any type to a string
+///
+/// This function will try to convert the argument to a string using the following methods:
+/// - if the argument has a to_string method, it will use that
+/// - if the argument has a ostream operator, it will use that
+/// - if the argument is an arithmetic type, it will use std::to_string
+/// - if all else fails, it will convert the address of the argument to a string
+///
+template <typename Expr>
+constexpr ::string any_to_string(Expr &&arg) {
+    if constexpr (__internal_interfaces::ToString<Expr>) {
+        return arg.to_string();
+    } else if constexpr (__internal_interfaces::OStream<Expr>) {
+        ::std::stringstream ss;
+        ss << arg;
+        return ss.str();
+    } else if constexpr (::std::is_arithmetic_v<Expr>) {
+        return ::std::to_string(arg);
+    } else {
+        return "0x" + ::std::to_string(reinterpret_cast<::std::uintptr_t>(&arg));
+    }
+}
+
+/// \include belongs to the helix standard library.
+/// \brief format a string with arguments
+///
+/// the following calls can happen in helix and becomes the following c++:
+///
+/// f"hi: {var}"   -> format_string("hi: \{\}", var)
+/// f"hi: {var1=}" -> format_string("hi: var1=\{\}", var1)
+///
+/// f"hi: {(some_expr() + 12)=}" -> format_string("hi: (some_expr() + 12)=\{\}", some_expr())
+/// f"hi: {some_expr() + 12}"    -> format_string("hi: \{\}", some_expr() + 12)
+///
+template <typename... Expr>
+constexpr  ::string format_string( ::string base, Expr &&...args) {
+    const ::std::array< ::string, sizeof...(args)> exprs_as_string = {
+        any_to_string(::std::forward<Expr>(args))...};
+    size_t pos = 0;
+
+#pragma unroll
+    for (auto &&arg : exprs_as_string) {
+        pos = base.find("\\{\\}", pos);
+
+        if (pos == ::string::npos) [[unlikely]] {
+            throw ::std::runtime_error(
+                "Internal [f-stirng engine] error: format argument count mismatch");
+        }
+
+        base.replace(pos, 4, arg);
+        pos += arg.size();
+    }
+
+    return base;
+}
+}  // namespace std
+
+class endl {
+  public:
+    endl &operator=(const endl &) = delete;
+    endl &operator=(endl &&)      = delete;
+    endl(const endl &end)         = delete;
+    endl(endl &&)                 = delete;
+    endl()                        = default;
+    ~endl()                       = default;
+
+    explicit endl(::string end)
+        : end_l(::std::move(end)) {}
+    
+    explicit endl(const char *end)
+        : end_l(end) {}
+    
+    explicit endl(const char end)
+        : end_l(::string(1, end)) {}
+    
+    friend ::std::ostream &operator<<(::std::ostream &oss, const endl &end) {
+        oss << end.end_l;
+        return oss;
+    }
+
+  private:
+    ::string end_l = "\n";
+};
+}  // namespace helix
+
+template <typename... Args>
+inline constexpr void print(Args &&...args) {
+    if constexpr (sizeof...(args) == 0) {
+        ::std::cout << helix::endl('\n');
+        return;
+    };
+    
+    (::std::cout << ... << args);
+    
+    if constexpr (sizeof...(args) > 0) {
+        if constexpr (!::std::is_same_v<::std::remove_cv_t<::std::remove_reference_t<
+                                          decltype(::std::get<sizeof...(args) - 1>(
+                                              ::std::tuple<Args...>(args...)))>>,
+                                      helix::endl>) {
+            ::std::cout << helix::endl('\n');
+        }
+    }
+}
 )");
 
     for (const auto &child : node.children) {

@@ -17,6 +17,8 @@
 
 #include "lexer/include/cases.def"
 #include "neo-panic/include/error.hh"
+#include "neo-pprint/include/hxpprint.hh"
+#include "token/include/Token.hh"
 
 namespace parser::lexer {
 Lexer::Lexer(std::string source, const std::string &filename)
@@ -30,6 +32,19 @@ Lexer::Lexer(std::string source, const std::string &filename)
     , column(0)
     , offset(0)
     , end(this->source.size()) {}
+
+Lexer::Lexer(std::string source, const std::string &filename, u64 line, u64 column, u64 offset)
+    : tokens(filename)
+    , source(std::move(source))
+    , file_name(filename)
+    , currentChar(this->source.length() > 0 ? this->source[0] : '\0')
+    , cachePos(0)
+    , currentPos(0)
+    , line(line)
+    , column(column)
+    , offset(offset)
+    , end(this->source.size())
+    , starting_pos_override({line, column}) {}
 
 Lexer::Lexer(const __TOKEN_N::Token &token)
     : tokens(token.file_name())
@@ -330,21 +345,54 @@ inline __TOKEN_N::Token Lexer::parse_string() {
     // all the data within " (<string>) or ' (<char>) is a string
     auto start        = currentPos;
     auto start_line   = line;
-    auto start_column = column;
+    auto start_column = column+1;
 
     std::string token_type;
 
-    bool end_loop = false;
-    char quote    = current();
+    bool end_loop      = false;
+    char quote         = current();
+    bool is_format_str = false;
 
     switch (current()) {
-        case STRING_BYPASS:
-            quote = advance();
+        case 'r':
+        case 'b':
+        case 'f':
+            is_format_str = true;
+        case 'u':
+            if (peek_forward() == '"' || peek_forward() == '\'') {
+                quote = advance();
+            } else {
+                error::Panic panic = error::Panic(error::create_old_CodeError(
+                    nullptr,
+                    0.0001,
+                    {},
+                    std::vector<string>{"more then 1 string specifier provided."}));
+            }
             break;
     }
 
+    size_t brace_nesting = 0;
+
     // if the quote is followed by a \ then ignore the quote
     while (!end_loop && !is_eof()) {
+        if (is_format_str) {
+            switch (current()) {
+                case '{':
+                    ++brace_nesting;
+                    break;
+                case '}':
+                    --brace_nesting;
+                    break;
+                default:
+                    break;
+            }
+        }
+
+        if (brace_nesting > 0) {
+            bare_advance();
+            continue;
+        }
+
         switch (peek_forward()) {
             case '\\':
                 bare_advance();
@@ -355,10 +403,19 @@ inline __TOKEN_N::Token Lexer::parse_string() {
             default:
                 break;
         }
+
         bare_advance();
     }
 
+    if (brace_nesting > 0) {
+        auto bad_token = __TOKEN_N::Token{start_line, start_column, 1, offset, "\"", file_name};
+        throw error::Panic(error::create_old_CodeError(
+            &bad_token, 2.1002, {}, std::vector<string>{"'{' in f-string"}));
+    }
+
     if (is_eof()) {
+        print(currentPos);
+        print(std::string(current(), 1));
         auto bad_token = __TOKEN_N::Token{start_line, start_column, 1, offset, "\"", file_name};
         throw error::Panic(
             error::create_old_CodeError(&bad_token, 2.1002, {}, std::vector<string>{"string"}));
@@ -528,5 +585,5 @@ inline char Lexer::peek_forward() const {
     return source[currentPos + 1];
 }
 
-inline bool Lexer::is_eof() const { return currentPos >= end; }
+inline bool Lexer::is_eof() const { return currentPos > end; }
 }  // namespace parser::lexer

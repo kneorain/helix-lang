@@ -13,8 +13,10 @@
 #ifndef __LEXER_HH__
 #define __LEXER_HH__
 
+#include <optional>
 #include <string>
 
+#include "neo-types/include/hxint.hh"
 #include "token/include/Token.hh"
 
 namespace parser::lexer {
@@ -22,8 +24,9 @@ class Lexer {
   public:
     // TODO: Investigate if we can make this string not a copy
     Lexer(std::string source, const std::string &filename);
+    Lexer(std::string source, const std::string &filename, u64 line, u64 column, u64 offset);
     explicit Lexer(const __TOKEN_N::Token &token);
-    Lexer() = default;
+    Lexer()                              = default;
     Lexer(const Lexer &lexer)            = default;
     Lexer(Lexer &&lexer)                 = delete;
     Lexer &operator=(const Lexer &lexer) = default;
@@ -58,13 +61,14 @@ class Lexer {
     std::string          source;     //> source code
     std::string          file_name;  //> file name
 
-    char currentChar;  //> current character
-    u64  cachePos;     //> cache position
-    u64  currentPos;   //> current position in the source
-    u64  line;         //> line number
-    u64  column;       //> position in the line
-    u64  offset;       //> position of the end of the token
-    u64  end;          //> end of the source
+    char                               currentChar;  //> current character
+    u64                                cachePos;     //> cache position
+    u64                                currentPos;   //> current position in the source
+    u64                                line;         //> line number
+    u64                                column;       //> position in the line
+    u64                                offset;       //> position of the end of the token
+    u64                                end;          //> end of the source
+    std::optional<std::pair<u64, u64>> starting_pos_override = std::nullopt;
 };
 
 // prevent global namespace pollution
