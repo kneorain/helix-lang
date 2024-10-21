@@ -31,7 +31,7 @@ struct hash<error::Errors> {
 }  // namespace std
 
 namespace error {
-const helix::CompTimeMap<float, Errors, 100> ERROR_MAP({
+const helix::CompTimeMap<float, Errors, 150> ERROR_MAP({
     // Syntax Errors
     MP(0.0001, Errors{"invalid syntax: {}", "", error::ERR}),
     MP(0.0002, Errors{"invalid use of a literal", "use the literal in a correct manner.", error::ERR}),
@@ -150,6 +150,7 @@ const helix::CompTimeMap<float, Errors, 100> ERROR_MAP({
     MP(8.1001, Errors{"dangling pointer detected", "ensure the pointer '{}' is not used after the memory is freed.", error::FATAL}),
     MP(8.1002, Errors{"memory leak detected", "ensure all allocated memory is freed appropriately.", error::FATAL}),
     MP(8.1003, Errors{"invalid memory access at address '{}'", "ensure memory is accessed within valid bounds.", error::FATAL}),
+    MP(0.8245, Errors{"{}", "", error::ERR}),
 
 });
 };  // end of namespace error

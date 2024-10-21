@@ -15,6 +15,7 @@
 #include <cstddef>
 #include <format>
 #include <iomanip>
+#include <numeric>
 #include <optional>
 #include <ostream>
 #include <sstream>
@@ -283,33 +284,69 @@ return_state:
     return marking;
 }
 
-size_t set_level(string &level, const float &err_level) {
+size_t set_level(string &level, const double &err_level) {
     size_t level_len = 0;
+    std::string __ret_color = "";
 
     switch (ERROR_MAP.at(err_level)->level) {
         case NOTE:
-            level     = string(colors::bold) + string(colors::fg8::blue) + "note" + ret_color;
+            level     = string(colors::bold) + string(colors::fg8::cyan) + "note" + __ret_color;
             level_len = level.size() -
-                        string(string(colors::bold) + string(colors::fg8::blue) + ret_color).size();
+                        string(string(colors::bold) + string(colors::fg8::cyan) + __ret_color).size();
             break;
         case WARN:
-            level = string(colors::bold) + string(colors::fg8::yellow) + "warn" + ret_color;
+            level = string(colors::bold) + string(colors::fg8::yellow) + "warn" + __ret_color;
             level_len =
                 level.size() -
-                string(string(colors::bold) + string(colors::fg8::yellow) + ret_color).size();
+                string(string(colors::bold) + string(colors::fg8::yellow) + __ret_color).size();
             break;
         case ERR:
             level =
-                string(colors::bold) + ret_color + string(colors::fg8::red) + "error" + ret_color;
-            level_len = level.size() - string(string(colors::bold) + ret_color +
-                                              string(colors::fg8::red) + ret_color)
+                string(colors::bold) + __ret_color + string(colors::fg8::red) + "error" + __ret_color;
+            level_len = level.size() - string(string(colors::bold) + __ret_color +
+                                              string(colors::fg8::red) + __ret_color)
                                            .size();
             break;
         case FATAL:
-            level = string(colors::bold) + ret_color + string(colors::fg8::red) + "fatal" +
-                    string(colors::reset) + ret_color;
-            level_len = level.size() - string(string(colors::bold) + ret_color +
-                                              string(colors::fg8::red) + ret_color)
+            level = string(colors::bold) + __ret_color + string(colors::fg8::red) + "fatal" +
+                    string(colors::reset) + __ret_color;
+            level_len = level.size() - string(string(colors::bold) + __ret_color +
+                                              string(colors::fg8::red) + __ret_color)
+                                           .size();
+            break;
+    }
+
+    return level_len;
+}
+
+size_t set_level(string &level, const Level &err_level) {
+    size_t level_len = 0;
+    std::string __ret_color = "";
+
+    switch (err_level) {
+        case NOTE:
+            level     = string(colors::bold) + string(colors::fg8::cyan) + "note" + __ret_color;
+            level_len = level.size() -
+                        string(string(colors::bold) + string(colors::fg8::cyan) + __ret_color).size();
+            break;
+        case WARN:
+            level = string(colors::bold) + string(colors::fg8::yellow) + "warn" + __ret_color;
+            level_len =
+                level.size() -
+                string(string(colors::bold) + string(colors::fg8::yellow) + __ret_color).size();
+            break;
+        case ERR:
+            level =
+                string(colors::bold) + __ret_color + string(colors::fg8::red) + "error" + __ret_color;
+            level_len = level.size() - string(string(colors::bold) + __ret_color +
+                                              string(colors::fg8::red) + __ret_color)
+                                           .size();
+            break;
+        case FATAL:
+            level = string(colors::bold) + __ret_color + string(colors::fg8::red) + "fatal" +
+                    string(colors::reset) + __ret_color;
+            level_len = level.size() - string(string(colors::bold) + __ret_color +
+                                              string(colors::fg8::red) + __ret_color)
                                            .size();
             break;
     }
@@ -318,7 +355,8 @@ size_t set_level(string &level, const float &err_level) {
 }
 
 Panic::Panic(const CodeError &err)
-    : level_len(set_level(final_err.level, err.err_code))
+    : level_len(err.level == NONE ? set_level(final_err.level, err.err_code)
+                                  : set_level(final_err.level, err.level))
     , mark_pof(err.mark_pof) {
     auto err_map_at = ERROR_MAP.at(err.err_code);
 
@@ -326,7 +364,7 @@ Panic::Panic(const CodeError &err)
         throw std::runtime_error("err code \'" + std::to_string(err.err_code) + "\' not found");
     }
 
-    if (err_map_at->level >= ERR) {
+    if ((err_map_at->level >= ERR) || err.level >= ERR) {
         HAS_ERRORED = true;
     }
 
@@ -348,6 +386,7 @@ Panic::Panic(const CodeError &err)
     final_err.line   = err.pof->line_number();
     final_err.col    = err.pof->column_number();
     final_err.offset = err.pof->length();
+    final_err.indent = err.indent;
 
     process_full_line();
 
@@ -498,7 +537,7 @@ void Panic::show_error() {
     }
 
     // add the message
-    formatted_error += A_W + final_err.level + ": " + final_err.msg + string(colors::reset) +
+    formatted_error += A_W + final_err.level + ": " + std::string(colors::reset) + final_err.msg + string(colors::reset) +
                        "\n";  // fatal: missing semicolon
     formatted_error += A_W + string(level_len - 1, ' ') + "-->  at " +
                        format_loc_info(final_err.file, final_err.line, final_err.col) + "\n";
@@ -526,11 +565,34 @@ void Panic::show_error() {
     if (!final_err.fix.empty()) {
         formatted_error += A_W + whitespace + "| " + "\n";
         formatted_error += string((A_W.size() + whitespace.size() - 3), ' ') +
-                           string(colors::bold) + string(colors::fg8::green) + "fix" +
-                           string(colors::fg8::white) + ": " + final_err.fix + "\n";
+                           string(colors::bold) + string(colors::fg8::green) + "fix" + ": " + std::string(colors::reset) + final_err.fix + "\n";
     }
 
     formatted_error += string(colors::reset);
+
+    // split the formatted_error by \n and add final_err.indent to each line
+    if (final_err.indent > 0) {
+        std::vector<std::string> lines_to_indent;
+        std::istringstream        iss(formatted_error);
+        std::string               line;
+
+        while (std::getline(iss, line)) {
+            lines_to_indent.push_back(line);
+        }
+
+        for (auto &line : lines_to_indent) {
+            std::string_insert(line, std::string(final_err.indent*4, ' '), 0);
+        }
+
+        formatted_error = std::accumulate(lines_to_indent.begin(),
+                                          lines_to_indent.end(),
+                                          std::string(),
+                                          [](const std::string &a, const std::string &b) {
+                                              return a + b + "\n";
+                                          });
+
+        formatted_error.pop_back();  // remove the last newline
+    }
 
     print(formatted_error);
 }

@@ -13,6 +13,12 @@
 - [ ] Parse and codegen catch blocks with no catch type
 - [ ] Make test syntax work for definitions and usages
 - [ ] Make classes immutable by default
+- [x] Get f-strings working
+- [x] Convert clang errors into the helix error msg format.
+- [ ] Convert gcc errors into the helix error msg format.
+- [ ] Convert msvc errors into the helix error msg format.
+- [ ] Fix ast error messages, where the message tells a fix to also add a quick fix to the error
+- [ ] Add support for global scopes in the parser
 
 # Completed:
 ### Parser:

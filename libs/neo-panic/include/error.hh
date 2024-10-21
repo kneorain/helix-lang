@@ -44,6 +44,7 @@ struct _internal_error {
     u64          col{};
     u64          offset{};
     fix_pair_vec quick_fix;
+    size_t       indent = 0;
 
     _internal_error() = default;
 
@@ -70,31 +71,28 @@ struct _internal_error {
                 json += ", ";
             }
         }
-        
+
         json += "]";
         return json += "}";
     }
 };
-
 
 using string_vec   = std::vector<string>;
 using fix_pair     = std::pair<__TOKEN_N::Token, i64>;
 using fix_pair_vec = std::vector<fix_pair>;
 using errors_rep   = std::vector<_internal_error>;
 
-
 inline bool       HAS_ERRORED = false;
 inline bool       SHOW_ERROR  = true;
 inline errors_rep ERRORS;
-
 
 enum Level {
     NOTE,   ///< Just a Info.
     WARN,   ///< Warn, the compiler can move on to code gen. and produce a binary
     ERR,    ///< Error, but compiler can continue parsing
     FATAL,  ///< Fatal error all other proceeding errors omitted
+    NONE,    ///< No level
 };
-
 
 struct Errors {
     string err;
@@ -102,25 +100,24 @@ struct Errors {
     Level  level = ERR;
 };
 
-
 struct CodeError {
     __TOKEN_N::Token *pof;  //< point of failure
-    double         err_code;
-    bool          mark_pof = true;
-    string_vec    fix_fmt_args;
-    string_vec    err_fmt_args;
-    fix_pair_vec  opt_fixes;  //< fixes that show in the code to fix
+    double            err_code;
+    bool              mark_pof = true;
+    string_vec        fix_fmt_args;
+    string_vec        err_fmt_args;
+    fix_pair_vec      opt_fixes;     //< fixes that show in the code to fix
+    Level             level  = NONE;  //< optional level to overload the one specifed in the error
+    size_t            indent = 0;    //< optional indent to allow to error categorizing
 
     ~CodeError() = default;
 };
 
-
 struct CompilerError {
-    double      err_code;
+    double     err_code;
     string_vec fix_fmt_args;
     string_vec err_fmt_args;
 };
-
 
 class Panic {
   public:
@@ -141,19 +138,17 @@ class Panic {
     bool   mark_pof;
 };
 
-
 static inline CodeError create_old_CodeError(__TOKEN_N::Token *pof,
-                                             const double  err_code,
-                                             string_vec    fix_fmt_args = {},
-                                             string_vec    err_fmt_args = {},
-                                             fix_pair_vec  opt_fixes    = {}) {
+                                             const double      err_code,
+                                             string_vec        fix_fmt_args = {},
+                                             string_vec        err_fmt_args = {},
+                                             fix_pair_vec      opt_fixes    = {}) {
     return CodeError{.pof          = pof,
                      .err_code     = err_code,
                      .fix_fmt_args = std::move(fix_fmt_args),
                      .err_fmt_args = std::move(err_fmt_args),
                      .opt_fixes    = std::move(opt_fixes)};
 };
-
 
 static inline string fmt_string(const string &format, const string_vec &fmt_args) {
     string      result;

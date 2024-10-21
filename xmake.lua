@@ -183,16 +183,14 @@ local function helix_src_setup()
     -- libs
     add_includedirs("libs") -- add all files in the neo-json directory
 
-    add_headerfiles("libs/neo-json/**.hh")   -- add all files in the neo-json directory
 	add_headerfiles("libs/neo-panic/**.hh")  -- add all files in the neo-panic directory
-	add_headerfiles("libs/neo-pprint/**.hh") -- add all files in the neo-pprint directory
-	add_headerfiles("libs/neo-types/**.hh")  -- add all files in the neo-types directory
+	add_files("libs/neo-panic/**.cc")        -- add all files in the neo-panic directory
+    
+    add_headerfiles("libs/neo-json/**.hh")    -- add all files in the neo-json directory
+    add_headerfiles("libs/glaze-json/**.hpp") -- add all files in glaze-json directory
+	add_headerfiles("libs/neo-pprint/**.hh")  -- add all files in the neo-pprint directory
+	add_headerfiles("libs/neo-types/**.hh")   -- add all files in the neo-types directory
 	add_headerfiles("libs/taywee-args/**.hh") -- add all files in the taywee-args directory
-
-    -- FIXME: remove since its unsed, due to not working with my custom lexer.
-	add_headerfiles("libs/PEGTL/**.hpp")  -- add all files in the PEGTL directory
-
-	add_files("libs/neo-panic/**.cc") -- add all files in the neo-panic directory
 end
 
 function sleep(seconds)
