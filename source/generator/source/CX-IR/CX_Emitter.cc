@@ -1218,6 +1218,11 @@ CX_VISIT_IMPL(Program) {
 #include <stdexcept>
 #include <type_traits>
 
+#ifdef __GNUG__
+    #include <cxxabi.h>
+    #include <memory>
+#endif
+
 /// language primitive types
 
 /// ensure cross-platform compatibility for 128-bit and 256-bit types.
@@ -1318,12 +1323,25 @@ constexpr ::string any_to_string(Expr &&arg) {
     } else if constexpr (::std::is_arithmetic_v<Expr>) {
         return ::std::to_string(arg);
     } else {
-        return "0x" + ::std::to_string(reinterpret_cast<::std::uintptr_t>(&arg));
+        ::std::stringstream ss;
+    
+#       ifdef __GNUG__
+            int status;
+            char *realname = abi::__cxa_demangle(typeid(arg).name(), 0, 0, &status);
+            ss << "[" << realname << " at 0x" << ::std::hex << &arg << "]";
+            free(realname);
+#       else
+            ss << "[" << typeid(arg).name() << " at 0x" << ::std::hex << &arg << "]";
+#       endif
+
+        return ss.str();
     }
 }
 
 /// \include belongs to the helix standard library.
 /// \brief format a string with arguments
+///
+/// TODO: = is not yet suppoted
 ///
 /// the following calls can happen in helix and becomes the following c++:
 ///

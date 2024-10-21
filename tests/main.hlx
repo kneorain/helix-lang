@@ -53,7 +53,7 @@ op / fn divide(a: Fraction, b: Fraction) -> Fraction {
     let new_d = a.d * b.n;
     return Fraction { n= new_n, d= new_d };
 }
-/* 
+/*
 */
 
 // + - * / % ^ & | ~ ! = < > += -= *= /= %= ^= &= |= << >> >>= <<= == != <= >= <=>(since C++20) && || ++ -- , ->* -> ( ) [ ]
@@ -159,7 +159,7 @@ op | fn bitwise_or(a: Fraction, b: Fraction) -> Fraction {
     return Fraction { n= a.n | b.n, d= a.d | b.d };
 }
 
-// Overload the bitwise XOR operator for Fraction   
+// Overload the bitwise XOR operator for Fraction
 
 op ^ fn bitwise_xor(a: Fraction, b: Fraction) -> Fraction {
     return Fraction { n= a.n ^ b.n, d= a.d ^ b.d };
@@ -261,7 +261,7 @@ const eval fn range(n: i32) -> std::vector::<i32> {
     for (let i: i32 = 0; i < n; i++) {
         v.push_back(i);
     }
-    
+
     return v;
 }
 
@@ -280,7 +280,7 @@ class Fuzz {
 
 
 
-class Fish requires <T> if Bar in T, T derives Fuzz {    
+class Fish requires <T> if Bar in T, T derives Fuzz {
     let fish: T;
 }
 
@@ -362,12 +362,13 @@ fn main() -> i32 {
     numbers.push_back(30);
     numbers.push_back(40);
     numbers.push_back(50);
-    
+
     let a: i32 = 10;
     let bp: *i32 = &a;
 
     let xy = hi_there();
     print(f"x: {std::get::<0>(xy)}, y: {std::get::<1>(xy).c_str()}");
+    print(f"numbers = {numbers}");
 
     let primitive_numbers: *u32 = alloca(5 * sizeof(u32)) as *u32;
     primitive_numbers[0] = 1;
@@ -375,7 +376,7 @@ fn main() -> i32 {
     primitive_numbers[2] = 3;
     primitive_numbers[3] = 4;
     primitive_numbers[4] = 5;
-    
+
 
     for i in range(5) {
         print(f"Primitive number {i}: {primitive_numbers[i]}");
@@ -407,7 +408,7 @@ fn main() -> i32 {
 
     let f1: Fraction = { .n=1, .d=2 };
     let f2: Fraction = { .n=3, .d=4 };
-    
+
     let f3 = f1 + f2;
 
     // Use C-style printf for output
