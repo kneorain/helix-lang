@@ -37,6 +37,8 @@ __AST_NODE_BEGIN {
 
         __TOKEN_N::Token value;
         LiteralType      type;
+        bool contains_format_args = false;
+        NodeV<> format_args;
     };
 
     class BinaryExpr final : public Node {  // := E op E
@@ -152,9 +154,11 @@ __AST_NODE_BEGIN {
         BASE_CORE_METHODS(ScopePathExpr);
 
         explicit ScopePathExpr(NodeT<IdentExpr> first) { path.emplace_back(std::move(first)); }
+        explicit ScopePathExpr(bool /* unused */) {}
 
         NodeV<IdentExpr> path;
         NodeT<>          access;
+        bool global_scope = false;
     };
 
     class DotPathExpr final : public Node {  // := E '.' E
@@ -324,12 +328,12 @@ __AST_NODE_BEGIN {
     class CastExpr final : public Node {  // := E 'as' E
         BASE_CORE_METHODS(CastExpr);
 
-        CastExpr(NodeT<> value, NodeT<> type)
+        CastExpr(NodeT<> value, NodeT<Type> type)
             : value(std::move(value))
             , type(std::move(type)) {}
 
         NodeT<> value;
-        NodeT<> type;
+        NodeT<Type> type;
     };
 
     class InstOfExpr final : public Node {  // := E ('in' | 'derives') E

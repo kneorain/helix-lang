@@ -117,16 +117,19 @@
 #include <unordered_set>
 #include <vector>
 
+#include "lexer/include/lexer.hh"
 #include "neo-pprint/include/hxpprint.hh"
 #include "parser/ast/include/config/AST_config.def"
 #include "parser/ast/include/nodes/AST_expressions.hh"
 #include "parser/ast/include/private/AST_generate.hh"
+#include "parser/ast/include/private/base/AST_base_expression.hh"
 #include "parser/ast/include/types/AST_jsonify_visitor.hh"
 #include "parser/ast/include/types/AST_modifiers.hh"
 #include "parser/ast/include/types/AST_types.hh"
 #include "token/include/config/Token_cases.def"
 #include "token/include/config/Token_config.def"
 #include "token/include/private/Token_generate.hh"
+#include "token/include/private/Token_list.hh"
 
 // ---------------------------------------------------------------------------------------------- //
 
@@ -222,6 +225,8 @@ AST_BASE_IMPL(Expression, parse_primary) {  // NOLINT(readability-function-cogni
                             __TOKEN_N::KEYWORD_SPAWN,
                             __TOKEN_N::KEYWORD_AWAIT})) {
         node = parse<AsyncThreading>();
+    } else if (tok.token_kind() == __TOKEN_N::OPERATOR_SCOPE) {  // global scope access
+        node = parse<ScopePathExpr>(nullptr, true);
     } else {
         return std::unexpected(
             PARSE_ERROR_MSG("Expected an expression, but found an unexpected token '" +
@@ -376,6 +381,8 @@ AST_BASE_IMPL(Expression, parse) {  // NOLINT(readability-function-cognitive-com
 
 // ---------------------------------------------------------------------------------------------- //
 
+// make a parse f-string method to parse f"string {expr} string"
+
 AST_NODE_IMPL(Expression, LiteralExpr, ParseResult<> str_concat) {
     IS_NOT_EMPTY;
 
@@ -426,11 +433,156 @@ AST_NODE_IMPL(Expression, LiteralExpr, ParseResult<> str_concat) {
                 PARSE_ERROR(tok, "expected a literal. but found: " + tok.token_kind_repr()));
     }
 
-    return make_node<LiteralExpr>(tok, type);
+    NodeT<LiteralExpr> node = make_node<LiteralExpr>(tok, type);
+
+    std::string base_string = tok.value();
+
+    if (base_string.length() > 0 && (base_string[0] == 'f' && base_string[1] == '"')) {
+        // remove the "f" from the string.
+        std::string formatted_string = base_string.substr(1);
+
+        // vector of (offset to the "{", offset to the "}"), ignoring any "\{" or "\}"
+        std::vector<std::pair<size_t, size_t>> f_string_elements;
+
+        bool   prev_is_backslash = false;
+        size_t start             = std::string::npos;
+        int    open_braces       = 0;
+
+        for (size_t pos = 0; pos < formatted_string.size(); ++pos) {
+            switch (formatted_string[pos]) {
+                case '\\':
+                    prev_is_backslash = !prev_is_backslash;
+                    continue;
+
+                case '{':
+                    if (!prev_is_backslash) {
+                        if (open_braces == 0) {
+                            start = ++pos;
+                        }
+
+                        open_braces++;
+                    }
+
+                    prev_is_backslash = false;
+                    continue;
+
+                case '}':
+                    if (!prev_is_backslash) {
+                        open_braces--;
+
+                        if (open_braces == 0 && start != std::string::npos) {
+                            if (pos == start) {
+                                return std::unexpected(PARSE_ERROR(
+                                    tok,
+                                    "blank f-strings are not allowed, use \"\\{\\}\" if meant to "
+                                    "have unformatted braces."));
+                            }
+
+                            f_string_elements.emplace_back(start, pos - start);
+                            start = std::string::npos;
+
+                        } else if (open_braces < 0) {
+                            return std::unexpected(
+                                PARSE_ERROR(tok, "malformed f-string, unterminated \"}\"."));
+                        }
+                    }
+
+                    prev_is_backslash = false;
+                    continue;
+
+                default:
+                    prev_is_backslash = false;
+                    break;
+            }
+        }
+
+        // check if there's any unmatched opening brace.
+        if (open_braces != 0) {
+            return std::unexpected(PARSE_ERROR(tok, "malformed f-string, unterminated \"}\"."));
+        }
+
+        std::vector<std::pair<size_t, size_t>> original_copy = f_string_elements;
+
+        for (size_t i = 0; i < f_string_elements.size(); ++i) {
+            // start a tokenizer instance to process f-string elemets
+            parser::lexer::Lexer lexer(
+                formatted_string.substr(f_string_elements[i].first, f_string_elements[i].second),
+                tok.file_name(),
+                tok.line_number(),
+                tok.column_number() + original_copy[i].first - 1,
+                tok.offset() + original_copy[i].first);
+
+            // remove the section of formatted_string
+            formatted_string.erase(f_string_elements[i].first, f_string_elements[i].second);
+
+            // update the position of all the elements after the current one
+            for (auto &f_string_element_ : f_string_elements) {
+                if (f_string_element_.first > f_string_elements[i].first) {
+                    f_string_element_.first -= f_string_elements[i].second;
+                }
+            }
+
+            // lex the substring
+            __TOKEN_N::TokenList tokens = lexer.tokenize();
+
+            // pre-process
+            // ...
+
+            // make a ast generator
+            auto       iter = tokens.begin();
+            Expression _expr_parser(iter);
+
+            // parse ast to identify syntax errors
+            ParseResult<> parse = _expr_parser.parse();
+
+            // check if any errors were emitted and if so return
+            if (!parse || !parse.has_value()) {
+                return std::unexpected(parse.error());
+            }
+
+            node->format_args.emplace_back(parse.value());
+        }
+
+        // swaps all the "{" <-> "\{" and "}" <-> "\}"
+        for (size_t i = 0; i < formatted_string.size(); ++i) {
+            if (formatted_string[i] == '{' && (i == 0 || formatted_string[i - 1] != '\\')) {
+                formatted_string.insert(i, "\\\\");
+                ++i;
+                ++i;
+            } else if (formatted_string[i] == '}' && (i == 0 || formatted_string[i - 1] != '\\')) {
+                formatted_string.insert(i, "\\\\");
+                ++i;
+                ++i;
+            } else if (formatted_string.substr(i, 2) == "\\{") {
+                formatted_string.erase(i, 1);
+                ++i;
+            } else if (formatted_string.substr(i, 2) == "\\}") {
+                formatted_string.erase(i, 1);
+                ++i;
+            }
+        }
+
+        node->value.get_value()    = formatted_string;
+        node->contains_format_args = true;
+    }
+
+    return node;
 }
 
 AST_NODE_IMPL_VISITOR(Jsonify, LiteralExpr) {
-    json.section("LiteralExpr").add("value", node.value).add("type", (int)node.getNodeType());
+    std::vector<neo::json> args;
+
+    if (node.contains_format_args && !node.format_args.empty()) {
+        for (const auto &arg : node.format_args) {
+            args.push_back(get_node_json(arg));
+        }
+    }
+
+    json.section("LiteralExpr")
+        .add("value", node.value)
+        .add("format_args", args)
+        .add("contains_format_args", ((node.contains_format_args) ? "true" : "false"))
+        .add("type", (int)node.getNodeType());
 }
 
 // ---------------------------------------------------------------------------------------------- //
@@ -704,40 +856,55 @@ AST_NODE_IMPL(Expression, GenericInvokePathExpr) {
 
 // ---------------------------------------------------------------------------------------------- //
 
-AST_NODE_IMPL(Expression, ScopePathExpr, ParseResult<> lhs) {
+AST_NODE_IMPL(Expression, ScopePathExpr, ParseResult<> lhs, bool global_scope) {
     IS_NOT_EMPTY;
 
-    // := (E) ('::' E)*
+    // := ('::'? E) ('::' E)*
 
     ParseResult<IdentExpr> first;
+    NodeT<ScopePathExpr>   path;
 
-    IS_NULL_RESULT(lhs) {
-        if (CURRENT_TOKEN_IS(__TOKEN_N::OPERATOR_SCOPE)) {
-            return std::unexpected(PARSE_ERROR_MSG("expected an identifier, but found nothing"));
+    if (global_scope) {
+        IS_EXCEPTED_TOKEN(__TOKEN_N::OPERATOR_SCOPE);
+
+        path               = make_node<ScopePathExpr>(false);
+        path->global_scope = true;
+
+        goto LINE902_PARSE_SCOPE_PATH_EXPR;
+    } else {
+        IS_NULL_RESULT(lhs) {
+            if (CURRENT_TOKEN_IS(__TOKEN_N::OPERATOR_SCOPE)) { // global scope access
+                path               = make_node<ScopePathExpr>(false);
+                path->global_scope = true;
+
+                goto LINE902_PARSE_SCOPE_PATH_EXPR;
+            }
+
+            first = parse<IdentExpr>();
+            RETURN_IF_ERROR(first);
         }
+        else {
+            RETURN_IF_ERROR(lhs);
 
-        first = parse<IdentExpr>();
-        RETURN_IF_ERROR(first);
-    }
-    else {
-        RETURN_IF_ERROR(lhs);
+            if (lhs.value()->getNodeType() == nodes::PathExpr) {
+                NodeT<PathExpr> path = std::static_pointer_cast<PathExpr>(lhs.value());
 
-        if (lhs.value()->getNodeType() == nodes::PathExpr) {
-            NodeT<PathExpr> path = std::static_pointer_cast<PathExpr>(lhs.value());
-
-            if (path->type != PathExpr::PathType::Identifier) {
+                if (path->type != PathExpr::PathType::Identifier) {
+                    return std::unexpected(
+                        PARSE_ERROR_MSG("expected an identifier, but found nothing"));
+                }
+            } else if (lhs.value()->getNodeType() != nodes::IdentExpr) {
                 return std::unexpected(
                     PARSE_ERROR_MSG("expected an identifier, but found nothing"));
             }
-        } else if (lhs.value()->getNodeType() != nodes::IdentExpr) {
-            return std::unexpected(PARSE_ERROR_MSG("expected an identifier, but found nothing"));
-        }
 
-        first = std::static_pointer_cast<IdentExpr>(lhs.value());
+            first = std::static_pointer_cast<IdentExpr>(lhs.value());
+        }
     }
 
-    NodeT<ScopePathExpr> path = make_node<ScopePathExpr>(first.value());
+    path = make_node<ScopePathExpr>(first.value());
 
+LINE902_PARSE_SCOPE_PATH_EXPR:
     while
         CURRENT_TOKEN_IS(__TOKEN_N::OPERATOR_SCOPE) {
             iter.advance();  // skip '::'
@@ -752,7 +919,7 @@ AST_NODE_IMPL(Expression, ScopePathExpr, ParseResult<> lhs) {
             }
 
             if (CURRENT_TOKEN_IS_NOT(__TOKEN_N::IDENTIFIER) ||
-                HAS_NEXT_TOK && HAS_NEXT_TOK != __TOKEN_N::OPERATOR_SCOPE) {
+                (HAS_NEXT_TOK && NEXT_TOK != __TOKEN_N::OPERATOR_SCOPE)) {
                 ParseResult<> rhs = parse_primary();
                 RETURN_IF_ERROR(rhs);
 
@@ -776,7 +943,10 @@ AST_NODE_IMPL_VISITOR(Jsonify, ScopePathExpr) {
         path.push_back(get_node_json(p));
     }
 
-    json.section("ScopePathExpr").add("path", path).add("access", get_node_json(node.access));
+    json.section("ScopePathExpr")
+        .add("path", path)
+        .add("access", get_node_json(node.access))
+        .add("global_scope", node.global_scope ? "true" : "false");
 }
 
 // ---------------------------------------------------------------------------------------------- //
@@ -1364,7 +1534,7 @@ AST_NODE_IMPL(Expression, CastExpr, ParseResult<> lhs) {
     IS_EXCEPTED_TOKEN(__TOKEN_N::KEYWORD_AS);
     iter.advance();  // skip 'as'
 
-    ParseResult<> rhs = parse<Type>();
+    ParseResult<Type> rhs = parse<Type>();
     RETURN_IF_ERROR(rhs);
 
     return make_node<CastExpr>(lhs.value(), rhs.value());
@@ -1435,7 +1605,7 @@ AST_NODE_IMPL(Expression, Type) {  // TODO - REMAKE using the new Modifiers and 
 
     while (node->specifiers.find_add(CURRENT_TOK)) {
         iter.advance();  // TODO: Handle 'ffi' ('class' | 'interface' | 'struct' | 'enum' | 'union'
-                         // | 'type')
+                         // | 'type' | 'unsafe')
     }
 
     auto __parse_tuple = [&](NodeT<Type> elm1) -> ParseResult<> {

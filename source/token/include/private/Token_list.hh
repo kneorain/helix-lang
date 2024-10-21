@@ -146,6 +146,8 @@ __TOKEN_BEGIN {
         Token &operator[](u64 index) const {
             return const_cast<Token &>(TokenVec::operator[](index));
         }
+
+        friend __TOKEN_N::TokenList tokenize();
     };
 
     void print_tokens(__TOKEN_N::TokenList & tokens);

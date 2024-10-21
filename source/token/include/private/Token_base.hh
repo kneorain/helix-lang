@@ -23,6 +23,8 @@
 #include "token/include/private/Token_generate.hh"
 
 __TOKEN_BEGIN {
+    class TokenList;
+
     /*
     Token(u64 line, u64 column, u64 length, u64 offset, std::string_view value,
               const std::string &filename, std::string_view token_kind = "");
@@ -91,6 +93,14 @@ __TOKEN_BEGIN {
 
         void set_file_name(const std::string &file_name);
         void set_value(const std::string &other);
+        
+        enum class OffsetType {
+            Line,
+            Colum,
+            Offset,
+        };
+
+        void offset(OffsetType ty, u64 by);
     };
 
     Token bare_token(tokens token_type, std::string value = "");

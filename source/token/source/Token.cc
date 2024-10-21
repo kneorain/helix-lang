@@ -153,6 +153,22 @@ __TOKEN_BEGIN {
         this->len = this->val.length();
     }
 
+    void Token::offset(OffsetType ty, u64 by) {
+        switch (ty) {
+            case OffsetType::Line:
+                line += by;
+                return;
+            case OffsetType::Offset:
+                _offset += by;
+                return;
+            case OffsetType::Colum:
+                column += by;
+                return;
+            default:
+                return;
+        }
+    }
+
     std::string Token::to_string() const {
         return std::string("Token(") + std::string("line: ") + std::to_string(line) +
                std::string(", column: ") + std::to_string(column) + std::string(", len: ") +

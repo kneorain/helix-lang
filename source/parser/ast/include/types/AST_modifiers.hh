@@ -23,6 +23,7 @@
 #include <vector>
 
 #include "neo-json/include/json.hh"
+#include "neo-pprint/include/hxpprint.hh"
 #include "parser/ast/include/config/AST_config.def"
 #include "token/include/Token.hh"
 
@@ -131,12 +132,13 @@ __AST_BEGIN {
             Async,   ///< 'async'
             Module,  ///< 'module'
             Ffi,     ///< 'ffi'
+            Unsafe,  ///< 'unsafe'
         };
 
         static bool is_type_qualifier(const __TOKEN_N::Token &tok) {
             return tok == __TOKEN_N::KEYWORD_CONST || tok == __TOKEN_N::KEYWORD_MODULE ||
                    tok == __TOKEN_N::KEYWORD_YIELD || tok == __TOKEN_N::KEYWORD_ASYNC ||
-                   tok == __TOKEN_N::KEYWORD_FFI;
+                   tok == __TOKEN_N::KEYWORD_FFI || tok == __TOKEN_N::KEYWORD_UNSAFE;
         }
 
         explicit TypeSpecifier(__TOKEN_N::Token marker)
@@ -156,6 +158,9 @@ __AST_BEGIN {
                     break;
                 case __TOKEN_N::KEYWORD_FFI:
                     type = Specifier::Ffi;
+                    break;
+                case __TOKEN_N::KEYWORD_UNSAFE:
+                    type = Specifier::Unsafe;
                     break;
                 default:
                     throw std::runtime_error("Invalid type specifier");
@@ -361,7 +366,7 @@ __AST_BEGIN {
         enum class ExpectedModifier : char {
             StorageSpec,  ///< 'ffi' | 'static'
             FfiSpec,      ///< 'class' | 'interface' | 'struct' | 'enum' | 'union' | 'type'
-            TypeSpec,     ///< 'const' | 'module' | 'yield' | 'async' | 'ffi' 
+            TypeSpec,     ///< 'const' | 'module' | 'yield' | 'async' | 'ffi' | 'unsafe'
             AccessSpec,   ///< 'pub' | 'priv' | 'prot' | 'intl'
             FuncSpec,     ///< 'inline' | 'async' | 'static' | 'const' | 'eval'
             FuncQual,     ///< 'default' | 'panic' | 'delete' | 'const'
@@ -385,7 +390,8 @@ __AST_BEGIN {
               __TOKEN_N::KEYWORD_MODULE,
               __TOKEN_N::KEYWORD_YIELD,
               __TOKEN_N::KEYWORD_ASYNC,
-              __TOKEN_N::KEYWORD_FFI}},
+              __TOKEN_N::KEYWORD_FFI,
+              __TOKEN_N::KEYWORD_UNSAFE}},
             {ExpectedModifier::AccessSpec,
              {__TOKEN_N::KEYWORD_PUBLIC,
               __TOKEN_N::KEYWORD_PRIVATE,

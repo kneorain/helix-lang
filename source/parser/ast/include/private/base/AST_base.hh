@@ -62,7 +62,7 @@ __AST_NODE_BEGIN {
         [[nodiscard]] std ::string getNodeName() const override { return "Program"; };
         [[nodiscard]] bool         is(nodes node) const override { return node == nodes::Program; }
 
-        Program &parse() {
+        Program &parse(bool quiet = false) {
             auto iter = source_tokens.begin();
 
             ParseResult<> expr;
@@ -72,7 +72,9 @@ __AST_NODE_BEGIN {
                 expr      = decl.parse();
 
                 if (!expr.has_value()) {
-                    expr.error().panic();
+                    has_errored = true;
+                    if (!quiet) { expr.error().panic();
+}
 #ifdef DEBUG
                     print(std::string(colors::fg16::red),
                           "error: ",
@@ -90,6 +92,7 @@ __AST_NODE_BEGIN {
 
         NodeV<> children;
         NodeV<> annotations;
+        bool has_errored = false;
 
       private:
         __TOKEN_N::TokenList &source_tokens;
