@@ -48,9 +48,15 @@
 ///                            declaration, not of the function type.
 ///       parameter names   -- excluded; not part of any type.
 ///       top-level param
-///         const           -- excluded, same as C++. ParamDecl::is_const is
-///                            a separate bool precisely so it stays out of
-///                            the canonical.
+///         const           -- excluded, same as C++ ([dcl.fct]/5) -- both
+///                            the `const` on the binding (ParamDecl::is_const)
+///                            and a `const` written on the type at its top
+///                            level (`x: const *i32` is a const pointer, and
+///                            `f(x: const *i32)` / `f(x: *i32)` are one
+///                            function). A qualifier UNDER the top level
+///                            stays: `f(*const i32)` and `f(*i32)` are two.
+///                            The receiver's is under the top level --
+///                            `const self` is `const Foo*` -- and stays.
 ///
 ///     Identity is a POINTER comparison on canonicals, which is only sound
 ///     because CanonicalTypeStore uniques BUILD-wide, not per-TU: an
@@ -432,6 +438,7 @@ class RedeclMerge {
             var ca = pa->type_->canonical;
             var cb = pb->type_->canonical;
             if (ca == &null) || (cb == &null) { return false; }   // dependent: M2's.
+            if !pa->is_self { ca = canon_unqual(ca); cb = canon_unqual(cb); }
             if ca != cb { return false; }
         }
         return true;
@@ -478,7 +485,8 @@ class RedeclMerge {
 
     priv fn _param_canonical(self, p: *ParamDecl) -> *Type {
         if (p == &null) || (p->type_ == &null) { return &null; }
-        return p->type_->canonical;
+        var c = p->type_->canonical;
+        return (c) if (p->is_self) else (canon_unqual(c));
     }
 
     /// The canonical \p t is identical to once lowered: `usize` / `isize`

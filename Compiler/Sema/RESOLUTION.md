@@ -189,7 +189,11 @@ still on a placeholder must not ship in a stable release.
 `Sema/Resolve/RedeclMerge.k`, inside the T stage after TypeResolution.
 Merges FUNCTION redeclarations by signature (arity, canonical param types
 in order, generic arity; return type EXCLUDED so a mismatch is a conflict;
-const excluded for Kairo-authored decls, included for foreign). R(a) walks
+const excluded for Kairo-authored decls, included for foreign; top-level
+parameter cv excluded as in C++ ([dcl.fct]/5), both the binding's `const`
+and a `const` written at the top of the type, so `f(x: const *i32)` and
+`f(x: *i32)` are one function while `f(*const i32)` and `f(*i32)` are two;
+the receiver's `const` is one level down and stays). R(a) walks
 frozen cells; R(b) matches `fn Class::method` against the in-class set.
 Return-type / default / linkage / modifier agreement checked across the
 chain. File scope permits repeats, a type body does not ([class.mem]).

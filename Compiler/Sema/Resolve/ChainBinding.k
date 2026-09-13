@@ -301,7 +301,7 @@ class ChainBinding derives RecursiveASTVisitor::<ChainBinding> {
             case DeclKind::TypeAliasDecl {
                 var td = cast::<TypeAliasDecl>(d);
                 if td->aliased == &null { a.kind = AnchorKind::Errored; return a; }
-                var c = td->aliased->canonical;
+                var c = canon_unqual(td->aliased->canonical);
                 if c == &null {
                     a.kind = (AnchorKind::Dependent) if (td->aliased->is_dependent()) else (AnchorKind::Errored);
                     return a;
@@ -371,7 +371,7 @@ class ChainBinding derives RecursiveASTVisitor::<ChainBinding> {
             case DeclKind::ExtensionDecl {
                 var e = cast::<ExtensionDecl>(d);
                 if (e->target == &null) || e->target->is_poisoned() { a.kind = AnchorKind::Errored; return a; }
-                var c = e->target->canonical;
+                var c = canon_unqual(e->target->canonical);
                 if c == &null {
                     a.kind = (AnchorKind::Dependent) if (e->target->is_dependent()) else (AnchorKind::Errored);
                     return a;
@@ -828,8 +828,9 @@ class ChainBinding derives RecursiveASTVisitor::<ChainBinding> {
     /// (a builtin, a pointer: nothing with members to offer).
     priv fn _record_decl_of(self, t: *Type) -> *Decl {
         if (t == &null) || (t->canonical == &null) { return &null; }
-        if !isa::<RecordType>(t->canonical) { return &null; }
-        return NameLookup::representative(cast::<RecordType>(t->canonical)->decl);
+        var c = canon_unqual(t->canonical);
+        if !isa::<RecordType>(c) { return &null; }
+        return NameLookup::representative(cast::<RecordType>(c)->decl);
     }
 
     /// One step whose left side is dependent.
@@ -943,9 +944,9 @@ class ChainBinding derives RecursiveASTVisitor::<ChainBinding> {
             // An ExtensionDecl has no name of its own, so reporting it says
             // "[member of ]". The home a reader means is the type extended.
             var e = cast::<ExtensionDecl>(owner);
-            if (e->target != &null) && (e->target->canonical != &null)
-            && isa::<RecordType>(e->target->canonical) {
-                return cast::<RecordType>(e->target->canonical)->decl;
+            if (e->target != &null) && (e->target->canonical != &null) {
+                var c = canon_unqual(e->target->canonical);
+                if isa::<RecordType>(c) { return cast::<RecordType>(c)->decl; }
             }
         }
         return owner;

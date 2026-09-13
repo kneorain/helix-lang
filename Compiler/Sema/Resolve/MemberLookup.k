@@ -476,7 +476,7 @@ class MemberLookup {
 
     priv fn _walk_edge(self, e: *InheritEdge, name: DeclName, out: *vec::<*Decl>, seen: *set::<u64>) {
         if (e == &null) || (e->base == &null) { return; }
-        var c = e->base->canonical;
+        var c = canon_unqual(e->base->canonical);
         if c == &null { return; }                 // dependent base: M2's problem.
         if !isa::<RecordType>(c) { return; }      // ConformanceChecking diagnoses.
         self._walk_record(cast::<RecordType>(c)->decl, name, out, seen);
