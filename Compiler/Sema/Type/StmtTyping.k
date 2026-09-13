@@ -399,7 +399,7 @@ class <T> StmtTyping derives RecursiveASTVisitor::<T> {
         var vd = dyn_cast::<VariableDecl>(b->decl);
         if vd == &null { return; }
         if (b->type_ != &null) && (b->type_->canonical != &null) {
-            vd->type_ = b->type_->canonical;
+            vd->type_ = canon_unqual(b->type_->canonical);
             if (t != &null) && (!dyn()->conv.convertible(t, vd->type_->canonical)) {
                 dyn()->sc->diag->report(DiagID::SC001E, b->range.start,
                     f"binding annotated '{dyn()->tu.str(vd->type_->canonical)}' cannot take a value of type '{dyn()->tu.str(t)}\x27"
@@ -512,7 +512,7 @@ class <T> StmtTyping derives RecursiveASTVisitor::<T> {
                 var ft: *Type = &null;
                 if (arm->filter != &null) && (arm->filter->canonical != &null) { ft = arm->filter->canonical; }
                 if ft == &null { var a = vec::<*Type>(); ft = dyn()->tu.lang_record(WellKnownType::Panic, &a); }
-                if ft != &null { vd->type_ = ft; }
+                if ft != &null { vd->type_ = canon_unqual(ft); }
             }
             if arm->body != &null { dyn()->dispatch_stmt(static_cast::<*Stmt>(arm->body)); }
         }

@@ -411,6 +411,7 @@ class <T> CallTyping {
             dyn()->fail(n, f"'{dyn()->tu.str(t)}' may be null; unwrap it before calling, with '??' or 'unwrap!()\x27");
             return &null;
         }
+        ft = canon_unqual(ft);   // a `const` callable calls the same code.
         if (ft == &null) || (!isa::<FunctionPointerType>(ft)) {
             self._type_args_blind(n);
             dyn()->fail(n, f"'{dyn()->tu.str(t)}' is not callable");

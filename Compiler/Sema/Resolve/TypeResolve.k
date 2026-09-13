@@ -944,7 +944,7 @@ class TypeResolution derives RecursiveASTVisitor::<TypeResolution> {
     priv fn _scope_of(self, d: *Decl, at: SourceRange) -> *DeclContext {
         if d == &null { return &null; }
         if isa::<TypeAliasDecl>(d) {
-            var c = self._expand_alias(cast::<TypeAliasDecl>(d), at);
+            var c = canon_unqual(self._expand_alias(cast::<TypeAliasDecl>(d), at));
             if c == &null { return &null; }
             if !isa::<RecordType>(c) { return &null; }
             var rd = cast::<RecordType>(c)->decl;
@@ -1736,8 +1736,8 @@ class TypeResolution derives RecursiveASTVisitor::<TypeResolution> {
         if n->target != &null { self.dispatch_type(n->target); }
 
         var pushed = false;
-        if (n->target != &null) && (n->target->canonical != &null) && isa::<RecordType>(n->target->canonical) {
-            self._selfs.push_back(cast::<RecordType>(n->target->canonical)->decl);
+        if (n->target != &null) && (n->target->canonical != &null) && isa::<RecordType>(canon_unqual(n->target->canonical)) {
+            self._selfs.push_back(cast::<RecordType>(canon_unqual(n->target->canonical))->decl);
             pushed = true;
         }
 
@@ -1894,7 +1894,7 @@ class TypeResolution derives RecursiveASTVisitor::<TypeResolution> {
 
     priv fn _check_enum_underlying(self, n: *EnumDecl) {
         if n->underlying == &null { return; }
-        var c = n->underlying->canonical;
+        var c = canon_unqual(n->underlying->canonical);
         if c == &null { return; }   // poisoned or dependent; already handled.
         if isa::<BuiltinType>(c) && builtin_is_integer(cast::<BuiltinType>(c)->builtin) { return; }
         self.sc->diag->report(DiagID::R046E, n->underlying->range.start,
