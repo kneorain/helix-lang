@@ -148,7 +148,7 @@ class <T> StmtTyping derives RecursiveASTVisitor::<T> {
         self.pop_frame();
 
         var ok = (t != &null) && (!f->body_expr->is_poisoned());
-        if ok { f->return_type = t; }   // inferred slot := canonical.
+        if ok { f->return_type = canon_unqual(t); }   // inferred slot := canonical.
         dyn()->sc->rstate.finish_decl(static_cast::<*Decl>(f), ok || (!f->body_expr->is_poisoned()));
         return t;
     }
@@ -173,7 +173,7 @@ class <T> StmtTyping derives RecursiveASTVisitor::<T> {
         if st == ResolveState::Resolved { return (v->type_->canonical) if (v->type_ != &null) else (&null); }
         if !dyn()->sc->rstate.begin_decl(static_cast::<*Decl>(v), v->range) { return &null; }
         var t = dyn()->type_of(v->init, &null);
-        if t != &null { v->type_ = t; }
+        if t != &null { v->type_ = canon_unqual(t); }
         dyn()->sc->rstate.finish_decl(static_cast::<*Decl>(v), t != &null);
         return t;
     }
@@ -271,7 +271,7 @@ class <T> StmtTyping derives RecursiveASTVisitor::<T> {
                 ).first(n->range).emit();
                 n->poison(); ok = false;
             } else {
-                n->type_ = t;   // inferred slot := canonical.
+                n->type_ = canon_unqual(t);   // inferred slot := the value's type; a copy has no cv.
             }
         } else if n->init->is_poisoned() {
             ok = false;
@@ -409,7 +409,7 @@ class <T> StmtTyping derives RecursiveASTVisitor::<T> {
             return;
         }
         if t == &null { return; }
-        var shaped = t;
+        var shaped = canon_unqual(t);
         var sh = static_cast::<u8>(b->shorthand);
         if (sh & static_cast::<u8>(BindingShorthand::Pointer)) != 0 {
             shaped = dyn()->sc->types->pointer(shaped, (sh & static_cast::<u8>(BindingShorthand::Unsafe)) != 0);
@@ -423,12 +423,13 @@ class <T> StmtTyping derives RecursiveASTVisitor::<T> {
     priv fn _bind_list(self, list: *FrozenList::<Binding>, t: *Type, at: *Expr) {
         if list->size() == 1 { self._bind_one(list->get(0), t); return; }
         var tt: *TupleType = &null;
-        if (t != &null) && isa::<TupleType>(t) { tt = cast::<TupleType>(t); }
+        var tu_ = canon_unqual(t);
+        if (tu_ != &null) && isa::<TupleType>(tu_) { tt = cast::<TupleType>(tu_); }
         if (tt != &null) && (tt->elements.size() != list->size()) {
             dyn()->fail(at, f"{list->size()} binding(s) but '{dyn()->tu.str(t)}' has {tt->elements.size()} element(s)");
             tt = &null;
         }
-        if (tt == &null) && (t != &null) && (!isa::<TupleType>(t)) {
+        if (tt == &null) && (tu_ != &null) && (!isa::<TupleType>(tu_)) {
             dyn()->fail(at, f"cannot destructure '{dyn()->tu.str(t)}' into {list->size()} bindings");
         }
         for var i: usize = 0; i < list->size(); ++i {

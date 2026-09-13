@@ -141,7 +141,9 @@ What T decides:
   (`MemberLookup::ensure_filled`, IMPORTS.md §5); only a failed fill defers.
 - **Final decl -> canonical**: GenericParamDecl -> `generic_param(owner,
   index)` on the REPRESENTATIVE; alias -> expand; nominal -> arity -> args
-  by position and name -> defaults in the PRIMARY's scope -> #12.
+  by position and name -> defaults in the PRIMARY's scope -> #12. A written
+  const/volatile wraps the canonical (`qualified()`); identity keeps it.
+  Reference kinds put it on the referee.
 - **Specialization registration** (#12) via `_register_specs_in`.
 - **Structural kinds** ask the store. `[T; N]` canonicalizes only for a
   literal N. Dependence always flows up (`_component_ok`).
@@ -608,7 +610,8 @@ control** is a late filter [MISSING].
    `Expr::type_`, `value_category`, `expr_flags`, inferred decl slots: X.
    `instantiated_from` on implicit nodes: registry (then M2).
    `needs_using`: MemberLookup. `sc->bounds`: ConstraintExtraction.
-8. **Canonical identity is build-wide.**
+8. **Canonical identity is build-wide, and cv-qualified: const i32 and i32
+   are two canonicals.**
 9. **T never rewrites nodes.** X never allocates nodes.
 10. **Builtins are not names.**
 11. **Imports are erased at N/CB.**

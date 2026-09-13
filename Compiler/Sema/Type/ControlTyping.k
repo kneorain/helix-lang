@@ -143,7 +143,7 @@ class <T> ControlTyping {
                         var a = vec::<*Type>();
                         ft = dyn()->tu.lang_record(WellKnownType::Panic, &a);
                     }
-                    if ft != &null { vd->type_ = ft; }
+                    if ft != &null { vd->type_ = canon_unqual(ft); }
                 }
             }
             var at = dyn()->type_of(arm->body, (expected) if (expected != &null) else (acc));
@@ -228,7 +228,8 @@ class <T> ControlTyping {
                 ok = false;
                 continue;
             }
-            params.push_back(p->type_->canonical);
+            // a function type has no top-level cv on its parameters ([dcl.fct]/5)
+            params.push_back(canon_unqual(p->type_->canonical));
             if p->default_val != &null { dyn()->type_of(p->default_val, p->type_->canonical); dyn()->check_convertible(p->default_val, p->type_->canonical); }
         }
         for var i: usize = 0; i < n->captures.size(); ++i {
@@ -255,14 +256,14 @@ class <T> ControlTyping {
 
         var ret = declared;
         if ret == &null {
-            ret = (inferred) if (inferred != &null) else (dyn()->tu.builtin(BuiltinKind::Void));
+            ret = (canon_unqual(inferred)) if (inferred != &null) else (dyn()->tu.builtin(BuiltinKind::Void));
             if n->return_type == &null { n->return_type = ret; }   // inferred slot := canonical (self-canonical).
         }
         if (n->body_expr != &null) && (n->body_expr->type_ == &null) && (!n->body_expr->is_poisoned()) {
             dyn()->mark_unknown(n);
             return &null;
         }
-        return dyn()->sc->types->func(&params, ret);
+        return dyn()->sc->types->func(&params, canon_unqual(ret));
     }
 
     // === initializers =======================================================
@@ -389,14 +390,14 @@ class <T> ControlTyping {
     fn type_pattern(self, p: *Pattern, scrutinee: *Type) {
         if p == &null { return; }
         if p->is_poisoned() { return; }
-        if (scrutinee != &null) && (p->type_ == &null) { p->type_ = scrutinee; }
+        if (scrutinee != &null) && (p->type_ == &null) { p->type_ = canon_unqual(scrutinee); }
         switch p->kind {
             case PatternKind::BindingPattern {
                 var b = cast::<BindingPattern>(p);
                 var vd = dyn_cast::<VariableDecl>(b->decl);
                 if vd == &null { return; }
                 if (b->type_ != &null) && (b->type_->canonical != &null) {
-                    vd->type_ = b->type_->canonical;
+                    vd->type_ = canon_unqual(b->type_->canonical);
                     if (scrutinee != &null) && (!dyn()->conv.convertible(scrutinee, b->type_->canonical)) {
                         dyn()->sc->diag->report(DiagID::SC001E, p->range.start,
                             f"pattern type '{dyn()->tu.str(b->type_->canonical)}' does not match the scrutinee type '{dyn()->tu.str(scrutinee)}\x27"
@@ -404,7 +405,7 @@ class <T> ControlTyping {
                         p->poison();
                     }
                 } else if (vd->type_ == &null) && (scrutinee != &null) {
-                    vd->type_ = scrutinee;
+                    vd->type_ = canon_unqual(scrutinee);
                 }
             }
             case PatternKind::LiteralPattern {
@@ -422,7 +423,8 @@ class <T> ControlTyping {
             case PatternKind::TupleDestructurePattern {
                 var tp = cast::<TupleDestructurePattern>(p);
                 var tt: *TupleType = &null;
-                if (scrutinee != &null) && isa::<TupleType>(scrutinee) { tt = cast::<TupleType>(scrutinee); }
+                var su = canon_unqual(scrutinee);
+                if (su != &null) && isa::<TupleType>(su) { tt = cast::<TupleType>(su); }
                 if (tt != &null) && (tt->elements.size() != tp->elements.size()) {
                     dyn()->sc->diag->report(DiagID::SC001E, p->range.start,
                         f"tuple pattern has {tp->elements.size()} element(s) but '{dyn()->tu.str(scrutinee)}' has {tt->elements.size()}"

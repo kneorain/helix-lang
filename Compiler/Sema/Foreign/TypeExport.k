@@ -70,6 +70,15 @@ class TypeExport {
         if t == &null { return clang::QualType(); }
         if t->is_dependent() || t->is_instantiation_dependent() { return clang::QualType(); }
 
+        if isa::<QualifiedType>(t) {
+            var q = cast::<QualifiedType>(t);
+            var r = self.to_clang(q->inner);
+            if r.isNull() { return r; }
+            if (q->quals & QUAL_CONST())    != 0 { r = r.withConst();    }
+            if (q->quals & QUAL_VOLATILE()) != 0 { r = r.withVolatile(); }
+            return r;
+        }
+
         if isa::<BuiltinType>(t) { return self._builtin(cast::<BuiltinType>(t)); }
 
         if isa::<PointerType>(t) {
@@ -81,7 +90,6 @@ class TypeExport {
             var lr = cast::<CXXLValueRefType>(t);
             var r  = self.to_clang(lr->referee);
             if r.isNull() { return r; }
-            if lr->is_const { r = r.withConst(); }
             return self.cctx->getLValueReferenceType(r);
         }
         if isa::<CXXRValueRefType>(t) {

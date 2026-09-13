@@ -137,6 +137,9 @@ class <T> MemberTyping {
                     var p = dyn()->tu.pointee(val);
                     if p != &null { val = p; }
                 }
+                // The pointee of a `*const T` is `const T`; peel_ref now
+                // peels quals too.
+                val = dyn()->ml.peel_ref(val);
             }
 
             if is_last {
@@ -288,6 +291,7 @@ class <T> MemberTyping {
         var bt = dyn()->type_of(n->base, &null);
         if dyn()->propagate(n, n->base) { return &null; }
         if bt == &null { return &null; }
+        bt = canon_unqual(bt);
 
         var is_range = (n->index != &null) && isa::<RangeExpr>(dyn()->tu.strip_parens(n->index));
         var usize_t  = dyn()->tu.builtin(BuiltinKind::USize);

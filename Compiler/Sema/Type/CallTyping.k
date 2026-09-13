@@ -98,7 +98,13 @@ class <T> CallTyping {
     priv fn _const_lvalue(self, e: *Expr) -> bool {
         var x = dyn()->tu.strip_parens(e);
         if x == &null { return false; }
-        if (x->type_ != &null) && isa::<CXXLValueRefType>(x->type_) { return cast::<CXXLValueRefType>(x->type_)->is_const; }
+        if x->type_ != &null {
+            // The type says so: `*p` through a `*const i32`, a field of a
+            // const object, a `const T&` result.
+            var t = x->type_;
+            if isa::<CXXLValueRefType>(t) { t = cast::<CXXLValueRefType>(t)->referee; }
+            if canon_has_const(t) { return true; }
+        }
         if !isa::<NamedIdentExpr>(x) { return false; }
         var d = cast::<NamedIdentExpr>(x)->resolved_decl;
         if d == &null { return false; }

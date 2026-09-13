@@ -265,11 +265,14 @@ class Type derives TypeQual::<Type>, Annotation::<Type> { // all types have qual
     pub var size_bits:       usize       = 0;
     pub var align_bits:      usize       = 0;
     /// INVARIANT (enforced by TypeResolution, relied on by everything after):
-    /// canonical always points to the fully-desugared, UNQUALIFIED type.
-    /// Type identity is (a->canonical == b->canonical) && (a->quals ==
-    /// b->quals); uniquing/instantiation caches key on canonical with quals
-    /// excluded. A canonical that sometimes retains quals silently forks
-    /// duplicate instantiations do not relax this.
+    /// canonical always points to the fully-desugared type, cv-qualifiers
+    /// INCLUDED: `const Foo` canonicalizes to qualified(CONST, Foo), a node
+    /// distinct from Foo's. Type identity is (a->canonical == b->canonical)
+    /// and nothing else; "identical ignoring qualifiers" is
+    /// canon_unqual(a->canonical) == canon_unqual(b->canonical). The
+    /// syntax node's `flags` say what was WRITTEN; the canonical says what
+    /// it MEANS. Uniquing and instantiation caches key on the canonical, so
+    /// `W<const i32>` and `W<i32>` are two instances, as in C++.
     pub var canonical:      *Type        = &null; // for types that are qualified by another type, e.g. associated types like T::Item or pointer types like *T
     pub var kind:            TypeKind    = TypeKind::RecoveryType;
     pub var range:           SourceRange = SourceRange::invalid();

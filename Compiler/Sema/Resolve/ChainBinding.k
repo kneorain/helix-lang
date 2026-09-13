@@ -461,7 +461,8 @@ class ChainBinding derives RecursiveASTVisitor::<ChainBinding> {
             e.kind = AnchorKind::Errored;
             return e;
         }
-        if isa::<RecordType>(t) { return self._type_anchor(cast::<RecordType>(t)->decl); }
+        var u = canon_unqual(t);
+        if isa::<RecordType>(u) { return self._type_anchor(cast::<RecordType>(u)->decl); }
         var a = Anchor{};
         a.kind = AnchorKind::Type;
         a.ty   = t;
@@ -626,6 +627,7 @@ class ChainBinding derives RecursiveASTVisitor::<ChainBinding> {
                 var r = Anchor{}; r.kind = AnchorKind::Errored; return r;
             }
             ty = cast::<PointerType>(ty)->pointee;
+            ty = self.ml.peel_ref(ty);
         } else {
             if isa::<PointerType>(ty) {
                 self._err(DiagID::R027E, at, "'.' cannot be applied to a pointer; use '->\x27");
@@ -1002,8 +1004,13 @@ class ChainBinding derives RecursiveASTVisitor::<ChainBinding> {
         if isa::<NullableType>(t){ return f"{self._type_name_str(cast::<NullableType>(t)->inner)}?"; }
         if isa::<CXXLValueRefType>(t) {
             var lr = cast::<CXXLValueRefType>(t);
-            var cq = ("const ") if lr->is_const else ("");
-            return f"{cq}{self._type_name_str(lr->referee)}&";
+            return f"{self._type_name_str(lr->referee)}&";
+        }
+        if isa::<QualifiedType>(t) {
+            var q = cast::<QualifiedType>(t);
+            var s = ("const ") if (canon_has_const(t)) else ("");
+            if canon_has_volatile(t) { s += "volatile "; }
+            return s + self._type_name_str(q->inner);
         }
         if isa::<CXXRValueRefType>(t) { return f"{self._type_name_str(cast::<CXXRValueRefType>(t)->referee)}&&"; }
         if isa::<VectorType>(t)  { return f"[{self._type_name_str(cast::<VectorType>(t)->element)}]"; }

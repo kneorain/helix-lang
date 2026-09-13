@@ -231,7 +231,7 @@ class <T> LiteralTyping {
             return &null;
         }
         // an expected fixed array `[T; N]` keeps its shape.
-        var ex = dyn()->tu.strip_nullable(expected);
+        var ex = canon_unqual(dyn()->tu.strip_nullable(expected));
         if (ex != &null) && isa::<FixedArrayType>(ex) { return ex; }
         return dyn()->tu.vector_of(elem);
     }
@@ -283,7 +283,7 @@ class <T> LiteralTyping {
     }
 
     fn type_tuple_literal(self, n: *TupleLiteralExpr, expected: *Type) -> *Type {
-        var ex = dyn()->tu.strip_nullable(expected);
+        var ex = canon_unqual(dyn()->tu.strip_nullable(expected));
         var et: *TupleType = &null;
         if (ex != &null) && isa::<TupleType>(ex) && (cast::<TupleType>(ex)->elements.size() == n->elements.size()) {
             et = cast::<TupleType>(ex);

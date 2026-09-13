@@ -421,10 +421,7 @@ recursive, and a shell already mid-fill on this thread returns false at once.
 
 [MISSING] a Kairo diagnostic for a failed fill (it logs at Driver stage, and
 clang's own error reaches stderr through the set's printer); a C++ forward
-shape for Kairo-native args (`std::vector<KairoStruct>`); a dependent
-default argument loses qualifiers when spelled back (`std::map<i32, i32>`'s
-`allocator<pair<const K, T>>` goes out as `pair<int, int>`, clang's
-static_assert rejects it, the fill fails; `Tests/Sema/FFI/default_arg_const.k`).
+shape for Kairo-native args (`std::vector<KairoStruct>`).
 
 **Nested records.** Implicit instantiation of `holder<alloc>` DECLARES
 `holder<alloc>::node` but defines it only when something requires it

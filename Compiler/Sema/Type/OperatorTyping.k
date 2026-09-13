@@ -80,9 +80,12 @@ class <T> OperatorTyping {
             || (k == TokenKind::OpLessEqual) || (k == TokenKind::OpGreaterEqual);
     }
 
-    /// §6 unification, or null.
-    fn unify_operands(self, a: *Type, b: *Type) -> *Type {
-        if (a == &null) || (b == &null) { return &null; }
+    /// §6 unification, or null. Operands are read as values; their
+    /// top-level cv is gone by the time they meet.
+    fn unify_operands(self, a_in: *Type, b_in: *Type) -> *Type {
+        if (a_in == &null) || (b_in == &null) { return &null; }
+        var a = canon_unqual(a_in);
+        var b = canon_unqual(b_in);
         if a == b { return a; }
         var ab = dyn()->conv.implicit(a, b);
         var ba = dyn()->conv.implicit(b, a);
@@ -160,6 +163,10 @@ class <T> OperatorTyping {
         }
         if dyn()->propagate(n, n->lhs) || dyn()->propagate(n, n->rhs) { return &null; }
         if (lt == &null) || (rt == &null) { return &null; }
+        // Every builtin result below is a prvalue, and user_binary is safe to
+        // hand the stripped type: ml.lookup and ADL both peel it anyway.
+        lt = canon_unqual(lt);
+        rt = canon_unqual(rt);
 
         // A DEPENDENT operand has no operator table yet: which `op +` applies
         // to `T` is decided by the instantiation, not here. Rejecting it at
@@ -339,12 +346,12 @@ class <T> OperatorTyping {
             case TokenKind::OpExclaim { return self._unary_bool(n, ot); }
             case TokenKind::KwNot     { return self._unary_bool(n, ot); }
             case TokenKind::OpMinus {
-                if dyn()->tu.is_float(ot) || dyn()->tu.is_signed_int(ot) { return ot; }
+                if dyn()->tu.is_float(ot) || dyn()->tu.is_signed_int(ot) { return canon_unqual(ot); }
                 dyn()->fail(n, f"cannot negate a value of type '{dyn()->tu.str(ot)}\x27");
                 return &null;
             }
             case TokenKind::OpPlus {
-                if dyn()->tu.is_numeric(ot) { return ot; }
+                if dyn()->tu.is_numeric(ot) { return canon_unqual(ot); }
                 dyn()->fail(n, f"unary '+' requires a numeric operand, not '{dyn()->tu.str(ot)}\x27");
                 return &null;
             }
@@ -393,13 +400,13 @@ class <T> OperatorTyping {
     }
 
     priv fn _unary_bool(self, n: *UnaryOperatorExpr, ot: *Type) -> *Type {
-        if dyn()->tu.is_bool(ot) { return ot; }
+        if dyn()->tu.is_bool(ot) { return canon_unqual(ot); }
         dyn()->fail(n, f"'!' requires a 'bool' operand, not '{dyn()->tu.str(ot)}\x27");
         return &null;
     }
 
     priv fn _unary_bits(self, n: *UnaryOperatorExpr, ot: *Type) -> *Type {
-        if dyn()->tu.is_integer(ot) || dyn()->tu.is_builtin(ot, BuiltinKind::Byte) { return ot; }
+        if dyn()->tu.is_integer(ot) || dyn()->tu.is_builtin(ot, BuiltinKind::Byte) { return canon_unqual(ot); }
         dyn()->fail(n, f"'~' requires an integer or byte operand, not '{dyn()->tu.str(ot)}\x27");
         return &null;
     }

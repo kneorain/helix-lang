@@ -11,7 +11,9 @@
 ///
 ///     Rules that are decisions, not translations:
 ///       T*            -> *T           (safe pointer; foreign-pointer safety is a lint)
-///       const T&      -> cxx_lref(T, const=true)   const IS in the key for refs only
+///       const T&      -> cxx_lref(qualified(CONST, T))
+///       cv T          -> qualified(cv, T)   object types only; a function or
+///                                           array type's cv is its own affair
 ///       T&&           -> cxx_rref(T)
 ///       builtins      by (size, sign, float format) against the target
 ///       Foo<int>      -> instances->instance_for(Foo, [int])   (registry shell)
@@ -141,7 +143,27 @@ class TypeImport {
         return key;
     }
 
+    /// Canonical for a canonical clang type, cv included. clang keeps cv on
+    /// the canonical QualType, so the bits are read here once and never
+    /// per arm. A function type carries no object cv, and an array type's
+    /// cv lives on its element (clang agrees), so neither is wrapped.
     priv fn _map(self, qt: clang::QualType) -> *Type {
+        if qt.isNull() { return &null; }
+        var inner = self._map_unqual(qt);
+        if inner == &null { return &null; }
+        var ty = qt.getTypePtr();
+        if ty->isFunctionType() || ty->isArrayType() { return inner; }
+        return self.store->qualified(inner, TypeImport::quals_of(qt));
+    }
+
+    static fn quals_of(qt: clang::QualType) -> u8 {
+        var q: u8 = 0;
+        if qt.isConstQualified()    { q = q | QUAL_CONST();    }
+        if qt.isVolatileQualified() { q = q | QUAL_VOLATILE(); }
+        return q;
+    }
+
+    priv fn _map_unqual(self, qt: clang::QualType) -> *Type {
         if qt.isNull() { return &null; }
         var ty = qt.getTypePtr();
 
@@ -162,8 +184,8 @@ class TypeImport {
         }
         var lr = llvm::dyn_cast::<clang::LValueReferenceType>(ty);
         if lr != &null {
-            var ref_ = lr->getPointeeType();
-            return self.store->cxx_lref(self._map_or_opaque(ref_), ref_.isConstQualified());
+            // the const rides in through _map.
+            return self.store->cxx_lref(self._map_or_opaque(lr->getPointeeType()));
         }
         var rr = llvm::dyn_cast::<clang::RValueReferenceType>(ty);
         if rr != &null {

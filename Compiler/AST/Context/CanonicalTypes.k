@@ -7,9 +7,8 @@
 ///   \detail
 ///     Base.k states the invariant this class exists to make true:
 ///
-///         canonical always points to the fully-desugared, UNQUALIFIED type.
-///         Type identity is (a->canonical == b->canonical) && (a->quals ==
-///         b->quals).
+///         canonical always points to the fully-desugared type, qualifiers
+///         included. Type identity is (a->canonical == b->canonical).
 ///
 ///     That is a claim about POINTERS, and pointers are only comparable inside
 ///     one uniquing domain. Kairo has one ASTContext per fid, so a per-fid
@@ -19,11 +18,23 @@
 ///     surface as silently duplicated instantiations rather than as an error.
 ///     Hence: ONE store, global, mutex-guarded.
 ///
-///   \par Quals are excluded from every key
-///     `const Foo` and `Foo` share a canonical and differ only in `quals`.
-///     Base.k spells out why: a canonical that sometimes retains qualifiers
-///     silently forks duplicate instantiations. Callers pass ALREADY-CANONICAL
-///     components; this class never inspects a qualifier.
+///   \par Qualifiers ARE in the key
+///     `const Foo` and `Foo` are two canonicals: qualified(CONST, Foo) and
+///     Foo. The wrapper is one interned node per (quals, inner) pair, and it
+///     is the ONLY place a qualifier lives on a canonical: `inner` is never
+///     itself a QualifiedType (qualified() folds), and no other kind carries
+///     a cv bit. `const T&` is cxx_lref(qualified(CONST, T)); the old
+///     `is_const` on CXXLValueRefType is gone. Without this `pair<const K, T>`
+///     imported as `pair<K, T>`, `g(const int*)` and `g(int*)` were one
+///     overload, and `W<const int>` was `W<int>`.
+///
+///     "Same type ignoring qualifiers" is canon_unqual(a) == canon_unqual(b)
+///     (CanonicalNodes.k); that question is asked by shape queries and by
+///     signature identity at parameter top level, and nowhere else.
+///
+///     PointerType::is_unsafe is NOT a qualifier here. `unsafe *T` chooses the
+///     pointer's representation; it says nothing about the pointee. It stays
+///     a field on the pointer and in the pointer's key.
 ///
 ///   \par Arena
 ///     Its own, not any ASTContext's. release_from(Parsing) resets a fid's
@@ -204,6 +215,54 @@ class CanonicalTypeStore {
         return ty;
     }
 
+    /// The cv-qualified form of \p inner. \p quals is a QUAL_* bitset. Zero
+    /// returns \p inner unchanged; an already-qualified \p inner folds, so
+    /// qualified(CONST, qualified(VOLATILE, T)) is ONE node carrying both
+    /// bits and a QualifiedType never wraps a QualifiedType. Layout is the
+    /// inner's: a qualifier changes what may be done with the object, not
+    /// its bytes.
+    fn qualified(self, inner: *Type, quals: u8) -> *Type {
+        if inner == &null { return &null; }
+        if quals == 0 { return inner; }
+
+        var base = inner;
+        var q    = quals;
+        if isa::<QualifiedType>(inner) {
+            q    = q | cast::<QualifiedType>(inner)->quals;
+            base = cast::<QualifiedType>(inner)->inner;
+        }
+        ICE_IF(((q & (~(QUAL_CONST() | QUAL_VOLATILE()))) != 0),
+               "CanonicalTypeStore::qualified: bit outside const/volatile");
+
+        var h = canon_hash_u64(0, static_cast::<u64>(static_cast::<u8>(TypeKind::QualifiedType)));
+        h = canon_hash_ptr(h, reinterpret_cast::<*void>(base));
+        h = canon_hash_u64(h, static_cast::<u64>(q));
+
+        var lock = std::LockGuard(self._mu);
+        var hit = self._probe_qualified(h, base, q);
+        if hit != &null { return hit; }
+
+        var qt = self._alloc::<QualifiedType>();
+        qt->kind  = TypeKind::QualifiedType;
+        qt->range = SourceRange::invalid();
+        qt->inner = base;
+        qt->quals = q;
+        qt->init_annotations(&(self._arena));
+        qt->init_spans(&(self._arena));
+        // The mixin bits mirror the key so anything that reads `flags` off a
+        // canonical (a printer) sees the same answer. Nothing keys on them.
+        if (q & QUAL_CONST())    != 0 { qt->add_const();    }
+        if (q & QUAL_VOLATILE()) != 0 { qt->add_volatile(); }
+
+        var ty = static_cast::<*Type>(qt);
+        ty->canonical  = ty;
+        ty->size_bits  = base->size_bits;
+        ty->align_bits = base->align_bits;
+        self._absorb_flags(ty, base);
+        self._insert(h, ty);
+        return ty;
+    }
+
     /// `*T` and `unsafe *T` are two entities, not one type with a flag: the
     /// conversion lattice will not cross between them, so safety is part of
     /// the uniquing key.
@@ -223,10 +282,11 @@ class CanonicalTypeStore {
         return self._unary(TypeKind::SetType, element);
     }
 
-    /// `const T&` and `T&` are two entities: const is part of the key, riding
-    /// the same kind bit PointerType uses for safety.
-    fn cxx_lref(self, referee: *Type, is_const: bool = false) -> *Type {
-        return self._unary(TypeKind::CXXLValueRefType, referee, is_const);
+    /// `const T&` is cxx_lref(qualified(CONST, T)): the reference has no
+    /// qualifiers of its own, the referee carries them, and the referee is
+    /// the whole key.
+    fn cxx_lref(self, referee: *Type) -> *Type {
+        return self._unary(TypeKind::CXXLValueRefType, referee);
     }
 
     fn cxx_rref(self, referee: *Type) -> *Type {
@@ -428,14 +488,22 @@ class CanonicalTypeStore {
 
     // === Identity =============================================================
 
-    /// The identity test Base.k defines, as a function. Quals EXCLUDED by
-    /// construction: they never entered a key, so two canonicals are equal iff
-    /// the entities are. Callers that care about qualifiers compare `quals`
-    /// themselves, which is the other half of the invariant.
+    /// The identity test Base.k defines, as a function. Qualifiers INCLUDED:
+    /// they are in the key, so `const i32` and `i32` are not identical here.
     static fn identical(a: *Type, b: *Type) -> bool {
         if (a == &null) || (b == &null) { return false; }
         var ca = a->canonical;
         var cb = b->canonical;
+        if (ca == &null) || (cb == &null) { return false; }
+        return ca == cb;
+    }
+
+    /// Identity with the TOP-LEVEL qualifiers of both sides ignored. What a
+    /// shape query and parameter-level signature identity want; nothing else.
+    static fn identical_unqualified(a: *Type, b: *Type) -> bool {
+        if (a == &null) || (b == &null) { return false; }
+        var ca = canon_unqual(a->canonical);
+        var cb = canon_unqual(b->canonical);
         if (ca == &null) || (cb == &null) { return false; }
         return ca == cb;
     }
@@ -478,10 +546,9 @@ class CanonicalTypeStore {
     /// Shared body for the one-component kinds. Each has exactly one child
     /// slot at a different field name, so the probe and the fill switch on
     /// kind; everything else is identical.
-    /// \param is_unsafe the per-kind key bit: safety for PointerType, const
-    ///        for CXXLValueRefType. Every other kind passes false, which
-    ///        folds a constant into the hash and leaves their keys unchanged
-    ///        relative to each other.
+    /// \param is_unsafe PointerType's key bit. Every other kind passes false,
+    ///        which folds a constant into the hash and leaves their keys
+    ///        unchanged relative to each other.
     priv fn _unary(self, k: TypeKind, child: *Type, is_unsafe: bool = false) -> *Type {
         if child == &null { return &null; }
         var h = canon_hash_u64(0, static_cast::<u64>(static_cast::<u8>(k)));
@@ -500,9 +567,6 @@ class CanonicalTypeStore {
                 // what keeps a bucket collision from merging them anyway.
                 if k == TypeKind::PointerType {
                     if cast::<PointerType>(c)->is_unsafe != is_unsafe { continue; }
-                }
-                if k == TypeKind::CXXLValueRefType {
-                    if cast::<CXXLValueRefType>(c)->is_const != is_unsafe { continue; }
                 }
                 return c;
             }
@@ -536,8 +600,7 @@ class CanonicalTypeStore {
             }
             case TypeKind::CXXLValueRefType {
                 var n = self._alloc::<CXXLValueRefType>();
-                n->referee  = child;
-                n->is_const = is_unsafe;
+                n->referee = child;
                 ty = static_cast::<*Type>(n);
             }
             case TypeKind::CXXRValueRefType {
@@ -573,6 +636,18 @@ class CanonicalTypeStore {
     }
 
     // --- probes (called under the write lock) --------------------------------
+
+    priv fn _probe_qualified(self, h: u64, inner: *Type, quals: u8) -> *Type {
+        var b = self._bucket(h);
+        if b == &null { return &null; }
+        for var i: usize = 0; i < b->size(); ++i {
+            var c = (*b)[i];
+            if c->kind != TypeKind::QualifiedType { continue; }
+            var q = cast::<QualifiedType>(c);
+            if (q->inner == inner) && (q->quals == quals) { return c; }
+        }
+        return &null;
+    }
 
     priv fn _probe_record(self, h: u64, decl: *Decl, args: *vec::<*Type>, n: usize) -> *Type {
         var b = self._bucket(h);

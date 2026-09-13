@@ -110,6 +110,16 @@ class Deduction {
     fn unify(self, param: *Type, arg: *Type, top: bool) -> ImplicitRank {
         if (param == &null) || (arg == &null) { return ImplicitRank::None; }
 
+        // Top-level cv is not deduced from and not deduced into
+        // ([temp.deduct.call]/2): by-value `const T` against a const lvalue
+        // is T := the unqualified type on both counts. A reference P looks
+        // through itself first (below), so `const T&` still sees the const.
+        if top && (!isa::<CXXLValueRefType>(param)) && (!isa::<CXXRValueRefType>(param)) {
+            param = canon_unqual(param);
+            arg   = canon_unqual(arg);
+            if param == arg { return ImplicitRank::Exact; }
+        }
+
         if isa::<GenericParamType>(param) {
             var g = cast::<GenericParamType>(param);
             if g->owner == &null { return ImplicitRank::None; }
@@ -121,6 +131,17 @@ class Deduction {
             if param == arg { return ImplicitRank::Exact; }
             if !top { return ImplicitRank::None; }
             return self.conv->implicit(arg, param);
+        }
+
+        // P = cv T': A must carry every qualifier P does, and T' deduces
+        // from A minus them. `const T&` against `const int` is T := int;
+        // `const T*` against `const volatile int*` is T := volatile int.
+        if isa::<QualifiedType>(param) {
+            var pq = cast::<QualifiedType>(param)->quals;
+            var aq = canon_quals(arg);
+            if (aq & pq) != pq { return ImplicitRank::None; }
+            var rest = self.sc->types->qualified(canon_unqual(arg), static_cast::<u8>(aq & (~pq)));
+            return self.unify(cast::<QualifiedType>(param)->inner, rest, false);
         }
 
         // A dependent C++ reference parameter (only imported signatures have
@@ -152,35 +173,28 @@ class Deduction {
             case TypeKind::PointerType {
                 if self.tu.is_unsafe_ptr(param) != self.tu.is_unsafe_ptr(arg) { return ImplicitRank::None; }
                 return self._inner(self.unify(cast::<PointerType>(param)->pointee, cast::<PointerType>(arg)->pointee, false));
-            }
-            case TypeKind::NullableType {
+            } case TypeKind::NullableType {
                 return self._inner(self.unify(cast::<NullableType>(param)->inner, cast::<NullableType>(arg)->inner, false));
-            }
-            case TypeKind::VectorType {
+            } case TypeKind::VectorType {
                 return self._inner(self.unify(cast::<VectorType>(param)->element, cast::<VectorType>(arg)->element, false));
-            }
-            case TypeKind::SetType {
+            } case TypeKind::SetType {
                 return self._inner(self.unify(cast::<SetType>(param)->element, cast::<SetType>(arg)->element, false));
-            }
-            case TypeKind::FixedArrayType {
+            } case TypeKind::FixedArrayType {
                 var pa = cast::<FixedArrayType>(param); var aa = cast::<FixedArrayType>(arg);
                 if pa->size_bits != aa->size_bits { return ImplicitRank::None; }
                 return self._inner(self.unify(pa->element, aa->element, false));
-            }
-            case TypeKind::MapType {
+            } case TypeKind::MapType {
                 var pm = cast::<MapType>(param); var am = cast::<MapType>(arg);
                 if self.unify(pm->key, am->key, false) == ImplicitRank::None { return ImplicitRank::None; }
                 return self._inner(self.unify(pm->value, am->value, false));
-            }
-            case TypeKind::TupleType {
+            } case TypeKind::TupleType {
                 var pt = cast::<TupleType>(param); var at = cast::<TupleType>(arg);
                 if pt->elements.size() != at->elements.size() { return ImplicitRank::None; }
                 for var i: usize = 0; i < pt->elements.size(); ++i {
                     if self.unify(pt->elements[i], at->elements[i], false) == ImplicitRank::None { return ImplicitRank::None; }
                 }
                 return ImplicitRank::Exact;
-            }
-            case TypeKind::FunctionPointerType {
+            } case TypeKind::FunctionPointerType {
                 var pf = cast::<FunctionPointerType>(param); var af = cast::<FunctionPointerType>(arg);
                 if pf->params.size() != af->params.size() { return ImplicitRank::None; }
                 for var i: usize = 0; i < pf->params.size(); ++i {
@@ -189,8 +203,7 @@ class Deduction {
                 if (pf->return_type == &null) != (af->return_type == &null) { return ImplicitRank::None; }
                 if pf->return_type == &null { return ImplicitRank::Exact; }
                 return self._inner(self.unify(pf->return_type, af->return_type, false));
-            }
-            case TypeKind::RecordType {
+            } case TypeKind::RecordType {
                 var pr = cast::<RecordType>(param); var ar = cast::<RecordType>(arg);
                 // `Foo<T>` against `Foo<i32>`: the arg's decl is an instance of
                 // the param's pattern (or the pattern itself for a dependent arg).
@@ -202,8 +215,7 @@ class Deduction {
                     if self.unify(pr->args[i], ar->args[i], false) == ImplicitRank::None { return ImplicitRank::None; }
                 }
                 return ImplicitRank::Exact;
-            }
-            default { return ImplicitRank::None; }
+            } default { return ImplicitRank::None; }
         }
     }
 
@@ -225,40 +237,33 @@ class Deduction {
                 var g = cast::<GenericParamType>(t);
                 var b = self.lookup(g->owner, g->param_index);
                 return b;   // null = unbound, stays dependent for the caller to notice.
-            }
-            case TypeKind::PointerType {
+            } case TypeKind::PointerType {
                 var p = self.substitute(cast::<PointerType>(t)->pointee);
                 if p == &null { return &null; }
                 return self.sc->types->pointer(p, cast::<PointerType>(t)->is_unsafe);
-            }
-            case TypeKind::NullableType {
+            } case TypeKind::NullableType {
                 var i = self.substitute(cast::<NullableType>(t)->inner);
                 if i == &null { return &null; }
                 return self.sc->types->nullable(i);
-            }
-            case TypeKind::VectorType {
+            } case TypeKind::VectorType {
                 var e = self.substitute(cast::<VectorType>(t)->element);
                 if e == &null { return &null; }
                 return self.sc->types->vector(e);
-            }
-            case TypeKind::SetType {
+            } case TypeKind::SetType {
                 var e = self.substitute(cast::<SetType>(t)->element);
                 if e == &null { return &null; }
                 return self.sc->types->set_of(e);
-            }
-            case TypeKind::MapType {
+            } case TypeKind::MapType {
                 var k = self.substitute(cast::<MapType>(t)->key);
                 var v = self.substitute(cast::<MapType>(t)->value);
                 if (k == &null) || (v == &null) { return &null; }
                 return self.sc->types->map_of(k, v);
-            }
-            case TypeKind::FixedArrayType {
+            } case TypeKind::FixedArrayType {
                 var a = cast::<FixedArrayType>(t);
                 var e = self.substitute(a->element);
                 if e == &null { return &null; }
                 return self.sc->types->array(e, static_cast::<u64>(a->size_bits));
-            }
-            case TypeKind::TupleType {
+            } case TypeKind::TupleType {
                 var tt = cast::<TupleType>(t);
                 var elems = vec::<*Type>();
                 for var i: usize = 0; i < tt->elements.size(); ++i {
@@ -267,8 +272,7 @@ class Deduction {
                     elems.push_back(e);
                 }
                 return self.sc->types->tuple(&elems);
-            }
-            case TypeKind::FunctionPointerType {
+            } case TypeKind::FunctionPointerType {
                 var f = cast::<FunctionPointerType>(t);
                 var ps = vec::<*Type>();
                 for var i: usize = 0; i < f->params.size(); ++i {
@@ -282,8 +286,12 @@ class Deduction {
                     if r == &null { return &null; }
                 }
                 return self.sc->types->func(&ps, r);
-            }
-            case TypeKind::RecordType {
+            } case TypeKind::QualifiedType {
+                var q = cast::<QualifiedType>(t);
+                var i = self.substitute(q->inner);
+                if i == &null { return &null; }
+                return self.sc->types->qualified(i, q->quals);
+            } case TypeKind::RecordType {
                 var r = cast::<RecordType>(t);
                 var args = vec::<*Type>();
                 var dep  = false;
@@ -299,8 +307,7 @@ class Deduction {
                                                          NameLookup::ctx_of(primary));
                 var inst = (e->decl) if (e != &null) else (primary);
                 return self.sc->types->record(inst, &args);
-            }
-            default { return &null; }
+            } default { return &null; }
         }
     }
 
@@ -365,35 +372,29 @@ class Deduction {
                 }
                 if !changed { return t; }
                 return self.sc->types->record(r->decl, &args);
-            }
-            case TypeKind::PointerType {
+            } case TypeKind::PointerType {
                 var p = cast::<PointerType>(t);
                 var i = self.replace_self(p->pointee, iface, with);
                 return (t) if (i == p->pointee) else (self.sc->types->pointer(i, p->is_unsafe));
-            }
-            case TypeKind::NullableType {
+            } case TypeKind::NullableType {
                 var nt = cast::<NullableType>(t);
                 var i  = self.replace_self(nt->inner, iface, with);
                 return (t) if (i == nt->inner) else (self.sc->types->nullable(i));
-            }
-            case TypeKind::VectorType {
+            } case TypeKind::VectorType {
                 var vt = cast::<VectorType>(t);
                 var i  = self.replace_self(vt->element, iface, with);
                 return (t) if (i == vt->element) else (self.sc->types->vector(i));
-            }
-            case TypeKind::SetType {
+            } case TypeKind::SetType {
                 var st = cast::<SetType>(t);
                 var i  = self.replace_self(st->element, iface, with);
                 return (t) if (i == st->element) else (self.sc->types->set_of(i));
-            }
-            case TypeKind::MapType {
+            } case TypeKind::MapType {
                 var mt = cast::<MapType>(t);
                 var k  = self.replace_self(mt->key, iface, with);
                 var v  = self.replace_self(mt->value, iface, with);
                 if (k == mt->key) && (v == mt->value) { return t; }
                 return self.sc->types->map_of(k, v);
-            }
-            case TypeKind::TupleType {
+            } case TypeKind::TupleType {
                 var tt      = cast::<TupleType>(t);
                 var elems   = vec::<*Type>();
                 var changed = false;
@@ -403,8 +404,11 @@ class Deduction {
                     elems.push_back(e);
                 }
                 return (t) if (!changed) else (self.sc->types->tuple(&elems));
-            }
-            case TypeKind::FunctionPointerType {
+            } case TypeKind::QualifiedType {
+                  var q = cast::<QualifiedType>(t);
+                  var i = self.replace_self(q->inner, iface, with);
+                  return (t) if (i == q->inner) else (self.sc->types->qualified(i, q->quals));
+            } case TypeKind::FunctionPointerType {
                 var f       = cast::<FunctionPointerType>(t);
                 var ps      = vec::<*Type>();
                 var changed = false;
@@ -419,8 +423,7 @@ class Deduction {
                     if r != f->return_type { changed = true; }
                 }
                 return (t) if (!changed) else (self.sc->types->func(&ps, r));
-            }
-            default { return t; }
+            } default { return t; }
         }
     }
 }

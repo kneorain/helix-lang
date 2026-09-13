@@ -47,9 +47,9 @@ class TypeUtil {
 
     /// COUNT when \p t is not a builtin.
     fn kind_of(self, t: *Type) -> BuiltinKind {
-        if t == &null { return BuiltinKind::COUNT; }
-        if !isa::<BuiltinType>(t) { return BuiltinKind::COUNT; }
-        return cast::<BuiltinType>(t)->builtin;
+        var u = canon_unqual(t);
+        if (u == &null) || (!isa::<BuiltinType>(u)) { return BuiltinKind::COUNT; }
+        return cast::<BuiltinType>(u)->builtin;
     }
 
     fn is_builtin(self, t: *Type, b: BuiltinKind) -> bool { return self.kind_of(t) == b; }
@@ -84,21 +84,27 @@ class TypeUtil {
     }
 
     // === structural shapes ==================================================
+    //
+    // Cv is not shape. Every query here answers for the unqualified type; a
+    // caller that wants the qualifier asks quals().
 
     fn pointee(self, t: *Type) -> *Type {
-        if (t == &null) || (!isa::<PointerType>(t)) { return &null; }
-        return cast::<PointerType>(t)->pointee;
+        var u = canon_unqual(t);
+        if (u == &null) || (!isa::<PointerType>(u)) { return &null; }
+        return cast::<PointerType>(u)->pointee;
     }
 
     /// Requires PointerType::is_unsafe on canonical nodes (see spec).
     fn is_unsafe_ptr(self, t: *Type) -> bool {
-        if (t == &null) || (!isa::<PointerType>(t)) { return false; }
-        return cast::<PointerType>(t)->is_unsafe;
+        var u = canon_unqual(t);
+        if (u == &null) || (!isa::<PointerType>(u)) { return false; }
+        return cast::<PointerType>(u)->is_unsafe;
     }
 
     fn nullable_inner(self, t: *Type) -> *Type {
-        if (t == &null) || (!isa::<NullableType>(t)) { return &null; }
-        return cast::<NullableType>(t)->inner;
+        var u = canon_unqual(t);
+        if (u == &null) || (!isa::<NullableType>(u)) { return &null; }
+        return cast::<NullableType>(u)->inner;
     }
 
     /// `T?` -> `T`, `T` -> `T`.
@@ -108,20 +114,23 @@ class TypeUtil {
     }
 
     fn record_decl(self, t: *Type) -> *Decl {
-        if (t == &null) || (!isa::<RecordType>(t)) { return &null; }
-        return cast::<RecordType>(t)->decl;
+        var u = canon_unqual(t);
+        if (u == &null) || (!isa::<RecordType>(u)) { return &null; }
+        return cast::<RecordType>(u)->decl;
     }
 
     fn record_args(self, t: *Type) -> FrozenList::<*Type> {
-        if (t == &null) || (!isa::<RecordType>(t)) { return create_empty_frozen_list::<*Type>(); }
-        return cast::<RecordType>(t)->args;
+        var u = canon_unqual(t);
+        if (u == &null) || (!isa::<RecordType>(u)) { return create_empty_frozen_list::<*Type>(); }
+        return cast::<RecordType>(u)->args;
     }
 
     fn element_of(self, t: *Type) -> *Type {
-        if t == &null { return &null; }
-        if isa::<VectorType>(t)     { return cast::<VectorType>(t)->element; }
-        if isa::<SetType>(t)        { return cast::<SetType>(t)->element; }
-        if isa::<FixedArrayType>(t) { return cast::<FixedArrayType>(t)->element; }
+        var u = canon_unqual(t);
+        if u == &null { return &null; }
+        if isa::<VectorType>(u)     { return cast::<VectorType>(u)->element; }
+        if isa::<SetType>(u)        { return cast::<SetType>(u)->element; }
+        if isa::<FixedArrayType>(u) { return cast::<FixedArrayType>(u)->element; }
         return &null;
     }
 
@@ -323,20 +332,23 @@ class TypeUtil {
     }
 
     fn is_vector_like(self, t: *Type) -> bool {
-        if t == &null { return false; }
-        if isa::<VectorType>(t) { return true; }
+        var u = canon_unqual(t);
+        if u == &null { return false; }
+        if isa::<VectorType>(u) { return true; }
         return self.is_lang(t, WellKnownType::Vector);
     }
 
     fn is_map_like(self, t: *Type) -> bool {
-        if t == &null { return false; }
-        if isa::<MapType>(t) { return true; }
+        var u = canon_unqual(t);
+        if u == &null { return false; }
+        if isa::<MapType>(u) { return true; }
         return self.is_lang(t, WellKnownType::HashMap);
     }
 
     fn is_set_like(self, t: *Type) -> bool {
-        if t == &null { return false; }
-        if isa::<SetType>(t) { return true; }
+        var u = canon_unqual(t);
+        if u == &null { return false; }
+        if isa::<SetType>(u) { return true; }
         return self.is_lang(t, WellKnownType::HashSet);
     }
 
@@ -354,9 +366,10 @@ class TypeUtil {
     }
 
     fn map_key_value(self, t: *Type, k: *(*Type), v: *(*Type)) -> bool {
-        if t == &null { return false; }
-        if isa::<MapType>(t) {
-            (*k) = cast::<MapType>(t)->key; (*v) = cast::<MapType>(t)->value; return true;
+        var u = canon_unqual(t);
+        if u == &null { return false; }
+        if isa::<MapType>(u) {
+            (*k) = cast::<MapType>(u)->key; (*v) = cast::<MapType>(u)->value; return true;
         }
         if self.is_lang(t, WellKnownType::HashMap) {
             var args = self.record_args(t);
@@ -364,6 +377,13 @@ class TypeUtil {
         }
         return false;
     }
+
+    // === qualifiers =========================================================
+
+    fn quals(self, t: *Type)        -> u8    { return canon_quals(t); }
+    fn unqual(self, t: *Type)       -> *Type { return canon_unqual(t); }
+    fn has_const(self, t: *Type)    -> bool  { return canon_has_const(t); }
+    fn has_volatile(self, t: *Type) -> bool  { return canon_has_volatile(t); }
 
     // === syntax quals =======================================================
     //
@@ -458,6 +478,13 @@ class TypeUtil {
                 return "<T>";
             }
             case TypeKind::OpaqueFFIType  { return "<ffi type>"; }
+            case TypeKind::QualifiedType {
+                var q = cast::<QualifiedType>(t);
+                var s = "";
+                if (q->quals & QUAL_CONST())    != 0 { s += "const ";    }
+                if (q->quals & QUAL_VOLATILE()) != 0 { s += "volatile "; }
+                return s + self.str(q->inner);
+            }
             case TypeKind::SelfType       { return (self.str(t->canonical)) if (t->canonical != &null) else ("Self"); }
             default {
                 if (t->canonical != &null) && (t->canonical != t) { return self.str(t->canonical); }

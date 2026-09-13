@@ -87,8 +87,11 @@ class <T> CastTyping {
             return target;
         }
 
-        // 1. const cast: same canonical, target spelled with const.
-        if dyn()->tu.syntax_is_const(n->target) && (src == target) { return target; }
+        // 1. const cast, one-way: the target is the operand's own type with
+        //    qualifiers added. Read off the canonicals: `as const T` is
+        //    qualified(CONST, T) against a T.
+        if (canon_unqual(target) == canon_unqual(src))
+        && ((canon_quals(src) & (~canon_quals(target))) == 0) { return target; }
         if mode == CastMode::Const {
             dyn()->fail(n, f"'as const' can only add 'const' to the operand's own type '{dyn()->tu.str(src)}\x27");
             return &null;

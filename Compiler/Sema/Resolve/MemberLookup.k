@@ -126,7 +126,7 @@ class MemberLookup {
         if isa::<ExtensionDecl>(d) {
             var e = cast::<ExtensionDecl>(d);
             if (e->target == &null) || (e->target->canonical == &null) { return; }   // errored, or a TU whose T has not run.
-            var c = e->target->canonical;
+            var c = canon_unqual(e->target->canonical);
             if isa::<RecordType>(c) {
                 // Keyed by DECL: `extend <T> Vec<T>` contributes to every
                 // Vec<X> at name level. RecordType::decl for a dependent
@@ -179,8 +179,11 @@ class MemberLookup {
     /// members, extension members, base members (transitively, deduped).
     /// Appends to \p out in walk order: own first, extensions, then bases
     /// breadth-first -- the order overload resolution and diagnostics want.
-    /// \return true if anything was found.
-    fn lookup(self, c: *Type, name: DeclName, out: *vec::<*Decl>) -> bool {
+    /// \return true if anything was found. A const vector has vector's
+    /// members; which of them may be called on a const object is
+    /// ConstChecking's.
+    fn lookup(self, c_in: *Type, name: DeclName, out: *vec::<*Decl>) -> bool {
+        var c = canon_unqual(c_in);
         if c == &null { return false; }
         var before = out->size();
 
@@ -410,16 +413,20 @@ class MemberLookup {
         }
     }
 
-    /// A C++ reference names its referee, for member access as for ADL: there
-    /// is no "reference to X" type with members of its own, and no reference
-    /// to a reference. Separate from _peel because the member step must NOT
-    /// peel pointers or nullables -- those belong to the separator (`.` vs
-    /// `->`, `?.`) -- while a reference is transparent to every separator.
+    /// A C++ reference names its referee, and a qualifier names the same
+    /// object: neither has members of its own. Loops, so `const T&`
+    /// (cxx_lref(qualified(CONST, T))) peels to T in one call. Separate
+    /// from _peel because the member step must NOT peel pointers or
+    /// nullables -- those belong to the separator (`.` vs `->`, `?.`).
     fn peel_ref(self, t: *Type) -> *Type {
-        if t == &null { return t; }
-        if isa::<CXXLValueRefType>(t) { return cast::<CXXLValueRefType>(t)->referee; }
-        if isa::<CXXRValueRefType>(t) { return cast::<CXXRValueRefType>(t)->referee; }
-        return t;
+        var c = t;
+        while c != &null {
+            if isa::<CXXLValueRefType>(c) { c = cast::<CXXLValueRefType>(c)->referee; continue; }
+            if isa::<CXXRValueRefType>(c) { c = cast::<CXXRValueRefType>(c)->referee; continue; }
+            if isa::<QualifiedType>(c)    { c = cast::<QualifiedType>(c)->inner;      continue; }
+            break;
+        }
+        return c;
     }
 
     priv fn _peel(self, t: *Type) -> *Type {

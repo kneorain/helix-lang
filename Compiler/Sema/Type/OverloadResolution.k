@@ -300,7 +300,7 @@ class OverloadResolution {
     priv fn _bind_kind(self, pt: *Type) -> u8 {
         if pt == &null { return 0; }
         if isa::<CXXRValueRefType>(pt) { return 2; }
-        if isa::<CXXLValueRefType>(pt) { return (1) if (cast::<CXXLValueRefType>(pt)->is_const) else (3); }
+        if isa::<CXXLValueRefType>(pt) { return (1) if (canon_has_const(cast::<CXXLValueRefType>(pt)->referee)) else (3); }
         return 0;
     }
 
@@ -418,6 +418,10 @@ class OverloadResolution {
             var p: *ParamDecl = (params[pi]) if (pi != usize(-1)) else (params[pack_at]);
             var pt: *Type = &null;
             if p->type_ != &null { pt = p->type_->canonical; }
+            // Top-level cv on a parameter is not part of the call
+            // ([dcl.fct]/5): `f(const i32)` takes an i32. The receiver is
+            // exempt -- its `const` is `const Foo*`, one level down.
+            if (pt != &null) && (!p->is_self) { pt = canon_unqual(pt); }
             if (p->type_ != &null) && p->type_->is_poisoned() { c->viable = false; c->reason = "parameter type is invalid"; return; }
             pt = c->ded.through_receiver(c->f, receiver, pt);   // `other: Self` is `other: <receiver>`.
 
@@ -486,7 +490,7 @@ class OverloadResolution {
         if isa::<CXXLValueRefType>(pt) { referee = cast::<CXXLValueRefType>(pt)->referee; }
         if isa::<CXXRValueRefType>(pt) { referee = cast::<CXXRValueRefType>(pt)->referee; }
         if referee == &null { return self._rank_literal(a, pt); }
-        var vr  = self._rank_literal(a, referee);
+        var vr  = self._rank_literal(a, canon_unqual(referee));
         var rel = (RefRel::Same) if (vr == ImplicitRank::Exact)
                   else (RefRel::Converts) if (vr == ImplicitRank::Converted) else (RefRel::None);
         return self.conv->ref_binding(pt, Expr::ValueCategory::RValue, false, rel);

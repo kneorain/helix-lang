@@ -821,10 +821,11 @@ class InferredType derives Type {
 ///
 ///  CXXLValueRefType
 ///  T& imported from C++ headers. Sema treats as a reference, not a pointer.
+///  const T& is a reference whose referee is const T; the const is on the
+///  referee's canonical, never here.
 ///
 class CXXLValueRefType derives Type {
     pub var referee:  *Type;
-    pub var is_const: bool = false;   ///< `const T&`; part of the canonical key.
 
     static fn create(
         ctx:     *ASTContext,

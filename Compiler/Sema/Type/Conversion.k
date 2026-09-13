@@ -2,14 +2,24 @@
 ///
 ///   \brief THE conversion relation. One concept in the whole language:
 ///          classify(S, T) over primitives per the Primitive Conversion
-///          Lattice, plus the three non-primitive implicit forms
-///          (`T -> T?`, `*Derived -> *Base`, `! -> anything`).
+///          Lattice, plus the non-primitive implicit forms (`T -> T?`,
+///          `*Derived -> *Base`, `*T -> *const T`, `! -> anything`).
 ///
 ///   \detail
 ///     Two ranks only, and no ordering inside rank 2 (lattice §7): Exact is
 ///     I, Converted is everything W-shaped. `-fno-implicit-conv` demotes W to
 ///     E here and nowhere else, which is what makes the flag a strict subset:
 ///     it can remove a candidate, never reorder two.
+///
+///     Qualifiers. A canonical carries its cv (CanonicalTypes.k), and this
+///     relation reads them in exactly two places. At the TOP level of a value
+///     they are not part of the conversion at all: reading a `const i32`
+///     yields an `i32` ([conv.lval]) and initializing a `const i32` from an
+///     `i32` is copy-initialization, so both are Exact and implicit() strips
+///     them before anything else looks. UNDER a pointer they are: `*i32 ->
+///     *const i32` is the qualification conversion ([conv.qual]), Converted;
+///     `*const i32 -> *i32` is nothing. Reference binding sees the referee's
+///     cv as C++ does: a plain `T&` takes no const lvalue.
 ///
 ///     The primitive relation is rule-based here (R1-R5, §4). The lattice doc
 ///     asks for a table-generated `classify` with property tests; that is a
@@ -195,9 +205,16 @@ class Conversion {
         if isa::<CXXLValueRefType>(from) { return self.implicit(cast::<CXXLValueRefType>(from)->referee, to); }
         if isa::<CXXRValueRefType>(from) { return self.implicit(cast::<CXXRValueRefType>(from)->referee, to); }
 
+        // Top-level cv is not part of a VALUE: the read strips it and
+        // copy-initialization ignores it on the target. `const i32 -> i32`
+        // and `i32 -> const i32` are both the identity.
+        var fu = canon_unqual(from);
+        var tq = canon_unqual(to);
+        if fu == tq { return ImplicitRank::Exact; }
+
         // primitives
-        var fk = self.tu.kind_of(from);
-        var tk = self.tu.kind_of(to);
+        var fk = self.tu.kind_of(fu);
+        var tk = self.tu.kind_of(tq);
         if (fk != BuiltinKind::COUNT) && (tk != BuiltinKind::COUNT) {
             if self.classify(fk, tk) == ConvClass::W {
                 return (ImplicitRank::Converted) if (self.implicit_enabled()) else (ImplicitRank::None);
@@ -206,41 +223,79 @@ class Conversion {
         }
 
         // T -> T?  (and *D -> *B?, i32 -> i64?, both via the inner)
-        var to_inner = self.tu.nullable_inner(to);
+        var to_inner = self.tu.nullable_inner(tq);
         if to_inner != &null {
-            var from_inner = self.tu.nullable_inner(from);
+            var from_inner = self.tu.nullable_inner(fu);
             if from_inner != &null {
                 // T? -> U?: only when the inners relate; never Exact (different type).
                 return (ImplicitRank::Converted) if (self.implicit(from_inner, to_inner) != ImplicitRank::None)
                        else (ImplicitRank::None);
             }
-            return (ImplicitRank::Converted) if (self.implicit(from, to_inner) != ImplicitRank::None)
+            return (ImplicitRank::Converted) if (self.implicit(fu, to_inner) != ImplicitRank::None)
                    else (ImplicitRank::None);
         }
 
-        // *Derived -> *Base, same safety.
-        var fp = self.tu.pointee(from);
-        var tp = self.tu.pointee(to);
+        // Pointers: qualification ([conv.qual]) and derived-to-base, same
+        // safety on both sides.
+        var fp = self.tu.pointee(fu);
+        var tp = self.tu.pointee(tq);
         if (fp != &null) && (tp != &null) {
-            if self.tu.is_unsafe_ptr(from) != self.tu.is_unsafe_ptr(to) { return ImplicitRank::None; }
+            if self.tu.is_unsafe_ptr(fu) != self.tu.is_unsafe_ptr(tq) { return ImplicitRank::None; }
+            // A qualifier the pointee loses is never implicit.
+            if !self._quals_kept(fp, tp) { return ImplicitRank::None; }
             var fd = self.tu.record_decl(fp);
             var td = self.tu.record_decl(tp);
             if (fd != &null) && (td != &null) && (fd != td) && self.tu.derives_from(fd, td) {
                 return ImplicitRank::Converted;
             }
+            if self._qual_conv(fu, tq, true) { return ImplicitRank::Converted; }
             return ImplicitRank::None;
         }
 
         return ImplicitRank::None;
     }
 
+    /// \p to's pointee carries every qualifier \p from's does.
+    priv fn _quals_kept(self, fp: *Type, tp: *Type) -> bool {
+        var fq = canon_quals(fp);
+        var tq = canon_quals(tp);
+        return (fq & (~tq)) == 0;
+    }
+
+    /// [conv.qual] over the pointee chains of two pointer types whose own
+    /// top-level cv has already been stripped: at every level the target
+    /// keeps the source's qualifiers, and a qualifier ADDED at any level but
+    /// the first needs `const` on every level above it -- that is the rule
+    /// that keeps `T** -> const T**` out while letting `T** -> const T*
+    /// const*` in. \p const_above is that condition for the level being
+    /// compared; the first level always passes it. True when the two chains
+    /// meet on one canonical, i.e. the conversion is qualification and
+    /// nothing else.
+    priv fn _qual_conv(self, from: *Type, to: *Type, const_above: bool) -> bool {
+        var fp = self.tu.pointee(from);
+        var tp = self.tu.pointee(to);
+        if (fp == &null) || (tp == &null) { return false; }
+        if self.tu.is_unsafe_ptr(from) != self.tu.is_unsafe_ptr(to) { return false; }
+        if !self._quals_kept(fp, tp) { return false; }
+        if (canon_quals(fp) != canon_quals(tp)) && (!const_above) { return false; }
+        var fpu = canon_unqual(fp);
+        var tpu = canon_unqual(tp);
+        if fpu == tpu { return true; }
+        if (self.tu.pointee(fpu) == &null) || (self.tu.pointee(tpu) == &null) { return false; }
+        return self._qual_conv(fpu, tpu, const_above && canon_has_const(tp));
+    }
+
     /// Reference binding, C++'s ranking where Kairo can see it:
     ///
     ///   `T&` / `const T&` <- T         Exact (binding is an identity, not a conversion)
-    ///   `T&`              <- const T&  None  (drops const)
+    ///   `T&`              <- const T   None  (drops const)
     ///   `const T&`        <- U, U->T   Converted (binds a temporary)
     ///   `B&` / `const B&` <- D, D:B    Converted (derived-to-base)
     ///   `T&&`             <- T / U->T  Converted
+    ///
+    /// The referee's cv is read off the referee (`const T&` is
+    /// cxx_lref(qualified(CONST, T))); the source's is its own top-level cv,
+    /// or its referee's when the source is itself a reference.
     ///
     /// Rvalue references rank Converted, never Exact: Conversion sees types,
     /// not value categories, so the C++ tiebreak that sends an lvalue to
@@ -250,33 +305,31 @@ class Conversion {
     /// never an ambiguity.
     priv fn _bind_ref(self, from: *Type, to: *Type) -> ImplicitRank {
         var src = from;
-        var from_const = false;
-        if isa::<CXXLValueRefType>(from) {
-            from_const = cast::<CXXLValueRefType>(from)->is_const;
-            src = cast::<CXXLValueRefType>(from)->referee;
-        } else if isa::<CXXRValueRefType>(from) {
-            src = cast::<CXXRValueRefType>(from)->referee;
-        }
+        if isa::<CXXLValueRefType>(from)      { src = cast::<CXXLValueRefType>(from)->referee; }
+        else if isa::<CXXRValueRefType>(from) { src = cast::<CXXRValueRefType>(from)->referee; }
+        var sq = canon_quals(src);
+        src = canon_unqual(src);
 
         if isa::<CXXRValueRefType>(to) {
             var rr = cast::<CXXRValueRefType>(to)->referee;
-            if (src == rr) || (self.implicit(src, rr) != ImplicitRank::None) { return ImplicitRank::Converted; }
+            if (sq & (~canon_quals(rr))) != 0 { return ImplicitRank::None; }
+            var rru = canon_unqual(rr);
+            if (src == rru) || (self.implicit(src, rru) != ImplicitRank::None) { return ImplicitRank::Converted; }
             return ImplicitRank::None;
         }
 
-        var lr       = cast::<CXXLValueRefType>(to);
-        var referee  = lr->referee;
-        if src == referee {
-            if from_const && (!lr->is_const) { return ImplicitRank::None; }
-            return ImplicitRank::Exact;
-        }
+        var referee = cast::<CXXLValueRefType>(to)->referee;
+        // A plain `T&` (or `volatile T&`) from a more-qualified lvalue: the
+        // binding would drop a qualifier.
+        if (sq & (~canon_quals(referee))) != 0 { return ImplicitRank::None; }
+        var ru = canon_unqual(referee);
+        if src == ru { return ImplicitRank::Exact; }
         var fd = self.tu.record_decl(src);
-        var td = self.tu.record_decl(referee);
+        var td = self.tu.record_decl(ru);
         if (fd != &null) && (td != &null) && (fd != td) && self.tu.derives_from(fd, td) {
-            if from_const && (!lr->is_const) { return ImplicitRank::None; }
             return ImplicitRank::Converted;
         }
-        if lr->is_const && (self.implicit(src, referee) != ImplicitRank::None) { return ImplicitRank::Converted; }
+        if canon_has_const(referee) && (self.implicit(src, ru) != ImplicitRank::None) { return ImplicitRank::Converted; }
         return ImplicitRank::None;
     }
 
@@ -310,7 +363,7 @@ class Conversion {
             return (ImplicitRank::Exact) if (exact) else (ImplicitRank::Converted);
         }
         if !isa::<CXXLValueRefType>(to) { return ImplicitRank::None; }
-        if cast::<CXXLValueRefType>(to)->is_const {
+        if canon_has_const(cast::<CXXLValueRefType>(to)->referee) {
             return (ImplicitRank::Exact) if (exact) else (ImplicitRank::Converted);
         }
         // Plain `T&`: a modifiable lvalue, and never a temporary.
@@ -318,14 +371,18 @@ class Conversion {
         return (ImplicitRank::Exact) if (exact) else (ImplicitRank::Converted);
     }
 
-    /// \p src (a value type) against \p referee.
+    /// \p src (a value type) against \p referee, cv of both ignored: the
+    /// relation is between the objects, and whether the binding may drop a
+    /// qualifier is ref_binding's question (its `from_const`).
     fn ref_rel(self, src: *Type, referee: *Type) -> RefRel {
         if (src == &null) || (referee == &null) { return RefRel::None; }
-        if src == referee { return RefRel::Same; }
-        var fd = self.tu.record_decl(src);
-        var td = self.tu.record_decl(referee);
+        var su = canon_unqual(src);
+        var ru = canon_unqual(referee);
+        if su == ru { return RefRel::Same; }
+        var fd = self.tu.record_decl(su);
+        var td = self.tu.record_decl(ru);
         if (fd != &null) && (td != &null) && (fd != td) && self.tu.derives_from(fd, td) { return RefRel::Derived; }
-        if self.implicit(src, referee) != ImplicitRank::None { return RefRel::Converts; }
+        if self.implicit(su, ru) != ImplicitRank::None { return RefRel::Converts; }
         return RefRel::None;
     }
 
@@ -336,16 +393,13 @@ class Conversion {
         var to_l = isa::<CXXLValueRefType>(to);
         var to_r = isa::<CXXRValueRefType>(to);
         if (!to_l) && (!to_r) { return self.implicit(from, to); }
-        // A reference-typed argument's value is its referee, and a `const T&`
-        // one is const whatever its arm said.
+        // A reference-typed argument's value is its referee, and a const
+        // one -- by its own top-level cv or its referee's -- is const
+        // whatever its arm said.
         var src = from;
-        var c   = from_const;
-        if isa::<CXXLValueRefType>(from) {
-            c   = c || cast::<CXXLValueRefType>(from)->is_const;
-            src = cast::<CXXLValueRefType>(from)->referee;
-        } else if isa::<CXXRValueRefType>(from) {
-            src = cast::<CXXRValueRefType>(from)->referee;
-        }
+        if isa::<CXXLValueRefType>(from)      { src = cast::<CXXLValueRefType>(from)->referee; }
+        else if isa::<CXXRValueRefType>(from) { src = cast::<CXXRValueRefType>(from)->referee; }
+        var c = from_const || canon_has_const(src);
         var referee = (cast::<CXXLValueRefType>(to)->referee) if (to_l) else (cast::<CXXRValueRefType>(to)->referee);
         return self.ref_binding(to, cat, c, self.ref_rel(src, referee));
     }
@@ -355,16 +409,20 @@ class Conversion {
     }
 
     /// Branch join for if/match/try: the type both sides convert to, or null.
+    /// The join is a prvalue, so it carries no top-level cv: `const i32` and
+    /// `i32` join to `i32`.
     fn join(self, a: *Type, b: *Type) -> *Type {
-        if a == &null { return b; }
-        if b == &null { return a; }
-        if a == b { return a; }
-        if self.tu.is_never(a) { return b; }
-        if self.tu.is_never(b) { return a; }
-        var ab = self.implicit(a, b);
-        var ba = self.implicit(b, a);
-        if (ab != ImplicitRank::None) && (ba == ImplicitRank::None) { return b; }
-        if (ba != ImplicitRank::None) && (ab == ImplicitRank::None) { return a; }
+        if a == &null { return canon_unqual(b); }
+        if b == &null { return canon_unqual(a); }
+        var au = canon_unqual(a);
+        var bu = canon_unqual(b);
+        if au == bu { return au; }
+        if self.tu.is_never(au) { return bu; }
+        if self.tu.is_never(bu) { return au; }
+        var ab = self.implicit(au, bu);
+        var ba = self.implicit(bu, au);
+        if (ab != ImplicitRank::None) && (ba == ImplicitRank::None) { return bu; }
+        if (ba != ImplicitRank::None) && (ab == ImplicitRank::None) { return au; }
         return &null;   // neither or both: the caller errors (both = a W-cycle, invariant 2).
     }
 }

@@ -218,10 +218,26 @@ class TypeResolution derives RecursiveASTVisitor::<TypeResolution> {
             case TypeKind::CXXLValueRefType      { self._resolve_cxx_lref(cast::<CXXLValueRefType>(t));       }
             case TypeKind::CXXRValueRefType      { self._resolve_cxx_rref(cast::<CXXRValueRefType>(t));       }
             case TypeKind::OpaqueFFIType         { self._resolve_opaque(cast::<OpaqueFFIType>(t));            }
+            case TypeKind::QualifiedType         { 0; }   // canonical by construction.
             case TypeKind::InferredType          { 0; }   // TypeInference owns; no canonical here.
             case TypeKind::TypeOfType            { self._mark_inst_dependent(t); }   // needs expr typing.
             case TypeKind::TypeExpr              { self._mark_inst_dependent(t); }   // const arg; evaluator.
             default                              { 0; }
+        }
+
+        // The written cv-qualifiers, onto the canonical. Every kind but
+        // four: a canonical carries its own; a reference cannot be
+        // qualified (`const T&` qualifies the REFEREE, and the ref arms do
+        // that themselves); and a function type's remaining qualifiers are
+        // effects, which are not cv.
+        if (t->canonical != &null) && (!t->is_poisoned()) {
+            var k = t->kind;
+            if (k != TypeKind::QualifiedType)
+            && (k != TypeKind::CXXLValueRefType) && (k != TypeKind::CXXRValueRefType)
+            && (k != TypeKind::FunctionPointerType) {
+                var q = self._canon_quals(t);
+                if q != 0 { t->canonical = self.sc->types->qualified(t->canonical, q); }
+            }
         }
 
         var st = ResolveState::Resolved;
@@ -264,16 +280,27 @@ class TypeResolution derives RecursiveASTVisitor::<TypeResolution> {
 
     priv fn _resolve_cxx_lref(self, n: *CXXLValueRefType) {
         if !self._component_ok(n, n->referee) { return; }
-        // `const T&` and `T&` are two canonicals. The written const is the
-        // TypeQual qualifier, read through *Type because the node's own
-        // `is_const` FIELD (the canonical's key bit) hides that method.
-        var is_const = static_cast::<*Type>(n)->is_const();
-        n->canonical = self.sc->types->cxx_lref(n->referee->canonical, is_const);
+        // A reference has no cv of its own: `const T&` qualifies the
+        // referee. The written qualifier lands there, and resolve()'s
+        // central wrap skips reference kinds so it is not applied twice.
+        var referee = self.sc->types->qualified(n->referee->canonical, self._canon_quals(n));
+        n->canonical = self.sc->types->cxx_lref(referee);
     }
 
     priv fn _resolve_cxx_rref(self, n: *CXXRValueRefType) {
         if !self._component_ok(n, n->referee) { return; }
-        n->canonical = self.sc->types->cxx_rref(n->referee->canonical);
+        var referee = self.sc->types->qualified(n->referee->canonical, self._canon_quals(n));
+        n->canonical = self.sc->types->cxx_rref(referee);
+    }
+
+    /// The bits of a syntax node's TypeQual that enter identity. Only
+    /// const and volatile: restrict, atomic, eval and the effects are
+    /// facts about a declaration or a use, not about which type it is.
+    priv fn _canon_quals(self, t: *Type) -> u8 {
+        var q: u8 = 0;
+        if t->is_const()    { q = q | QUAL_CONST();    }
+        if t->is_volatile() { q = q | QUAL_VOLATILE(); }
+        return q;
     }
 
     priv fn _resolve_map(self, n: *MapType) {
@@ -1500,6 +1527,9 @@ class TypeResolution derives RecursiveASTVisitor::<TypeResolution> {
             }
             case TypeKind::CXXRValueRefType {
                 self._narrowest_in_type(cast::<CXXRValueRefType>(t)->referee, worst, worst_rank);
+            }
+            case TypeKind::QualifiedType {
+                self._narrowest_in_type(cast::<QualifiedType>(t)->inner, worst, worst_rank);
             }
             default { }
         }

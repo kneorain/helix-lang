@@ -232,6 +232,9 @@ class TypeCycleCheck {
                 }
             } case TypeKind::FixedArrayType {
                 self._type_edges(cast::<FixedArrayType>(c)->element, site);
+            } case TypeKind::QualifiedType {
+                // A const field is still by value.
+                self._type_edges(cast::<QualifiedType>(c)->inner, site);
             } case TypeKind::SelfType {
                 // `var x: Self` inside a record is that record by value.
                 if self._stack.size() > 0 {
@@ -333,6 +336,8 @@ class TypeCycleCheck {
                 return false;
             } case TypeKind::FixedArrayType {
                 return self._type_uses_param(cast::<FixedArrayType>(c)->element, rec, index, depth);
+            } case TypeKind::QualifiedType {
+                return self._type_uses_param(cast::<QualifiedType>(c)->inner, rec, index, depth);
             } default {
                 return false;
             }

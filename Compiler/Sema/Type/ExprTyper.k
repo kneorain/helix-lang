@@ -486,7 +486,8 @@ class ExprTyper
             var p = f->params[i];
             if (p == &null) || p->is_self { continue; }
             if (p->type_ == &null) || (p->type_->canonical == &null) { return &null; }
-            ps.push_back(p->type_->canonical);
+            // a function type has no top-level cv on its parameters ([dcl.fct]/5)
+            ps.push_back(canon_unqual(p->type_->canonical));
         }
         var r = self.fn_return_type(f);
         if r == &null { return &null; }
