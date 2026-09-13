@@ -71,6 +71,7 @@ import AST::Node::PrimaryExpressions::*;
 import AST::Node::Expressions::*;
 import AST::Node::Statements::*;
 import AST::Node::Declarations::*;
+import AST::DeclFacts::*;
 import AST::Node::Types::*;
 import AST::Node::CanonicalNodes::*;
 import AST::Node::Casting::*;
@@ -443,7 +444,7 @@ class TypeResolution derives RecursiveASTVisitor::<TypeResolution> {
     /// carries that flag through the store's flag absorption.
     priv fn _self_record(self, owner: *Decl) -> *Type {
         var canon = NameLookup::representative(owner);
-        var gps   = self._generic_params_of(canon);
+        var gps   = decl_generic_params(canon);
         var args  = vec::<*Type>();
         for var i: usize = 0; i < gps.size(); ++i {
             var gp = gps[i];
@@ -672,7 +673,7 @@ class TypeResolution derives RecursiveASTVisitor::<TypeResolution> {
             // dependent spelling, not clang's `unsigned long`.
             head = owner;
             MemberLookup::ensure_filled(self.sc, owner);
-            var pat = self._instantiated_from_of(owner);
+            var pat = decl_instantiated_from(owner);
             if (pat != &null) && self._is_unfilled_instance(owner) { head = pat; }
         } else {
             // --- 2. head: generic frames, then the DC chain + overlay --------
@@ -823,7 +824,7 @@ class TypeResolution derives RecursiveASTVisitor::<TypeResolution> {
         if (d == &null) || isa::<TypeAliasDecl>(d) { return &null; }
         var canon = NameLookup::representative(d);
         if !MemberLookup::primary_is_imported(canon) { return &null; }
-        var gps = self._generic_params_of(canon);
+        var gps = decl_generic_params(canon);
         if gps.size() == 0 { return &null; }
         if !self._check_arity(canon, gps, seg, ct) { return &null; }
         var args = vec::<*Type>();
@@ -1010,7 +1011,7 @@ class TypeResolution derives RecursiveASTVisitor::<TypeResolution> {
 
         // -- nominal types --------------------------------------------------------
         var canon = NameLookup::representative(d);
-        var gps   = self._generic_params_of(canon);
+        var gps   = decl_generic_params(canon);
 
         if !self._check_arity(canon, gps, seg, ct) { return &null; }
 
@@ -1247,7 +1248,7 @@ class TypeResolution derives RecursiveASTVisitor::<TypeResolution> {
         
         self.frames.clear();
         self.ltypes.clear();
-        self._push_frame(primary, self._generic_params_of(primary));
+        self._push_frame(primary, decl_generic_params(primary));
         self._selfs.clear();
         self._push_enclosing_selfs(self.cur_dc);
 
@@ -1612,8 +1613,8 @@ class TypeResolution derives RecursiveASTVisitor::<TypeResolution> {
         // classified now. Register it late; a use that already minted an
         // implicit node for these args gets the "after instantiation" error,
         // which is the right answer for a spec written below its first use.
-        if (self._spec_kind_of(static_cast::<*Decl>(n)) == SpecKind::Explicit)
-        && (self._instantiated_from_of(static_cast::<*Decl>(n)) == &null) {
+        if (decl_spec_kind(static_cast::<*Decl>(n)) == SpecKind::Explicit)
+        && (decl_instantiated_from(static_cast::<*Decl>(n)) == &null) {
             self._register_type_spec(static_cast::<*Decl>(n));
         }
         self._pop_frame();
@@ -1635,8 +1636,8 @@ class TypeResolution derives RecursiveASTVisitor::<TypeResolution> {
         // classified now. Register it late; a use that already minted an
         // implicit node for these args gets the "after instantiation" error,
         // which is the right answer for a spec written below its first use.
-        if (self._spec_kind_of(static_cast::<*Decl>(n)) == SpecKind::Explicit)
-        && (self._instantiated_from_of(static_cast::<*Decl>(n)) == &null) {
+        if (decl_spec_kind(static_cast::<*Decl>(n)) == SpecKind::Explicit)
+        && (decl_instantiated_from(static_cast::<*Decl>(n)) == &null) {
             self._register_type_spec(static_cast::<*Decl>(n));
         }
         self._pop_frame();
@@ -1658,8 +1659,8 @@ class TypeResolution derives RecursiveASTVisitor::<TypeResolution> {
         // classified now. Register it late; a use that already minted an
         // implicit node for these args gets the "after instantiation" error,
         // which is the right answer for a spec written below its first use.
-        if (self._spec_kind_of(static_cast::<*Decl>(n)) == SpecKind::Explicit)
-        && (self._instantiated_from_of(static_cast::<*Decl>(n)) == &null) {
+        if (decl_spec_kind(static_cast::<*Decl>(n)) == SpecKind::Explicit)
+        && (decl_instantiated_from(static_cast::<*Decl>(n)) == &null) {
             self._register_type_spec(static_cast::<*Decl>(n));
         }
         self._pop_frame();
@@ -1843,7 +1844,7 @@ class TypeResolution derives RecursiveASTVisitor::<TypeResolution> {
     /// the name-resolution fact the parser deferred to sema (#68).
     priv fn _refine_spec_kind(self, d: *Decl, gps: FrozenList::<*GenericParamDecl>,
                               args: FrozenList::<*Type>) {
-        var kind = self._spec_kind_of(d);
+        var kind = decl_spec_kind(d);
         if kind != SpecKind::Primary { return; }
         if gps.size() == 0 { return; }   // `<> Box<T>` stays Primary by construction.
         var concrete = false;
@@ -1856,26 +1857,7 @@ class TypeResolution derives RecursiveASTVisitor::<TypeResolution> {
             if (seg == &null) || (seg->resolved_decl == &null) { continue; }
             if !isa::<GenericParamDecl>(seg->resolved_decl) { concrete = true; break; }
         }
-        if concrete { self._set_spec_kind(d, SpecKind::Explicit); }
-    }
-
-    priv fn _spec_kind_of(self, d: *Decl) -> SpecKind {
-        if isa::<FunctionDecl>(d)  { return cast::<FunctionDecl>(d)->spec_kind;  }
-        if isa::<ClassDecl>(d)     { return cast::<ClassDecl>(d)->spec_kind;     }
-        if isa::<StructDecl>(d)    { return cast::<StructDecl>(d)->spec_kind;    }
-        if isa::<UnionDecl>(d)     { return cast::<UnionDecl>(d)->spec_kind;     }
-        if isa::<EnumDecl>(d)      { return cast::<EnumDecl>(d)->spec_kind;      }
-        if isa::<InterfaceDecl>(d) { return cast::<InterfaceDecl>(d)->spec_kind; }
-        return SpecKind::None;
-    }
-
-    priv fn _set_spec_kind(self, d: *Decl, k: SpecKind) {
-        if isa::<FunctionDecl>(d)  { cast::<FunctionDecl>(d)->spec_kind  = k; return; }
-        if isa::<ClassDecl>(d)     { cast::<ClassDecl>(d)->spec_kind     = k; return; }
-        if isa::<StructDecl>(d)    { cast::<StructDecl>(d)->spec_kind    = k; return; }
-        if isa::<UnionDecl>(d)     { cast::<UnionDecl>(d)->spec_kind     = k; return; }
-        if isa::<EnumDecl>(d)      { cast::<EnumDecl>(d)->spec_kind      = k; return; }
-        if isa::<InterfaceDecl>(d) { cast::<InterfaceDecl>(d)->spec_kind = k; return; }
+        if concrete { decl_set_spec_kind(d, SpecKind::Explicit); }
     }
 
     // === Enum underlying ========================================================
@@ -1892,19 +1874,6 @@ class TypeResolution derives RecursiveASTVisitor::<TypeResolution> {
     }
 
     // === Decl helpers ===========================================================
-
-    priv fn _generic_params_of(self, d: *Decl) -> FrozenList::<*GenericParamDecl> {
-        if d == &null { return create_empty_frozen_list::<*GenericParamDecl>(); }
-        if isa::<ClassDecl>(d)     { return cast::<ClassDecl>(d)->generic_params;     }
-        if isa::<StructDecl>(d)    { return cast::<StructDecl>(d)->generic_params;    }
-        if isa::<UnionDecl>(d)     { return cast::<UnionDecl>(d)->generic_params;     }
-        if isa::<InterfaceDecl>(d) { return cast::<InterfaceDecl>(d)->generic_params; }
-        if isa::<EnumDecl>(d)      { return cast::<EnumDecl>(d)->generic_params;      }
-        if isa::<TypeAliasDecl>(d) { return cast::<TypeAliasDecl>(d)->generic_params; }
-        if isa::<FunctionDecl>(d)  { return cast::<FunctionDecl>(d)->generic_params;  }
-        if isa::<ExtensionDecl>(d) { return cast::<ExtensionDecl>(d)->generic_params; }
-        return create_empty_frozen_list::<*GenericParamDecl>();
-    }
 
     priv fn _decl_name_str(self, d: *Decl) -> string {
         if d == &null { return "<null>"; }
@@ -1937,7 +1906,7 @@ class TypeResolution derives RecursiveASTVisitor::<TypeResolution> {
             var d = self._selfs[(n - 1) - i];
             if d == &null { continue; }
             MemberLookup::ensure_filled(self.sc, d);
-            var pat = self._instantiated_from_of(d);
+            var pat = decl_instantiated_from(d);
             if (pat != &null) && self._is_unfilled_instance(d) { d = pat; }
             var dc = NameLookup::context_of(d);
             if dc == &null { continue; }
@@ -2028,7 +1997,7 @@ class TypeResolution derives RecursiveASTVisitor::<TypeResolution> {
         }
         if isa::<ModuleDecl>(d) { self._register_specs_in(NameLookup::context_of(d)); return; }
 
-        var k = self._spec_kind_of(d);
+        var k = decl_spec_kind(d);
         if ((k == SpecKind::Explicit) || (k == SpecKind::Partial)) && !isa::<FunctionDecl>(d) {
             self._register_type_spec(d);            // function specs: OverloadResolution's.
         }
@@ -2042,11 +2011,11 @@ class TypeResolution derives RecursiveASTVisitor::<TypeResolution> {
     /// times registration is attempted.
     priv fn _register_type_spec(self, d: *Decl) {
         if d->is_poisoned() { return; }
-        if self._instantiated_from_of(d) != &null { return; }
+        if decl_instantiated_from(d) != &null { return; }
         self._warn_if_local_spec(d);
         var primary = self._primary_of_spec(d);
         if primary == &null { d->poison(); return; }        // diagnosed inside.
-        self._set_instantiated_from(d, primary);
+        decl_set_instantiated_from(d, primary);
 
         var saved_dc     = self.cur_dc;
         var saved_frames = self.frames;
@@ -2055,11 +2024,11 @@ class TypeResolution derives RecursiveASTVisitor::<TypeResolution> {
         if d->semantic_dc != &null { self.cur_dc = reinterpret_cast::<*DeclContext>(d->semantic_dc); }
         self.frames.clear();
         self.ltypes.clear();
-        self._push_frame(NameLookup::representative(d), self._generic_params_of(d));
+        self._push_frame(NameLookup::representative(d), decl_generic_params(d));
         self._selfs.clear();
         self._push_enclosing_selfs(self.cur_dc);
 
-        var sargs = self._spec_args_of(d);
+        var sargs = decl_spec_args(d);
         var args  = vec::<*Type>();
         var ok    = true;
         var dep   = false;
@@ -2078,7 +2047,7 @@ class TypeResolution derives RecursiveASTVisitor::<TypeResolution> {
         self.ltypes = saved_lt;
         if !ok { d->poison(); return; }
 
-        if (self._spec_kind_of(d) == SpecKind::Partial) || dep {
+        if (decl_spec_kind(d) == SpecKind::Partial) || dep {
             // A pattern: matched against concrete args by M2. Never a RecordType::decl.
             self.sc->instances->register_partial(primary, d);
             return;
@@ -2205,34 +2174,6 @@ class TypeResolution derives RecursiveASTVisitor::<TypeResolution> {
             return;
         }
         self.sc->instances->retarget(e, NameLookup::representative(prev));
-    }
-
-    // -- kind-generic accessors over TemplateParams -----------------------------
-
-    priv fn _spec_args_of(self, d: *Decl) -> FrozenList::<*Type> {
-        if isa::<ClassDecl>(d)     { return cast::<ClassDecl>(d)->spec_args;     }
-        if isa::<StructDecl>(d)    { return cast::<StructDecl>(d)->spec_args;    }
-        if isa::<UnionDecl>(d)     { return cast::<UnionDecl>(d)->spec_args;     }
-        if isa::<EnumDecl>(d)      { return cast::<EnumDecl>(d)->spec_args;      }
-        if isa::<InterfaceDecl>(d) { return cast::<InterfaceDecl>(d)->spec_args; }
-        return create_empty_frozen_list::<*Type>();
-    }
-
-    priv fn _instantiated_from_of(self, d: *Decl) -> *Decl {
-        if isa::<ClassDecl>(d)     { return cast::<ClassDecl>(d)->instantiated_from;     }
-        if isa::<StructDecl>(d)    { return cast::<StructDecl>(d)->instantiated_from;    }
-        if isa::<UnionDecl>(d)     { return cast::<UnionDecl>(d)->instantiated_from;     }
-        if isa::<EnumDecl>(d)      { return cast::<EnumDecl>(d)->instantiated_from;      }
-        if isa::<InterfaceDecl>(d) { return cast::<InterfaceDecl>(d)->instantiated_from; }
-        return &null;
-    }
-
-    priv fn _set_instantiated_from(self, d: *Decl, p: *Decl) {
-        if isa::<ClassDecl>(d)     { cast::<ClassDecl>(d)->instantiated_from     = p; return; }
-        if isa::<StructDecl>(d)    { cast::<StructDecl>(d)->instantiated_from    = p; return; }
-        if isa::<UnionDecl>(d)     { cast::<UnionDecl>(d)->instantiated_from     = p; return; }
-        if isa::<EnumDecl>(d)      { cast::<EnumDecl>(d)->instantiated_from      = p; return; }
-        if isa::<InterfaceDecl>(d) { cast::<InterfaceDecl>(d)->instantiated_from = p; return; }
     }
 
     priv fn _decl_name_imm(self, d: *Decl) -> u32 {

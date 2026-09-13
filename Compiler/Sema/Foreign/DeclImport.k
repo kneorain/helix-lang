@@ -65,6 +65,7 @@ import AST::Context::InstantiationRegistry::*;
 import AST::ASTSupport::*;
 import AST::Node::Base::*;
 import AST::Node::Declarations::*;
+import AST::DeclFacts::*;
 import AST::Node::CanonicalNodes::*;
 import AST::Node::Casting::*;
 import AST::Kind::DeclKind::*;
@@ -501,12 +502,7 @@ class DeclImport {
         var us   = std::nstring_to_string(usr);
         var vset = reinterpret_cast::<*void>(self._set);
         var vd   = reinterpret_cast::<*void>(d);
-        if isa::<FunctionDecl>(kd)  { cast::<FunctionDecl>(kd)->set_imported(vd, us, sp, vset, t->fid);  return; }
-        if isa::<ClassDecl>(kd)     { cast::<ClassDecl>(kd)->set_imported(vd, us, sp, vset, t->fid);     return; }
-        if isa::<StructDecl>(kd)    { cast::<StructDecl>(kd)->set_imported(vd, us, sp, vset, t->fid);    return; }
-        if isa::<UnionDecl>(kd)     { cast::<UnionDecl>(kd)->set_imported(vd, us, sp, vset, t->fid);     return; }
-        if isa::<TypeAliasDecl>(kd) { cast::<TypeAliasDecl>(kd)->set_imported(vd, us, sp, vset, t->fid); return; }
-        if isa::<VariableDecl>(kd)  { cast::<VariableDecl>(kd)->set_imported(vd, us, sp, vset, t->fid);  return; }
+        decl_set_imported(kd, vd, us, sp, vset, t->fid);
     }
 
     /// The name binding: ident key, or ctor / operator key for functions.
@@ -828,10 +824,7 @@ class DeclImport {
     // --- templates ----------------------------------------------------------------
 
     priv fn _define_class_template(self, t: *HeaderTarget, ct: *clang::ClassTemplateDecl, kd: *Decl, ti: *TypeImport) {
-        var gps: *FrozenList::<*GenericParamDecl> = &null;
-        if isa::<ClassDecl>(kd)       { gps = &(cast::<ClassDecl>(kd)->generic_params); }
-        else if isa::<StructDecl>(kd) { gps = &(cast::<StructDecl>(kd)->generic_params); }
-        else if isa::<UnionDecl>(kd)  { gps = &(cast::<UnionDecl>(kd)->generic_params); }
+        var gps = decl_generic_params_slot(kd);
         if gps == &null { return; }
         self._generic_params(t, kd, ct->getTemplateParameters(), ti, gps);
         self._define_record(t, ct->getTemplatedDecl(), kd, ti);
@@ -855,7 +848,7 @@ class DeclImport {
         self._set_spec(kd, (SpecKind::Partial) if (partial) else (SpecKind::Explicit), rep, args, t->ctx);
         if partial {
             var ps = llvm::cast::<clang::ClassTemplatePartialSpecializationDecl>(sp);
-            var gps = self._gps_of(kd);
+            var gps = decl_generic_params_slot(kd);
             if gps != &null { self._generic_params(t, kd, ps->getTemplateParameters(), ti, gps); }
             self.instances->register_partial(rep, kd);
         } else {
@@ -864,24 +857,13 @@ class DeclImport {
         self._define_record(t, sp, kd, ti);
     }
 
-    priv fn _gps_of(self, kd: *Decl) -> *FrozenList::<*GenericParamDecl> {
-        if isa::<ClassDecl>(kd)  { return &(cast::<ClassDecl>(kd)->generic_params); }
-        if isa::<StructDecl>(kd) { return &(cast::<StructDecl>(kd)->generic_params); }
-        if isa::<UnionDecl>(kd)  { return &(cast::<UnionDecl>(kd)->generic_params); }
-        return &null;
-    }
-
     priv fn _set_spec(self, kd: *Decl, k: SpecKind, prim: *Decl, args: ref!(vec::<*Type>), ctx: *ASTContext) {
-        if isa::<ClassDecl>(kd) {
-            var c = cast::<ClassDecl>(kd);
-            c->spec_kind = k; c->instantiated_from = prim; c->spec_args.from_vec(&args, ctx);
-        } else if isa::<StructDecl>(kd) {
-            var s = cast::<StructDecl>(kd);
-            s->spec_kind = k; s->instantiated_from = prim; s->spec_args.from_vec(&args, ctx);
-        } else if isa::<UnionDecl>(kd) {
-            var u = cast::<UnionDecl>(kd);
-            u->spec_kind = k; u->instantiated_from = prim; u->spec_args.from_vec(&args, ctx);
-        }
+        decl_set_spec_kind(kd, k);
+        decl_set_instantiated_from(kd, prim);
+        // spec_args has no slot accessor: the one per-kind write left.
+        if isa::<ClassDecl>(kd)       { cast::<ClassDecl>(kd)->spec_args.from_vec(&args, ctx);  }
+        else if isa::<StructDecl>(kd) { cast::<StructDecl>(kd)->spec_args.from_vec(&args, ctx); }
+        else if isa::<UnionDecl>(kd)  { cast::<UnionDecl>(kd)->spec_args.from_vec(&args, ctx);  }
     }
 
     /// TemplateParameterList -> GenericParamDecls, owner stamped so

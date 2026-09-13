@@ -49,6 +49,7 @@ ffi "c++" import "llvm/ADT/SmallVector.h";
 
 import AST::Node::Base::*;
 import AST::Node::Declarations::*;
+import AST::DeclFacts::*;
 import AST::Node::Types::*;
 import AST::Node::CanonicalNodes::*;
 import AST::Node::Casting::*;
@@ -181,18 +182,18 @@ class TypeExport {
         // Anything with a live clang decl in THIS set: a plain imported
         // record or enum, an explicit specialization, or an instance a fill
         // already stamped with its ClassTemplateSpecializationDecl.
-        var cd = TypeExport::clang_decl_of(d);
-        if (cd != &null) && (TypeExport::origin_set_of(d) == self.set) {
+        var cd = decl_clang(d);
+        if (cd != &null) && (decl_origin_set(d) == self.set) {
             var tag = llvm::dyn_cast::<clang::TagDecl>(reinterpret_cast::<*clang::Decl>(cd));
             if tag != &null { return clang::QualType(self.cctx->getCanonicalTagType(tag)); }
         }
 
         // An unfilled instance of an imported template: spell the template-id
         // from its args. Recursing here is what makes `cont<cont<i32>>` work.
-        var prim = TypeExport::pattern_of(d);
-        if (prim == &null) || (!TypeExport::is_instance(d)) { return clang::QualType(); }
-        if TypeExport::origin_set_of(prim) != self.set { return clang::QualType(); }
-        var ct = TypeExport::class_template_of(reinterpret_cast::<*clang::Decl>(TypeExport::clang_decl_of(prim)));
+        var prim = decl_instantiated_from(d);
+        if (prim == &null) || (!decl_is_instance(d)) { return clang::QualType(); }
+        if decl_origin_set(prim) != self.set { return clang::QualType(); }
+        var ct = TypeExport::class_template_of(reinterpret_cast::<*clang::Decl>(decl_clang(prim)));
         if ct == &null { return clang::QualType(); }
         var qs: llvm::SmallVector::<clang::QualType, 8>;
         for var i: usize = 0; i < rt->args.size(); ++i {
@@ -245,45 +246,4 @@ class TypeExport {
         }
     }
 
-    // FFILinkage, per kind
-    //
-    // A CRTP mixin has no common base to read through; these are the kinds
-    // that derive it AND can back a RecordType.
-
-    static fn clang_decl_of(d: *Decl) -> *void {
-        if isa::<ClassDecl>(d)  { return cast::<ClassDecl>(d)->clang_decl;  }
-        if isa::<StructDecl>(d) { return cast::<StructDecl>(d)->clang_decl; }
-        if isa::<UnionDecl>(d)  { return cast::<UnionDecl>(d)->clang_decl;  }
-        if isa::<EnumDecl>(d)   { return cast::<EnumDecl>(d)->clang_decl;   }   // not stamped today: null.
-        return &null;
-    }
-
-    static fn origin_set_of(d: *Decl) -> *void {
-        if isa::<ClassDecl>(d)  { return cast::<ClassDecl>(d)->origin_set;  }
-        if isa::<StructDecl>(d) { return cast::<StructDecl>(d)->origin_set; }
-        if isa::<UnionDecl>(d)  { return cast::<UnionDecl>(d)->origin_set;  }
-        if isa::<EnumDecl>(d)   { return cast::<EnumDecl>(d)->origin_set;   }
-        return &null;
-    }
-
-    static fn origin_fid_of(d: *Decl) -> u32 {
-        if isa::<ClassDecl>(d)  { return cast::<ClassDecl>(d)->origin_fid;  }
-        if isa::<StructDecl>(d) { return cast::<StructDecl>(d)->origin_fid; }
-        if isa::<UnionDecl>(d)  { return cast::<UnionDecl>(d)->origin_fid;  }
-        return 0;
-    }
-
-    static fn pattern_of(d: *Decl) -> *Decl {
-        if isa::<ClassDecl>(d)  { return cast::<ClassDecl>(d)->instantiated_from;  }
-        if isa::<StructDecl>(d) { return cast::<StructDecl>(d)->instantiated_from; }
-        if isa::<UnionDecl>(d)  { return cast::<UnionDecl>(d)->instantiated_from;  }
-        return &null;
-    }
-
-    static fn is_instance(d: *Decl) -> bool {
-        if isa::<ClassDecl>(d)  { return cast::<ClassDecl>(d)->is_instance();  }
-        if isa::<StructDecl>(d) { return cast::<StructDecl>(d)->is_instance(); }
-        if isa::<UnionDecl>(d)  { return cast::<UnionDecl>(d)->is_instance();  }
-        return false;
-    }
 }

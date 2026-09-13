@@ -45,6 +45,7 @@ import AST::Node::Program::*;
 import AST::Node::Types::*;
 import AST::Node::CanonicalNodes::*;
 import AST::Node::Declarations::*;
+import AST::DeclFacts::*;
 import AST::Node::Casting::*;
 import AST::Kind::DeclKind::*;
 import AST::Kind::TypeKind::*;
@@ -399,14 +400,7 @@ class TypeCycleCheck {
 
     priv fn _decl_name(self, d: *Decl) -> string {
         if d == &null { return "<null>"; }
-        switch d->kind {
-            case DeclKind::ClassDecl  { return self._imm(cast::<ClassDecl>(d)->name.imm);  }
-            case DeclKind::StructDecl { return self._imm(cast::<StructDecl>(d)->name.imm); }
-            case DeclKind::UnionDecl  { return self._imm(cast::<UnionDecl>(d)->name.imm);  }
-            case DeclKind::EnumDecl   { return self._imm(cast::<EnumDecl>(d)->name.imm);   }
-            default { return "<type>"; }
-        }
-        return "<type>";
+        return self._imm(decl_name_tok(d).imm);
     }
 
     priv fn _imm(self, imm: u32) -> string {

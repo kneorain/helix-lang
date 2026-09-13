@@ -62,6 +62,7 @@ import AST::Context::SymbolTable::*;
 import AST::Context::InstantiationRegistry::*;
 import AST::Node::Base::*;
 import AST::Node::Declarations::*;
+import AST::DeclFacts::*;
 import AST::Node::Casting::*;
 import Sema::Resolve::NameLookup::*;
 import Sema::Foreign::ForeignRegistry::*;
@@ -95,12 +96,12 @@ class ForeignInstantiate {
         // Unlocked fast path. Both flags only ever go false -> true, each is
         // written LAST by a fill holding `_mu`, and today every caller is the
         // driver thread; the re-check under the lock is what is load-bearing.
-        if ForeignInstantiate::_filled(shell) { return true; }
-        if ForeignInstantiate::_failed(shell) { return false; }
+        if decl_instantiated(shell) { return true; }
+        if decl_fill_failed(shell) { return false; }
 
         var lock = std::LockGuard(self._mu);
-        if ForeignInstantiate::_filled(shell) { return true; }
-        if ForeignInstantiate::_failed(shell) { return false; }
+        if decl_instantiated(shell) { return true; }
+        if decl_fill_failed(shell) { return false; }
         // Re-entered for a shell this thread is already filling: not a
         // failure (the outer fill will finish it), so no sticky flag.
         for var i: usize = 0; i < self._active.size(); ++i {
@@ -114,24 +115,26 @@ class ForeignInstantiate {
             self.n_filled += 1;
             return true;
         }
-        ForeignInstantiate::_set_failed(shell);
+        decl_set_fill_failed(shell);
         self.n_failed += 1;
         // TODO(diag): no Kairo diagnostic in v1; the use site's member typing
         // reports `unknown` as it did before fills. When a header set's clang
         // diagnostics are routed through the engine (IMPORTS.md §5,
         // [MISSING]), a failed fill goes with them, pointed at the use that
         // demanded it.
-        var prim = TypeExport::pattern_of(shell);
+        var prim = decl_instantiated_from(shell);
+        var what = "<no pattern>";
+        if prim != &null { what = decl_cxx_spelling(prim); }
         Logger::warn(Logger::Stage::Driver,
-            f"ForeignInstantiate: instance of {ForeignInstantiate::_spelling(prim)} not filled: {self._why}");
+            f"ForeignInstantiate: instance of {what} not filled: {self._why}");
         return false;
     }
 
     priv fn _fill_locked(self, shell: *Decl) -> bool {
         // 1. who owns the pattern.
-        var prim = TypeExport::pattern_of(shell);
+        var prim = decl_instantiated_from(shell);
         if prim == &null { self._why = "no pattern"; return false; }
-        var hs = reinterpret_cast::<*HeaderSet>(TypeExport::origin_set_of(prim));
+        var hs = reinterpret_cast::<*HeaderSet>(decl_origin_set(prim));
         if hs == &null { self._why = "primary has no header set"; return false; }
         // A set's clang instance lives until HeaderSetCache::release_all,
         // after every TU's sema. A fill past that is a pass looking into an
@@ -141,9 +144,9 @@ class ForeignInstantiate {
         var csema = hs->sema();
         if (cctx == &null) || (csema == &null) { self._why = "header set has no AST / Sema"; return false; }
 
-        var ct = TypeExport::class_template_of(reinterpret_cast::<*clang::Decl>(TypeExport::clang_decl_of(prim)));
+        var ct = TypeExport::class_template_of(reinterpret_cast::<*clang::Decl>(decl_clang(prim)));
         if ct == &null { self._why = "primary is not a class template"; return false; }
-        var t = self._hindex->target_for_fid(TypeExport::origin_fid_of(prim));
+        var t = self._hindex->target_for_fid(decl_origin_fid(prim));
         if t == &null { self._why = "primary's header has no import target"; return false; }
         // The shell's own spec_args are empty by design; its args are the
         // registry entry's (canonical, parameter order, defaults filled).
@@ -200,8 +203,8 @@ class ForeignInstantiate {
         //    USR to it so a later import naming the spec finds this node.
         var usr = TypeImport::usr_of(spec);
         var sp  = ti.spelling(clang::QualType(cctx->getCanonicalTagType(spec)));
-        ForeignInstantiate::_stamp(shell, reinterpret_cast::<*void>(spec), std::nstring_to_string(usr),
-                                   sp, reinterpret_cast::<*void>(hs), t->fid);
+        decl_set_imported(shell, reinterpret_cast::<*void>(spec), std::nstring_to_string(usr),
+                          sp, reinterpret_cast::<*void>(hs), t->fid);
         if !usr.empty() { self._reg->put(usr, shell); }
 
         // 6. freeze what the fill created, THEN publish. `instantiated` is
@@ -209,7 +212,7 @@ class ForeignInstantiate {
         for var i: usize = 0; i < di.fill_scopes.size(); ++i {
             if di.fill_scopes[i]->dc_symbols != &null { di.fill_scopes[i]->dc_symbols->freeze(); }
         }
-        ForeignInstantiate::_set_filled(shell);
+        decl_set_instantiated(shell);
         Logger::info(Logger::Stage::Driver,
             f"ForeignInstantiate: filled {sp}: {di.n_declared} decl(s) declared, {di.n_defined} defined, {ti.n_opaque} opaque type(s)");
         return true;
@@ -265,48 +268,4 @@ class ForeignInstantiate {
         }
     }
 
-    // === per-kind flag access ===============================================
-    //
-    // An imported class template is minted as a Class, Struct or Union
-    // (DeclImport::_mint_record), and its shells share the primary's kind.
-
-    static fn _filled(d: *Decl) -> bool {
-        if isa::<ClassDecl>(d)  { return cast::<ClassDecl>(d)->instantiated;  }
-        if isa::<StructDecl>(d) { return cast::<StructDecl>(d)->instantiated; }
-        if isa::<UnionDecl>(d)  { return cast::<UnionDecl>(d)->instantiated;  }
-        return false;
-    }
-
-    static fn _failed(d: *Decl) -> bool {
-        if isa::<ClassDecl>(d)  { return cast::<ClassDecl>(d)->foreign_fill_failed;  }
-        if isa::<StructDecl>(d) { return cast::<StructDecl>(d)->foreign_fill_failed; }
-        if isa::<UnionDecl>(d)  { return cast::<UnionDecl>(d)->foreign_fill_failed;  }
-        return true;                                    // no kind we can fill: fail once, fast.
-    }
-
-    static fn _set_filled(d: *Decl) {
-        if isa::<ClassDecl>(d)  { cast::<ClassDecl>(d)->instantiated  = true; return; }
-        if isa::<StructDecl>(d) { cast::<StructDecl>(d)->instantiated = true; return; }
-        if isa::<UnionDecl>(d)  { cast::<UnionDecl>(d)->instantiated  = true; return; }
-    }
-
-    static fn _set_failed(d: *Decl) {
-        if isa::<ClassDecl>(d)  { cast::<ClassDecl>(d)->foreign_fill_failed  = true; return; }
-        if isa::<StructDecl>(d) { cast::<StructDecl>(d)->foreign_fill_failed = true; return; }
-        if isa::<UnionDecl>(d)  { cast::<UnionDecl>(d)->foreign_fill_failed  = true; return; }
-    }
-
-    static fn _stamp(d: *Decl, cd: *void, usr: string, sp: string, hs: *void, fid: u32) {
-        if isa::<ClassDecl>(d)  { cast::<ClassDecl>(d)->set_imported(cd, usr, sp, hs, fid);  return; }
-        if isa::<StructDecl>(d) { cast::<StructDecl>(d)->set_imported(cd, usr, sp, hs, fid); return; }
-        if isa::<UnionDecl>(d)  { cast::<UnionDecl>(d)->set_imported(cd, usr, sp, hs, fid);  return; }
-    }
-
-    static fn _spelling(d: *Decl) -> string {
-        if d == &null { return "<no pattern>"; }
-        if isa::<ClassDecl>(d)  { return cast::<ClassDecl>(d)->cxx_spelling;  }
-        if isa::<StructDecl>(d) { return cast::<StructDecl>(d)->cxx_spelling; }
-        if isa::<UnionDecl>(d)  { return cast::<UnionDecl>(d)->cxx_spelling;  }
-        return "<?>";
-    }
 }

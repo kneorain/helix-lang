@@ -129,6 +129,7 @@ import AST::ASTSupport::*;
 import AST::Node::Base::*;
 import AST::Node::CanonicalNodes::*;
 import AST::Node::Declarations::*;
+import AST::DeclFacts::*;
 import AST::Node::Types::*;
 import AST::Node::Casting::*;
 import AST::Kind::DeclKind::*;
@@ -378,7 +379,7 @@ class RedeclMerge {
         if (im != u32(-1)) && home->is_type_scope() {
             var owner = home->owner_decl();
             if owner != &null {
-                if self.sc->ctx->get_ident_imm(self._owner_name_tok(owner)) == im {
+                if self.sc->ctx->get_ident_imm(decl_name_tok(owner)) == im {
                     return DeclName::ctor();
                 }
             }
@@ -742,18 +743,8 @@ class RedeclMerge {
         if dc->is_translation_unit() { return "<tu>"; }
         var owner = dc->owner_decl();
         if owner == &null { return "<anon scope>"; }
-        var tok = self._owner_name_tok(owner);
+        var tok = decl_name_tok(owner);
         if tok.kind == TokenKind::TkUnknown { return "<anon scope>"; }
         return self.sc->ctx->get_spelling(tok);
-    }
-
-    priv fn _owner_name_tok(self, d: *Decl) -> Token {
-        if isa::<ClassDecl>(d)     { return cast::<ClassDecl>(d)->name;     }
-        if isa::<StructDecl>(d)    { return cast::<StructDecl>(d)->name;    }
-        if isa::<UnionDecl>(d)     { return cast::<UnionDecl>(d)->name;     }
-        if isa::<InterfaceDecl>(d) { return cast::<InterfaceDecl>(d)->name; }
-        if isa::<EnumDecl>(d)      { return cast::<EnumDecl>(d)->name;      }
-        if isa::<ModuleDecl>(d)    { return cast::<ModuleDecl>(d)->name;    }
-        return Token{};
     }
 }

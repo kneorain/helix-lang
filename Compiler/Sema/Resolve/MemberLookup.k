@@ -60,6 +60,7 @@ import AST::Context::GlobalDisambigTable::*;
 import AST::Node::Base::*;
 import AST::Node::Program::*;
 import AST::Node::Declarations::*;
+import AST::DeclFacts::*;
 import AST::Node::Types::*;
 import AST::Node::CanonicalNodes::*;
 import AST::Node::Casting::*;
@@ -294,7 +295,7 @@ class MemberLookup {
         //    whether that instance is implicit or a user-written spec (#12).
         var exts = self.extensions_of_decl(d);
         if exts != &null { self._append_from_extensions(exts, name, out); }
-        var pat = self._pattern_of(d);
+        var pat = decl_instantiated_from(d);
         if (pat != &null) && (pat != d) {
             var pexts = self.extensions_of_decl(pat);
             if pexts != &null { self._append_from_extensions(pexts, name, out); }
@@ -333,16 +334,6 @@ class MemberLookup {
         // UnionDecl / EnumDecl: no bases.
     }
 
-    /// `instantiated_from` for the kinds that carry it, else null.
-    priv fn _pattern_of(self, d: *Decl) -> *Decl {
-        if isa::<ClassDecl>(d)     { return cast::<ClassDecl>(d)->instantiated_from;     }
-        if isa::<StructDecl>(d)    { return cast::<StructDecl>(d)->instantiated_from;    }
-        if isa::<UnionDecl>(d)     { return cast::<UnionDecl>(d)->instantiated_from;     }
-        if isa::<EnumDecl>(d)      { return cast::<EnumDecl>(d)->instantiated_from;      }
-        if isa::<InterfaceDecl>(d) { return cast::<InterfaceDecl>(d)->instantiated_from; }
-        return &null;
-    }
-
     /// An instance whose table is still empty. `instantiated` is the one
     /// answer for both fillers: M2 sets it for a Kairo pattern,
     /// ForeignInstantiate for an imported one. It must not be short-circuited
@@ -351,13 +342,7 @@ class MemberLookup {
     /// dependent spellings -- `size_type` unresolved -- instead of clang's.
     /// Public because TypeResolve asks the same question of a `::` head.
     static fn unfilled(d: *Decl) -> bool {
-        if d == &null { return false; }
-        if isa::<ClassDecl>(d)    { var n = cast::<ClassDecl>(d);     return n->is_instance() && !n->instantiated; }
-        if isa::<StructDecl>(d)    { var n = cast::<StructDecl>(d);    return n->is_instance() && !n->instantiated; }
-        if isa::<UnionDecl>(d)     { var n = cast::<UnionDecl>(d);     return n->is_instance() && !n->instantiated; }
-        if isa::<EnumDecl>(d)      { var n = cast::<EnumDecl>(d);      return n->is_instance() && !n->instantiated; }
-        if isa::<InterfaceDecl>(d) { var n = cast::<InterfaceDecl>(d); return n->is_instance() && !n->instantiated; }
-        return false;
+        return decl_is_instance(d) && (!decl_instantiated(d));
     }
 
     /// THE fill trigger: if \p d is an unfilled shell of an imported
@@ -380,23 +365,11 @@ class MemberLookup {
     /// own instantiation, imported), not from substituting into the pattern.
     /// Public because M2 is the other reader.
     static fn filled_by_clang(d: *Decl) -> bool {
-        if d == &null { return false; }
-        if isa::<ClassDecl>(d)     { var n = cast::<ClassDecl>(d);     return n->is_instance() && MemberLookup::primary_is_imported(n->instantiated_from); }
-        if isa::<StructDecl>(d)    { var n = cast::<StructDecl>(d);    return n->is_instance() && MemberLookup::primary_is_imported(n->instantiated_from); }
-        if isa::<UnionDecl>(d)     { var n = cast::<UnionDecl>(d);     return n->is_instance() && MemberLookup::primary_is_imported(n->instantiated_from); }
-        if isa::<EnumDecl>(d)      { var n = cast::<EnumDecl>(d);      return n->is_instance() && MemberLookup::primary_is_imported(n->instantiated_from); }
-        if isa::<InterfaceDecl>(d) { var n = cast::<InterfaceDecl>(d); return n->is_instance() && MemberLookup::primary_is_imported(n->instantiated_from); }
-        return false;
+        return decl_is_instance(d) && decl_is_imported(decl_instantiated_from(d));
     }
 
     static fn primary_is_imported(p: *Decl) -> bool {
-        if p == &null { return false; }
-        if isa::<ClassDecl>(p)     { return cast::<ClassDecl>(p)->is_imported();     }
-        if isa::<StructDecl>(p)    { return cast::<StructDecl>(p)->is_imported();    }
-        if isa::<UnionDecl>(p)     { return cast::<UnionDecl>(p)->is_imported();     }
-        if isa::<EnumDecl>(p)      { return cast::<EnumDecl>(p)->is_imported();      }
-        if isa::<InterfaceDecl>(p) { return cast::<InterfaceDecl>(p)->is_imported(); }
-        return false;
+        return decl_is_imported(p);
     }
 
     // === ADL ==================================================================
@@ -472,7 +445,7 @@ class MemberLookup {
         // An implicit instance may not carry a semantic_dc of its own; its
         // primary's is the answer either way.
         if src->semantic_dc == &null {
-            var p = self._pattern_of(d);
+            var p = decl_instantiated_from(d);
             if p != &null { src = p; }
         }
         var dc = reinterpret_cast::<*DeclContext>(src->semantic_dc);

@@ -66,6 +66,7 @@ import AST::Node::PrimaryExpressions::*;
 import AST::Node::Expressions::*;
 import AST::Node::Statements::*;
 import AST::Node::Declarations::*;
+import AST::DeclFacts::*;
 import AST::Node::Types::*;
 import AST::Node::CanonicalNodes::*;
 import AST::Node::Casting::*;
@@ -238,7 +239,7 @@ class ChainBinding derives RecursiveASTVisitor::<ChainBinding> {
         var a = Anchor{};
         var canon = NameLookup::representative(id->resolved_decl);
         a.decl = canon;
-        var gps = self._generic_params_of(canon);
+        var gps = decl_generic_params(canon);
         if (gps.size() == 0) || (gps.size() != id->generic_args.size()) {
             a.kind = AnchorKind::NeedsInference;    // not a record with params, or arity needs defaults/packs.
             return a;
@@ -395,7 +396,7 @@ class ChainBinding derives RecursiveASTVisitor::<ChainBinding> {
         // The record with its own params as args (Self-shaped). For member
         // lookup only the decl matters; the args make Self/dependence right.
         var args = vec::<*Type>();
-        var gps  = self._generic_params_of(canon);
+        var gps  = decl_generic_params(canon);
         for var i: usize = 0; i < gps.size(); ++i {
             var gp = gps[i];
             if gp == &null { continue; }
@@ -775,7 +776,7 @@ class ChainBinding derives RecursiveASTVisitor::<ChainBinding> {
         if (t == &null) || (!isa::<GenericParamType>(t)) { return &null; }
         var g = cast::<GenericParamType>(t);
         if g->owner == &null { return &null; }
-        var gps = self._generic_params_of_any(g->owner);
+        var gps = decl_generic_params(g->owner);
         if static_cast::<usize>(g->param_index) >= gps.size() { return &null; }
         return gps[static_cast::<usize>(g->param_index)];
     }
@@ -964,30 +965,8 @@ class ChainBinding derives RecursiveASTVisitor::<ChainBinding> {
         return u32(-1);
     }
 
-    priv fn _generic_params_of(self, d: *Decl) -> FrozenList::<*GenericParamDecl> {
-        if d == &null { return create_empty_frozen_list::<*GenericParamDecl>(); }
-        if isa::<ClassDecl>(d)     { return cast::<ClassDecl>(d)->generic_params;     }
-        if isa::<StructDecl>(d)    { return cast::<StructDecl>(d)->generic_params;    }
-        if isa::<UnionDecl>(d)     { return cast::<UnionDecl>(d)->generic_params;     }
-        if isa::<InterfaceDecl>(d) { return cast::<InterfaceDecl>(d)->generic_params; }
-        if isa::<EnumDecl>(d)      { return cast::<EnumDecl>(d)->generic_params;      }
-        return create_empty_frozen_list::<*GenericParamDecl>();
-    }
-
-    /// _generic_params_of covers the RECORD kinds, which is all member lookup
-    /// ever needs. A generic PARAMETER, though, can be declared by a function,
-    /// an alias or an extension too, and `canonical -> declaring param` has to
-    /// work for every one of them.
-    priv fn _generic_params_of_any(self, d: *Decl) -> FrozenList::<*GenericParamDecl> {
-        if d == &null { return create_empty_frozen_list::<*GenericParamDecl>(); }
-        if isa::<FunctionDecl>(d)  { return cast::<FunctionDecl>(d)->generic_params;  }
-        if isa::<TypeAliasDecl>(d) { return cast::<TypeAliasDecl>(d)->generic_params; }
-        if isa::<ExtensionDecl>(d) { return cast::<ExtensionDecl>(d)->generic_params; }
-        return self._generic_params_of(d);
-    }
-
     priv fn _generic_count(self, d: *Decl) -> usize {
-        return self._generic_params_of(d).size();
+        return decl_generic_params(d).size();
     }
 
     /// Spelled with the decl's OWN context: a name reached through an import

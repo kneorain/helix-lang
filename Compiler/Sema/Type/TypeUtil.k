@@ -27,6 +27,7 @@ import AST::Node::Base::*;
 import AST::Node::PrimaryExpressions::*;
 import AST::Node::Expressions::*;
 import AST::Node::Declarations::*;
+import AST::DeclFacts::*;
 import AST::Node::Types::*;
 import AST::Node::CanonicalNodes::*;
 import AST::Node::Casting::*;
@@ -152,28 +153,12 @@ class TypeUtil {
     // === decl helpers =======================================================
 
     fn generic_params_of(self, d: *Decl) -> FrozenList::<*GenericParamDecl> {
-        if d == &null { return create_empty_frozen_list::<*GenericParamDecl>(); }
-        if isa::<ClassDecl>(d)     { return cast::<ClassDecl>(d)->generic_params;     }
-        if isa::<StructDecl>(d)    { return cast::<StructDecl>(d)->generic_params;    }
-        if isa::<UnionDecl>(d)     { return cast::<UnionDecl>(d)->generic_params;     }
-        if isa::<InterfaceDecl>(d) { return cast::<InterfaceDecl>(d)->generic_params; }
-        if isa::<EnumDecl>(d)      { return cast::<EnumDecl>(d)->generic_params;      }
-        if isa::<TypeAliasDecl>(d) { return cast::<TypeAliasDecl>(d)->generic_params; }
-        if isa::<FunctionDecl>(d)  { return cast::<FunctionDecl>(d)->generic_params;  }
-        if isa::<ExtensionDecl>(d) { return cast::<ExtensionDecl>(d)->generic_params; }
-        return create_empty_frozen_list::<*GenericParamDecl>();
+        return decl_generic_params(d);
     }
 
     /// The pattern a record decl is an instance of, or the decl itself.
     fn pattern_of(self, d: *Decl) -> *Decl {
-        if d == &null { return &null; }
-        var p: *Decl = &null;
-        if isa::<ClassDecl>(d)     { p = cast::<ClassDecl>(d)->instantiated_from;     }
-        if isa::<StructDecl>(d)    { p = cast::<StructDecl>(d)->instantiated_from;    }
-        if isa::<UnionDecl>(d)     { p = cast::<UnionDecl>(d)->instantiated_from;     }
-        if isa::<EnumDecl>(d)      { p = cast::<EnumDecl>(d)->instantiated_from;      }
-        if isa::<InterfaceDecl>(d) { p = cast::<InterfaceDecl>(d)->instantiated_from; }
-        return (p) if (p != &null) else (d);
+        return decl_pattern(d);
     }
 
     /// Spelled with the decl's OWN context (hard invariant #2).
