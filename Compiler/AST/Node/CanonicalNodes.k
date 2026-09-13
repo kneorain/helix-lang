@@ -291,78 +291,6 @@ enum BuiltinKind derives u8 {
     COUNT,   ///< keep last.
 }
 
-///
-///  QualifiedType
-///  const T | volatile T | const volatile T
-///
-///  `inner` is canonical and never itself a QualifiedType (the store folds);
-///  `quals` is never 0 (the store returns `inner` for that). Layout is the
-///  inner's.
-///
-class QualifiedType derives Type {
-    pub var inner: *Type = &null;
-    pub var quals: u8    = 0;      ///< QUAL_CONST | QUAL_VOLATILE; the key.
-
-    /* OVERRIDE */ static fn classof(ptr: *Type) -> bool {
-        return ptr->kind == TypeKind::QualifiedType;
-    }
-
-    /* OVERRIDE */ static fn type_kind() -> TypeKind {
-        return TypeKind::QualifiedType;
-    }
-}
-
-///
-///  BuiltinType
-///  i32 | bool | f64 | void | usize ...
-///
-///  A singleton. `canonical` points at ITSELF: a builtin is already fully
-///  desugared, and self-canonicality is what lets the identity test
-///  (a->canonical == b->canonical) work uniformly without a builtin special
-///  case at every comparison site.
-///
-class BuiltinType derives Type {
-    pub var builtin: BuiltinKind = BuiltinKind::Void;
-
-    /* OVERRIDE */ static fn classof(ptr: *Type) -> bool {
-        return ptr->kind == TypeKind::BuiltinType;
-    }
-
-    /* OVERRIDE */ static fn type_kind() -> TypeKind {
-        return TypeKind::BuiltinType;
-    }
-
-    fn spelling(self) -> string { return builtin_spelling(self.builtin); }
-}
-
-///
-///  RecordType
-///  The canonical form of a nominal type use: Foo | Foo<i32> | ns::Inner
-///
-///  `decl` is the CANONICAL link of the entity's redecl chain (the definition
-///  once N(a) retargeted it), never whichever forward declaration a particular
-///  spelling happened to bind. That is what collapses `class Foo;` and
-///  `class Foo { }` to one type.
-///
-///  `args` holds CANONICAL generic arguments, empty for a non-generic type.
-///  Uniquing is on (decl, args...), so Vec<i32> and Vec<u8> are distinct
-///  entities while two spellings of Vec<i32> are one.
-///
-class RecordType derives Type {
-    pub var decl: *Decl = &null;          ///< canonical Class/Struct/Union/Interface/EnumDecl.
-    pub var args: FrozenList::<*Type>;    ///< canonical generic args; empty if non-generic.
-
-    /* OVERRIDE */ static fn classof(ptr: *Type) -> bool {
-        return ptr->kind == TypeKind::RecordType;
-    }
-
-    /* OVERRIDE */ static fn type_kind() -> TypeKind {
-        return TypeKind::RecordType;
-    }
-
-    fn is_generic_instance(self) -> bool { return self.args.size() > 0; }
-}
-
 /// \brief Map a type-position token kind to its builtin, or COUNT when the
 ///        token does not name one.
 ///
@@ -602,6 +530,80 @@ fn builtin_is_float(b: BuiltinKind) -> bool {
     var v = static_cast::<u8>(b);
     return (v >= static_cast::<u8>(BuiltinKind::F8E4M3))
         && (v <= static_cast::<u8>(BuiltinKind::F512));
+}
+
+// FIXME: REFACTOR into separate files.
+
+///
+///  QualifiedType
+///  const T | volatile T | const volatile T
+///
+///  `inner` is canonical and never itself a QualifiedType (the store folds);
+///  `quals` is never 0 (the store returns `inner` for that). Layout is the
+///  inner's.
+///
+class QualifiedType derives Type {
+    pub var inner: *Type = &null;
+    pub var quals: u8    = 0;      ///< QUAL_CONST | QUAL_VOLATILE; the key.
+
+    /* OVERRIDE */ static fn classof(ptr: *Type) -> bool {
+        return ptr->kind == TypeKind::QualifiedType;
+    }
+
+    /* OVERRIDE */ static fn type_kind() -> TypeKind {
+        return TypeKind::QualifiedType;
+    }
+}
+
+///
+///  BuiltinType
+///  i32 | bool | f64 | void | usize ...
+///
+///  A singleton. `canonical` points at ITSELF: a builtin is already fully
+///  desugared, and self-canonicality is what lets the identity test
+///  (a->canonical == b->canonical) work uniformly without a builtin special
+///  case at every comparison site.
+///
+class BuiltinType derives Type {
+    pub var builtin: BuiltinKind = BuiltinKind::Void;
+
+    /* OVERRIDE */ static fn classof(ptr: *Type) -> bool {
+        return ptr->kind == TypeKind::BuiltinType;
+    }
+
+    /* OVERRIDE */ static fn type_kind() -> TypeKind {
+        return TypeKind::BuiltinType;
+    }
+
+    fn spelling(self) -> string { return builtin_spelling(self.builtin); }
+}
+
+///
+///  RecordType
+///  The canonical form of a nominal type use: Foo | Foo<i32> | ns::Inner
+///
+///  `decl` is the CANONICAL link of the entity's redecl chain (the definition
+///  once N(a) retargeted it), never whichever forward declaration a particular
+///  spelling happened to bind. That is what collapses `class Foo;` and
+///  `class Foo { }` to one type.
+///
+///  `args` holds CANONICAL generic arguments, empty for a non-generic type.
+///  Uniquing is on (decl, args...), so Vec<i32> and Vec<u8> are distinct
+///  entities while two spellings of Vec<i32> are one.
+///
+class RecordType derives Type {
+    pub var decl: *Decl = &null;          ///< canonical Class/Struct/Union/Interface/EnumDecl.
+    pub var args: FrozenList::<*Type>;    ///< canonical generic args; empty if non-generic.
+
+    /* OVERRIDE */ static fn classof(ptr: *Type) -> bool {
+        return ptr->kind == TypeKind::RecordType;
+    }
+
+    /* OVERRIDE */ static fn type_kind() -> TypeKind {
+        return TypeKind::RecordType;
+    }
+
+    fn is_generic_instance(self) -> bool { return self.args.size() > 0; }
 }
 
 /// QualifiedType::quals bits. A bitset, not a bool: `volatile` is in real

@@ -1406,9 +1406,9 @@ class CompilerInstance {
             var STI = T->createMCSubtargetInfo(tt.getTriple(), r"", r"");
             finally { delete STI; }
             if !STI->isCPUStringValid(std::string_to_nstring(self._inv.target.mcpu).raw()) {
-                self._diag->report(DiagID::P00xE,
-                    f"unknown target CPU '{self._inv.target.mcpu}' for target '{t->effective_triple}'").emit();
-                self._diag->report(DiagID::N00xN,
+                self._diag->report(DiagID::P001E,
+                    f"unknown target CPU '{self._inv.target.mcpu}' for target '{t->effective_triple}\x27").emit();
+                self._diag->report(DiagID::P001N, // Maybe add a new diagnostic catogery for this? like Driver?
                     f"run with --print-cpus --target={t->effective_triple} to list valid values").emit();
                 self.invocation().ok = false;
                 return;

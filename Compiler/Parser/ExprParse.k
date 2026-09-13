@@ -1183,7 +1183,7 @@ class <T> ExprParse {
             //
             // the integer it landed on belongs to the next statement. Falling
             // through to the identifier path is what makes that report the
-            // honest "expected identifier or tuple index after '.'" instead of
+            // honest "expected identifier or tuple index after '.\x27" instead of
             // inventing a whitespace rule about two different lines.
             if idx_range.start != sep_range.end {
                 if !dyn()->ctx->sm->is_multiline(sep_range | idx_range) {
