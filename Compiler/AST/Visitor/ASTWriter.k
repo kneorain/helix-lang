@@ -419,6 +419,7 @@ class <D> ASTWriter {
             case TypeKind::InferredType          { return self.dyn()->transform_inferred_type(            cast::<InferredType>(t)          ); }
             case TypeKind::NullableType          { return self.dyn()->transform_nullable_type(            cast::<NullableType>(t)          ); }
             case TypeKind::OpaqueFFIType         { return self.dyn()->transform_opaque_ffi_type(          cast::<OpaqueFFIType>(t)         ); }
+            case TypeKind::QualifiedType         { return t; }   // canonical and interned: never rewritten in place.
             case TypeKind::FixedArrayType        { return self.dyn()->transform_fixed_array_type(         cast::<FixedArrayType>(t)        ); }
             case TypeKind::VariadicPackType      { return self.dyn()->transform_variadic_pack_type(       cast::<VariadicPackType>(t)      ); }
             case TypeKind::GenericParamType      { return self.dyn()->transform_generic_param_type(       cast::<GenericParamType>(t)      ); }

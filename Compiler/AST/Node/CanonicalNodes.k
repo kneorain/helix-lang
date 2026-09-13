@@ -5,22 +5,32 @@
 ///          CanonicalTypeStore.
 ///
 ///   \detail
-///     Every other TypeKind is a piece of SYNTAX -- `*T`, `[T]`, `Foo::Bar<U>`
-///     -- and the parser builds it from tokens. These two are not syntax:
+///     Every other TypeKind is a piece of SYNTAX, `*T`, `[T]`, `Foo::Bar<U>`
+///     \and the parser builds it from tokens. These two are not syntax:
 ///
-///       BuiltinType  `i32` lexes as the keyword token AtI32, not as an
+///     BuiltinType    `i32` lexes as the keyword token AtI32, not as an
 ///                    identifier, so it is in no symbol table and resolves by
 ///                    token kind rather than by lookup. It is a universal
 ///                    entity (Clang's IntTy model): one singleton per kind per
 ///                    build, owned by the store, referenced by every TU.
 ///
-///       RecordType   the canonical form of a nominal type USE. `Foo` and
+///     RecordType     the canonical form of a nominal type USE. `Foo` and
 ///                    `ns::Foo` and an imported `Foo` are three different
 ///                    ChainType nodes naming ONE entity; they all canonicalize
 ///                    to the same RecordType(canonical decl, canonical args).
 ///                    Without it a ChainType's canonical could only point at
 ///                    another ChainType, and type identity would degrade to
 ///                    "whichever spelling was resolved first".
+///
+///     QualifiedType  the canonical form of a cv-qualified type. A written
+///                    `const` is a TypeQual flag on the SYNTAX node; the
+///                    canonical it resolves to is qualified(CONST, inner),
+///                    one interned node per (quals, inner). Identity keeps
+///                    it: `W<const i32>` and `W<i32>` are two instances,
+///                    `g(*const i32)` and `g(*i32)` two overloads. The
+///                    top-level cv of a VALUE is stripped by whoever reads
+///                    the value (Conversion, the inferred-slot writers,
+///                    signature identity), never by the store.
 ///
 ///   \par Lifetime
 ///     Allocated from CanonicalTypeStore's own arena, NOT from any
@@ -44,6 +54,7 @@
 
 import AST::Node::Base::*;
 import AST::ASTSupport::*;
+import AST::Node::Casting::*;
 import Token::TokenKind::*;
 
 /// \enum BuiltinKind
@@ -56,7 +67,7 @@ import Token::TokenKind::*;
 ///   last.
 ///
 ///   These are not names. A builtin never enters a SymbolTable, never rides
-///   the import overlay, and can never be shadowed -- `i32` lexes as the
+///   the import overlay, and can never be shadowed, `i32` lexes as the
 ///   keyword token AtI32 and TypeResolution asks builtin_for_token() before
 ///   it asks any table anything. That is why `var i32 = 3` cannot break
 ///   `var x: i32`, and why none of these have a WellKnownType row.
@@ -71,15 +82,15 @@ import Token::TokenKind::*;
 ///
 ///   builtin_fixed_bits() answers "how wide", never "which type". A float
 ///   comparison keyed on width alone silently conflates F16 with BF16 and
-///   F8E4M3 with F8E5M2 -- neither pair is interconvertible without
+///   F8E4M3 with F8E5M2, neither pair is interconvertible without
 ///   rounding, and neither is the other's canonical. Ask
 ///   builtin_float_format() instead. Same for Byte vs U8 and Char vs U32:
 ///   same width, distinct types, distinct rules.
 ///
 /// \par Codegen is not uniform, and the enum does not hide it
 ///   Four different lowering strategies appear below. The type-level view is
-///   uniform -- every entry is a BuiltinType singleton with real size_bits
-///   and itself as canonical -- but the emitted C++ is not, and the
+///   uniform, every entry is a BuiltinType singleton with real size_bits
+///   and itself as canonical, but the emitted C++ is not, and the
 ///   difference is documented per entry rather than inferred from the name:
 ///
 ///     native      a C++/LLVM type exists; emit it and stop.
@@ -94,13 +105,13 @@ enum BuiltinKind derives u8 {
 
     /// The type of an expression that does not produce a value because
     /// control never reaches its end: a `-> !` call, `return`, `break`.
-    /// Not spellable in type position -- `-> !` is recorded on the
+    /// Not spellable in type position, `-> !` is recorded on the
     /// declaration as is_noreturn and mapped here, so builtin_for_token()
     /// has no row for it. Convertible TO everything (a diverging arm joins
     /// with any other arm) and FROM nothing.
     Never,
 
-    /// One byte in memory, not one bit -- addressability. Valid values are
+    /// One byte in memory, not one bit, addressability. Valid values are
     /// exactly {0, 1}; bool->integer is ALWAYS zext, never sext. `true` and
     /// `false` are keyword tokens lexed to literal nodes, not shadowable
     /// identifiers, so there is no library enum and no underlying type to
@@ -113,7 +124,7 @@ enum BuiltinKind derives u8 {
     //
     // I128..I512 / U128..U512 are LEGALIZED. LLVM supports arbitrary-width
     // integers, so codegen emits `iN` and legalization breaks it into
-    // multi-word carry chains using the target's native width -- SIMD where
+    // multi-word carry chains using the target's native width, SIMD where
     // profitable, all for free, on every architecture. No corelib code
     // exists for these and none is needed. The cost is instruction count,
     // not calls: roughly 2-4x at 128 bits, 8-16x at 256, 20-40x at 512
@@ -126,7 +137,7 @@ enum BuiltinKind derives u8 {
     /// Pointer-width integers. Their size is TARGET-dependent, so unlike the
     /// fixed-width entries above their size_bits is filled from the target
     /// triple at store construction, not from the name. builtin_fixed_bits()
-    /// returns 0 for these two on purpose -- 0 means "ask the store".
+    /// returns 0 for these two on purpose, 0 means "ask the store".
     USize, ISize,
 
     // === 8-bit floats ======================================================
@@ -141,7 +152,7 @@ enum BuiltinKind derives u8 {
     // enum runs Half, BFloat, Float, Double, X86_FP80, FP128, PPC_FP128 and
     // stops. There is no Float8*TyID. So:
     //
-    //   storage      kairo::rt::f8e4m3 / f8e5m2 -- a struct wrapping u8.
+    //   storage      kairo::rt::f8e4m3 / f8e5m2, a struct wrapping u8.
     //   arithmetic   promote to f32, compute, narrow back. See
     //                builtin_arith_promote().
     //   folding      APFloat HAS the semantics even though IR does not
@@ -176,7 +187,7 @@ enum BuiltinKind derives u8 {
     /// results differ from every ML toolchain in existence.
     F8E4M3,
 
-    /// `f8e5m2`. OCP E5M2: 1/5/2, bias 15, IEEE-shaped -- infinities and
+    /// `f8e5m2`. OCP E5M2: 1/5/2, bias 15, IEEE-shaped, infinities and
     /// NaN both present. Exponent field is identical to F16's.
     /// APFloat: semFloat8E5M2.
     F8E5M2,
@@ -188,7 +199,7 @@ enum BuiltinKind derives u8 {
     // rounding; neither is the other's canonical.
 
     /// `f16`. IEEE 754 binary16: 1/5/10, bias 15. A FULL ARITHMETIC TYPE,
-    /// not storage-only -- `T + T` must mean addition for every T a generic
+    /// not storage-only, `T + T` must mean addition for every T a generic
     /// accepts, and a storage-only float poisons that. Emit LLVM `half` and
     /// let legalization promote to f32 on targets without native ALU
     /// support (pre-Sapphire-Rapids x86, pre-ARMv8.2). Same policy already
@@ -196,7 +207,7 @@ enum BuiltinKind derives u8 {
     /// disclosed in the docs. C++: _Float16.
     F16,
 
-    /// `bf16`. bfloat16: 1/8/7, bias 127 -- f32's exponent range with the
+    /// `bf16`. bfloat16: 1/8/7, bias 127, f32's exponent range with the
     /// mantissa truncated, so f32->bf16 is a truncation and bf16->f32 is
     /// exact. Native hardware on AVX512-BF16 and ARM BF16; native IR type
     /// (BFloatTyID). The one new float here that costs nothing.
@@ -217,14 +228,14 @@ enum BuiltinKind derives u8 {
     F64,
 
     /// `f80`. x87 80-bit extended: 1/15/64 with an EXPLICIT integer bit,
-    /// which no IEEE interchange format has -- it is not "binary80" and
+    /// which no IEEE interchange format has, it is not "binary80" and
     /// calling it that will eventually mislead someone writing codegen.
     ///
     /// X86 ONLY. There is no x86_fp80 on ARM, RISC-V or anything else, and
     /// on those targets C's `long double` is just double. TypeResolution
     /// emits a HARD ERROR naming the target triple when this is spelled for
     /// a non-x86 target, rather than silently widening to F128 or narrowing
-    /// to F64 -- a quiet precision change is worse than a failed build.
+    /// to F64, a quiet precision change is worse than a failed build.
     ///
     /// Retained despite being the one non-portable entry because the
     /// compiler's own Immediate::FloatData stores literal values in it.
@@ -233,7 +244,7 @@ enum BuiltinKind derives u8 {
 
     /// `f128`. IEEE binary128 (quadruple): 1/15/112. LLVM has the type
     /// (FP128TyID) but NO mainstream CPU has the instructions, so every
-    /// operation lowers to a compiler-rt LIBCALL -- __addtf3, __multf3,
+    /// operation lowers to a compiler-rt LIBCALL, __addtf3, __multf3,
     /// __divtf3. Roughly 10-50x f64 depending on the operation. Correct
     /// everywhere, fast nowhere.
     ///
@@ -251,8 +262,8 @@ enum BuiltinKind derives u8 {
     // nothing to legalize and nothing to call: these are the only entries in
     // this enum that need Kairo implementation code. corelib soft-float,
     // four and eight f64 limbs, Dekker arithmetic for add/mul and
-    // Newton-Raphson for div and sqrt. Not IEEE anything -- the limb
-    // representation has no single exponent field -- so builtin_float_format
+    // Newton-Raphson for div and sqrt. Not IEEE anything, the limb
+    // representation has no single exponent field, so builtin_float_format
     // reports SoftDouble4 / SoftDouble8 rather than a binaryN.
 
     /// `f256`. Four f64 limbs. C++: kairo::rt::f256.
@@ -265,19 +276,91 @@ enum BuiltinKind derives u8 {
 
     /// `byte`. A raw octet. Same width as U8 and NOT THE SAME TYPE: bitwise
     /// operators only, arithmetic is a diagnostic. This is the distinction
-    /// C++ never made -- char, unsigned char and uint8_t are one type there,
+    /// C++ never made, char, unsigned char and uint8_t are one type there,
     /// so "storage" and "small number" are indistinguishable to the type
     /// system. Here they are not. C++: std::byte.
     Byte,
 
     /// `char`. A decoded Unicode scalar value, 4 bytes. Same width as U32
     /// and NOT THE SAME TYPE. Strings are UTF-8 backed by u8; `char` appears
-    /// when a single codepoint is wanted -- s[i] yields one, `for ch in s`
+    /// when a single codepoint is wanted, s[i] yields one, `for ch in s`
     /// yields them. A [char; N] is 4x the UTF-8 size, bought for O(1)
     /// codepoint indexing. C++: char32_t.
     Char,
 
     COUNT,   ///< keep last.
+}
+
+///
+///  QualifiedType
+///  const T | volatile T | const volatile T
+///
+///  `inner` is canonical and never itself a QualifiedType (the store folds);
+///  `quals` is never 0 (the store returns `inner` for that). Layout is the
+///  inner's.
+///
+class QualifiedType derives Type {
+    pub var inner: *Type = &null;
+    pub var quals: u8    = 0;      ///< QUAL_CONST | QUAL_VOLATILE; the key.
+
+    /* OVERRIDE */ static fn classof(ptr: *Type) -> bool {
+        return ptr->kind == TypeKind::QualifiedType;
+    }
+
+    /* OVERRIDE */ static fn type_kind() -> TypeKind {
+        return TypeKind::QualifiedType;
+    }
+}
+
+///
+///  BuiltinType
+///  i32 | bool | f64 | void | usize ...
+///
+///  A singleton. `canonical` points at ITSELF: a builtin is already fully
+///  desugared, and self-canonicality is what lets the identity test
+///  (a->canonical == b->canonical) work uniformly without a builtin special
+///  case at every comparison site.
+///
+class BuiltinType derives Type {
+    pub var builtin: BuiltinKind = BuiltinKind::Void;
+
+    /* OVERRIDE */ static fn classof(ptr: *Type) -> bool {
+        return ptr->kind == TypeKind::BuiltinType;
+    }
+
+    /* OVERRIDE */ static fn type_kind() -> TypeKind {
+        return TypeKind::BuiltinType;
+    }
+
+    fn spelling(self) -> string { return builtin_spelling(self.builtin); }
+}
+
+///
+///  RecordType
+///  The canonical form of a nominal type use: Foo | Foo<i32> | ns::Inner
+///
+///  `decl` is the CANONICAL link of the entity's redecl chain (the definition
+///  once N(a) retargeted it), never whichever forward declaration a particular
+///  spelling happened to bind. That is what collapses `class Foo;` and
+///  `class Foo { }` to one type.
+///
+///  `args` holds CANONICAL generic arguments, empty for a non-generic type.
+///  Uniquing is on (decl, args...), so Vec<i32> and Vec<u8> are distinct
+///  entities while two spellings of Vec<i32> are one.
+///
+class RecordType derives Type {
+    pub var decl: *Decl = &null;          ///< canonical Class/Struct/Union/Interface/EnumDecl.
+    pub var args: FrozenList::<*Type>;    ///< canonical generic args; empty if non-generic.
+
+    /* OVERRIDE */ static fn classof(ptr: *Type) -> bool {
+        return ptr->kind == TypeKind::RecordType;
+    }
+
+    /* OVERRIDE */ static fn type_kind() -> TypeKind {
+        return TypeKind::RecordType;
+    }
+
+    fn is_generic_instance(self) -> bool { return self.args.size() > 0; }
 }
 
 /// \brief Map a type-position token kind to its builtin, or COUNT when the
@@ -330,7 +413,7 @@ fn builtin_for_token(k: TokenKind) -> BuiltinKind {
 }
 
 /// \brief The C++ spelling a builtin lowers to. THE single source of truth
-///        for emission -- codegen, the FFI mapping table and the header
+///        for emission, codegen, the FFI mapping table and the header
 ///        emitter all read this, so a type has one spelling or none.
 ///
 /// \detail
@@ -342,7 +425,7 @@ fn builtin_for_token(k: TokenKind) -> BuiltinKind {
 ///     &lt;cstdint&gt; alias    the fixed-width integers; ::std:: qualified so a
 ///                        user `using namespace std` cannot capture them.
 ///     _BitInt(N)         i128..i512 / u128..u512. NOT an alias of anything
-///                        -- LLVM legalizes iN directly and this is the C++
+///                       , LLVM legalizes iN directly and this is the C++
 ///                        surface for it.
 ///     kairo::rt struct   the two fp8 entries and f256/f512, where no C++ or
 ///                        LLVM type exists at all.
@@ -521,53 +604,24 @@ fn builtin_is_float(b: BuiltinKind) -> bool {
         && (v <= static_cast::<u8>(BuiltinKind::F512));
 }
 
-///
-///  BuiltinType
-///  i32 | bool | f64 | void | usize ...
-///
-///  A singleton. `canonical` points at ITSELF: a builtin is already fully
-///  desugared, and self-canonicality is what lets the identity test
-///  (a->canonical == b->canonical) work uniformly without a builtin special
-///  case at every comparison site.
-///
-class BuiltinType derives Type {
-    pub var builtin: BuiltinKind = BuiltinKind::Void;
+/// QualifiedType::quals bits. A bitset, not a bool: `volatile` is in real
+/// headers (std::atomic members, MMIO wrappers) and retrofitting it would
+/// be this whole sweep a second time.
+eval fn QUAL_CONST()    -> u8 { return 1; }
+eval fn QUAL_VOLATILE() -> u8 { return 2; }
 
-    /* OVERRIDE */ static fn classof(ptr: *Type) -> bool {
-        return ptr->kind == TypeKind::BuiltinType;
-    }
-
-    /* OVERRIDE */ static fn type_kind() -> TypeKind {
-        return TypeKind::BuiltinType;
-    }
-
-    fn spelling(self) -> string { return builtin_spelling(self.builtin); }
+/// The top-level qualifiers of a canonical; 0 for any other kind.
+fn canon_quals(t: *Type) -> u8 {
+    if (t == &null) || (!isa::<QualifiedType>(t)) { return 0; }
+    return cast::<QualifiedType>(t)->quals;
 }
 
-///
-///  RecordType
-///  The canonical form of a nominal type use: Foo | Foo<i32> | ns::Inner
-///
-///  `decl` is the CANONICAL link of the entity's redecl chain (the definition
-///  once N(a) retargeted it), never whichever forward declaration a particular
-///  spelling happened to bind. That is what collapses `class Foo;` and
-///  `class Foo { }` to one type.
-///
-///  `args` holds CANONICAL generic arguments, empty for a non-generic type.
-///  Uniquing is on (decl, args...), so Vec<i32> and Vec<u8> are distinct
-///  entities while two spellings of Vec<i32> are one.
-///
-class RecordType derives Type {
-    pub var decl: *Decl = &null;          ///< canonical Class/Struct/Union/Interface/EnumDecl.
-    pub var args: FrozenList::<*Type>;    ///< canonical generic args; empty if non-generic.
-
-    /* OVERRIDE */ static fn classof(ptr: *Type) -> bool {
-        return ptr->kind == TypeKind::RecordType;
-    }
-
-    /* OVERRIDE */ static fn type_kind() -> TypeKind {
-        return TypeKind::RecordType;
-    }
-
-    fn is_generic_instance(self) -> bool { return self.args.size() > 0; }
+/// \p t with its top-level qualifiers removed; \p t itself for any other
+/// kind. ONE level: `*const i32` stays `*const i32`.
+fn canon_unqual(t: *Type) -> *Type {
+    if (t == &null) || (!isa::<QualifiedType>(t)) { return t; }
+    return cast::<QualifiedType>(t)->inner;
 }
+
+fn canon_has_const(t: *Type)    -> bool { return (canon_quals(t) & QUAL_CONST())    != 0; }
+fn canon_has_volatile(t: *Type) -> bool { return (canon_quals(t) & QUAL_VOLATILE()) != 0; }

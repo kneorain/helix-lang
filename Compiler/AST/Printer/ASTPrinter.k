@@ -3342,6 +3342,7 @@ class AstDumper derives RecursiveASTVisitor::<AstDumper> {
             case TypeKind::CXXLValueRefType      { return "CXXLValueRefType";      }
             case TypeKind::CXXRValueRefType      { return "CXXRValueRefType";      }
             case TypeKind::OpaqueFFIType         { return "OpaqueFFIType";         }
+            case TypeKind::QualifiedType         { return "QualifiedType";         }
             case TypeKind::TypeExpr              { return "TypeExpr";              }
             default                              { return "<type>";               }
         }

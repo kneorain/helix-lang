@@ -35,6 +35,7 @@ import AST::Node::Patterns::*;
 import AST::Node::PrimaryExpressions::*;
 import AST::Node::Statements::*;
 import AST::Node::Types::*;
+import AST::Node::CanonicalNodes::*;
 import AST::Context::DeclContext::*;
 import AST::Context::CanonicalTypes::*;
 import AST::Node::Casting::*;
@@ -86,6 +87,7 @@ class <D> RecursiveASTVisitor {
             case TypeKind::BuiltinType           { return self.dyn()->traverse_builtin_type(             cast::<BuiltinType>(e)            ); }
             case TypeKind::NullableType          { return self.dyn()->traverse_nullable_type(            cast::<NullableType>(e)           ); }
             case TypeKind::OpaqueFFIType         { return self.dyn()->traverse_opaque_ffi_type(          cast::<OpaqueFFIType>(e)          ); }
+            case TypeKind::QualifiedType         { return self.dyn()->traverse_qualified_type(           cast::<QualifiedType>(e)          ); }
             case TypeKind::FixedArrayType        { return self.dyn()->traverse_fixed_array_type(         cast::<FixedArrayType>(e)         ); }
             case TypeKind::VariadicPackType      { return self.dyn()->traverse_variadic_pack_type(       cast::<VariadicPackType>(e)       ); }
             case TypeKind::GenericParamType      { return self.dyn()->traverse_generic_param_type(       cast::<GenericParamType>(e)       ); }
@@ -194,6 +196,11 @@ class <D> RecursiveASTVisitor {
 
     fn traverse_builtin_type(self, n: *BuiltinType) -> *BuiltinType {
         self.dyn()->walkup_builtin_type(n);
+        return n;
+    }
+
+    fn traverse_qualified_type(self, n: *QualifiedType) -> *QualifiedType {
+        self.dyn()->walkup_qualified_type(n);
         return n;
     }
 
@@ -337,6 +344,11 @@ class <D> RecursiveASTVisitor {
         return self.dyn()->visit_opaque_ffi_type(n);
     }
 
+    fn walkup_qualified_type(self, n: *QualifiedType) -> bool {
+        if self.dyn()->visit_type(n) == false { return false; }
+        return self.dyn()->visit_qualified_type(n);
+    }
+
     fn walkup_fixed_array_type(self, n: *FixedArrayType) -> bool {
         if self.dyn()->visit_type(n) == false { return false; }
         return self.dyn()->visit_fixed_array_type(n);
@@ -392,6 +404,7 @@ class <D> RecursiveASTVisitor {
     fn visit_builtin_type(            self, n: *BuiltinType          ) -> bool { return true; }
     fn visit_nullable_type(           self, n: *NullableType         ) -> bool { return true; }
     fn visit_opaque_ffi_type(         self, n: *OpaqueFFIType        ) -> bool { return true; }
+    fn visit_qualified_type(          self, n: *QualifiedType        ) -> bool { return true; }
     fn visit_fixed_array_type(        self, n: *FixedArrayType       ) -> bool { return true; }
     fn visit_variadic_pack_type(      self, n: *VariadicPackType     ) -> bool { return true; }
     fn visit_generic_param_type(      self, n: *GenericParamType     ) -> bool { return true; }

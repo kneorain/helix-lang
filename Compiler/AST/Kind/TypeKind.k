@@ -139,6 +139,12 @@ enum TypeKind derives u8 {
     // opaque type from ffi "c++" sema treats as black box
     OpaqueFFIType,
 
+    /// Canonical cv-qualified form of another canonical: `const T`,
+    /// `volatile T`. NEVER produced by the parser (a written qualifier is a
+    /// TypeQual flag on the syntax node); created only by
+    /// CanonicalTypeStore::qualified. Node: QualifiedType inner + quals.
+    QualifiedType,
+
     // Expression in the Type position like vec<i32, 12> where 12 is a const expression
     TypeExpr,
 
@@ -172,6 +178,7 @@ fn to_string(t: TypeKind) -> string {
         case TypeKind::CXXLValueRefType { return "CXXLValueRefType"; }
         case TypeKind::CXXRValueRefType { return "CXXRValueRefType"; }
         case TypeKind::OpaqueFFIType { return "OpaqueFFIType"; }
+        case TypeKind::QualifiedType { return "QualifiedType"; }
         case TypeKind::TypeExpr { return "TypeExpr"; }
     }
 
