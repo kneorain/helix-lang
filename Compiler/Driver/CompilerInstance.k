@@ -1393,6 +1393,27 @@ class CompilerInstance {
         (t->is_little_endian) = tt.isLittleEndian();
         (t->is_x86)           = tt.isX86();
         (t->resolved)         = true;
+
+        var err: libcxx::string;
+        var T = llvm::TargetRegistry::lookupTarget(tt, err);
+        if T == &null {
+            self._diag->report(DiagID::P004F,
+                f"unknown target triple '{t->effective_triple}': {string(err.c_str(), err.size())}").emit();
+            self.invocation().ok = false;
+            return;
+        }
+        if !self._inv.target.mcpu.empty() {
+            var STI = T->createMCSubtargetInfo(tt.getTriple(), r"", r"");
+            finally { delete STI; }
+            if !STI->isCPUStringValid(std::string_to_nstring(self._inv.target.mcpu).raw()) {
+                self._diag->report(DiagID::P00xE,
+                    f"unknown target CPU '{self._inv.target.mcpu}' for target '{t->effective_triple}'").emit();
+                self._diag->report(DiagID::N00xN,
+                    f"run with --print-cpus --target={t->effective_triple} to list valid values").emit();
+                self.invocation().ok = false;
+                return;
+            }
+        }
     }
 }
 
