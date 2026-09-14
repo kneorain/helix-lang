@@ -2027,6 +2027,14 @@ class ASTParse
         }
     }
 
+    /// \brief where a `const` was written at the TOP of \p ty. A `const` under
+    ///        a pointer (`*const i32`) lands on the pointee's node, not this
+    ///        one, so it does not answer here. Callers test ty->is_const()
+    ///        first; this is only the location.
+    pub fn top_const_range(self, ty: *Type) -> SourceRange {
+        return ty->qual_range(PendingQuals::TypeQualifier::Flags::IsConst);
+    }
+
     //  Recovery primitives
 
     /// \brief starts a speculative parse branch.

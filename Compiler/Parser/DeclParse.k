@@ -1525,6 +1525,28 @@ class <T> DeclParse {
             var pd = ParamDecl::create(dyn()->ctx, p_start | dyn()->prev().range, pname, pty, idx, !is_named);
             pd->is_const = p_const;
 
+            // `x: const T` on a NAMED parameter is `const x: T` spelled on the
+            // type: identical in meaning, harder to read. Same warning as
+            // `var x: const T`. An unnamed parameter has no binding to move
+            // the const onto, so it is left alone.
+            if is_named && (!p_const) && pty->is_const() {
+                var c_range = dyn()->top_const_range(pty);
+                var b = dyn()->diag->report(DiagID::S001W, c_range.start,
+                    "'const' on the type of a parameter is hard to read; declare the parameter 'const' instead"
+                );
+                b.first(c_range);
+                b.insert(pname.range.start, "const ", "make the parameter 'const\x27");
+                b.remove(c_range, "and drop it from the type");
+                b.emit();
+            } else if is_named && p_const && pty->is_const() {
+                // `const x: const T`: the same rule as a variable, a hard error
+                // on the second const.
+                var c_range = dyn()->top_const_range(pty);
+                dyn()->diag->report(DiagID::S001E, c_range.start,
+                    "the parameter is already 'const'; a second 'const' on its type is not allowed"
+                ).first(c_range).remove(c_range, "remove the second 'const\x27").emit();
+            }
+
             // default value
             if dyn()->check(TokenKind::OpEqual) {
                 dyn()->advance(T::SkipNL::After); // consume `=`
@@ -1982,6 +2004,28 @@ class <T> DeclParse {
             var ty = dyn()->parse_type();
             if (ty != &null) && (!is_recovery(ty)) {
                 vd->type_ = ty;
+                // `var x: const T` is `const x: T`: legal and identical in
+                // meaning, but the binding keyword no longer says what the
+                // binding is. A readability warning, not an error; the fix
+                // moves the const onto the binding.
+                if (storage == StorageClass::Var) && ty->is_const() {
+                    var c_range = dyn()->top_const_range(ty);
+                    var b = dyn()->diag->report(DiagID::S001W, c_range.start,
+                        "'const' on the type of a 'var' binding is hard to read; declare the binding 'const' instead"
+                    );
+                    b.first(c_range);
+                    b.strike(start);
+                    b.fix(start, "const", "make the binding 'const\x27");
+                    b.remove(c_range, "and drop it from the type");
+                    b.emit();
+                } else if (storage == StorageClass::Const) && ty->is_const() {
+                    // `const x: const T` says it twice. The second is the one
+                    // at fault: the binding keyword is the idiomatic place.
+                    var c_range = dyn()->top_const_range(ty);
+                    dyn()->diag->report(DiagID::S001E, c_range.start,
+                        "the binding is already 'const'; a second 'const' on its type is not allowed"
+                    ).first(c_range).remove(c_range, "remove the second 'const\x27").emit();
+                }
             }
         }
 
