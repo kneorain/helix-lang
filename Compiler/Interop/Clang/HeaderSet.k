@@ -72,6 +72,9 @@ import Location::SourceManager::*;
 import Support::FileIO::Path::*;
 import Support::TimeReport::*;
 import Interop::Clang::ClangBackend::*;
+import Diagnostic::Engine::*;
+import Diagnostic::BufferedDiagSink::*;
+import Diagnostic::ClangDiagAdapter::*;
 
 /// ThreadPool group for phase-A builds. 9 is CLANG_STARTUP_GROUP.
 eval fn HEADER_BUILD_GROUP() -> u8 { return 10; }
@@ -152,7 +155,14 @@ class HeaderSet {
     // The live phase-A instance.
     priv var _ci:      opt::<clang::CompilerInstance> = &null;
     priv var _act:     opt::<HeaderSetAction>         = &null;
-    priv var _printer: opt::<clang::TextDiagnosticPrinter> = &null;
+    priv var _printer: opt::<clang::TextDiagnosticPrinter> = &null;   ///< fallback client only; see begin_diag.
+    priv var _ksm:     obs::<SourceManager> = &null;                  ///< the backend's; adapter spans.
+
+    /// build()'s clang diagnostics. build() runs on a pool thread before any
+    /// importer exists, so they buffer here and the driver drains them into
+    /// its engine once the build has joined (drain_diags).
+    pub var diag_buf:  BufferedDiagSink;
+    priv var _clients: vec::<*clang::DiagnosticConsumer>;   ///< begin_diag's saved clients, innermost last.
     priv var _diag_opts: clang::DiagnosticOptions;
     priv var _main:    libcxx::string;                ///< the injected buffer; must outlive the parse.
     /// clang::Sema is single-threaded. Recursive because a foreign fill can
@@ -301,6 +311,14 @@ class HeaderSet {
         self._ci->setVirtualFileSystem(be->vfs());
         self._ci->createDiagnostics(self._printer, false);
         if !self._ci->hasDiagnostics() { self.ok = false; self.built.store(true); return; }
+
+        // Every clang diagnostic of this set goes through the Kairo engine,
+        // not the printer. Here there is no importer yet and no header fid
+        // (cfid_to_kfid fills at index()), so they buffer in diag_buf, each
+        // keeping clang's own file:line:col in its text.
+        self._ksm = be->ksm();
+        var bda = self.begin_diag(&self.diag_buf);
+        finally { self.end_diag(bda); }
         self._ci->setTarget(clang::TargetInfo::CreateTargetInfo(
             self._ci->getDiagnostics(), self._ci->getInvocation().getTargetOpts()));
         if !self._ci->hasTarget() { self.ok = false; self.built.store(true); return; }
@@ -325,6 +343,46 @@ class HeaderSet {
 
         Logger::info(Logger::Stage::Driver,
             f"HeaderSet: built key={self.headers.size()} header(s), {self.files.size()} file(s) entered, ok={self.ok}");
+    }
+
+    // --- diagnostics ---------------------------------------------------------
+
+    /// Route this set's clang diagnostics into \p sink until end_diag(), then
+    /// back to whichever client was active before. Nests: a fill that
+    /// spells a nested instance argument can fill again, and must hand the
+    /// outer fill's adapter back, not the printer. Caller holds sema_lock(),
+    /// or is build(), which owns the instance outright.
+    fn begin_diag(self, sink: *BufferedDiagSink) -> *ClangDiagAdapter {
+        var a = std::create::<ClangDiagAdapter>();
+        a->sink   = sink;
+        a->ksm    = self._ksm;
+        a->fidmap = &(self.cfid_to_kfid);
+        var de = &(self._ci->getDiagnostics());
+        self._clients.push_back(de->getClient());
+        de->setClient(a, false);
+        a->BeginSourceFile(self._ci->getLangOpts(), &null);
+        return a;
+    }
+
+    /// Flush \p a, restore the client begin_diag replaced, free \p a. Null is
+    /// a no-op, so a caller with no sink can pair the two unconditionally.
+    fn end_diag(self, a: *ClangDiagAdapter) {
+        if a == &null { return; }
+        a->EndSourceFile();
+        a->finish();
+        var prev: *clang::DiagnosticConsumer = self._printer;
+        if !self._clients.empty() {
+            prev = self._clients[self._clients.size() - 1];
+            self._clients.pop_back();
+        }
+        self._ci->getDiagnostics().setClient(prev, false);
+        std::destroy(a);
+    }
+
+    /// build()'s buffered diagnostics into the driver's engine. Driver
+    /// thread, after the build joined. Idempotent: the buffer drains empty.
+    fn drain_diags(self, engine: *DiagEngine, sm: *SourceManager) {
+        self.diag_buf.drain_into(engine, sm);
     }
 
     // --- release (driver thread) -------------------------------------------
