@@ -340,12 +340,20 @@ class ExprTyper
                 var p = cast::<ParamDecl>(d);
                 n->value_category = Expr::ValueCategory::LValue;
                 if p->type_ == &null { self.mark_unknown(n); return &null; }
-                return p->type_->canonical;
+                // A `const` binding is a const OBJECT, and an object's type
+                // carries its cv: `&x` on a const param is `*const T`, and
+                // `T&` deduces `const T` from it. The receiver is exempt --
+                // its const is FnModifier::IsConst and lands on `this`.
+                var t = p->type_->canonical;
+                if p->is_const && (!p->is_self) { t = self.sc->types->qualified(t, QUAL_CONST()); }
+                return t;
             }
             case DeclKind::VariableDecl {
                 n->value_category = Expr::ValueCategory::LValue;
-                var t = self.var_type(cast::<VariableDecl>(d));
+                var v = cast::<VariableDecl>(d);
+                var t = self.var_type(v);
                 if t == &null { if d->is_poisoned() { self.poison_only(n); } else { self.mark_unknown(n); } }
+                else if v->is_const() { t = self.sc->types->qualified(t, QUAL_CONST()); }
                 return t;
             }
             case DeclKind::FieldDecl {

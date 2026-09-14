@@ -218,8 +218,11 @@ class <T> MemberTyping {
                     n->value_category = Expr::ValueCategory::LValue;
                 }
                 case DeclKind::VariableDecl {
-                    cur = dyn()->var_type(cast::<VariableDecl>(d));
+                    var v = cast::<VariableDecl>(d);
+                    cur = dyn()->var_type(v);
                     if cur == &null { info->unknown = true; dyn()->mark_unknown(n); return &null; }
+                    // A const binding is a const object; see ExprTyper::_type_ident.
+                    if v->is_const() { cur = dyn()->sc->types->qualified(cur, QUAL_CONST()); }
                     cur_kind = 0; st->resolved_type = cur;
                     n->value_category = Expr::ValueCategory::LValue;
                 }
@@ -227,6 +230,7 @@ class <T> MemberTyping {
                     var p = cast::<ParamDecl>(d);
                     cur = (p->type_->canonical) if (p->type_ != &null) else (&null);
                     if cur == &null { info->unknown = true; dyn()->mark_unknown(n); return &null; }
+                    if p->is_const && (!p->is_self) { cur = dyn()->sc->types->qualified(cur, QUAL_CONST()); }
                     cur_kind = 0; st->resolved_type = cur;
                     n->value_category = Expr::ValueCategory::LValue;
                 }
