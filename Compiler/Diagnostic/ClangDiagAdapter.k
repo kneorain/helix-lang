@@ -40,6 +40,13 @@ class ClangDiagAdapter derives clang::DiagnosticConsumer {
     /// Every diagnostic in that header then rendered against this TU's Kairo
     /// file at a bogus offset. Ask the map; it knows when it was last rebound.
     pub var locmap:     obs::<ClangLocMap>;
+
+    /// A header set's own clang instance maps its files through ITS table,
+    /// not the backend's locmap: clang FileID hash -> Kairo fid, 0 for none
+    /// (HeaderSet::cfid_to_kfid). Set instead of `locmap` for that instance;
+    /// a raw table rather than the set so this layer never imports Interop's
+    /// HeaderSet (which imports the backend, which imports this).
+    pub var fidmap: const_obs::<libcxx::unordered_map::<u32, u32>> = &null;
     priv var _lo: const_obs::<clang::LangOptions> = &null; ///< owned by the CI, valid for the action.
 
     /// Note-attachment state: clang emits notes as separate HandleDiagnostic
@@ -71,6 +78,18 @@ class ClangDiagAdapter derives clang::DiagnosticConsumer {
         var msg     = self._format(info);
         var kloc    = self._to_kairo_loc(info);      // invalid == "none"
         var is_note = lvl == clang::DiagnosticsEngine::Note;
+
+        // A loc in no file Kairo loaded still names one clang knows. Keep it
+        // in the text, as the TextDiagnosticPrinter this replaces did, so a
+        // header-set diagnostic before its fids exist (build time) is not
+        // left pointing nowhere.
+        if (!kloc.is_valid()) && info.hasSourceManager() && info.getLocation().isValid() {
+            var pl = info.getSourceManager().getPresumedLoc(info.getLocation());
+            if pl.isValid() {
+                var file = std::nstring_to_string(llvm::StringRef(pl.getFilename()).str());
+                msg = f"{file}:{pl.getLine()}:{pl.getColumn()}: {msg}";
+            }
+        }
 
         if (is_note) && (self._last_fwded) && (self._open != &null) {
             self._attach_child_note(kloc, msg);
@@ -108,6 +127,19 @@ class ClangDiagAdapter derives clang::DiagnosticConsumer {
     //  internals
     // ------------------------------------------------------------------
 
+    /// The Kairo fid behind a clang FileID, or u32(-1) for none: through the
+    /// header set's table when one is set, else the backend's locmap.
+    priv fn _kfid_of(self, cfid: clang::FileID) -> FileID {
+        if self.fidmap != &null {
+            var it = self.fidmap->find(cfid.getHashValue());
+            if it == self.fidmap->end() { return static_cast::<FileID>(u32(-1)); }
+            if it->second == 0 { return static_cast::<FileID>(u32(-1)); }
+            return static_cast::<FileID>(it->second);
+        }
+        if self.locmap == &null { return static_cast::<FileID>(u32(-1)); }
+        return self.locmap->kairo_fid(cfid);
+    }
+
     priv fn _format(self, info: cref::<clang::Diagnostic>) -> string {
         var s: llvm::SmallString::<256>;
         info.FormatDiagnostic(s);
@@ -132,8 +164,7 @@ class ClangDiagAdapter derives clang::DiagnosticConsumer {
         var dec = info.getSourceManager()
                       .getDecomposedExpansionLoc(info.getLocation());
 
-        if self.locmap == &null { return SourceRange::invalid(); }
-        var kf = self.locmap->kairo_fid(dec.first);
+        var kf = self._kfid_of(dec.first);
         if kf == static_cast::<FileID>(u32(-1)) { return SourceRange::invalid(); }
 
         // dec.second == byte offset in kf. Single-byte primary span;
@@ -145,16 +176,16 @@ class ClangDiagAdapter derives clang::DiagnosticConsumer {
     /// fid its BEGIN is in, or invalid if the end is in a different file (or
     /// in none): a span cannot cross files.
     priv fn _range_in_kfid(self, cr: cref::<clang::CharSourceRange>, info: cref::<clang::Diagnostic>) -> SourceRange {
-        if (!cr.isValid()) || (!info.hasSourceManager()) || (self.locmap == &null) {
+        if (!cr.isValid()) || (!info.hasSourceManager()) {
             return SourceRange::invalid();
         }
 
         var b = info.getSourceManager().getDecomposedExpansionLoc(cr.getBegin());
         var e = info.getSourceManager().getDecomposedExpansionLoc(cr.getEnd());
 
-        var kb = self.locmap->kairo_fid(b.first);
+        var kb = self._kfid_of(b.first);
         if kb == static_cast::<FileID>(u32(-1)) { return SourceRange::invalid(); }
-        if self.locmap->kairo_fid(e.first) != kb { return SourceRange::invalid(); }
+        if self._kfid_of(e.first) != kb { return SourceRange::invalid(); }
 
         var start: usize = static_cast::<usize>(b.second);
         var end:   usize = static_cast::<usize>(e.second);

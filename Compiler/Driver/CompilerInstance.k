@@ -1742,6 +1742,10 @@ fn FrontendAction::_sema() -> bool {
             if (htu == &null) || (htu->header_set == &null) { continue; }
             var hs = reinterpret_cast::<*HeaderSet>(htu->header_set);
             self._ci->header_index()->index(hs);
+            // The set's build-time clang diagnostics, buffered on the pool
+            // thread (HeaderSet::diag_buf): into the engine now the build
+            // has joined. A set shared by several TUs drains once.
+            hs->drain_diags(self._ci->diag(), self._ci->sm());
             self._attach_ffi_edges(htu, hctx, hs);
         }
     }

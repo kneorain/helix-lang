@@ -240,6 +240,7 @@ class ClangBackend {
 
     fn ci(self)     -> *clang::CompilerInstance { return self._ci; }
     fn locmap(self) -> *ClangLocMap             { return self._locmap; }
+    fn ksm(self)    -> *SourceManager           { return self._ksm; }
 
     fn invocation(self) -> *clang::CompilerInvocation { return self._cinv.get(); }
     fn vfs(self)        -> llvm::IntrusiveRefCntPtr::<llvm::vfs::FileSystem> { return self._vfs; }
