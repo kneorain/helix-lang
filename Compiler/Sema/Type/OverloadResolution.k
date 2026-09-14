@@ -117,6 +117,11 @@ class Candidate {
     /// parameter, or not Exact), 1 `const T&`, 2 `T&&`, 3 `T&`. Read only by
     /// the reference tiebreak.
     pub var binds:        vec::<u8>;
+    /// The implicit object parameter, judged like one more reference
+    /// argument: 1 `const self`, 3 plain `self`, 0 not judged (no receiver
+    /// object known). recv_const is the OBJECT's constness.
+    pub var recv_bind:    u8   = 0;
+    pub var recv_const:   bool = false;
     pub var ded:          Deduction;
     fn Candidate(self) { }
 }
@@ -184,7 +189,10 @@ class OverloadResolution {
                      frees: *vec::<*Decl>, fargs: *vec::<ArgInfo>,
                      at: SourceRange, name: string, receiver: *Type = &null) -> OvlResult {
         var out = OvlResult{};
-        out.receiver = receiver;
+        // \p receiver carries the OBJECT's cv (a const object's method call
+        // ranks on it, _judge_receiver); everything downstream of the
+        // result wants the type the call was made through, unqualified.
+        out.receiver = canon_unqual(receiver);
 
         if self._any_dependent(margs) || self._any_dependent(fargs) {
             out.outcome = OvlOutcome::Dependent;
@@ -280,6 +288,18 @@ class OverloadResolution {
         if x->free != y->free { return false; }
         if (args == &null) || (x->binds.size() != args->size()) || (y->binds.size() != args->size()) { return false; }
         var better = false;
+        // The implicit object parameter, when both judged it: a non-const
+        // object prefers `self` to `const self` exactly as a non-const
+        // lvalue prefers `T&` to `const T&` -- data() over data() const. The
+        // object counts as an lvalue even when it is a temporary
+        // ([over.match.funcs]/5).
+        if (x->recv_bind != 0) && (y->recv_bind != 0) {
+            var ra = ArgInfo{};
+            ra.cat      = Expr::ValueCategory::LValue;
+            ra.is_const = x->recv_const;
+            if self._ref_prefers(&ra, x->recv_bind, y->recv_bind) { better = true; }
+            else if self._ref_prefers(&ra, y->recv_bind, x->recv_bind) { return false; }
+        }
         for var k: usize = 0; k < args->size(); ++k {
             var a = &((*args)[k]);
             if self._ref_prefers(a, x->binds[k], y->binds[k]) { better = true; continue; }
@@ -341,6 +361,26 @@ class OverloadResolution {
 
     // === one candidate ======================================================
 
+    /// The implicit object parameter ([over.match.funcs]/4): the receiver
+    /// OBJECT against `self`, whose canonical carries the method's cv -- a
+    /// const method's self is `const Record` (TypeResolve's
+    /// _synthesize_receiver, and DeclImport through `this`). It binds as a
+    /// reference would: a const object cannot bind a plain `self`, and
+    /// either object binds `const self`. \p receiver's own cv is the
+    /// object's; null means no object is known, and nothing is judged.
+    priv fn _judge_receiver(self, c: *Candidate, p: *ParamDecl, receiver: *Type) {
+        if (receiver == &null) || (p->type_ == &null) || (p->type_->canonical == &null) { return; }
+        var sq = canon_quals(p->type_->canonical);
+        var oq = canon_quals(receiver);
+        if (oq & (~sq)) != 0 {
+            c->viable = false;
+            c->reason = f"'{self.tu.decl_name(static_cast::<*Decl>(c->f))}' is not const; it cannot be called on a const object";
+            return;
+        }
+        c->recv_bind  = (1) if ((sq & QUAL_CONST()) != 0) else (3);
+        c->recv_const = (oq & QUAL_CONST()) != 0;
+    }
+
     priv fn _judge(self, c: *Candidate, args: *vec::<ArgInfo>, has_receiver: bool,
                    receiver: *Type) {
         var f = c->f;
@@ -350,7 +390,11 @@ class OverloadResolution {
         for var i: usize = 0; i < f->params.size(); ++i {
             var p = f->params[i];
             if p == &null { continue; }
-            if p->is_self && has_receiver { continue; }
+            if p->is_self && has_receiver {
+                self._judge_receiver(c, p, receiver);
+                if !c->viable { return; }
+                continue;
+            }
             params.push_back(p);
         }
         var nparams = params.size();
@@ -423,7 +467,7 @@ class OverloadResolution {
             // exempt -- its `const` is `const Foo*`, one level down.
             if (pt != &null) && (!p->is_self) { pt = canon_unqual(pt); }
             if (p->type_ != &null) && p->type_->is_poisoned() { c->viable = false; c->reason = "parameter type is invalid"; return; }
-            pt = c->ded.through_receiver(c->f, receiver, pt);   // `other: Self` is `other: <receiver>`.
+            pt = c->ded.through_receiver(c->f, canon_unqual(receiver), pt);   // `other: Self` is `other: <receiver>`.
 
             if pt == &null {
                 // dependent-but-uncanonical parameter (`[T; N]`, alias app):
@@ -502,7 +546,7 @@ class OverloadResolution {
             case LitKind::Int {
                 var k = self.tu.kind_of(target);
                 if k == BuiltinKind::COUNT { return ImplicitRank::None; }
-                if builtin_is_float(k) { return ImplicitRank::Exact; }   // §5: the literal takes the type.
+                if builtin_info(k)->is_float() { return ImplicitRank::Exact; }   // §5: the literal takes the type.
                 var pb = self.tu.builtin(BuiltinKind::USize)->size_bits;
                 return (ImplicitRank::Exact)
                        if (literal_fits_int(a->lit_lo, a->lit_hi, a->lit_big, a->lit_neg, k, pb))

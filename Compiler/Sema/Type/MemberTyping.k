@@ -125,7 +125,11 @@ class <T> MemberTyping {
             // A C++ reference is transparent to every separator, so it goes
             // first -- the same helper ChainBinding binds with.
             var val = cur;
+            // The receiver OBJECT's cv, read before peel_ref strips it:
+            // `s.data()` on a const `s` must rank `data() const` alone.
+            var recv_q: u8 = 0;
             if cur_kind == 0 {
+                recv_q = self._object_quals(val);
                 val = dyn()->ml.peel_ref(val);
                 if (st->access_kind == ChainExpr::AccessKind::QuestionDot)
                 || (st->access_kind == ChainExpr::AccessKind::QuestionArrow) {
@@ -135,7 +139,7 @@ class <T> MemberTyping {
                 if (st->access_kind == ChainExpr::AccessKind::Arrow)
                 || (st->access_kind == ChainExpr::AccessKind::QuestionArrow) {
                     var p = dyn()->tu.pointee(val);
-                    if p != &null { val = p; }
+                    if p != &null { val = p; recv_q = self._object_quals(p); }
                 }
                 // The pointee of a `*const T` is `const T`; peel_ref now
                 // peels quals too.
@@ -143,7 +147,9 @@ class <T> MemberTyping {
             }
 
             if is_last {
-                info->receiver     = val;
+                // Qualified with the object's cv: OverloadResolution ranks
+                // the receiver on it and strips it for everything else.
+                info->receiver     = dyn()->sc->types->qualified(val, recv_q);
                 info->has_receiver = (cur_kind == 0) && (st->access_kind != ChainExpr::AccessKind::ColonColon);
             }
 
@@ -290,6 +296,18 @@ class <T> MemberTyping {
     }
 
     // === subscript ==========================================================
+
+    /// The cv of the object \p t denotes: through any C++ reference (a
+    /// reference is its referee), not through a pointer.
+    priv fn _object_quals(self, t: *Type) -> u8 {
+        var c = t;
+        while c != &null {
+            if isa::<CXXLValueRefType>(c) { c = cast::<CXXLValueRefType>(c)->referee; continue; }
+            if isa::<CXXRValueRefType>(c) { c = cast::<CXXRValueRefType>(c)->referee; continue; }
+            break;
+        }
+        return canon_quals(c);
+    }
 
     fn type_subscript(self, n: *SubscriptExpr, expected: *Type) -> *Type {
         var bt = dyn()->type_of(n->base, &null);

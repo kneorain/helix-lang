@@ -60,13 +60,13 @@ class TypeUtil {
     fn is_integer(self, t: *Type) -> bool {
         var k = self.kind_of(t);
         if k == BuiltinKind::COUNT { return false; }
-        return builtin_is_integer(k);
+        return builtin_info(k)->is_integer();
     }
 
     fn is_float(self, t: *Type) -> bool {
         var k = self.kind_of(t);
         if k == BuiltinKind::COUNT { return false; }
-        return builtin_is_float(k);
+        return builtin_info(k)->is_float();
     }
 
     fn is_numeric(self, t: *Type) -> bool { return self.is_integer(t) || self.is_float(t); }
@@ -74,7 +74,7 @@ class TypeUtil {
     fn is_signed_int(self, t: *Type) -> bool {
         var k = self.kind_of(t);
         if k == BuiltinKind::COUNT { return false; }
-        return builtin_is_integer(k) && builtin_is_signed(k);
+        return builtin_info(k)->is_integer() && builtin_info(k)->is_signed();
     }
 
     /// Width of an integer builtin, target width for usize/isize, 0 otherwise.

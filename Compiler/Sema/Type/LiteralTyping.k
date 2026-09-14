@@ -100,7 +100,7 @@ class <T> LiteralTyping {
                 return &null;
             }
             if !literal_fits_int(n->get_value_lo(), n->get_value_hi(), n->is_big(), negative, k, pb) {
-                dyn()->fail(n, f"literal does not fit in '{builtin_spelling(k)}\x27");
+                dyn()->fail(n, f"literal does not fit in '{builtin_info(k)->spelling}\x27");
                 return &null;
             }
             return dyn()->tu.builtin(k);
@@ -110,14 +110,14 @@ class <T> LiteralTyping {
         var target = dyn()->tu.strip_nullable(expected);
         var tk = dyn()->tu.kind_of(target);
         if tk != BuiltinKind::COUNT {
-            if builtin_is_integer(tk) {
+            if builtin_info(tk)->is_integer() {
                 if !literal_fits_int(n->get_value_lo(), n->get_value_hi(), n->is_big(), negative, tk, pb) {
-                    dyn()->fail(n, f"literal '{n->get_spelling()}' does not fit in '{builtin_spelling(tk)}\x27");
+                    dyn()->fail(n, f"literal '{n->get_spelling()}' does not fit in '{builtin_info(tk)->spelling}\x27");
                     return &null;
                 }
                 return target;
             }
-            if builtin_is_float(tk) { return target; }
+            if builtin_info(tk)->is_float() { return target; }
         }
 
         // default: i32, widening only when it does not fit.
