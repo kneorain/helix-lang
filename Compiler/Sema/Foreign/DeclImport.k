@@ -507,6 +507,14 @@ class DeclImport {
 
     /// The name binding: ident key, or ctor / operator key for functions.
     priv fn _bind_named(self, t: *HeaderTarget, nd: const_obs::<clang::NamedDecl>, kd: *Decl) {
+        // A partial specialization is never the answer to a name: the primary
+        // owns it, and partials_of(primary) -- M1's pairing, fed by
+        // _define_spec's register_partial -- is the only reader that wants
+        // it. Binding it here put `vector<bool, A>` beside `vector` (and
+        // `unique_ptr<T[], D>` beside its primary) in std's table, and every
+        // `std::vector` step saw two entities (R028E). The same rule as a
+        // Kairo `class <> Box<[T]>`, which _stmt_decl_imm declines to declare.
+        if llvm::isa::<clang::ClassTemplatePartialSpecializationDecl>(nd) { return; }
         var dc = self.scope_for(t, nd->getDeclContext());
         if dc == &null { return; }
         var fn_ = llvm::dyn_cast::<clang::FunctionDecl>(nd);
