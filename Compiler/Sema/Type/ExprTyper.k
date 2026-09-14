@@ -343,8 +343,9 @@ class ExprTyper
                 if p->type_ == &null { self.mark_unknown(n); return &null; }
                 // A `const` binding is a const OBJECT, and an object's type
                 // carries its cv: `&x` on a const param is `*const T`, and
-                // `T&` deduces `const T` from it. The receiver is exempt --
-                // its const is FnModifier::IsConst and lands on `this`.
+                // `T&` deduces `const T` from it. The receiver is exempt: a
+                // const method's `self` already has type `const Record`
+                // (TypeResolve::_synthesize_receiver, DeclImport).
                 var t = p->type_->canonical;
                 if p->is_const && (!p->is_self) { t = self.sc->types->qualified(t, QUAL_CONST()); }
                 return t;
