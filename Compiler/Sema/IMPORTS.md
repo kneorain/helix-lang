@@ -376,9 +376,13 @@ after I asks where a decl came from except through `FFILinkage`
 
 **Unresolved header.** A spelling clang cannot find leaves resolved_fid 0
 and phase I binds nothing, so each use of its names is an ordinary R020E
-miss. [MISSING] The set's own clang diagnostics go to its
-TextDiagnosticPrinter on stderr, not through ClangDiagAdapter into the
-Kairo engine, so they neither count as errors nor carry Kairo spans.
+miss. The set's own clang diagnostics go through a ClangDiagAdapter into
+the Kairo engine (HeaderSet::begin_diag), mapping locations through the
+set's cfid_to_kfid table: at build time into the set's diag_buf, drained
+into the driver's engine once the build joins (those predate the header
+fids, so they carry clang's file:line:col in their text), and during a fill
+into the demanding TU's sink with real spans. The TextDiagnosticPrinter is
+only the fallback client between them.
 
 **The bare-ffi miss gate is gone**, and with it `NamedIdentExpr::foreign`,
 `TraceRow::foreign_gate`, `AnchorKind::Foreign`, `MemberOutcome::Foreign`
@@ -419,8 +423,9 @@ spellings are dependent). Fills nest (define imports a type that is a path
 into another shell): `ForeignInstantiate::_mu` and the set's `sema_lock` are
 recursive, and a shell already mid-fill on this thread returns false at once.
 
-[MISSING] a Kairo diagnostic for a failed fill (it logs at Driver stage, and
-clang's own error reaches stderr through the set's printer); a C++ forward
+A failed fill's clang errors reach the demanding TU's sink through the
+engine, spanned in the header. [MISSING] a Kairo note pointing at the USE
+that demanded the fill; a C++ forward
 shape for Kairo-native args (`std::vector<KairoStruct>`).
 
 **Nested records.** Implicit instantiation of `holder<alloc>` DECLARES

@@ -359,7 +359,7 @@ class MemberLookup {
         if !MemberLookup::unfilled(d) { return true; }
         if !MemberLookup::filled_by_clang(d) { return false; }   // M2's, not clang's.
         if (sc == &null) || (sc->foreign == &null) { return false; }
-        return sc->foreign->fill(d);
+        return sc->foreign->fill(d, sc->diag);
     }
 
     /// True when \p d is an instance whose primary came from a C++ header --

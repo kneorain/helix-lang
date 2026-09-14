@@ -59,6 +59,7 @@ import Sema::SemaContext::*;
 import Sema::Resolve::NameLookup::*;
 import Sema::Resolve::MemberLookup::*;
 import Sema::Resolve::ResolutionState::*;
+import Sema::Resolve::GenericArgs::*;
 import AST::Context::ASTContext::*;
 import AST::Context::DeclContext::*;
 import AST::Context::TranslationUnit::*;
@@ -1071,47 +1072,13 @@ class TypeResolution derives RecursiveASTVisitor::<TypeResolution> {
     /// count (no default, not a pack), at most the total unless a pack makes
     /// it unbounded. Named args are counted, not positioned -- positioning is
     /// _collect_args' job.
+    /// GenericArgs::check_arity, poisoning \p ct on a miss.
     priv fn _check_arity(self, d: *Decl, gps: FrozenList::<*GenericParamDecl>,
                          seg: *ChainType::ChainSegment, ct: *ChainType) -> bool {
-        var given = seg->generic_args.size();
-        var total = gps.size();
-        var required: usize = 0;
-        var has_pack = false;
-        for var i: usize = 0; i < total; ++i {
-            var gp = gps[i];
-            if gp == &null { continue; }
-            if gp->is_pack { has_pack = true; continue; }
-            if gp->default_type == &null { required += 1; }
-        }
-
-        if (given == 0) && (total == 0) { return true; }
-
-        var nm = self._decl_name_str(d);
-        if (given > 0) && (total == 0) {
-            self.sc->diag->report(DiagID::R032E, seg->range.start,
-                f"'{nm}' is not generic and takes no generic arguments"
-            ).first(seg->range)
-             .note(DiagID::R032N, d->range.start, "declared here").first(d->range).emit();
-            ct->poison();
-            return false;
-        }
-        if given < required {
-            self.sc->diag->report(DiagID::R032E, seg->range.start,
-                f"'{nm}' requires at least {required} generic argument(s), but {given} were given"
-            ).first(seg->range)
-             .note(DiagID::R032N, d->range.start, "declared here").first(d->range).emit();
-            ct->poison();
-            return false;
-        }
-        if (!has_pack) && (given > total) {
-            self.sc->diag->report(DiagID::R032E, seg->range.start,
-                f"'{nm}' takes at most {total} generic argument(s), but {given} were given"
-            ).first(seg->range)
-             .note(DiagID::R032N, d->range.start, "declared here").first(d->range).emit();
-            ct->poison();
-            return false;
-        }
-        return true;
+        var ga = GenericArgs(self.sc);
+        if ga.check_arity(d, self._decl_name_str(d), gps, seg->generic_args.size(), seg->range) { return true; }
+        ct->poison();
+        return false;
     }
 
     /// Resolve every argument type in place (they were already dispatched by
@@ -1126,118 +1093,23 @@ class TypeResolution derives RecursiveASTVisitor::<TypeResolution> {
         return true;
     }
 
-    /// Positional + named args into parameter order, defaults filled, pack
-    /// tail gathered. Out: one canonical per NON-pack param slot, then the
-    /// pack's args flat (the store keys on the whole vector; a pack of two is
-    /// two entries). Named args that name nothing, or name a slot twice, are
-    /// errors here.
+    /// GenericArgs::collect over \p seg, poisoning \p ct on a miss. The
+    /// defaults are demanded HERE first: GenericArgs only reads them, and a
+    /// Kairo primary's default resolves in the PRIMARY's scope, which only T
+    /// can set up (_demand_default).
     priv fn _collect_args(self, seg: *ChainType::ChainSegment, ct: *ChainType,
                           primary: *Decl, gps: FrozenList::<*GenericParamDecl>,
                           out: *vec::<*Type>) -> bool {
         if !self._resolve_args(seg, ct) { return false; }
-
-        var total = gps.size();
-        var slots = vec::<*Type>();
-        var filled = vec::<bool>();
-        var pack_index: usize = usize(-1);
-        for var i: usize = 0; i < total; ++i {
-            slots.push_back(&null);
-            filled.push_back(false);
-            if (gps[i] != &null) && gps[i]->is_pack && (pack_index == usize(-1)) { pack_index = i; }
+        if seg->generic_args.size() < gps.size() {
+            for var i: usize = 0; i < gps.size(); ++i {
+                var gp = gps[i];
+                if (gp != &null) && (gp->default_type != &null) { self._demand_default(gp, primary); }
+            }
         }
-        var pack_args = vec::<*Type>();
-
-        var pos: usize = 0;
-        for var i: usize = 0; i < seg->generic_args.size(); ++i {
-            var a = seg->generic_args.get(i);
-            var cty: *Type = &null;
-            if a->ty != &null { cty = self._arg_canonical(a->ty); }
-
-            if a->name != &null {
-                var nimm = self._name_imm(a->name->name);
-                var found = usize(-1);
-                for var j: usize = 0; j < total; ++j {
-                    if (gps[j] != &null) && (self.sc->ctx->get_ident_imm(gps[j]->name) == nimm) { found = j; break; }
-                }
-                if found == usize(-1) {
-                    var nm = self.sc->ctx->get_spelling(a->name->name);
-                    self.sc->diag->report(DiagID::R033E, a->name_range.start,
-                        f"no generic parameter named '{nm}\x27"
-                    ).first(a->name_range).emit();
-                    ct->poison();
-                    return false;
-                }
-                if filled[found] {
-                    var nm = self.sc->ctx->get_spelling(a->name->name);
-                    self.sc->diag->report(DiagID::R034E, a->name_range.start,
-                        f"generic argument '{nm}' specified more than once"
-                    ).first(a->name_range).emit();
-                    ct->poison();
-                    return false;
-                }
-                slots[found]  = cty;
-                filled[found] = true;
-                continue;
-            }
-
-            // positional: into the pack once we reach it, else next free slot.
-            if (pack_index != usize(-1)) && (pos >= pack_index) {
-                pack_args.push_back(cty);
-                continue;
-            }
-            if pos >= total {
-                // arity check already bounded this; defensive.
-                ct->poison();
-                return false;
-            }
-            slots[pos]  = cty;
-            filled[pos] = true;
-            pos += 1;
-        }
-
-        // defaults + emit
-        for var i: usize = 0; i < total; ++i {
-            var gp = gps[i];
-            if gp == &null { continue; }
-            if gp->is_pack {
-                for var k: usize = 0; k < pack_args.size(); ++k {
-                    if pack_args[k] == &null { ct->poison(); return false; }
-                    out->push_back(pack_args[k]);
-                }
-                continue;
-            }
-            if !filled[i] {
-                if gp->default_type == &null { ct->poison(); return false; }   // arity said otherwise; defensive.
-                var dc = self._demand_default(gp, primary);
-                // A FOREIGN default comes back as the header's canonical, and
-                // a default naming the primary's own params (`class A =
-                // allocator<T>`) is dependent there. Every param before this
-                // one is already placed, so substitute them in: without it
-                // `std::vector<i32>` keyed as `vector<i32, allocator<T>>`, a
-                // dependent type with no instance behind it, and nothing (the
-                // clang fill included) ever looked past the pattern.
-                if (dc != &null) && dc->is_dependent() && self._foreign(primary) {
-                    var ded = Deduction(self.sc, &null);
-                    var rep = NameLookup::representative(primary);
-                    for var j: usize = 0; j < out->size(); ++j { ded.bind(rep, static_cast::<u32>(j), (*out)[j]); }
-                    var sub = ded.substitute(dc);
-                    if (sub != &null) && (!sub->is_dependent()) { dc = sub; }
-                    else { dc = &null; }      // still names an unplaced param: the stand-in below.
-                }
-                if dc == &null {
-                    if gp->default_type->is_poisoned() { ct->poison(); return false; }
-                    // Dependent default (mentions the primary's own params):
-                    // substitution is M2's. Stand in with the param itself.
-                    self._mark_inst_dependent(ct);
-                    out->push_back(self.sc->types->generic_param(primary, gp->index, false));
-                    continue;
-                }
-                out->push_back(dc);
-                continue;
-            }
-            if slots[i] == &null { ct->poison(); return false; }
-            out->push_back(slots[i]);
-        }
+        var ga = GenericArgs(self.sc);
+        if !ga.collect(primary, gps, seg->generic_args, false, out) { ct->poison(); return false; }
+        if ga.inst_dependent { self._mark_inst_dependent(ct); }
         return true;
     }
 
