@@ -52,6 +52,7 @@ import Sema::SemaContext::*;
 import Sema::Check::ConstraintSet::*;
 import Sema::Resolve::NameLookup::*;
 import Sema::Resolve::MemberLookup::*;
+import Sema::Resolve::GenericArgs::*;
 import Sema::Resolve::ResolutionTrace::*;
 import Sema::Resolve::ResolutionState::*;
 import AST::Context::ASTContext::*;
@@ -231,41 +232,41 @@ class ChainBinding derives RecursiveASTVisitor::<ChainBinding> {
 
     /// `Box<i32>::make()` / `Stack<i32>()`: a type head with explicit args in
     /// EXPRESSION position. T resolved the arg TYPES (the RAV dispatches them);
-    /// the application is decided here, and only in the plain case --
-    /// positional, every param supplied, no packs, no names. Defaults and
-    /// named args are inference's, exactly as they are for calls.
+    /// the application is GenericArgs', the rule a type position uses --
+    /// defaults, named args and a pack tail included. Probed silently: X
+    /// types this expression afterwards and owns any arity error, so a list
+    /// that does not apply leaves the step to inference.
     priv fn _anchor_of_generic_head(self, id: *NamedIdentExpr) -> Anchor {
         var a = Anchor{};
         var canon = NameLookup::representative(id->resolved_decl);
         a.decl = canon;
         var gps = decl_generic_params(canon);
-        if (gps.size() == 0) || (gps.size() != id->generic_args.size()) {
-            a.kind = AnchorKind::NeedsInference;    // not a record with params, or arity needs defaults/packs.
+        if gps.size() == 0 {
+            a.kind = AnchorKind::NeedsInference;    // not a record with params.
             return a;
         }
-        var args = vec::<*Type>();
-        var dep  = false;
-        for var i: usize = 0; i < gps.size(); ++i {
+        for var i: usize = 0; i < id->generic_args.size(); ++i {
             var g = id->generic_args.get(i);
-            if (g->name != &null) || (gps[i] == &null) || (gps[i]->is_pack) {
-                a.kind = AnchorKind::NeedsInference;
-                return a;
-            }
             if (g->ty == &null) || g->ty->is_poisoned() {
                 a.kind = AnchorKind::Errored;
                 return a;
             }
-            if g->ty->canonical == &null {
-                if g->ty->is_dependent() || g->ty->is_instantiation_dependent() {
-                    dep = true;
-                    continue;
-                }
+            if (g->ty->canonical == &null) && (!g->ty->is_dependent()) && (!g->ty->is_instantiation_dependent()) {
                 a.kind = AnchorKind::Errored;
                 return a;   // T left it unresolved and undiagnosed: ICE territory.
             }
-            if g->ty->is_dependent() {
-                dep = true; }
-            args.push_back(g->ty->canonical);
+        }
+        var ga = GenericArgs(self.sc);
+        ga.report = false;
+        var args = vec::<*Type>();
+        if (!ga.check_arity(canon, "", gps, id->generic_args.size(), id->range))
+        || (!ga.collect(canon, gps, id->generic_args, true, &args)) {
+            a.kind = AnchorKind::NeedsInference;
+            return a;
+        }
+        var dep = ga.inst_dependent;
+        for var i: usize = 0; i < args.size(); ++i {
+            if args[i]->is_dependent() || args[i]->is_instantiation_dependent() { dep = true; }
         }
         if dep {
             a.kind = AnchorKind::Dependent;

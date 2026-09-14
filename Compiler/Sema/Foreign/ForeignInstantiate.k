@@ -71,6 +71,8 @@ import Sema::Foreign::TypeExport::*;
 import Sema::Foreign::DeclImport::*;
 import Sema::Foreign::HeaderIndex::*;
 import Interop::Clang::HeaderSet::*;
+import Diagnostic::BufferedDiagSink::*;
+import Diagnostic::ClangDiagAdapter::*;
 
 class ForeignInstantiate {
     priv var _mu:        std::RecursiveMutex;      ///< ONE lock for all fills; see the file header.
@@ -90,8 +92,10 @@ class ForeignInstantiate {
     }
 
     /// Fill \p shell (an unfilled instance whose primary is imported). True
-    /// if it is filled afterwards, by this call or an earlier one.
-    fn fill(self, shell: *Decl) -> bool {
+    /// if it is filled afterwards, by this call or an earlier one. clang's
+    /// own diagnostics for the fill go to \p sink, the demanding TU's; null
+    /// leaves them on the set's fallback printer.
+    fn fill(self, shell: *Decl, sink: *BufferedDiagSink = &null) -> bool {
         if shell == &null { return false; }
         // Unlocked fast path. Both flags only ever go false -> true, each is
         // written LAST by a fill holding `_mu`, and today every caller is the
@@ -109,7 +113,7 @@ class ForeignInstantiate {
         }
 
         self._active.push_back(shell);
-        var ok = self._fill_locked(shell);
+        var ok = self._fill_locked(shell, sink);
         self._active.pop_back();
         if ok {
             self.n_filled += 1;
@@ -117,11 +121,10 @@ class ForeignInstantiate {
         }
         decl_set_fill_failed(shell);
         self.n_failed += 1;
-        // TODO(diag): no Kairo diagnostic in v1; the use site's member typing
-        // reports `unknown` as it did before fills. When a header set's clang
-        // diagnostics are routed through the engine (IMPORTS.md §5,
-        // [MISSING]), a failed fill goes with them, pointed at the use that
-        // demanded it.
+        // clang's own errors for the fill already went to `sink`, with spans
+        // in the header. TODO(diag): a Kairo note pointing at the USE that
+        // demanded the fill; until then the use's member typing reports
+        // `unknown` as it did before fills.
         var prim = decl_instantiated_from(shell);
         var what = "<no pattern>";
         if prim != &null { what = decl_cxx_spelling(prim); }
@@ -130,7 +133,7 @@ class ForeignInstantiate {
         return false;
     }
 
-    priv fn _fill_locked(self, shell: *Decl) -> bool {
+    priv fn _fill_locked(self, shell: *Decl, sink: *BufferedDiagSink) -> bool {
         // 1. who owns the pattern.
         var prim = decl_instantiated_from(shell);
         if prim == &null { self._why = "no pattern"; return false; }
@@ -156,6 +159,13 @@ class ForeignInstantiate {
         // Everything from here asks clang::Sema, including spelling the args:
         // a nested instance argument is itself a CheckTemplateIdType.
         var slock = std::LockGuard(*(hs->sema_lock()));
+
+        // clang's diagnostics for this fill -- a static_assert in the
+        // pattern, an undefined specialization it names -- go to the TU that
+        // demanded it, through the engine, with spans in the header.
+        var da: *ClangDiagAdapter = &null;
+        if sink != &null { da = hs->begin_diag(sink); }
+        finally { hs->end_diag(da); }
 
         // 2. the args, spelled in THIS set's AST.
         var tx = TypeExport(cctx, csema, reinterpret_cast::<*void>(hs));

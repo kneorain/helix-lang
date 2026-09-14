@@ -46,6 +46,7 @@ import Sema::SemaContext::*;
 import Sema::Resolve::NameLookup::*;
 import Sema::Resolve::MemberLookup::*;
 import Sema::Resolve::ChainBinding::*;
+import Sema::Resolve::GenericArgs::*;
 import Sema::Type::TypeUtil::*;
 import Sema::Type::Conversion::*;
 import Sema::Type::OverloadResolution::*;
@@ -403,7 +404,9 @@ class ExprTyper
     // === type-denoting expressions ==========================================
 
     /// The record a type decl denotes in expression position, applying
-    /// explicit generic args (positional, complete) or leaving the pattern.
+    /// explicit generic args or leaving the pattern. The args go through
+    /// GenericArgs, the rule a type position uses: `std::vector<i32>()` is
+    /// legal because _Alloc has a default.
     fn type_from_type_decl(self, d: *Decl, gargs: FrozenList::<ChainType::GenericArg>, at: *Expr) -> *Type {
         if isa::<ExtensionDecl>(d) {
             var e = cast::<ExtensionDecl>(d);
@@ -420,16 +423,16 @@ class ExprTyper
         var args = vec::<*Type>();
         var dep = false;
         if gargs.size() > 0 {
-            if gargs.size() != gps.size() {
-                self.fail(at, f"'{self.tu.decl_name(rep)}' takes {gps.size()} generic argument(s), {gargs.size()} given");
-                return &null;
-            }
+            var ga = GenericArgs(self.sc);
+            if !ga.check_arity(rep, self.tu.decl_name(rep), gps, gargs.size(), at->range) { self.poison_only(at); return &null; }
             for var i: usize = 0; i < gargs.size(); ++i {
                 var g = gargs.get(i);
                 if (g->ty == &null) || g->ty->is_poisoned() { self.poison_only(at); return &null; }
-                if g->ty->canonical == &null { dep = true; args.push_back(self.sc->types->generic_param(rep, static_cast::<u32>(i), false)); continue; }
-                if g->ty->is_dependent() { dep = true; }
-                args.push_back(g->ty->canonical);
+            }
+            if !ga.collect(rep, gps, gargs, true, &args) { self.poison_only(at); return &null; }
+            dep = ga.inst_dependent;
+            for var i: usize = 0; i < args.size(); ++i {
+                if args[i]->is_dependent() || args[i]->is_instantiation_dependent() { dep = true; }
             }
         } else {
             for var i: usize = 0; i < gps.size(); ++i {
