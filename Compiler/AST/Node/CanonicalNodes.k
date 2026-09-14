@@ -68,23 +68,23 @@ import Token::TokenKind::*;
 ///
 ///   These are not names. A builtin never enters a SymbolTable, never rides
 ///   the import overlay, and can never be shadowed, `i32` lexes as the
-///   keyword token AtI32 and TypeResolution asks builtin_for_token() before
+///   keyword token AtI32 and TypeResolution asks `builtin_for_token()` before
 ///   it asks any table anything. That is why `var i32 = 3` cannot break
-///   `var x: i32`, and why none of these have a WellKnownType row.
+///   `var x: i32`, and why none of these have a `WellKnownType` row.
 ///
 /// \par WIDTH IS NOT IDENTITY
 ///   Three widths now carry more than one entry, and this is the invariant
 ///   most likely to be violated by accident:
 ///
-///     8 bits   F8E4M3, F8E5M2, I8, U8, Byte
-///     16 bits  F16, BF16, I16, U16
-///     32 bits  F32, I32, U32, Char
+///     8 bits   `F8E4M3`, `F8E5M2`, `I8`, `U8`, `Byte`
+///     16 bits  `F16`, `BF16`, `I16`, `U16`
+///     32 bits  `F32`, `I32`, `U32`, `Char`
 ///
-///   builtin_fixed_bits() answers "how wide", never "which type". A float
+///   builtin_info()->bits answers "how wide", never "which type". A float
 ///   comparison keyed on width alone silently conflates F16 with BF16 and
 ///   F8E4M3 with F8E5M2, neither pair is interconvertible without
 ///   rounding, and neither is the other's canonical. Ask
-///   builtin_float_format() instead. Same for Byte vs U8 and Char vs U32:
+///   builtin_info()->fp instead. Same for Byte vs U8 and Char vs U32:
 ///   same width, distinct types, distinct rules.
 ///
 /// \par Codegen is not uniform, and the enum does not hide it
@@ -106,7 +106,7 @@ enum BuiltinKind derives u8 {
     /// The type of an expression that does not produce a value because
     /// control never reaches its end: a `-> !` call, `return`, `break`.
     /// Not spellable in type position, `-> !` is recorded on the
-    /// declaration as is_noreturn and mapped here, so builtin_for_token()
+    /// declaration as is_noreturn and mapped here, so `builtin_for_token()`
     /// has no row for it. Convertible TO everything (a diverging arm joins
     /// with any other arm) and FROM nothing.
     Never,
@@ -118,71 +118,71 @@ enum BuiltinKind derives u8 {
     /// configure. Match exhaustiveness knows it has exactly two inhabitants.
     Bool,
 
-    // === Integers ==========================================================
-    //
-    // I8..I64 / U8..U64 are native: one register, one instruction.
-    //
-    // I128..I512 / U128..U512 are LEGALIZED. LLVM supports arbitrary-width
-    // integers, so codegen emits `iN` and legalization breaks it into
-    // multi-word carry chains using the target's native width, SIMD where
-    // profitable, all for free, on every architecture. No corelib code
-    // exists for these and none is needed. The cost is instruction count,
-    // not calls: roughly 2-4x at 128 bits, 8-16x at 256, 20-40x at 512
-    // versus i64. Document that in the language docs; it is real, and it is
-    // still faster than any heap-limb bignum an ecosystem crate would give.
+    /// # Integers
+    ///
+    /// I8..I64 / U8..U64 are native: one register, one instruction.
+    ///
+    /// I128..I512 / U128..U512 are LEGALIZED. LLVM supports arbitrary-width
+    /// integers, so codegen emits `iN` and legalization breaks it into
+    /// multi-word carry chains using the target's native width, SIMD where
+    /// profitable, all for free, on every architecture. No corelib code
+    /// exists for these and none is needed. The cost is instruction count,
+    /// not calls: roughly 2-4x at 128 bits, 8-16x at 256, 20-40x at 512
+    /// versus i64. Document that in the language docs; it is real, and it is
+    /// still faster than any heap-limb bignum an ecosystem crate would give.
 
     I8, I16, I32, I64, I128, I256, I512,
     U8, U16, U32, U64, U128, U256, U512,
 
     /// Pointer-width integers. Their size is TARGET-dependent, so unlike the
-    /// fixed-width entries above their size_bits is filled from the target
-    /// triple at store construction, not from the name. builtin_fixed_bits()
+    /// fixed-width entries above their `size_bits` is filled from the target
+    /// triple at store construction, not from the name.` builtin_info()->bits`
     /// returns 0 for these two on purpose, 0 means "ask the store".
     USize, ISize,
 
-    // === 8-bit floats ======================================================
+    /// # 8-bit floats
+    ///
+    /// OCP 8-bit Floating Point Specification. Two formats, and the split is
+    /// not arbitrary: `E4M3` spends its bits on precision (weights and
+    /// activations), `E5M2` spends them on range and mirrors F16's exponent
+    /// field exactly, which makes `F16`<->`E5M2` conversion a shift rather than a
+    /// renormalization (gradients). Neither dominates; both ship.
+    ///
+    /// NO IR TYPE EXISTS. Verified against this tree: llvm/IR/Type.h's TypeID
+    /// enum runs Half, BFloat, Float, Double, X86_FP80, FP128, PPC_FP128 and
+    /// stops. There is no Float8*TyID. So:
+    ///
+    ///   *storage*    `kairo::rt::f8e4m3` / `f8e5m2`, a struct wrapping u8.
+    ///   *arithmetic* promote to `f32`, compute, narrow back. See
+    ///                builtin_arith_promote().
+    ///   *folding*    APFloat HAS the semantics even though IR does not
+    ///                (`semFloat8E4M3FN`, `semFloat8E5M2`). The constant
+    ///                evaluator uses them directly, so eval-time arithmetic
+    ///                needs no bit-twiddling of ours.
+    ///
+    /// The runtime header and APFloat MUST agree on all 256 bit patterns in
+    /// both directions. They are two implementations of one format, and a
+    /// disagreement is a miscompile that appears only when a value crosses
+    /// between compile time and run time. Test it exhaustively; 512 cases.
     //
-    // OCP 8-bit Floating Point Specification. Two formats, and the split is
-    // not arbitrary: E4M3 spends its bits on precision (weights and
-    // activations), E5M2 spends them on range and mirrors F16's exponent
-    // field exactly, which makes F16<->E5M2 conversion a shift rather than a
-    // renormalization (gradients). Neither dominates; both ship.
-    //
-    // NO IR TYPE EXISTS. Verified against this tree: llvm/IR/Type.h's TypeID
-    // enum runs Half, BFloat, Float, Double, X86_FP80, FP128, PPC_FP128 and
-    // stops. There is no Float8*TyID. So:
-    //
-    //   storage      kairo::rt::f8e4m3 / f8e5m2, a struct wrapping u8.
-    //   arithmetic   promote to f32, compute, narrow back. See
-    //                builtin_arith_promote().
-    //   folding      APFloat HAS the semantics even though IR does not
-    //                (semFloat8E4M3FN, semFloat8E5M2). The constant
-    //                evaluator uses them directly, so eval-time arithmetic
-    //                needs no bit-twiddling of ours.
-    //
-    // The runtime header and APFloat MUST agree on all 256 bit patterns in
-    // both directions. They are two implementations of one format, and a
-    // disagreement is a miscompile that appears only when a value crosses
-    // between compile time and run time. Test it exhaustively; 512 cases.
-    //
-    // NOT INCLUDED, deliberately:
-    //   Float8E4M3      the true-IEEE E4M3 with infinities, max finite 240.
-    //                   Nothing ships it. F8E4M3 below binds to the FN form.
-    //   *FNUZ variants  AMD MI300 (bias 8 / 16) and Graphcore (bias 11).
-    //                   Each is one vendor's ABI. A Kairo program spelling
-    //                   `f8e4m3` must denote the same format on every target
-    //                   it compiles for; these belong behind FFI, not here.
-    //   Float8E8M0FNU   8 exponent bits, no sign, no mantissa. A scale factor
-    //                   for MXFP4/MXFP8 blocks, not a value type: it has no
-    //                   arithmetic and CANNOT REPRESENT ZERO, which would
-    //                   break zero-initialization outright. APFloat
-    //                   special-cases it out of hasZero() for the same
-    //                   reason.
+    /// NOT INCLUDED, deliberately:
+    ///   *Float8E4M3*    the true-IEEE `E4M3` with infinities, max finite 240.
+    ///                   Nothing ships it. `F8E4M3` below binds to the FN form.
+    ///   *FNUZ variants* AMD `MI300` (bias 8 / 16) and `Graphcore` (bias 11).
+    ///                   Each is one vendor's ABI. A Kairo program spelling
+    ///                   `f8e4m3` must denote the same format on every target
+    ///                   it compiles for; these belong behind FFI, not here.
+    ///   *Float8E8M0FNU* 8 exponent bits, no sign, no mantissa. A scale factor
+    ///                   for `MXFP4/MXFP8` blocks, not a value type: it has no
+    ///                   arithmetic and CANNOT REPRESENT ZERO, which would
+    ///                   break zero-initialization outright. APFloat
+    ///                   special-cases it out of `hasZero()` for the same
+    ///                   reason.
 
     /// `f8e4m3`. OCP E4M3 in its FINITE-ONLY form: 1 sign / 4 exponent /
     /// 3 mantissa, bias 7, max finite 448, no infinities, NaN is the
-    /// all-ones significand alone. Binds to APFloat's semFloat8E4M3FN --
-    /// NOT semFloat8E4M3, which is the IEEE variant with infinities and a
+    /// all-ones significand alone. Binds to APFloat's `semFloat8E4M3FN`
+    /// NOT `semFloat8E4M3`, which is the IEEE variant with infinities and a
     /// max finite of 240. The names differ by two characters and the
     /// results differ from every ML toolchain in existence.
     F8E4M3,
@@ -192,11 +192,11 @@ enum BuiltinKind derives u8 {
     /// APFloat: semFloat8E5M2.
     F8E5M2,
 
-    // === 16-bit floats =====================================================
+    /// # 16-bit floats
     //
-    // Two DIFFERENT formats at one width. Both are native IR types in this
-    // tree (HalfTyID, BFloatTyID); neither converts to the other without
-    // rounding; neither is the other's canonical.
+    /// Two DIFFERENT formats at one width. Both are native IR types in this
+    /// tree (`HalfTyID`, `BFloatTyID`); neither converts to the other without
+    /// rounding; neither is the other's canonical.
 
     /// `f16`. IEEE 754 binary16: 1/5/10, bias 15. A FULL ARITHMETIC TYPE,
     /// not storage-only, `T + T` must mean addition for every T a generic
@@ -204,7 +204,7 @@ enum BuiltinKind derives u8 {
     /// let legalization promote to f32 on targets without native ALU
     /// support (pre-Sapphire-Rapids x86, pre-ARMv8.2). Same policy already
     /// accepted for F128's libcalls: correctness at the type level, cost
-    /// disclosed in the docs. C++: _Float16.
+    /// disclosed in the docs. C++: `_Float16`.
     F16,
 
     /// `bf16`. bfloat16: 1/8/7, bias 127, f32's exponent range with the
@@ -218,7 +218,7 @@ enum BuiltinKind derives u8 {
     /// a scheme-pure invention would be unrecognizable for no gain.
     BF16,
 
-    // === 32/64-bit floats ==================================================
+    /// # 32/64-bit floats
 
     /// `f32`. IEEE binary32. C++: float. APFloat: semIEEEsingle.
     F32,
@@ -244,51 +244,281 @@ enum BuiltinKind derives u8 {
 
     /// `f128`. IEEE binary128 (quadruple): 1/15/112. LLVM has the type
     /// (FP128TyID) but NO mainstream CPU has the instructions, so every
-    /// operation lowers to a compiler-rt LIBCALL, __addtf3, __multf3,
-    /// __divtf3. Roughly 10-50x f64 depending on the operation. Correct
+    /// operation lowers to a compiler-rt `LIBCALL`, `__addtf3`, `__multf3`,
+    /// `__divtf3`. Roughly 10-50x f64 depending on the operation. Correct
     /// everywhere, fast nowhere.
     ///
-    /// Do not confuse with PPC_FP128TyID, LLVM's OTHER 128-bit float: a
+    /// Do not confuse with `PPC_FP128TyID`, LLVM's OTHER 128-bit float: a
     /// double-double pair, structurally what F256 is below at half the limb
-    /// count. Kairo's f128 is always FP128TyID; a PowerPC `long double`
+    /// count. Kairo's `f128` is always `FP128TyID`; a PowerPC `long double`
     /// arriving through FFI is a different type and the FFI mapping table
     /// must say so.
-    /// C++: __float128. APFloat: semIEEEquad.
+    /// C++: `__float128`. `APFloat: semIEEEquad`.
     F128,
 
-    // === Extended-width floats =============================================
+    /// # Extended-width floats
     //
-    // LLVM HAS NO TYPE AT THESE WIDTHS. Unlike the integers above, there is
-    // nothing to legalize and nothing to call: these are the only entries in
-    // this enum that need Kairo implementation code. corelib soft-float,
-    // four and eight f64 limbs, Dekker arithmetic for add/mul and
-    // Newton-Raphson for div and sqrt. Not IEEE anything, the limb
-    // representation has no single exponent field, so builtin_float_format
-    // reports SoftDouble4 / SoftDouble8 rather than a binaryN.
+    /// LLVM HAS NO TYPE AT THESE WIDTHS. Unlike the integers above, there is
+    /// nothing to legalize and nothing to call: these are the only entries in
+    /// this enum that need Kairo implementation code. corelib soft-float,
+    /// four and eight f64 limbs, Dekker arithmetic for add/mul and
+    /// Newton-Raphson for div and sqrt. Not IEEE anything, the limb
+    /// representation has no single exponent field, so builtin_float_format
+    /// reports SoftDouble4 / SoftDouble8 rather than a binaryN.
 
-    /// `f256`. Four f64 limbs. C++: kairo::rt::f256.
+    /// `f256`. Four `f64` limbs. C++: `kairo::rt::f256`.
     F256,
 
-    /// `f512`. Eight f64 limbs. C++: kairo::rt::f512.
+    /// `f512`. Eight `f64` limbs. C++: `kairo::rt::f512`.
     F512,
 
-    // === Non-numeric scalars ===============================================
+    /// # Non-numeric scalars
 
     /// `byte`. A raw octet. Same width as U8 and NOT THE SAME TYPE: bitwise
     /// operators only, arithmetic is a diagnostic. This is the distinction
     /// C++ never made, char, unsigned char and uint8_t are one type there,
     /// so "storage" and "small number" are indistinguishable to the type
-    /// system. Here they are not. C++: std::byte.
+    /// system. Here they are not. C++: `std::byte`.
     Byte,
 
     /// `char`. A decoded Unicode scalar value, 4 bytes. Same width as U32
     /// and NOT THE SAME TYPE. Strings are UTF-8 backed by u8; `char` appears
     /// when a single codepoint is wanted, s[i] yields one, `for ch in s`
     /// yields them. A [char; N] is 4x the UTF-8 size, bought for O(1)
-    /// codepoint indexing. C++: char32_t.
+    /// codepoint indexing. C++: `char32_t`.
     Char,
 
     COUNT,   ///< keep last.
+}
+
+inline "c++" { // PORT(trivial) stage0 does not have a way to reprenst a constexpr variable.
+    constexpr u8 TOTAL_BUILTINS_COUNT = static_cast<u8>(BuiltinKind::COUNT);
+}
+
+/// \enum FloatImpl
+/// \brief How a float type's operations are implemented. ORTHOGONAL to bit
+///        layout: f16 is IEEE-shaped and Native, f128 is IEEE-shaped and
+///        Libcall. Callers that want to know "will this be fast" ask this;
+///        callers that want to know "what does a bit pattern mean" ask
+///        FloatLayout's fields.
+enum FloatImpl derives u8 {
+    None,       ///< not a float.
+    Native,     ///< an LLVM IR type exists; emit it and stop.
+    Libcall,    ///< IR type exists, every op lowers to compiler-rt. f128 only.
+    Corelib,    ///< no IR type at all; kairo::rt struct, arithmetic in f32/f64.
+}
+
+/// \enum FloatSem
+/// \brief APFloat semantics selector.
+///
+/// \detail
+///   The one part of a float's identity that MUST be a tag. It names an
+///   external object and cannot be reconstructed from field widths:
+///   semFloat8E4M3FN and semFloat8E4M3 have identical exponent and mantissa
+///   widths and differ only on whether infinities exist. Anything derivable
+///   from the layout lives in FloatLayout's numeric fields instead, so that
+///   adding a format does not mean adding a switch arm somewhere.
+///
+///   SoftDouble4/8 are not APFloat semantics. They are limb representations
+///   with no single exponent field; the constant evaluator has no APFloat to
+///   hand for them and must route through corelib.
+enum FloatSem derives u8 {
+    None = 0,
+
+    Float8E4M3FN,        ///< semFloat8E4M3FN. NOT semFloat8E4M3.
+    Float8E5M2,          ///< semFloat8E5M2.
+    IEEEHalf,            ///< semIEEEhalf.
+    BFloat,              ///< semBFloat.
+    IEEESingle,          ///< semIEEEsingle.
+    IEEEDouble,          ///< semIEEEdouble.
+    X87DoubleExtended,   ///< semX87DoubleExtended.
+    IEEEQuad,            ///< semIEEEquad.
+
+    SoftDouble4,         ///< four f64 limbs. No APFloat equivalent.
+    SoftDouble8,         ///< eight f64 limbs. No APFloat equivalent.
+}
+
+/// \struct FloatLayout
+/// \brief The shape of a float, in fields rather than in a name.
+///
+/// \detail
+///   Exists so that conversion rank, exactness and diagnostics are COMPUTED
+///   rather than table-matched pair by pair. See float_widens_exactly().
+///
+///   exp/mant/bias are 0 for the SoftDouble limb formats, which have no single
+///   exponent field. `exp == 0` on a row whose sem is not None means "ask
+///   corelib"; every consumer must treat it as unknown rather than as zero.
+struct FloatLayout {
+    var sem:   FloatSem;
+    var fimpl: FloatImpl;
+
+    var exp:  u8;  ///< exponent bits; 0 for limb formats and non-floats.
+    var mant: u8;  ///< STORED mantissa bits, excluding any implicit bit.
+    var bias: i16; ///< i16, not u8: FNUZ biases arriving through FFI do not fit.
+
+    var has_inf:          bool; ///< false for E4M3FN, whose all-ones exponent is NaN.
+    var explicit_int_bit: bool; ///< x87 only. Not an IEEE interchange format.
+}
+
+eval fn float_layout_none() -> FloatLayout {
+    return FloatLayout(FloatSem::None, FloatImpl::None, 0, 0, 0, false, false);
+}
+
+/// \brief True when every value of \p from is exactly representable in \p to.
+///
+/// \detail
+///   Width is NOT the answer and the 16-bit pair is the proof: bf16 -> f16
+///   loses range, f16 -> bf16 loses precision, both are 16 bits, neither is
+///   exact. Comparing the two fields separately gets all of these right with
+///   no pair table:
+///
+///     `bf16` -> `f32`    `true`    (8/23 covers 8/7)
+///     `bf16` -> `f16`    `false`   (5 exponent bits cannot hold 8)
+///     `f16`  -> `bf16`   `false`   (7 mantissa bits cannot hold 10)
+///     `f16`  -> `f32`    `true`
+///
+///   Limb formats return false rather than comparing against a zeroed field.
+///   Conservative refusal is the correct failure mode here; anything that
+///   needs a real answer for f256/f512 goes through corelib anyway.
+fn float_widens_exactly(from: *FloatLayout, to: *FloatLayout) -> bool {
+    if (from->sem == FloatSem::None) || (to->sem == FloatSem::None) { return false; }
+    if (from->exp == 0) || (to->exp == 0) { return false; }
+    if (from->has_inf && (!to->has_inf))  { return false; }
+    return (to->exp >= from->exp) && (to->mant >= from->mant);
+}
+
+/// Category bits for BuiltinInfo::flags. The predicates below read these
+/// instead of comparing enum values, which is what makes BuiltinKind's
+/// ordering genuinely arbitrary the way its doc comment claims.
+eval fn BF_INTEGER()      -> u8 { return 1;  }
+eval fn BF_SIGNED()       -> u8 { return 2;  }
+eval fn BF_FLOAT()        -> u8 { return 4;  }
+eval fn BF_TARGET_WIDTH() -> u8 { return 8;  }  ///< bits == 0; store fills from the triple.
+eval fn BF_X86_ONLY()     -> u8 { return 16; }  ///< TypeResolution hard-errors on other targets.
+
+/// \struct BuiltinInfo
+/// \brief One row per BuiltinKind.
+///
+/// \detail
+///   `kind` is redundant with the row index and is present ONLY so
+///   verify_builtin_table() can catch a misordered insert. That check is the
+///   entire justification for this being a table instead of a switch: a
+///   switch cannot be wrong about which arm it is in, a table can, so the
+///   table has to prove itself at eval time or it is strictly worse.
+///
+///   Per-entry semantics stay on BuiltinKind's doc comments. A row holds data;
+///   it does not hold the reasoning, and nothing here should be read as
+///   replacing it.
+struct BuiltinInfo {
+    var kind:     BuiltinKind;
+    var tk:       TokenKind;    ///< TokenKind::COUNT for the rows with no type-position token.
+    var spelling: string;       ///< source spelling, for diagnostics and dumps.
+    var cxx:      string;       ///< C++ emission. "" is a codegen bug, never valid.
+    var bits:     usize;        ///< 0 for Void/Never and for the target-width pair.
+    var flags:    u8;
+    var fp:       FloatLayout;
+
+    fn is_integer(self)  -> bool { return (self.flags & BF_INTEGER())  != 0; }
+    fn is_signed(self)   -> bool { return (self.flags & BF_SIGNED())   != 0; }
+    fn is_float(self)    -> bool { return (self.flags & BF_FLOAT())    != 0; }
+
+    /// True when the type is legal only on x86. TypeResolution reads this
+    /// rather than naming F80 directly, so a second such entry costs a row.
+    fn is_x86_only(self) -> bool { return (self.flags & BF_X86_ONLY()) != 0; }
+}
+
+/// \var BuiltinTable
+/// \brief Static description of every builtin, indexed by BuiltinKind. One row
+///        per enumerator, TOTAL_BUILTINS_COUNT rows, order matches the enum.
+///
+/// \detail
+///   The table is the single source of truth for the four facts a builtin
+///   carries: the keyword token it lexes as, the Kairo spelling, the C++ type
+///   EmitPlan writes, and the width/flags/float layout TypeResolution checks.
+///   Adding a builtin is one row here plus one enumerator; nothing else keys
+///   off the ordering.
+///
+/// \par Rows that do not mean what the columns suggest
+///      `Never` lists `"void"` as its C++ type and `TokenKind::OpExclaim` as its
+///      token. A noreturn function still has a C++ return type; divergence rides
+///      on `[[noreturn]]`, which EmitPlan attaches from is_noreturn. `!` is not
+///      spellable in type position, so nothing resolves through that token.
+///
+///      `USize`/`ISize` carry bits == 0 with BF_TARGET_WIDTH. Zero means "ask the
+///      store", which fills the real width from the target triple. Never read
+///      the literal 0 as a width.
+///
+///      `F256`/`F512` carry exp/mant/bias == 0. A limb representation has no
+///      single exponent field; those columns are not meaningful for them.
+///
+///      `F80` is BF_X86_ONLY. On a non-x86 target `long double` is `double`, so
+///      TypeResolution rejects f80 there rather than letting the row silently
+///      mean something else.
+///
+/// \par Float layout carries the identity, not the width
+///      F8E4M3 differs from semFloat8E4M3 only in has_inf == false, and that
+///      field is what float_widens_exactly() reads to refuse f16 -> f8e4m3.
+///      Width alone conflates F16 with BF16 and the two f8 formats; read
+///      FloatLayout.
+///
+/// \par Codegen strategy per row
+///     *native*     `_Float16`, `__bf16`, `float`, `double`, `long double`.
+///     *legalized*  `_BitInt(N)`: C23, adopted by Clang for C++ as an
+///                  extension; lowered to LLVM iN, legalization emits the
+///                  carry chains.
+///     *libcall*    `__float128`: LLVM has the type, calls compiler-rt.
+///     *corelib*    `::kairo::rt::*`: no LLVM type, arithmetic in f32/f64.
+///
+/// \par Non-numeric scalars
+///      `Byte` maps to `::std::byte`, a scoped enum in C++: bitwise ops only,
+///      arithmetic ill-formed, so the C++ side enforces Byte's rule for free.
+///      `Char` maps to `char32_t`, distinct from U32 despite equal width.
+inline "c++" { // PORT(trivial): reason for this inline c++, stage0 does not have any way to reprenst an initlizer list, and here we reuire it.
+    static BuiltinInfo BuiltinTable[TOTAL_BUILTINS_COUNT] = {
+        BuiltinInfo(BuiltinKind::Void,   TokenKind::AtVoid,    "void",    "void",                  0,   0,                        float_layout_none()),
+        BuiltinInfo(BuiltinKind::Never,  TokenKind::OpExclaim, "!",       "void",                  0,   0,                        float_layout_none()),
+        BuiltinInfo(BuiltinKind::Bool,   TokenKind::AtBool,    "bool",    "bool",                  8,   0,                        float_layout_none()),
+        BuiltinInfo(BuiltinKind::I8,     TokenKind::AtI8,      "i8",      "::std::int8_t",         8,   BF_INTEGER()|BF_SIGNED(), float_layout_none()),
+        BuiltinInfo(BuiltinKind::I16,    TokenKind::AtI16,     "i16",     "::std::int16_t",        16,  BF_INTEGER()|BF_SIGNED(), float_layout_none()),
+        BuiltinInfo(BuiltinKind::I32,    TokenKind::AtI32,     "i32",     "::std::int32_t",        32,  BF_INTEGER()|BF_SIGNED(), float_layout_none()),
+        BuiltinInfo(BuiltinKind::I64,    TokenKind::AtI64,     "i64",     "::std::int64_t",        64,  BF_INTEGER()|BF_SIGNED(), float_layout_none()),
+        BuiltinInfo(BuiltinKind::I128,   TokenKind::AtI128,    "i128",    "_BitInt(128)",          128, BF_INTEGER()|BF_SIGNED(), float_layout_none()),
+        BuiltinInfo(BuiltinKind::I256,   TokenKind::AtI256,    "i256",    "_BitInt(256)",          256, BF_INTEGER()|BF_SIGNED(), float_layout_none()),
+        BuiltinInfo(BuiltinKind::I512,   TokenKind::AtI512,    "i512",    "_BitInt(512)",          512, BF_INTEGER()|BF_SIGNED(), float_layout_none()),
+        BuiltinInfo(BuiltinKind::U8,     TokenKind::AtU8,      "u8",      "::std::uint8_t",        8,   BF_INTEGER(),             float_layout_none()),
+        BuiltinInfo(BuiltinKind::U16,    TokenKind::AtU16,     "u16",     "::std::uint16_t",       16,  BF_INTEGER(),             float_layout_none()),
+        BuiltinInfo(BuiltinKind::U32,    TokenKind::AtU32,     "u32",     "::std::uint32_t",       32,  BF_INTEGER(),             float_layout_none()),
+        BuiltinInfo(BuiltinKind::U64,    TokenKind::AtU64,     "u64",     "::std::uint64_t",       64,  BF_INTEGER(),             float_layout_none()),
+        BuiltinInfo(BuiltinKind::U128,   TokenKind::AtU128,    "u128",    "unsigned _BitInt(128)", 128, BF_INTEGER(),             float_layout_none()),
+        BuiltinInfo(BuiltinKind::U256,   TokenKind::AtU256,    "u256",    "unsigned _BitInt(256)", 256, BF_INTEGER(),             float_layout_none()),
+        BuiltinInfo(BuiltinKind::U512,   TokenKind::AtU512,    "u512",    "unsigned _BitInt(512)", 512, BF_INTEGER(),             float_layout_none()),
+        BuiltinInfo(BuiltinKind::USize,  TokenKind::AtUsize,   "usize",   "::std::size_t",         0,   BF_INTEGER()|BF_TARGET_WIDTH(),             float_layout_none()),
+        BuiltinInfo(BuiltinKind::ISize,  TokenKind::AtIsize,   "isize",   "::std::ptrdiff_t",      0,   BF_INTEGER()|BF_SIGNED()|BF_TARGET_WIDTH(), float_layout_none()),
+        BuiltinInfo(BuiltinKind::F8E4M3, TokenKind::AtF8E4M3,  "f8e4m3",  "::kairo::rt::f8e4m3",   8,   BF_FLOAT(),               FloatLayout(FloatSem::Float8E4M3FN,      FloatImpl::Corelib, 4,  3,   7,     false, false)),
+        BuiltinInfo(BuiltinKind::F8E5M2, TokenKind::AtF8E5M2,  "f8e5m2",  "::kairo::rt::f8e5m2",   8,   BF_FLOAT(),               FloatLayout(FloatSem::Float8E5M2,        FloatImpl::Corelib, 5,  2,   15,    true,  false)),
+        BuiltinInfo(BuiltinKind::F16,    TokenKind::AtF16,     "f16",     "_Float16",              16,  BF_FLOAT(),               FloatLayout(FloatSem::IEEEHalf,          FloatImpl::Native,  5,  10,  15,    true,  false)),
+        BuiltinInfo(BuiltinKind::BF16,   TokenKind::AtBf16,    "bf16",    "__bf16",                16,  BF_FLOAT(),               FloatLayout(FloatSem::BFloat,            FloatImpl::Native,  8,  7,   127,   true,  false)),
+        BuiltinInfo(BuiltinKind::F32,    TokenKind::AtF32,     "f32",     "float",                 32,  BF_FLOAT(),               FloatLayout(FloatSem::IEEESingle,        FloatImpl::Native,  8,  23,  127,   true,  false)),
+        BuiltinInfo(BuiltinKind::F64,    TokenKind::AtF64,     "f64",     "double",                64,  BF_FLOAT(),               FloatLayout(FloatSem::IEEEDouble,        FloatImpl::Native,  11, 52,  1023,  true,  false)),
+        BuiltinInfo(BuiltinKind::F80,    TokenKind::AtF80,     "f80",     "long double",           80,  BF_FLOAT()|BF_X86_ONLY(), FloatLayout(FloatSem::X87DoubleExtended, FloatImpl::Native,  15, 64,  16383, true,  true)),
+        BuiltinInfo(BuiltinKind::F128,   TokenKind::AtF128,    "f128",    "__float128",            128, BF_FLOAT(),               FloatLayout(FloatSem::IEEEQuad,          FloatImpl::Libcall, 15, 112, 16383, true,  false)),
+        BuiltinInfo(BuiltinKind::F256,   TokenKind::AtF256,    "f256",    "::kairo::rt::f256",     256, BF_FLOAT(),               FloatLayout(FloatSem::SoftDouble4,       FloatImpl::Corelib, 0,  0,   0,     true,  false)),
+        BuiltinInfo(BuiltinKind::F512,   TokenKind::AtF512,    "f512",    "::kairo::rt::f512",     512, BF_FLOAT(),               FloatLayout(FloatSem::SoftDouble8,       FloatImpl::Corelib, 0,  0,   0,     true,  false)),
+        BuiltinInfo(BuiltinKind::Byte,   TokenKind::AtByte,    "byte",    "::std::byte",           8,   0,                        float_layout_none()),
+        BuiltinInfo(BuiltinKind::Char,   TokenKind::AtChar,    "char",    "char32_t",              32,  0,                        float_layout_none()),
+    };
+}
+
+/// \brief THE builtin accessor. Every per-builtin fact (spelling, C++
+///        emission, width, category, float layout) is a field or predicate
+///        on the returned row; there are deliberately no per-field wrappers.
+///
+/// \detail `bits` answers "how wide", never "which type": three widths carry
+///         more than one entry (see BuiltinKind's WIDTH IS NOT IDENTITY note),
+///         so read `fp` when the question is about a format. `bits == 0` on a
+///         BF_TARGET_WIDTH row means "ask the store", never a width.
+fn builtin_info(b: BuiltinKind) -> *BuiltinInfo {
+    return &BuiltinTable[static_cast::<u8>(b)];
 }
 
 /// \brief Map a type-position token kind to its builtin, or COUNT when the
@@ -299,238 +529,106 @@ enum BuiltinKind derives u8 {
 ///          never shadowable. TypeResolution asks this question of a
 ///          ChainType's first segment before it asks the symbol tables
 ///          anything, which is also why `var i32 = 3` cannot break `var x: i32`.
+///
+///          Deliberately NOT a scan of BuiltinTable. This runs on every
+///          type-position token in every parse; a switch is a jump table and a
+///          scan is 30 comparisons. verify_builtin_table() round-trips every
+///          row through it, so the two cannot drift apart.
 fn builtin_for_token(k: TokenKind) -> BuiltinKind {
     switch k {
-        case TokenKind::AtVoid  { return BuiltinKind::Void;  }
-        case TokenKind::AtBool  { return BuiltinKind::Bool;  }
-        case TokenKind::AtByte  { return BuiltinKind::Byte;  }
-        case TokenKind::AtChar  { return BuiltinKind::Char;  }
+        case TokenKind::AtVoid    { return BuiltinKind::Void;   }
+        case TokenKind::OpExclaim { return BuiltinKind::Never;  }
+        case TokenKind::AtBool    { return BuiltinKind::Bool;   }
+        case TokenKind::AtByte    { return BuiltinKind::Byte;   }
+        case TokenKind::AtChar    { return BuiltinKind::Char;   }
 
-        case TokenKind::AtI8    { return BuiltinKind::I8;    }
-        case TokenKind::AtI16   { return BuiltinKind::I16;   }
-        case TokenKind::AtI32   { return BuiltinKind::I32;   }
-        case TokenKind::AtI64   { return BuiltinKind::I64;   }
-        case TokenKind::AtI128  { return BuiltinKind::I128;  }
-        case TokenKind::AtI256  { return BuiltinKind::I256;  }
-        case TokenKind::AtI512  { return BuiltinKind::I512;  }
+        case TokenKind::AtI8      { return BuiltinKind::I8;     }
+        case TokenKind::AtI16     { return BuiltinKind::I16;    }
+        case TokenKind::AtI32     { return BuiltinKind::I32;    }
+        case TokenKind::AtI64     { return BuiltinKind::I64;    }
+        case TokenKind::AtI128    { return BuiltinKind::I128;   }
+        case TokenKind::AtI256    { return BuiltinKind::I256;   }
+        case TokenKind::AtI512    { return BuiltinKind::I512;   }
 
-        case TokenKind::AtU8    { return BuiltinKind::U8;    }
-        case TokenKind::AtU16   { return BuiltinKind::U16;   }
-        case TokenKind::AtU32   { return BuiltinKind::U32;   }
-        case TokenKind::AtU64   { return BuiltinKind::U64;   }
-        case TokenKind::AtU128  { return BuiltinKind::U128;  }
-        case TokenKind::AtU256  { return BuiltinKind::U256;  }
-        case TokenKind::AtU512  { return BuiltinKind::U512;  }
+        case TokenKind::AtU8      { return BuiltinKind::U8;     }
+        case TokenKind::AtU16     { return BuiltinKind::U16;    }
+        case TokenKind::AtU32     { return BuiltinKind::U32;    }
+        case TokenKind::AtU64     { return BuiltinKind::U64;    }
+        case TokenKind::AtU128    { return BuiltinKind::U128;   }
+        case TokenKind::AtU256    { return BuiltinKind::U256;   }
+        case TokenKind::AtU512    { return BuiltinKind::U512;   }
 
-        case TokenKind::AtUsize { return BuiltinKind::USize; }
-        case TokenKind::AtIsize { return BuiltinKind::ISize; }
+        case TokenKind::AtUsize   { return BuiltinKind::USize;  }
+        case TokenKind::AtIsize   { return BuiltinKind::ISize;  }
 
-        case TokenKind::AtBf16   { return BuiltinKind::BF16;  }
-        case TokenKind::AtF16    { return BuiltinKind::F16;   }
-        case TokenKind::AtF32    { return BuiltinKind::F32;   }
-        case TokenKind::AtF64    { return BuiltinKind::F64;   }
-        case TokenKind::AtF80    { return BuiltinKind::F80;   }
-        case TokenKind::AtF128   { return BuiltinKind::F128;  }
-        case TokenKind::AtF256   { return BuiltinKind::F256;  }
-        case TokenKind::AtF512   { return BuiltinKind::F512;  }
-        case TokenKind::AtF8E4M3 { return BuiltinKind::F8E4M3; }
-        case TokenKind::AtF8E5M2 { return BuiltinKind::F8E5M2; }
+        case TokenKind::AtBf16    { return BuiltinKind::BF16;   }
+        case TokenKind::AtF16     { return BuiltinKind::F16;    }
+        case TokenKind::AtF32     { return BuiltinKind::F32;    }
+        case TokenKind::AtF64     { return BuiltinKind::F64;    }
+        case TokenKind::AtF80     { return BuiltinKind::F80;    }
+        case TokenKind::AtF128    { return BuiltinKind::F128;   }
+        case TokenKind::AtF256    { return BuiltinKind::F256;   }
+        case TokenKind::AtF512    { return BuiltinKind::F512;   }
+        case TokenKind::AtF8E4M3  { return BuiltinKind::F8E4M3; }
+        case TokenKind::AtF8E5M2  { return BuiltinKind::F8E5M2; }
 
-        default { return BuiltinKind::COUNT; }
+        default                   { return BuiltinKind::COUNT; }
     }
 }
 
-/// \brief The C++ spelling a builtin lowers to. THE single source of truth
-///        for emission, codegen, the FFI mapping table and the header
-///        emitter all read this, so a type has one spelling or none.
+/// \brief Every row lands at the index its `kind` names, carries a spelling
+///        and a C++ emission, round-trips through builtin_for_token(), and
+///        no two float rows claim the same APFloat semantics.
 ///
 /// \detail
-///   Four categories, and the return value does not distinguish them because
-///   the emitter does not care: it prints the string. What it means for a
-///   caller is documented per row above in BuiltinKind.
-///
-///     keyword / native   void, bool, float, double, _Float16, __bf16
-///     &lt;cstdint&gt; alias    the fixed-width integers; ::std:: qualified so a
-///                        user `using namespace std` cannot capture them.
-///     _BitInt(N)         i128..i512 / u128..u512. NOT an alias of anything
-///                       , LLVM legalizes iN directly and this is the C++
-///                        surface for it.
-///     kairo::rt struct   the two fp8 entries and f256/f512, where no C++ or
-///                        LLVM type exists at all.
-///
-///   USize/ISize are the only target-dependent rows. `usize`/`isize` map to
-///   size_t/ptrdiff_t rather than a fixed width, so the width follows the
-///   triple the same way size_bits does.
-///
-///   F80 is x86-only. TypeResolution rejects it for other targets before
-///   codegen ever asks, so this returns the spelling unconditionally rather
-///   than duplicating the target check.
-///
-/// \return the spelling, or "" for COUNT and any unhandled value. An empty
-///         string is a codegen bug, never a valid emission.
-fn builtin_cxx_spelling(b: BuiltinKind) -> string {
-    switch b {
-        case BuiltinKind::Void  { return "void"; }
+///   A table is only safer than a switch if a wrong insert fails the build.
+///   This is that check, and the distinct-sem clause is the one that matters
+///   most: two rows sharing FloatSem::IEEEHalf is the f16/bf16 conflation the
+///   enum spends three paragraphs warning about, and it should break the
+///   build rather than a test.
+eval fn verify_builtin_table() -> bool {
+    var seen_sem: array::<bool, 16>;
+    for (var s = 0; s < 16; ++s) { seen_sem[s] = false; }
 
-        // A noreturn function still has a C++ return type; the divergence
-        // rides on [[noreturn]], which EmitPlan attaches from is_noreturn.
-        case BuiltinKind::Never { return "void"; }
+    for (var i = 0; i < static_cast::<u8>(BuiltinKind::COUNT); ++i) {
+        var row = &BuiltinTable[i];
 
-        case BuiltinKind::Bool  { return "bool"; }
+        if (static_cast::<u8>(row->kind) != i) { return false; }
+        if (row->spelling == "")               { return false; }
+        if (row->cxx == "")                    { return false; }
 
-        // --- integers: fixed width ---------------------------------------
-        case BuiltinKind::I8    { return "::std::int8_t";   }
-        case BuiltinKind::I16   { return "::std::int16_t";  }
-        case BuiltinKind::I32   { return "::std::int32_t";  }
-        case BuiltinKind::I64   { return "::std::int64_t";  }
-        case BuiltinKind::U8    { return "::std::uint8_t";  }
-        case BuiltinKind::U16   { return "::std::uint16_t"; }
-        case BuiltinKind::U32   { return "::std::uint32_t"; }
-        case BuiltinKind::U64   { return "::std::uint64_t"; }
+        var is_float  = (row->flags & BF_FLOAT())   != 0;
+        var is_int    = (row->flags & BF_INTEGER()) != 0;
+        var is_target = (row->flags & BF_TARGET_WIDTH()) != 0;
 
-        // --- integers: extended width ------------------------------------
-        // _BitInt is C23, adopted by clang for C++ as an extension. Clang
-        // lowers these to LLVM iN and legalizes to carry chains.
-        case BuiltinKind::I128  { return "_BitInt(128)";           }
-        case BuiltinKind::I256  { return "_BitInt(256)";           }
-        case BuiltinKind::I512  { return "_BitInt(512)";           }
-        case BuiltinKind::U128  { return "unsigned _BitInt(128)";  }
-        case BuiltinKind::U256  { return "unsigned _BitInt(256)";  }
-        case BuiltinKind::U512  { return "unsigned _BitInt(512)";  }
+        if (is_float && is_int) { return false; }
 
-        // --- integers: target width ---------------------------------------
-        case BuiltinKind::USize { return "::std::size_t";    }
-        case BuiltinKind::ISize { return "::std::ptrdiff_t"; }
+        if (is_float) {
+            if (row->fp.sem == FloatSem::None)   { return false; }
+            if (row->fp.fimpl == FloatImpl::None) { return false; }
 
-        // --- floats: no C++ type exists -----------------------------------
-        // u8-wrapping structs. Arithmetic promotes to float in the header,
-        // matching what fpext/fptrunc would emit if IR had the type.
-        case BuiltinKind::F8E4M3 { return "::kairo::rt::f8e4m3"; }
-        case BuiltinKind::F8E5M2 { return "::kairo::rt::f8e5m2"; }
+            var s = static_cast::<u8>(row->fp.sem);
+            if (seen_sem[s]) { return false; }   // two rows, one APFloat semantics.
+            seen_sem[s] = true;
+        } else {
+            if (row->fp.sem != FloatSem::None)   { return false; }
+            if (row->fp.fimpl != FloatImpl::None) { return false; }
+        }
 
-        // --- floats: native ------------------------------------------------
-        case BuiltinKind::F16   { return "_Float16"; }
-        case BuiltinKind::BF16  { return "__bf16";   }
-        case BuiltinKind::F32   { return "float";    }
-        case BuiltinKind::F64   { return "double";   }
+        // bits == 0 must mean "ask the store", and only for the rows that say so.
+        if (is_target && (row->bits != 0)) { return false; }
+        if ((!is_target) && (row->bits == 0)
+            && (row->kind != BuiltinKind::Void)
+            && (row->kind != BuiltinKind::Never)) { return false; }
 
-        // x86 only; see BuiltinKind::F80. On a non-x86 target `long double`
-        // is double, which is exactly why T rejects f80 there instead of
-        // letting this row silently mean something else.
-        case BuiltinKind::F80   { return "long double"; }
-
-        case BuiltinKind::F128  { return "__float128"; }
-
-        // --- floats: corelib soft-float -----------------------------------
-        case BuiltinKind::F256  { return "::kairo::rt::f256"; }
-        case BuiltinKind::F512  { return "::kairo::rt::f512"; }
-
-        // --- non-numeric scalars -------------------------------------------
-        // std::byte is a scoped enum in C++: bitwise ops only, arithmetic
-        // ill-formed. The C++ side enforces Byte's rule for free.
-        case BuiltinKind::Byte  { return "::std::byte"; }
-        case BuiltinKind::Char  { return "char32_t";    }
-
-        default { return ""; }
+        // Every row round-trips through the switch above. No sentinel rows.
+        if (builtin_for_token(row->tk) != row->kind) { return false; }
     }
+    return true;
 }
 
-/// \brief Source spelling of a builtin, for diagnostics and dumps.
-fn builtin_spelling(b: BuiltinKind) -> string {
-    switch b {
-        case BuiltinKind::Void   { return "void";  }
-        case BuiltinKind::Never  { return "!";     }
-        case BuiltinKind::Bool   { return "bool";  }
-        case BuiltinKind::Byte   { return "byte";  }
-        case BuiltinKind::Char   { return "char";  }
-        case BuiltinKind::I8     { return "i8";    }
-        case BuiltinKind::I16    { return "i16";   }
-        case BuiltinKind::I32    { return "i32";   }
-        case BuiltinKind::I64    { return "i64";   }
-        case BuiltinKind::I128   { return "i128";  }
-        case BuiltinKind::I256   { return "i256";  }
-        case BuiltinKind::I512   { return "i512";  }
-        case BuiltinKind::U8     { return "u8";    }
-        case BuiltinKind::U16    { return "u16";   }
-        case BuiltinKind::U32    { return "u32";   }
-        case BuiltinKind::U64    { return "u64";   }
-        case BuiltinKind::U128   { return "u128";  }
-        case BuiltinKind::U256   { return "u256";  }
-        case BuiltinKind::U512   { return "u512";  }
-        case BuiltinKind::USize  { return "usize"; }
-        case BuiltinKind::ISize  { return "isize"; }
-        case BuiltinKind::F8E4M3 { return "f8e4m3"; }
-        case BuiltinKind::F8E5M2 { return "f8e5m2"; }
-        case BuiltinKind::BF16   { return "bf16"; }
-        case BuiltinKind::F16    { return "f16";   }
-        case BuiltinKind::F32    { return "f32";   }
-        case BuiltinKind::F64    { return "f64";   }
-        case BuiltinKind::F80    { return "f80";   }
-        case BuiltinKind::F128   { return "f128";  }
-        case BuiltinKind::F256   { return "f256";  }
-        case BuiltinKind::F512   { return "f512";  }
-        default                  { return "<builtin?>"; }
-    }
-}
-
-/// \brief Width in bits, or 0 for the two target-dependent entries (the store
-///        fills those from the target triple).
-fn builtin_fixed_bits(b: BuiltinKind) -> usize {
-    switch b {
-        case BuiltinKind::Void   { return 0;   }
-        case BuiltinKind::Never  { return 0;   }
-        case BuiltinKind::Bool   { return 8;   }
-        case BuiltinKind::Byte   { return 8;   }
-        case BuiltinKind::Char   { return 32;  }
-        case BuiltinKind::I8     { return 8;   }
-        case BuiltinKind::I16    { return 16;  }
-        case BuiltinKind::I32    { return 32;  }
-        case BuiltinKind::I64    { return 64;  }
-        case BuiltinKind::I128   { return 128; }
-        case BuiltinKind::I256   { return 256; }
-        case BuiltinKind::I512   { return 512; }
-        case BuiltinKind::U8     { return 8;   }
-        case BuiltinKind::U16    { return 16;  }
-        case BuiltinKind::U32    { return 32;  }
-        case BuiltinKind::U64    { return 64;  }
-        case BuiltinKind::U128   { return 128; }
-        case BuiltinKind::U256   { return 256; }
-        case BuiltinKind::U512   { return 512; }
-        case BuiltinKind::USize  { return 0;   }   // target-dependent.
-        case BuiltinKind::ISize  { return 0;   }   // target-dependent.
-        case BuiltinKind::F8E4M3 { return 8;   }
-        case BuiltinKind::F8E5M2 { return 8;   }
-        case BuiltinKind::BF16   { return 16;  }
-        case BuiltinKind::F16    { return 16;  }
-        case BuiltinKind::F32    { return 32;  }
-        case BuiltinKind::F64    { return 64;  }
-        case BuiltinKind::F80    { return 80;  }
-        case BuiltinKind::F128   { return 128; }
-        case BuiltinKind::F256   { return 256; }
-        case BuiltinKind::F512   { return 512; }
-        default                  { return 0;   }   // USize / ISize: target-dependent.
-    }
-}
-
-fn builtin_is_integer(b: BuiltinKind) -> bool {
-    var v = static_cast::<u8>(b);
-    return ((v >= static_cast::<u8>(BuiltinKind::I8))
-         && (v <= static_cast::<u8>(BuiltinKind::U512)))
-        || (b == BuiltinKind::USize) || (b == BuiltinKind::ISize);
-}
-
-fn builtin_is_signed(b: BuiltinKind) -> bool {
-    var v = static_cast::<u8>(b);
-    return ((v >= static_cast::<u8>(BuiltinKind::I8))
-         && (v <= static_cast::<u8>(BuiltinKind::I512)))
-        || (b == BuiltinKind::ISize);
-}
-
-fn builtin_is_float(b: BuiltinKind) -> bool {
-    var v = static_cast::<u8>(b);
-    return (v >= static_cast::<u8>(BuiltinKind::F8E4M3))
-        && (v <= static_cast::<u8>(BuiltinKind::F512));
-}
+// PORT(trivial): the table is static not evaluated, so the static_assert is a no-op in stage0.
+// static_assert(verify_builtin_table(), r"BuiltinTable row is out of order, incomplete, or duplicates a FloatSem");
 
 // FIXME: REFACTOR into separate files.
 
@@ -575,7 +673,7 @@ class BuiltinType derives Type {
         return TypeKind::BuiltinType;
     }
 
-    fn spelling(self) -> string { return builtin_spelling(self.builtin); }
+    fn info(self) -> *BuiltinInfo { return builtin_info(self.builtin); }
 }
 
 ///

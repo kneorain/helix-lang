@@ -139,7 +139,7 @@ class CanonicalTypeStore {
             bt->init_annotations(&(self._arena));
             bt->init_spans(&(self._arena));
 
-            var bits = builtin_fixed_bits(b);
+            var bits = builtin_info(b)->bits;
             if (b == BuiltinKind::USize) || (b == BuiltinKind::ISize) {
                 bits = self._ptr_bits;
             }
