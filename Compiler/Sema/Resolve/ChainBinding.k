@@ -23,12 +23,11 @@
 ///     candidate cells and fills the rest).
 ///
 ///     A step rooted in a GENERIC PARAMETER is decided by that parameter's
-///     declaration, not deferred wholesale (see "The dependent regimes"
-///     below). `<T: type>` defers everything to M2, the C++ rule. A bounded
-///     `<T impl I>` / `<T derives B>` resolves against the bound's members
-///     right here, once, at the template. An unbounded `<T>` has no members
-///     at all and says so -- at the template, which is the whole difference
-///     from C++. Only a dependent COMPOSITE (`[T]`, an unfilled
+///     declaration, not deferred wholesale
+///     A bounded `<T impl I>` / `<T derives B>` resolves against the bound's
+///     members right here, once, at the template. An unbounded `<T>` has no
+///     members at all and says so -- at the template, which is the whole
+///     difference from C++. Only a dependent COMPOSITE (`[T]`, an unfilled
 ///     `Foo<T>::Inner`) is still Dependent for M2 (hard invariant #5).
 ///
 ///   \par One error, one home
@@ -868,7 +867,7 @@ class ChainBinding derives RecursiveASTVisitor::<ChainBinding> {
             );
             d.first(at);
             d.note(DiagID::R051N, gp->range.start,
-                f"'{pname}' is declared with no bound; add 'impl <Interface>' to give it members, or ': type' to defer every access to instantiation"
+                f"'{pname}' is declared with no bound; add 'impl <Interface>' to give it members"
             ).first(gp->range);
             d.emit();
             if st->name != &null { st->name->poison(); }

@@ -156,9 +156,9 @@ class Deduction {
             if isa::<CXXLValueRefType>(a) { a = cast::<CXXLValueRefType>(a)->referee; }
             if isa::<CXXRValueRefType>(a) { a = cast::<CXXRValueRefType>(a)->referee; }
             if isa::<CXXLValueRefType>(param) {
-                return self.unify(cast::<CXXLValueRefType>(param)->referee, a, top);
+                return self._unify_referee(cast::<CXXLValueRefType>(param)->referee, a);
             }
-            var rr = self.unify(cast::<CXXRValueRefType>(param)->referee, a, top);
+            var rr = self._unify_referee(cast::<CXXRValueRefType>(param)->referee, a);
             return (ImplicitRank::Converted) if (rr != ImplicitRank::None) else (ImplicitRank::None);
         }
 
@@ -217,6 +217,23 @@ class Deduction {
                 return ImplicitRank::Exact;
             } default { return ImplicitRank::None; }
         }
+    }
+
+    /// A reference parameter's referee against the argument's value type
+    /// ([temp.deduct.call]/3). The argument's cv is NOT stripped here -- it
+    /// is the referee's, not a top-level cv -- so `T&` against a `const i32`
+    /// is T := const i32, the only way it binds. The referee's own cv is
+    /// matched off first, and binding may ADD it: `const T&` against a
+    /// `const i32` or an `i32` is T := i32 either way.
+    priv fn _unify_referee(self, referee: *Type, a: *Type) -> ImplicitRank {
+        if (referee == &null) || (a == &null) { return ImplicitRank::None; }
+        if isa::<QualifiedType>(referee) {
+            var pq = cast::<QualifiedType>(referee)->quals;
+            var aq = canon_quals(a);
+            var rest = self.sc->types->qualified(canon_unqual(a), static_cast::<u8>(aq & (~pq)));
+            return self.unify(cast::<QualifiedType>(referee)->inner, rest, false);
+        }
+        return self.unify(referee, a, false);
     }
 
     priv fn _inner(self, r: ImplicitRank) -> ImplicitRank {
