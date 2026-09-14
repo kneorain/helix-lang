@@ -23,3 +23,4 @@
 
 macro boom!() { boom!() }
 var a = boom!();
+

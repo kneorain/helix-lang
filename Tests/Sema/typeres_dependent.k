@@ -39,7 +39,7 @@
 // type `T`, which IS a dependent non-record, so `.thing` has nothing to look
 // into and stops as dependent for M2.
 
-class <T> Box {
+class <T: type> Box {
     var val: T;
 
     fn get(self) -> T::Item {
@@ -55,7 +55,7 @@ class <T> Box {
     // just "the enclosing type", resolved concretely by N/T regardless of
     // T's own dependence.
     fn identity(self) -> Self {
-        return self
+        return &self
     }
 }
 
@@ -67,7 +67,7 @@ class <T> Box {
 // the FACT that `T` itself binds (rather than reporting "undeclared") is
 // what this case is actually proving.
 
-fn <T> generic_fn(x: T) -> T::Item {
+fn <T: type> generic_fn(x: T) -> T::Item {
     return x.thing
 }
 
