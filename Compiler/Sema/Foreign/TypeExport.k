@@ -219,10 +219,10 @@ class TypeExport {
     /// target, exactly as they came in.
     priv fn _builtin(self, bt: *BuiltinType) -> clang::QualType {
         var k = bt->builtin;
-        if builtin_is_integer(k) {
-            var bits = builtin_fixed_bits(k);
+        if builtin_info(k)->is_integer() {
+            var bits = builtin_info(k)->bits;
             if bits == 0 { bits = bt->size_bits; }       // usize/isize: the store's target width.
-            var sgn: u32 = (1) if (builtin_is_signed(k)) else (0);
+            var sgn: u32 = (1) if (builtin_info(k)->is_signed()) else (0);
             return self.cctx->getIntTypeForBitwidth(static_cast::<u32>(bits), sgn);   // null past 128.
         }
         switch k {

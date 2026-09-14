@@ -76,11 +76,11 @@ enum RefRel derives u8 {
 /// Can an untyped integer literal of the given magnitude take builtin \p bk?
 /// \p negative is the unary-minus fold; the magnitude then may reach 2^(bits-1).
 fn literal_fits_int(lo: u64, hi: u64, big: bool, negative: bool, bk: BuiltinKind, ptr_bits: usize) -> bool {
-    if !builtin_is_integer(bk) { return false; }
+    if !builtin_info(bk)->is_integer() { return false; }
     if big { return false; }
-    var bits = builtin_fixed_bits(bk);
+    var bits = builtin_info(bk)->bits;
     if bits == 0 { bits = ptr_bits; }
-    var is_signed = builtin_is_signed(bk);
+    var is_signed = builtin_info(bk)->is_signed();
     if negative && (!is_signed) { return false; }
 
     // magnitude limit as a 128-bit number. Every shift below is done on a
@@ -124,10 +124,10 @@ class Conversion {
         if (s == BuiltinKind::Never) { return ConvClass::W; }
         if (t == BuiltinKind::Never) { return ConvClass::X; }
 
-        var si = builtin_is_integer(s);
-        var ti = builtin_is_integer(t);
-        var sf = builtin_is_float(s);
-        var tf = builtin_is_float(t);
+        var si = builtin_info(s)->is_integer();
+        var ti = builtin_info(t)->is_integer();
+        var sf = builtin_info(s)->is_float();
+        var tf = builtin_info(t)->is_float();
 
         if si && ti { return self._int_int(s, t); }
         if si && tf { return self._int_float(s, t); }
@@ -150,11 +150,11 @@ class Conversion {
 
     priv fn _int_int(self, s: BuiltinKind, t: BuiltinKind) -> ConvClass {
         if self._is_ptr_int(s) || self._is_ptr_int(t) { return ConvClass::E; }   // §4
-        var sb = builtin_fixed_bits(s);
-        var tb = builtin_fixed_bits(t);
+        var sb = builtin_info(s)->bits;
+        var tb = builtin_info(t)->bits;
         if (sb > 64) || (tb > 64) { return ConvClass::E; }                       // R5
-        var ss = builtin_is_signed(s);
-        var ts = builtin_is_signed(t);
+        var ss = builtin_info(s)->is_signed();
+        var ts = builtin_info(t)->is_signed();
         if (!ss) && (!ts) { return (ConvClass::W) if (tb > sb) else (ConvClass::E); } // R1
         if ss && ts       { return (ConvClass::W) if (tb > sb) else (ConvClass::E); } // R1
         if (!ss) && ts    { return (ConvClass::W) if (tb > sb) else (ConvClass::E); } // R2 uN->iM
@@ -173,7 +173,7 @@ class Conversion {
 
     priv fn _int_float(self, s: BuiltinKind, t: BuiltinKind) -> ConvClass {
         if self._is_ptr_int(s) { return ConvClass::E; }
-        var sb = builtin_fixed_bits(s);
+        var sb = builtin_info(s)->bits;
         if sb > 64 { return ConvClass::E; }
         var m = self._mantissa(t);
         if m == 0 { return ConvClass::E; }

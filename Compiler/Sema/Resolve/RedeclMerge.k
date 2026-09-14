@@ -438,7 +438,14 @@ class RedeclMerge {
             var ca = pa->type_->canonical;
             var cb = pb->type_->canonical;
             if (ca == &null) || (cb == &null) { return false; }   // dependent: M2's.
-            if !pa->is_self { ca = canon_unqual(ca); cb = canon_unqual(cb); }
+            // A receiver's cv is in its canonical -- a const method's self is
+            // `const Record` -- and for a FOREIGN pair it is identity:
+            // begin() / begin() const are two entities. Kairo permits no
+            // const overloads (header), so a Kairo-authored pair differing
+            // only there is one entity with two contracts, and
+            // _check_modifiers_agree reports it.
+            var strip = (!pa->is_self) || ((!self._foreign(a)) && (!self._foreign(b)));
+            if strip { ca = canon_unqual(ca); cb = canon_unqual(cb); }
             if ca != cb { return false; }
         }
         return true;
@@ -541,7 +548,7 @@ class RedeclMerge {
             if !first { s += ", "; }
             first = false;
             var c = self._cxx_lowered(self._param_canonical(p), pw);
-            if isa::<BuiltinType>(c) { s += builtin_cxx_spelling(cast::<BuiltinType>(c)->builtin); }
+            if isa::<BuiltinType>(c) { s += builtin_info(cast::<BuiltinType>(c)->builtin)->cxx; }
             else { s += tu.str(c); }
         }
         return s + ")";

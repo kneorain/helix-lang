@@ -336,7 +336,7 @@ class <T> CallTyping {
         if r.outcome != OvlOutcome::Selected { dyn()->poison_only(n); return &null; }
         if !ok { dyn()->poison_only(n); return &null; }
 
-        if recv != &null { r.ded.bind_from_record(recv); }
+        if recv != &null { r.ded.bind_from_record(canon_unqual(recv)); }
 
         // promote cell -> decl (hard invariant #7).
         if (ident != &null) && (ident->resolved_decl == &null) {

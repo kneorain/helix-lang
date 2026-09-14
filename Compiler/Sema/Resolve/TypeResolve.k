@@ -639,7 +639,7 @@ class TypeResolution derives RecursiveASTVisitor::<TypeResolution> {
         var bk = builtin_for_token(tok.kind);
         if bk != BuiltinKind::COUNT {
             if (n > 1) || (!seg0->generic_args.is_empty()) {
-                var sp = builtin_spelling(bk);
+                var sp = builtin_info(bk)->spelling;
                 self.sc->diag->report(DiagID::R024E, ct->range.start,
                     f"'{sp}' is a primitive type; it has no members and takes no generic arguments"
                 ).first(ct->range).emit();
@@ -1715,6 +1715,13 @@ class TypeResolution derives RecursiveASTVisitor::<TypeResolution> {
 
             var st = SelfType::create(self.sc->ctx, p->range);
             st->canonical = self._self_record(owner);
+            // `const self` is the implicit object parameter of a const method:
+            // its object is `const Record`, and that is its canonical, as an
+            // imported const method's `this` pointee is. Overload resolution
+            // ranks the receiver on it ([over.match.funcs]/4).
+            if (st->canonical != &null) && p->is_const {
+                st->canonical = self.sc->types->qualified(st->canonical, QUAL_CONST());
+            }
             if st->canonical == &null { self._mark_dependent(st); }
             // Record the outcome so the RAV's later visit of this ParamDecl
             // (it dispatches type_) finds it done rather than re-resolving.
@@ -1768,7 +1775,7 @@ class TypeResolution derives RecursiveASTVisitor::<TypeResolution> {
         if n->underlying == &null { return; }
         var c = canon_unqual(n->underlying->canonical);
         if c == &null { return; }   // poisoned or dependent; already handled.
-        if isa::<BuiltinType>(c) && builtin_is_integer(cast::<BuiltinType>(c)->builtin) { return; }
+        if isa::<BuiltinType>(c) && builtin_info(cast::<BuiltinType>(c)->builtin)->is_integer() { return; }
         self.sc->diag->report(DiagID::R046E, n->underlying->range.start,
             "an enum's underlying type must be a primitive integer type"
         ).first(n->underlying->range).emit();

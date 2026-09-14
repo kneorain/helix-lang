@@ -866,7 +866,6 @@ class NameResolution derives RecursiveASTVisitor::<NameResolution> {
         }
 
         var r = self.sc->lookup.unqualified(self.cur_dc, DeclName::ident(imm));
-        // NOTE the parens: `!a && b` parses as `!(a && b)` here.
         if (!r.found()) && (self._ext_target != &null) {
             r = self.sc->lookup.in_context(self._ext_target, DeclName::ident(imm));
         }
