@@ -149,6 +149,26 @@ class EmitIR {
         }
     }
 
+    // Parameter modes (AST/ParamMode.k). NOT YET LOWERED. When this is
+    // written, these are the rules, and every one of them is a
+    // build-wide invariant, not a per-site choice:
+    //   Inout          `T&`.  The argument's `&` marker node
+    //                  (UnaryOperatorExpr::is_mode_marker) emits its
+    //                  OPERAND bare -- never `&x`.
+    //   Move           `T&&`. An lvalue argument emits `std::move(x)`;
+    //                  a prvalue emits as is.
+    //   Value, const   `const T&` iff the parameter's canonical is a
+    //                  non-generic record (or: a pure function of the
+    //                  canonical, identical in every TU -- IMPORTS.md
+    //                  invariant 12 applied to functions). A GENERIC
+    //                  parameter (`fn <T> f(const x: T)`) is ALWAYS
+    //                  `const T&`; there is no answer at the template.
+    //   Value          `T`.
+    //   A Kairo out-of-line definition of an imported method spells its
+    //   parameters from the IMPORTED decl's cxx_param_spellings, not
+    //   from the Kairo modes: `const x: i32` matching `const int&` must
+    //   emit `const int&`.
+    //   Closure lambdas: same table, from FunctionPointerType::modes.
     priv fn _param_decl(self, p: *ParamDecl) {
         // C++ forms:
         //   - `T name`  (no default)
