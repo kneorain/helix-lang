@@ -541,6 +541,10 @@ class <T> StmtParse {
     ///          Unlike _parse_binding_spec, absence of a leading keyword is NOT
     ///          an error here it's the mutable-by-default case.
     fn _parse_binding_spec_opt(self, out: *std::StackBuf::<Binding, 4>, ctx_range: SourceRange) -> bool {
+        // `for @move y in`: taken before the keyword probe, which would not
+        // recognise `@` as a binding start. _parse_binding asks again; the
+        // mode is consumed here, so it is never reported twice.
+        dyn()->_reject_mode_binding();
         // leading 'var' | 'const' sets the default mutability; absent => mutable.
         var leading_const = false;
         if dyn()->check(TokenKind::KwVar) {
@@ -626,6 +630,7 @@ class <T> StmtParse {
             result.is_explicit = true;
             dyn()->advance();
         }
+        dyn()->_reject_mode_binding();   // `(@inout a, b)` / `for @move y`: parameter-only.
 
         // pointer shorthand: `unsafe *` or `*`
         if dyn()->check(TokenKind::KwUnsafe) {
@@ -1467,6 +1472,7 @@ class <T> StmtParse {
 
         var start_range = dyn()->current_ptr()->range;
         dyn()->advance(T::SkipNL::After); // consume `catch`
+        dyn()->_reject_mode_binding();   // `catch @inout e`: parameter-only.
 
         // optional binding identifier
         if dyn()->check(TokenKind::LitIdentifier) {

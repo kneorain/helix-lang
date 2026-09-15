@@ -167,6 +167,7 @@ class <T> PatternParse {
         var start    = dyn()->current_ptr()->range;
         var is_const = dyn()->check(TokenKind::KwConst);
         dyn()->advance(); // consume var/const
+        dyn()->_reject_mode_binding();   // `case var @move n`: parameter-only.
 
         if !dyn()->check(TokenKind::LitIdentifier) {
             dyn()->diag->report(DiagID::S062E, start.start,

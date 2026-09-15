@@ -41,6 +41,7 @@ import Parser::TypeParse::*;
 import Parser::PatternParse::*;
 import Parser::Shared::ImportGrammar::*;
 import Parser::Shared::MacroHeaderGrammar::*;
+import AST::ParamMode::*;
 
 struct PendingComment {
     var kind:  AnnotationKind = AnnotationKind::DocComment;
@@ -1779,6 +1780,45 @@ class ASTParse
         return &null;
     }
 
+    //  Parameter passing modes (AST/ParamMode.k)
+
+    /// `@inout` / `@move` at the cursor, or Value. Does not consume.
+    ///
+    /// A mode is `@` + identifier, the same two tokens an attribute opens
+    /// with, so every caller must ask BEFORE consume_leading_annotations
+    /// runs; after it the mode has been swallowed as an attribute.
+    pub fn _peek_mode(self) -> ParamMode {
+        if !self.check(TokenKind::OpAt) { return ParamMode::Value; }
+        if !self.check_peek(TokenKind::LitIdentifier) { return ParamMode::Value; }
+        var sp = self.ctx->get_spelling(self.peek());
+        if sp == "inout" { return ParamMode::Inout; }
+        if sp == "move"  { return ParamMode::Move;  }
+        return ParamMode::Value;
+    }
+
+    /// Consume the two tokens of a mode the caller peeked; returns the range
+    /// spanning both.
+    pub fn _consume_mode(self) -> SourceRange {
+        var r = self.current_ptr()->range;
+        self.advance(); // consume `@`
+        r = r | self.current_ptr()->range;
+        self.advance(); // consume `inout` / `move`
+        return r;
+    }
+
+    /// Rejection helper for binding sites: if a mode is at the cursor, report
+    /// it, consume it, and return true. Consuming is the recovery -- the
+    /// binding that follows parses as if the mode were never written.
+    pub fn _reject_mode_binding(self) -> bool {
+        if self._peek_mode() == ParamMode::Value { return false; }
+        var r = self._consume_mode();
+        self.diag->report(DiagID::S001E, r.start,
+            "'@inout' and '@move' are parameter passing modes; a mode "
+            "can only be written on a function or closure parameter"
+        ).first(r).emit();
+        return true;
+    }
+
     //  Annotation consumption
 
     /// \brief consumes doc-comments, @attributes, and visibility keywords
@@ -2191,7 +2231,7 @@ class ASTParse
     
     fn <T> is_fatal(self, ptr: *T) -> bool {
         inline "c++" {
-            auto base = reinterpret_cast<uint8_t*>(&this->_fatal_sentinels);
+            auto base = reinterpret_cast<asuint8_t*>(&this->_fatal_sentinels);
             if constexpr (libcxx::is_same_v<T, Type>) {
                 return reinterpret_cast<T*>(base + 0) == ptr;
             } else if constexpr (libcxx::is_same_v<T, Expr>) {

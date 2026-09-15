@@ -31,6 +31,7 @@ import Diagnostic::Engine::*;
 import Diagnostic::Registry::*;
 import Location::SourceRange::*;
 import Token::TokenKind::*;
+import AST::ParamMode::*;
 
 /// \class TypeParse
 /// \brief CRTP mixin providing type expression parsing for the Kairo parser.
@@ -326,6 +327,20 @@ class <T> TypeParse {
 
             dyn()->exit_depth();
             return rt;
+        }
+
+        // A passing mode is not part of a type. Asked BEFORE the annotation
+        // scan below: `@inout` is `@` + identifier, which it would otherwise
+        // swallow as an attribute and never report. Consumed so the type
+        // that follows still parses. The fn-pointer parameter list takes its
+        // modes itself (_parse_fn_ptr_params) and never lets one reach here.
+        if dyn()->_peek_mode() != ParamMode::Value {
+            var mr = dyn()->_consume_mode();
+            dyn()->diag->report(DiagID::S001E, mr.start,
+                "a passing mode is not part of a type; write it on the parameter "
+                "('@inout x: T'); in a function pointer type the mode goes before "
+                "the parameter type ('fn(@inout T)')"
+            ).first(mr).emit();
         }
 
         inline "c++" {
@@ -1221,9 +1236,10 @@ class <T> TypeParse {
         dyn()->advance(T::SkipNL::After); // consume `(`
 
         var param_types: std::StackBuf::<*Type, 8>;
+        var param_modes: std::StackBuf::<ParamMode, 8>;   // parallel to param_types.
 
         if !dyn()->check(TokenKind::OpRParen) {
-            self._parse_fn_ptr_params(&param_types, start_range);
+            self._parse_fn_ptr_params(&param_types, &param_modes, start_range);
         }
 
         // consume `)`
@@ -1256,6 +1272,10 @@ class <T> TypeParse {
 
         var fpt = FunctionPointerType::create(dyn()->ctx, start_range | dyn()->prev().range, return_type);
         fpt->params.from_buf(param_types.data(), param_types.size(), dyn()->ctx);
+        // Always, even when empty: TypeResolution ICEs on a count mismatch.
+        // The create_error / create_unprototyped nodes populate neither, so
+        // they are parallel at zero.
+        fpt->modes.from_buf(param_modes.data(), param_modes.size(), dyn()->ctx);
         dyn()->apply_quals(fpt, &fn_quals);
         return fpt;
     }
@@ -1276,7 +1296,10 @@ class <T> TypeParse {
     ///       (default
     ///       values are illegal in function pointer signatures) and the parser
     ///       synchronizes to the next parameter or the end of the list.
-    inline fn _parse_fn_ptr_params(self, out: *std::StackBuf::<*Type, 8>, start_range: SourceRange) {
+    ///
+    /// \param modes parallel to \p out: one entry pushed with every type, so a
+    ///        parameter dropped in recovery drops its mode too.
+    inline fn _parse_fn_ptr_params(self, out: *std::StackBuf::<*Type, 8>, modes: *std::StackBuf::<ParamMode, 8>, start_range: SourceRange) {
         while !dyn()->is_eof() {
             if dyn()->check(TokenKind::OpRParen) {
                 return;
@@ -1297,12 +1320,18 @@ class <T> TypeParse {
                 continue;
             }
 
+            // `fn(@inout T)`: the one type-shaped place a mode is legal. Taken
+            // here so parse_type's mode-in-type rejection never sees it.
+            var m = dyn()->_peek_mode();
+            if m != ParamMode::Value { dyn()->_consume_mode(); }
+
             var param_ty = self.parse_type(false, true);
             if (param_ty == &null) || is_recovery(param_ty) {
                 self._sync_type_progress(TypeSyncCtx::Paren, 1, 0, 0);
                 continue;
             }
             out->push_back(param_ty);
+            modes->push_back(m);
 
             if dyn()->check(TokenKind::OpComma) {
                 dyn()->advance(T::SkipNL::After);

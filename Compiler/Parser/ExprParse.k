@@ -3182,6 +3182,7 @@ class <T> ExprParse {
             result.is_const = false; // explicit mutable
             dyn()->advance();
         }
+        dyn()->_reject_mode_binding();   // `catch @inout e`: parameter-only.
 
         // optional binding identifier
         if dyn()->check(TokenKind::LitIdentifier) {

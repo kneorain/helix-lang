@@ -45,6 +45,7 @@ import Location::SourceRange::*;
 import Token::Token::*;
 import Token::TokenKind::*;
 import Parser::LexicalScope::*;
+import AST::ParamMode::*;
 
 class <T> DeclParse {
     /// \enum DeclSyncCtx
@@ -844,6 +845,7 @@ class <T> DeclParse {
 
     /// \brief parses a single generic parameter.
     priv fn _parse_one_generic_param(self, idx: u32) -> *GenericParamDecl {
+        dyn()->_reject_mode_binding();   // `<@move T>`: a generic param is not passed.
         var start = dyn()->current_ptr()->range;
 
         // const value parameter: `const N: T`
@@ -1438,15 +1440,51 @@ class <T> DeclParse {
             // to a trailing slot after `)` (that form is rejected in
             // `_parse_fn_modifiers`). `_parse_function` lifts it onto
             // FnModifier::IsConst so Sema keeps one source of truth.
+            // Passing mode. Written either side of `const` (`@inout x: T`,
+            // `const @move x: T`); the second spot is taken in the const probe
+            // below. Taken here, first, so the `self` check sees it as well.
+            // Never through the attribute parser: inside a parameter list
+            // `@move` is a mode, never the transfer-ctor attribute.
+            var p_mode       = dyn()->_peek_mode();
+            var p_mode_range = SourceRange::invalid();
+            if p_mode != ParamMode::Value { p_mode_range = dyn()->_consume_mode(); }
+
             var self_const = false;
             var self_start = dyn()->current_ptr()->range;
             if dyn()->check(TokenKind::KwConst) && dyn()->check_peek(TokenKind::KwSelf) {
                 self_const = true;
                 dyn()->advance(); // consume `const`
+            } else if dyn()->check(TokenKind::KwConst) && dyn()->check_peek(TokenKind::OpAt) {
+                // `const @inout self`: the mode sits between `const` and
+                // `self`, three tokens along, so probe. A hit falls into the
+                // `self` path below and draws the same receiver error as
+                // `@inout self`; a miss rolls back for the named-param probe.
+                var sprobe   = dyn()->tentative_begin();
+                dyn()->advance(); // consume `const`
+                var sm       = dyn()->_peek_mode();
+                var sm_range = SourceRange::invalid();
+                if sm != ParamMode::Value { sm_range = dyn()->_consume_mode(); }
+                if (sm != ParamMode::Value) && dyn()->check(TokenKind::KwSelf) {
+                    dyn()->tentative_commit(sprobe);
+                    self_const = true;
+                    if p_mode == ParamMode::Value {
+                        p_mode       = sm;
+                        p_mode_range = sm_range;
+                    }
+                } else {
+                    dyn()->tentative_rollback(sprobe);
+                }
             }
             if dyn()->check(TokenKind::KwSelf) {
                 var s_tok = dyn()->current();
                 dyn()->advance();
+                // Reported and dropped: ParamDecl::mode is never set on `self`.
+                if p_mode != ParamMode::Value {
+                    dyn()->diag->report(DiagID::S001E, p_mode_range.start,
+                        "'self' takes no passing mode; the receiver is already passed "
+                        "by reference, and its mutability is written 'const self\x27"
+                    ).first(p_mode_range).emit();
+                }
                 var pd = ParamDecl::create_self(dyn()->ctx, self_start | s_tok.range, s_tok);
                 pd->is_const = self_const;
                 pd->index = idx;
@@ -1479,11 +1517,20 @@ class <T> DeclParse {
             if dyn()->check(TokenKind::KwConst) {
                 var probe = dyn()->tentative_begin();
                 dyn()->advance(); // consume `const`
+                // `const @mode x: T`, the other order of `@mode const x: T`.
+                // Inside the probe: a rollback un-consumes it with the const.
+                var c_mode       = dyn()->_peek_mode();
+                var c_mode_range = SourceRange::invalid();
+                if c_mode != ParamMode::Value { c_mode_range = dyn()->_consume_mode(); }
                 if dyn()->check(TokenKind::LitIdentifier)
                 && dyn()->check_peek(TokenKind::OpColon)
                 && (!dyn()->check_peek(TokenKind::OpColonColon)) {
                     dyn()->tentative_commit(probe);
                     p_const = true;
+                    if (c_mode != ParamMode::Value) && (p_mode == ParamMode::Value) {
+                        p_mode       = c_mode;
+                        p_mode_range = c_mode_range;
+                    }
                 } else {
                     dyn()->tentative_rollback(probe);
                 }
@@ -1523,7 +1570,20 @@ class <T> DeclParse {
             }
 
             var pd = ParamDecl::create(dyn()->ctx, p_start | dyn()->prev().range, pname, pty, idx, !is_named);
-            pd->is_const = p_const;
+            pd->is_const   = p_const;
+            pd->mode       = p_mode;
+            pd->mode_range = p_mode_range;
+
+            // `const` with a mode contradicts it. Reported at the mode, and the
+            // mode KEPT: the decl stays usable for everything downstream.
+            if p_const && (p_mode != ParamMode::Value) {
+                var cmsg = "'const' cannot be combined with '@move\x27";
+                if p_mode == ParamMode::Inout {
+                    cmsg = "'const' and '@inout' contradict: an '@inout' parameter is a "
+                           "mutable borrow; a read-only borrow is 'const x: T\x27";
+                }
+                dyn()->diag->report(DiagID::S001E, p_mode_range.start, cmsg).first(p_mode_range).emit();
+            }
 
             // `x: const T` on a NAMED parameter is `const x: T` spelled on the
             // type: identical in meaning, harder to read. Same warning as
@@ -1958,6 +2018,7 @@ class <T> DeclParse {
         else if dyn()->check(TokenKind::KwStatic) { storage = StorageClass::Static; }
         else if dyn()->check(TokenKind::KwEval)   { storage = StorageClass::Eval;   }
         dyn()->advance(); // consume the storage keyword
+        dyn()->_reject_mode_binding();   // `var @inout x`: modes are parameter-only.
 
         // `static thread X: T` - thread_local storage duration.
         var is_thread = false;
@@ -2076,6 +2137,7 @@ class <T> DeclParse {
             return FieldDecl::create_error(dyn()->ctx, start);
         }
         dyn()->advance(); // consume storage keyword
+        dyn()->_reject_mode_binding();   // `var @inout f: T` on a field.
 
         // `static thread x: T` - thread_local storage duration.
         var is_thread = false;
@@ -3013,6 +3075,7 @@ class <T> DeclParse {
                     continue;
                 }
                 // payload fields are `name: Type` (no var/const keyword).
+                dyn()->_reject_mode_binding();
                 if !dyn()->check(TokenKind::LitIdentifier) { break; }
                 var fname = dyn()->current();
                 var fstart = fname.range;
