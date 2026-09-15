@@ -675,7 +675,8 @@ Type domain (each unblocks the next):
 
     h. ExtensionOrphanCheck + import-scoped extension index   small
     i. ConformanceChecking: the conformance table, impl-only
-       members, arity/Self checks, visibility at instantiation
+       members, arity/Self checks, visibility at instantiation;
+       instantiating a class with a `= virtual` method is an error
     j. PatternChecking: ctor-pattern heads, bare `case n`,
        `.Variant`, exhaustiveness
     k. ADL / free operator functions (X, OperatorTyping)     DONE
@@ -683,6 +684,7 @@ Type domain (each unblocks the next):
     m. ConstChecking, PanicEffectChecking (reads panic_sites)
     n. ExtensionLowering: `a.m()` -> `m(&a)`, prvalue receiver
        materialization, `semantic_dc` rewrite
+    n2. CopyMoveLowering: copying a MOVE class is an error
 
 Mono / codegen:
 

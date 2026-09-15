@@ -58,6 +58,7 @@ import AST::Node::Declarations::*;
 import AST::Node::Casting::*;
 import Location::SourceRange::*;
 import Diagnostic::Registry::*;
+import AST::ParamMode::*;
 
 /// \enum LitKind
 /// \brief An argument that is an untyped literal carries its shape so the
@@ -91,6 +92,16 @@ class ArgInfo {
     /// they decide which of `T&` / `const T&` / `T&&` the argument binds.
     pub var cat:        Expr::ValueCategory = Expr::ValueCategory::RValue;
     pub var is_const:   bool = false;
+    /// The `&` MARKER (AST/ParamMode.k). `marked` when the argument as
+    /// written is `&e`. `expr` is the whole `&e`, typed as the address-of it
+    /// may still turn out to be (against `x: *T` that is what it means);
+    /// `inner_*` are the OPERAND's view, which is what an `@inout` parameter
+    /// is judged against. Only the `@inout` path reads `inner_*`; every
+    /// other parameter reads `ty` / `cat` / `is_const` and sees address-of.
+    pub var marked:      bool  = false;
+    pub var inner_ty:    *Type = &null;
+    pub var inner_cat:   Expr::ValueCategory = Expr::ValueCategory::RValue;
+    pub var inner_const: bool  = false;
     fn ArgInfo(self) { }
 }
 
@@ -122,6 +133,11 @@ class Candidate {
     /// object known). recv_const is the OBJECT's constness.
     pub var recv_bind:    u8   = 0;
     pub var recv_const:   bool = false;
+    /// Arguments that reached an `@inout` parameter WITHOUT the marker.
+    /// Viable (migration tolerance); CallTyping warns after selection. The
+    /// two are parallel: arg index, the parameter it landed on.
+    pub var inout_unmarked: vec::<usize>;
+    pub var inout_params:   vec::<*ParamDecl>;
     pub var ded:          Deduction;
     fn Candidate(self) { }
 }
@@ -143,6 +159,9 @@ class OvlResult {
     /// `T impl I` the receiver is `T` rather than any record. Null when the
     /// call had no receiver.
     pub var receiver:     *Type = &null;
+    /// Copied off the winner; see Candidate.
+    pub var inout_unmarked: vec::<usize>;
+    pub var inout_params:   vec::<*ParamDecl>;
     fn OvlResult(self) { }
 }
 
@@ -252,6 +271,8 @@ class OverloadResolution {
         out.via_free     = w->free;
         out.receiver_bound = has_receiver && (!w->free);
         out.ded          = w->ded;
+        out.inout_unmarked = w->inout_unmarked;
+        out.inout_params   = w->inout_params;
         return out;
     }
 
@@ -479,16 +500,31 @@ class OverloadResolution {
                 c->viable = false; c->reason = "parameter type is unresolved"; return;
             }
 
-            var r = self._rank_arg(c, a, pt, pi == usize(-1));
+            // The parameter's mode. A pack tail ranks by value; the receiver
+            // never reaches here (bound above, and it takes no mode).
+            var mode = (ParamMode::Value) if (pi == usize(-1)) else (p->mode);
+
+            var r = self._rank_arg(c, a, pt, pi == usize(-1), mode);
             if r == ImplicitRank::None {
                 var pn = self.tu.param_name(p);
                 var got = (self.tu.str(a->ty)) if (a->ty != &null) else ("<literal>");
+                if mode == ParamMode::Inout {
+                    var iv = (self.tu.str(a->inner_ty)) if (a->marked && (a->inner_ty != &null)) else (got);
+                    c->viable = false;
+                    c->reason = f"parameter '{pn}' is '@inout' and needs a mutable lvalue of type '{self.tu.str(pt)}'; got '{iv}\x27";
+                    return;
+                }
                 c->viable = false;
                 c->reason = f"cannot convert argument of type '{got}' to parameter '{pn}' of type '{self.tu.str(pt)}\x27";
                 return;
             }
             if (r == ImplicitRank::Converted) && (c->rank < 1) { c->rank = 1; }
-            if r == ImplicitRank::Exact { c->binds[i] = self._bind_kind(pt); }
+            // An `@inout` binding IS a `T&` binding for the reference tiebreak.
+            if r == ImplicitRank::Exact { c->binds[i] = (3) if (mode == ParamMode::Inout) else (self._bind_kind(pt)); }
+            if (mode == ParamMode::Inout) && (!a->marked) {
+                c->inout_unmarked.push_back(i);
+                c->inout_params.push_back(p);
+            }
         }
 
         // 4. a generic candidate must have deduced every param.
@@ -499,7 +535,35 @@ class OverloadResolution {
         }
     }
 
-    priv fn _rank_arg(self, c: *Candidate, a: *ArgInfo, pt: *Type, is_pack: bool) -> ImplicitRank {
+    /// \p mode is the parameter's passing mode. `@inout` is judged exactly as
+    /// a C++ `T&` parameter is (Conversion::ref_binding, [over.ics.ref]): a
+    /// mutable lvalue of T binds Exact, a derived object Converted, a
+    /// temporary never. `@move` ranks by VALUE: `f(x)` moves, the call site
+    /// writes nothing, and MoveCheck owns what follows. No new ranking rule
+    /// lives here; modes restate the reference rules in Kairo terms.
+    priv fn _rank_arg(self, c: *Candidate, a: *ArgInfo, pt: *Type, is_pack: bool, mode: ParamMode) -> ImplicitRank {
+        if mode == ParamMode::Inout {
+            // The operand's view when marked; the argument itself otherwise
+            // (viable; CallTyping warns). A literal is a prvalue and can never
+            // be borrowed mutably.
+            var ty  = a->ty;
+            var cat = a->cat;
+            var cst = a->is_const;
+            if a->marked { ty = a->inner_ty; cat = a->inner_cat; cst = a->inner_const; }
+            if (!a->marked) && (a->lit != LitKind::None) { return ImplicitRank::None; }
+            if ty == &null { return ImplicitRank::None; }
+            if pt->is_dependent() {
+                // `fn <T> f(@inout x: T)`: T deduces from the operand's view,
+                // then binds as a plain `T&` -- a const lvalue does not bind.
+                var d = c->ded.unify(pt, ty, true);
+                if d == ImplicitRank::None { return ImplicitRank::None; }
+                var lref = self.sc->types->cxx_lref(canon_unqual(ty));
+                return self.conv->ref_binding(lref, cat, cst, RefRel::Same);
+            }
+            var lref = self.sc->types->cxx_lref(pt);
+            return self.conv->implicit_arg(ty, lref, cat, cst);
+        }
+
         // Pack element: the param's canonical is the pack's generic param
         // (VariadicPackType shares it). Bind nothing -- a pack is one slot
         // with many types, and the registry does not model that yet -- accept.

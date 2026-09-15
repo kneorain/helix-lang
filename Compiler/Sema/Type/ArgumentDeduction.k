@@ -41,6 +41,7 @@ import AST::Node::CanonicalNodes::*;
 import AST::Node::Declarations::*;
 import AST::Node::Casting::*;
 import AST::Kind::TypeKind::*;
+import AST::ParamMode::*;
 
 class DeducedBinding {
     pub var owner: *Decl = &null;
@@ -292,17 +293,19 @@ class Deduction {
             } case TypeKind::FunctionPointerType {
                 var f = cast::<FunctionPointerType>(t);
                 var ps = vec::<*Type>();
+                var ms = vec::<ParamMode>();
                 for var i: usize = 0; i < f->params.size(); ++i {
                     var p = self.substitute(f->params[i]);
                     if p == &null { return &null; }
                     ps.push_back(p);
+                    ms.push_back(f->modes[i]);      // modes survive substitution unchanged.
                 }
                 var r: *Type = &null;
                 if f->return_type != &null {
                     r = self.substitute(f->return_type);
                     if r == &null { return &null; }
                 }
-                return self.sc->types->func(&ps, r);
+                return self.sc->types->func(&ps, &ms, r);
             } case TypeKind::QualifiedType {
                 var q = cast::<QualifiedType>(t);
                 var i = self.substitute(q->inner);
@@ -428,18 +431,20 @@ class Deduction {
             } case TypeKind::FunctionPointerType {
                 var f       = cast::<FunctionPointerType>(t);
                 var ps      = vec::<*Type>();
+                var ms      = vec::<ParamMode>();
                 var changed = false;
                 for var i: usize = 0; i < f->params.size(); ++i {
                     var p = self.replace_self(f->params[i], iface, with);
                     if p != f->params[i] { changed = true; }
                     ps.push_back(p);
+                    ms.push_back(f->modes[i]);
                 }
                 var r: *Type = &null;
                 if f->return_type != &null {
                     r = self.replace_self(f->return_type, iface, with);
                     if r != f->return_type { changed = true; }
                 }
-                return (t) if (!changed) else (self.sc->types->func(&ps, r));
+                return (t) if (!changed) else (self.sc->types->func(&ps, &ms, r));
             } default { return t; }
         }
     }

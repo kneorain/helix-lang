@@ -80,6 +80,7 @@ import AST::Kind::TypeKind::*;
 import AST::Visitor::RecursiveASTVisitor::*;
 import Token::TokenKind::*;
 import Diagnostic::Registry::*;
+import AST::ParamMode::*;
 
 __inline_cpp("
 #define RecursiveASTVisitor_ExprTyper RecursiveASTVisitor<ExprTyper>
@@ -491,19 +492,22 @@ class ExprTyper
         return &(self._scratch_ded);
     }
 
-    /// The fn-pointer canonical of a non-generic function.
+    /// The fn-pointer canonical of a non-generic function. The receiver is
+    /// not a parameter of the type; every other parameter's MODE is.
     fn fn_pointer_type(self, f: *FunctionDecl) -> *Type {
         var ps = vec::<*Type>();
+        var ms = vec::<ParamMode>();
         for var i: usize = 0; i < f->params.size(); ++i {
             var p = f->params[i];
             if (p == &null) || p->is_self { continue; }
             if (p->type_ == &null) || (p->type_->canonical == &null) { return &null; }
             // a function type has no top-level cv on its parameters ([dcl.fct]/5)
             ps.push_back(canon_unqual(p->type_->canonical));
+            ms.push_back(p->mode);
         }
         var r = self.fn_return_type(f);
         if r == &null { return &null; }
-        return self.sc->types->func(&ps, r);
+        return self.sc->types->func(&ps, &ms, r);
     }
 
     // === outcomes ===========================================================

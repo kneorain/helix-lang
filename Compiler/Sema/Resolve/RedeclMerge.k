@@ -28,6 +28,18 @@
 ///     arity. Two decls agreeing on all of it are ONE ENTITY; anything else
 ///     is an overload.
 ///
+///     The passing MODE of each parameter is in the signature (AST/ParamMode.k):
+///     `f(x: T)` and `f(@inout x: T)` are two entities the call site tells
+///     apart by the `&` marker. `f(x: T)` and `f(@move x: T)` are two
+///     entities to C++ (`T` vs `T&&`) and ONE source text to a Kairo caller,
+///     so that pair is an error at the second declaration
+///     (_check_move_overload). Against a FOREIGN decl the C++ reference
+///     kind is read as the mode it spells: `T&` is `@inout`, `const T&` is
+///     by value, `T&&` is `@move` -- which is what lets a Kairo out-of-line
+///     definition match an imported method. Foreign-vs-foreign pairs keep
+///     the type-only comparison: their modes are all Value and the
+///     reference kinds are already in their canonicals.
+///
 ///     Everything else is EXCLUDED, and each exclusion is load-bearing:
 ///
 ///       return type       -- excluded, which is what makes a mismatch a
@@ -142,6 +154,7 @@ import AST::Kind::DeclKind::*;
 import Token::Token::*;
 import Token::TokenKind::*;
 import Diagnostic::Registry::*;
+import AST::ParamMode::*;
 
 ///
 /// \class RedeclMerge
@@ -154,6 +167,14 @@ import Diagnostic::Registry::*;
 ///        T's frames / _selfs / ltypes / cur_dc are irrelevant here, and
 ///        having them in scope invites a future edit to use them.
 ///
+/// One parameter's contribution to signature identity: the type it is
+/// judged on and the mode it is passed by, after the foreign mapping.
+class SigShape {
+    pub var mode: ParamMode = ParamMode::Value;
+    pub var ty:   *Type     = &null;
+    fn SigShape(self) { }
+}
+
 class RedeclMerge {
     pub var sc: *SemaContext;
 
@@ -256,9 +277,11 @@ class RedeclMerge {
                 if b->is_poisoned() { continue; }
                 if !self._same_signature(a, b) {
                     // Two entities to Kairo -- but maybe one to the C++ it
-                    // emits. Asked here, where the pair is already known to
-                    // be an overload and nowhere else pairs them.
-                    self._check_cxx_collision(name, a, b);
+                    // emits, and maybe unchoosable at a Kairo call site.
+                    // Asked here, where the pair is already known to be an
+                    // overload and nowhere else pairs them.
+                    self._check_move_overload(name, a, b);
+                    if !b->is_poisoned() { self._check_cxx_collision(name, a, b); }
                     continue;
                 }
                 self._link(name, a, b, in_type_body);
@@ -418,7 +441,10 @@ class RedeclMerge {
         if a->is_variadic != b->is_variadic { return false; }
 
         if a->params.size() != b->params.size() { return false; }
-        
+
+        var fa = self._foreign(a);
+        var fb = self._foreign(b);
+
         // Const-ness participates in signature identity for FOREIGN decls
         // only. Kairo source may not declare const overloads at all (see
         // header), so for Kairo-authored decls a const mismatch is one
@@ -426,9 +452,12 @@ class RedeclMerge {
         // C++ has no such rule and the STL leans on it hard --
         // begin()/begin() const, the operator[] pairs -- so an extracted
         // header's pairs are two entities and must not merge.
-        if self._foreign(a) || self._foreign(b) {
+        if fa || fb {
             if a->is_const() != b->is_const() { return false; }
         }
+
+        // Exactly one side foreign: its reference kinds are read as modes.
+        var mixed = fa != fb;
 
         for var i: usize = 0; i < a->params.size(); ++i {
             var pa = a->params[i];
@@ -438,17 +467,96 @@ class RedeclMerge {
             var ca = pa->type_->canonical;
             var cb = pb->type_->canonical;
             if (ca == &null) || (cb == &null) { return false; }   // dependent: M2's.
-            // A receiver's cv is in its canonical -- a const method's self is
-            // `const Record` -- and for a FOREIGN pair it is identity:
-            // begin() / begin() const are two entities. Kairo permits no
-            // const overloads (header), so a Kairo-authored pair differing
-            // only there is one entity with two contracts, and
-            // _check_modifiers_agree reports it.
-            var strip = (!pa->is_self) || ((!self._foreign(a)) && (!self._foreign(b)));
-            if strip { ca = canon_unqual(ca); cb = canon_unqual(cb); }
-            if ca != cb { return false; }
+
+            if pa->is_self || pb->is_self {
+                if pa->is_self != pb->is_self { return false; }
+                // A receiver's cv is in its canonical -- a const method's self
+                // is `const Record` -- and for a FOREIGN pair it is identity:
+                // begin() / begin() const are two entities. Kairo permits no
+                // const overloads (header), so a Kairo-authored pair differing
+                // only there is one entity with two contracts, and
+                // _check_modifiers_agree reports it.
+                var strip = (!fa) && (!fb);
+                if strip { ca = canon_unqual(ca); cb = canon_unqual(cb); }
+                if ca != cb { return false; }
+                continue;
+            }
+
+            var sa = self._param_shape(pa, ca, fa, mixed);
+            var sb = self._param_shape(pb, cb, fb, mixed);
+            if sa.mode != sb.mode { return false; }
+            if sa.ty   != sb.ty   { return false; }
         }
         return true;
+    }
+
+    /// The (mode, type) a value parameter is judged on. Top-level cv is
+    /// stripped as in C++ ([dcl.fct]/5). A foreign decl's mode is always
+    /// Value; against a KAIRO decl its C++ reference kind is read as the
+    /// mode it spells, so `void f(int&)` in a header and `fn S::f(self,
+    /// @inout x: i32)` are one entity. Foreign-vs-foreign keeps the
+    /// reference in the type: `b(int&)` / `b(const int&)` stay two.
+    priv fn _param_shape(self, p: *ParamDecl, c: *Type, foreign: bool, mixed: bool) -> SigShape {
+        var out = SigShape{};
+        out.mode = p->mode;
+        out.ty   = canon_unqual(c);
+        if !(foreign && mixed) { return out; }
+        if isa::<CXXLValueRefType>(c) {
+            var r = cast::<CXXLValueRefType>(c)->referee;
+            out.ty   = canon_unqual(r);
+            out.mode = (ParamMode::Value) if (canon_has_const(r)) else (ParamMode::Inout);
+            return out;
+        }
+        if isa::<CXXRValueRefType>(c) {
+            out.ty   = canon_unqual(cast::<CXXRValueRefType>(c)->referee);
+            out.mode = ParamMode::Move;
+            return out;
+        }
+        return out;
+    }
+
+    /// Two overloads whose ONLY difference is by-value vs `@move` on some
+    /// parameter. C++ tells `f(T)` from `f(T&&)`; a Kairo call cannot --
+    /// `@move` has no marker, so `f(x)` is the same text for both and
+    /// nothing can choose. Error at the second declaration. Kairo-authored
+    /// pairs only: an imported pair is clang's and legal there.
+    ///
+    /// A pair that ALSO differs in `@inout`-ness at some position is a
+    /// genuine overload: `f(&a, b)` and `f(a, b)` choose.
+    priv fn _check_move_overload(self, name: string, a: *FunctionDecl, b: *FunctionDecl) {
+        if self._foreign(a) || self._foreign(b) { return; }
+        if a->generic_params.size() != b->generic_params.size() { return; }
+        if a->is_variadic != b->is_variadic { return; }
+        if a->params.size() != b->params.size() { return; }
+        var differs = false;
+        var pos: usize = 0;
+        for var i: usize = 0; i < a->params.size(); ++i {
+            var pa = a->params[i];
+            var pb = b->params[i];
+            if (pa == &null) || (pb == &null) { return; }
+            if pa->is_self != pb->is_self { return; }
+            var ca = self._param_canonical(pa);
+            var cb = self._param_canonical(pb);
+            if (ca == &null) || (cb == &null) { return; }
+            if ca != cb { return; }
+            if pa->is_self { continue; }
+            var ia = pa->mode == ParamMode::Inout;
+            var ib = pb->mode == ParamMode::Inout;
+            if ia != ib { return; }                       // distinguishable at the call.
+            if pa->mode != pb->mode { differs = true; pos = i; }
+        }
+        if !differs { return; }
+
+        var pn = self.sc->ctx->get_spelling(b->params[pos]->name);
+        // f-strings do not adjacent-concatenate under Stage 0: explicit `+`.
+        self.sc->diag->report(DiagID::R001E, b->range.start,
+            f"'{name}' cannot be overloaded on '@move': a '@move' argument is written "
+            + "with no marker, so a call could not choose between these declarations"
+        ).first(b->range)
+         .note(DiagID::R001N, a->range.start,
+            f"the other declaration is here; they differ only in the passing mode of '{pn}\x27"
+        ).first(a->range).emit();
+        b->poison();
     }
 
     // === C++ signature collision ==========================================
@@ -472,6 +580,12 @@ class RedeclMerge {
         if a->generic_params.size() != b->generic_params.size() { return; }
         if a->is_variadic != b->is_variadic { return; }
         if a->params.size() != b->params.size() { return; }
+        // A mode difference is a C++ difference (`T` vs `T&` vs `T&&`): no
+        // collision possible, whatever the types lower to.
+        for var i: usize = 0; i < a->params.size(); ++i {
+            if (a->params[i] != &null) && (b->params[i] != &null)
+            && (a->params[i]->mode != b->params[i]->mode) { return; }
+        }
         var pw = self._pointer_width();
         for var i: usize = 0; i < a->params.size(); ++i {
             var ca = self._param_canonical(a->params[i]);

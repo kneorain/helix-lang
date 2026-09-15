@@ -34,6 +34,7 @@ import AST::Node::Casting::*;
 import AST::Kind::DeclKind::*;
 import AST::Kind::TypeKind::*;
 import AST::Kind::ExprKind::*;
+import AST::ParamMode::*;
 
 class TypeUtil {
     pub var sc: *SemaContext;
@@ -460,6 +461,9 @@ class TypeUtil {
                 var s = "fn (";
                 for var i: usize = 0; i < f->params.size(); ++i {
                     if i > 0 { s += ", "; }
+                    // the mode is in the canonical, so it is in the spelling:
+                    // `fn(@inout i32)` and `fn(i32)` must not render alike.
+                    if i < f->modes.size() { s += param_mode_prefix(f->modes[i]); }
                     s += self.str(f->params[i]);
                 }
                 s += ")";

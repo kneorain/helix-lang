@@ -211,12 +211,12 @@ class TypeImport {
             for var i: u32 = 0; i < n; ++i {
                 params.push_back(self._map_or_opaque(fp->getParamType(i)));
             }
-            return self.store->func(&params, self._map_or_opaque(fp->getReturnType()));
+            return self.store->func(&params, &null, self._map_or_opaque(fp->getReturnType()));
         }
         var fnp = llvm::dyn_cast::<clang::FunctionNoProtoType>(ty);
         if fnp != &null {
             var params = vec::<*Type>();
-            return self.store->func(&params, self._map_or_opaque(fnp->getReturnType()));
+            return self.store->func(&params, &null, self._map_or_opaque(fnp->getReturnType()));
         }
 
         // --- template parameters -----------------------------------------------

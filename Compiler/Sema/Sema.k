@@ -47,6 +47,8 @@ import Sema::Check::ConstraintExtraction::*;
 import Sema::Check::TypeCycleCheck::*;
 import Sema::Check::ShadowCheck::*;
 import Sema::Check::ValueCategoryPass::*;
+import Sema::Check::ClassLifecycle::*;
+import Sema::Check::MoveCheck::*;
 import Sema::Type::ExprTyper::*;
 import AST::Context::ASTContext::*;
 import AST::Context::GlobalDisambigTable::*;
@@ -274,6 +276,20 @@ class Sema {
         // Runs late: it REQUIRES ExprTyper to be complete.
 
         { var _p = TimeRegion("ShadowCheck"); ShadowCheck(&self.sc).run(); }
+
+        // Per-record lifecycle facts (copyable / movable / trivial) and the
+        // rules about the lifecycle itself: one transfer ctor, no user
+        // `op =`, base/derived category match, the virtual-destructor rule.
+        // After ExprTyper only for schedule linearity; it reads declarations
+        // and canonicals, never expression types. MoveCheck below reads its
+        // table, so the object outlives both calls.
+        var lifecycle = ClassLifecycle(&self.sc);
+        { var _p = TimeRegion("ClassLifecycle"); lifecycle.run(); }
+
+        // `@move` arguments: movability, and use-after-move over each body.
+        // REQUIRES ExprTyper complete (promoted callees, typed arguments) and
+        // ClassLifecycle (movability).
+        { var _p = TimeRegion("MoveCheck"); MoveCheck(&self.sc, &lifecycle).run(); }
 
         // TODO(sema): OperatorSignatureCheck(&self.sc).run();
         // TODO(sema): ConformanceChecking(&self.sc).run();

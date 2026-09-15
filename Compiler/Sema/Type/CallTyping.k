@@ -21,10 +21,26 @@
 ///     are ranked by shape and typed AFTER selection with the parameter type
 ///     (§5). Named arguments need a parser node; see the spec.
 ///
+///   \par The `&` marker (AST/ParamMode.k)
+///     `&x` in argument position is UnaryOperatorExpr(OpAmp, x): the parser
+///     does not know the callee and cannot decide whether it is address-of
+///     or the `@inout` marker. Nothing strips it before selection -- an
+///     implementation that did would break every pointer argument in the
+///     language. Instead arg_info records the operand's view alongside the
+///     address-of view; OverloadResolution reads the operand's view against
+///     an `@inout` parameter and the address-of view against everything
+///     else; and finish_call_args, once the parameter is known, rewrites the
+///     `&x` node to the operand's type (an lvalue) and sets is_mode_marker
+///     so codegen emits the operand bare. An UNMARKED argument to `@inout`
+///     binds with a warning (migration tolerance); the marker will become
+///     required.
+///
 ///     The one write to the tree outside `type_`: promoting a candidate cell
 ///     to the selected decl on the callee (NamedIdentExpr::resolved_decl or
 ///     Step::resolved_decl), which is the "cell -> decl: inference" line of
-///     hard invariant #7.
+///     hard invariant #7. Plus the marker rewrite above, which is the one
+///     place a memoized expression type is overwritten, and only after
+///     selection, which is the only point the answer exists.
 ///
 ///   Part of the Kairo Project, under the Apache License v2.0 with the
 ///   Kairo Runtime Library Exception.
@@ -45,6 +61,7 @@ import AST::Context::DeclContext::*;
 import AST::Context::SymbolTable::*;
 import AST::Context::InstantiationRegistry::*;
 import AST::ASTSupport::*;
+import AST::ParamMode::*;
 import AST::Node::Base::*;
 import AST::Node::PrimaryExpressions::*;
 import AST::Node::Expressions::*;
@@ -55,7 +72,19 @@ import AST::Node::Casting::*;
 import AST::Kind::DeclKind::*;
 import AST::Kind::ExprKind::*;
 import AST::Visitor::RecursiveASTVisitor::*;
+import Token::TokenKind::*;
 import Diagnostic::Registry::*;
+
+/// The operand of a `&e` written as a call argument, or null when \p e is
+/// not that shape. Bare `&e` only: `(&e)` is address-of, as in C++. One
+/// decoder, three readers (arg_info, finish_call_args, _call_through).
+fn mode_marker_operand(e: *Expr) -> *Expr {
+    if e == &null { return &null; }
+    if !isa::<UnaryOperatorExpr>(e) { return &null; }
+    var u = cast::<UnaryOperatorExpr>(e);
+    if u->op_token.kind != TokenKind::OpAmp { return &null; }
+    return u->operand;
+}
 
 class <T> CallTyping {
     priv inline fn dyn(self) -> *T { return static_cast::<*T>(&self); }
@@ -84,6 +113,20 @@ class <T> CallTyping {
         }
         a.expr  = e;
         a.range = e->range;
+
+        // The `&` marker: record the operand's view BEFORE the whole `&e` is
+        // typed. Both views exist until selection decides which one the
+        // parameter reads; typing the operand first makes the outer typing a
+        // memo hit on it.
+        var _op = mode_marker_operand(e);
+        if _op != &null {
+            dyn()->type_of(_op, &null);
+            a.marked      = true;
+            a.inner_ty    = _op->type_;
+            a.inner_cat   = _op->value_category;
+            a.inner_const = self._const_lvalue(_op);
+        }
+
         if dyn()->literal_shape(e, &a) { return a; }
         a.ty = dyn()->type_of(e, &null);
         if (a.ty == &null) && (!e->is_poisoned()) { a.dependent = true; }
@@ -125,8 +168,54 @@ class <T> CallTyping {
         return ok;
     }
 
+    /// The `&x` node, now known to be the marker: it reads as its operand.
+    /// `&x` was typed as address-of before selection (it had to be: against
+    /// `x: *i32` that is what it means); now that the parameter is known to
+    /// be `@inout`, the node is an lvalue of T, not a `*T`. This is the one
+    /// place a memoized expression type is rewritten, and only after
+    /// selection, which is the only point the answer exists.
+    ///
+    /// \p pt is the substituted parameter canonical, or null when still
+    /// dependent; the binding is re-checked against it so a deduced
+    /// `@inout x: T` is judged on the type it actually became.
+    priv fn _commit_marker(self, a: *ArgInfo, pt: *Type) {
+        var _op = mode_marker_operand(a->expr);
+        if _op == &null { return; }
+        var u = cast::<UnaryOperatorExpr>(a->expr);
+        u->is_mode_marker = true;
+        u->type_          = _op->type_;
+        u->value_category = Expr::ValueCategory::LValue;
+        if _op->is_poisoned() { u->poison(); return; }
+        if (pt == &null) || pt->is_dependent() { return; }
+        if _op->type_ == &null { return; }
+        var lref = dyn()->sc->types->cxx_lref(pt);
+        var r = dyn()->conv.implicit_arg(_op->type_, lref, _op->value_category, self._const_lvalue(_op));
+        if r == ImplicitRank::None {
+            dyn()->fail(u, f"cannot pass '{dyn()->tu.str(_op->type_)}' to an '@inout' parameter of type '{dyn()->tu.str(pt)}'; an '@inout' argument must be a mutable lvalue");
+        }
+    }
+
+    /// Migration tolerance: an unmarked argument to `@inout` bound; say so
+    /// once per argument, at the argument, in words that say it will stop
+    /// binding. No fixit by design (spec: MIGRATION).
+    priv fn _warn_unmarked(self, args: *vec::<ArgInfo>, r: *OvlResult) {
+        for var k: usize = 0; k < r->inout_unmarked.size(); ++k {
+            var i = r->inout_unmarked[k];
+            if i >= args->size() { continue; }
+            var a  = &((*args)[i]);
+            var pn = "<parameter>";
+            if (k < r->inout_params.size()) && (r->inout_params[k] != &null) {
+                pn = dyn()->tu.param_name(r->inout_params[k]);
+            }
+            dyn()->warn(a->expr,
+                f"argument to '@inout' parameter '{pn}' is not marked with '&'; the marker "
+                "will be required in a future release");
+        }
+    }
+
     /// After selection: type the untyped literals against their parameters,
-    /// and re-check every argument against the substituted parameter type.
+    /// commit `&` markers, and re-check every argument against the
+    /// substituted parameter type.
     fn finish_call_args(self, f: *FunctionDecl, args: *vec::<ArgInfo>, r: *OvlResult) {
         var params = vec::<*ParamDecl>();
         for var i: usize = 0; i < f->params.size(); ++i {
@@ -158,6 +247,12 @@ class <T> CallTyping {
             // `other: Self` is `other: T`. Resolution already judged the
             // argument this way; this is the same rule applied to the winner.
             pt = r->ded.through_receiver(f, r->receiver, pt);
+
+            // `@inout` with the marker: the operand is the argument.
+            if (p->mode == ParamMode::Inout) && a->marked && (pi != usize(-1)) {
+                self._commit_marker(a, (canon_unqual(pt)) if (pt != &null) else (&null));
+                continue;
+            }
             if a->lit != LitKind::None {
                 dyn()->type_of(a->expr, pt);
                 continue;
@@ -268,7 +363,6 @@ class <T> CallTyping {
             }
             if info->callable_cands.size() > 0 {
                 var last = ce->steps.get(ce->steps.size() - 1);
-                var recv_expr: *Expr = &null;
                 var nm = "<operator>";
                 if last->name != &null { nm = dyn()->sc->ctx->get_spelling(last->name->name); }
                 return self._call_candidates(n, &(info->callable_cands), info->has_receiver, info->receiver,
@@ -349,6 +443,7 @@ class <T> CallTyping {
         }
 
         self.finish_call_args(r.decl, &args, &r);
+        self._warn_unmarked(&args, &r);
         var rt = self.call_result_type(r.decl, &r);
         if rt == &null { dyn()->mark_unknown(n); return &null; }
         return rt;
@@ -393,6 +488,7 @@ class <T> CallTyping {
         if !ok { dyn()->poison_only(n); return &null; }
         r.ded.bind_from_record(rec);
         self.finish_call_args(r.decl, &args, &r);
+        self._warn_unmarked(&args, &r);
         return rec;
     }
 
@@ -438,10 +534,46 @@ class <T> CallTyping {
         for var i: usize = 0; i < n->args.size(); ++i {
             var a = n->args[i];
             if a == &null { continue; }
+            var pt   = fp->params[i];
+            var mode = (fp->modes[i]) if (i < fp->modes.size()) else (ParamMode::Value);
+
+            if mode == ParamMode::Inout {
+                // The type's `@inout` position: the argument is the operand of
+                // a `&` marker, or (tolerated, warned) an unmarked lvalue. It
+                // is judged as a `T&` binding, exactly as a declared
+                // parameter's would be, and lends no type to a literal.
+                var _op = mode_marker_operand(a);
+                var target = (_op) if (_op != &null) else (a);
+                dyn()->type_of(target, &null);
+                if target->is_poisoned() { if _op != &null { a->poison(); } bad = true; continue; }
+                if _op == &null {
+                    dyn()->warn(a, f"argument to '@inout' parameter {i + 1} of '{dyn()->tu.str(ft)}' is not "
+                                   "marked with '&'; the marker will be required in a future release");
+                }
+                if target->type_ != &null {
+                    var lref = dyn()->sc->types->cxx_lref(canon_unqual(pt));
+                    var r = dyn()->conv.implicit_arg(target->type_, lref, target->value_category, self._const_lvalue(target));
+                    if r == ImplicitRank::None {
+                        dyn()->fail(target, f"cannot pass '{dyn()->tu.str(target->type_)}' to an '@inout' parameter of type '{dyn()->tu.str(pt)}'; an '@inout' argument must be a mutable lvalue");
+                        bad = true;
+                        continue;
+                    }
+                }
+                if _op != &null {
+                    // Never typed as address-of on this path: the type said
+                    // `@inout` before the node was reached. Commit it as its
+                    // operand and record it as done for the RAV's later visit.
+                    var u = cast::<UnaryOperatorExpr>(a);
+                    u->is_mode_marker = true;
+                    u->value_category = Expr::ValueCategory::LValue;
+                    dyn()->finish(a, _op->type_);
+                }
+                continue;
+            }
+
             // The parameter type is the EXPECTED type, not a post-hoc check:
             // an untyped literal argument takes it the same way it would
-            // through an overload set (§5).
-            var pt = fp->params[i];
+            // through an overload set (§5). `@move` ranks by value.
             dyn()->type_of(a, pt);
             if a->is_poisoned() { bad = true; continue; }
             if !dyn()->check_convertible(a, pt) { bad = true; }
@@ -451,3 +583,4 @@ class <T> CallTyping {
         return fp->return_type;
     }
 }
+

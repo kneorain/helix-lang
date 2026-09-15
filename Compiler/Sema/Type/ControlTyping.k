@@ -48,6 +48,7 @@ import AST::Kind::DeclKind::*;
 import AST::Kind::ExprKind::*;
 import AST::Kind::PatternKind::*;
 import Diagnostic::Registry::*;
+import AST::ParamMode::*;
 
 class <T> ControlTyping {
     priv inline fn dyn(self) -> *T { return static_cast::<*T>(&self); }
@@ -217,7 +218,10 @@ class <T> ControlTyping {
 
     fn type_closure(self, n: *ClosureExpr, expected: *Type) -> *Type {
         // parameter types are required; the frame gives `return` its target.
+        // Modes ride parallel: a closure's type IS the fn-pointer canonical,
+        // so a mode not collected here does not exist for closures.
         var params = vec::<*Type>();
+        var modes  = vec::<ParamMode>();
         var ok = true;
         for var i: usize = 0; i < n->params.size(); ++i {
             var p = n->params[i];
@@ -230,6 +234,7 @@ class <T> ControlTyping {
             }
             // a function type has no top-level cv on its parameters ([dcl.fct]/5)
             params.push_back(canon_unqual(p->type_->canonical));
+            modes.push_back(p->mode);
             if p->default_val != &null { dyn()->type_of(p->default_val, p->type_->canonical); dyn()->check_convertible(p->default_val, p->type_->canonical); }
         }
         for var i: usize = 0; i < n->captures.size(); ++i {
@@ -263,7 +268,7 @@ class <T> ControlTyping {
             dyn()->mark_unknown(n);
             return &null;
         }
-        return dyn()->sc->types->func(&params, canon_unqual(ret));
+        return dyn()->sc->types->func(&params, &modes, canon_unqual(ret));
     }
 
     // === initializers =======================================================

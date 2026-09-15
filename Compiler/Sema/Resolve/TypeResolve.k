@@ -84,6 +84,7 @@ import Token::TokenKind::*;
 import Diagnostic::Registry::*;
 import AST::Context::InstantiationRegistry::*;
 import Sema::Type::ArgumentDeduction::*;
+import AST::ParamMode::*;
 
 __inline_cpp("
 #define RecursiveASTVisitor_TypeResolution RecursiveASTVisitor<TypeResolution>
@@ -360,13 +361,21 @@ class TypeResolution derives RecursiveASTVisitor::<TypeResolution> {
     /// function: Kairo has no "unknown parameters" identity and the C rule
     /// (any args) has no type-level meaning worth inventing. Callers that
     /// care check `is_unprototyped` on the syntax node.
+    ///
+    /// The written modes go into the key with the params. The parser fills
+    /// `modes` parallel to `params` even when empty; a mismatch is a parser
+    /// bug, not a user error.
     priv fn _resolve_fnptr(self, n: *FunctionPointerType) {
+        ICE_IF((n->modes.size() != n->params.size()),
+               "TypeResolution: FunctionPointerType::modes not parallel to params");
         var params = vec::<*Type>();
+        var modes  = vec::<ParamMode>();
         var ok = true;
         for var i: usize = 0; i < n->params.size(); ++i {
             var p = n->params[i];
             if !self._component_ok(n, p) { ok = false; continue; }
             params.push_back(p->canonical);
+            modes.push_back(n->modes[i]);
         }
         var ret: *Type = &null;
         if n->return_type != &null {
@@ -376,7 +385,7 @@ class TypeResolution derives RecursiveASTVisitor::<TypeResolution> {
             ret = self.sc->builtin(BuiltinKind::Void);
         }
         if !ok { return; }
-        n->canonical = self.sc->types->func(&params, ret);
+        n->canonical = self.sc->types->func(&params, &modes, ret);
     }
 
     priv fn _resolve_opaque(self, n: *OpaqueFFIType) {
