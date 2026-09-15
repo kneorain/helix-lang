@@ -420,6 +420,12 @@ class UnaryOperatorExpr derives Expr {
     pub var operand:  *Expr;
     pub var op_token: Token;  ///< the operator token (!, -, *, &, ++, --, etc.)
     pub var fix:      Fix;
+    /// `&x` in argument position, bound to an `@inout` parameter: the `&` is
+    /// the call-site MARKER, not address-of. Set by CallTyping after overload
+    /// selection (the parser cannot know the callee); `type_` is then the
+    /// operand's type and the node is an lvalue. Codegen emits the operand
+    /// bare. False for every other `&`.
+    pub var is_mode_marker: bool = false;
 
     static fn create(
         ctx:      *ASTContext,
@@ -434,6 +440,7 @@ class UnaryOperatorExpr derives Expr {
         node->operand  = operand;
         node->op_token = op_token;
         node->fix      = fix;
+        node->is_mode_marker = false;
         node->init_annotations(&(ctx->ast_alloc));;
         return node;
     }
@@ -447,6 +454,7 @@ class UnaryOperatorExpr derives Expr {
         node->recovery_kind = ExprKind::UnaryOperatorExpr;
         node->range         = range;
         node->operand       = &null;
+        node->is_mode_marker = false;
         node->init_annotations(&(ctx->ast_alloc));;
         return node;
     }

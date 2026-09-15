@@ -37,6 +37,7 @@ import AST::Mixin::FFILinkage::*;
 import Location::SourceRange::*;
 import Token::Token::*;
 import Resolution::ModulePath::*;
+import AST::ParamMode::*;
 
 /// Forward decls for cross-references between decl nodes.
 class FieldDecl;     // enum-variant payloads, struct/class members
@@ -292,7 +293,16 @@ class ParamDecl derives Decl {
     pub var index:       u32 = 0;          ///< position in the parameter list.
     pub var unname:      bool = false;     ///< true for the `unnamed` parameter.
     pub var has_default: bool = false;     ///< imported C++ param with a default arg; no Kairo expr to carry.
-    
+
+    /// Passing mode. Legal only here (and on a fn-pointer type's parameter
+    /// positions); the parser rejects it everywhere else. See AST/ParamMode.k.
+    /// Never set on `self`: the receiver is already a reference parameter.
+    pub var mode:       ParamMode   = ParamMode::Value;
+    pub var mode_range: SourceRange = SourceRange::invalid();  ///< the `@inout` / `@move` tokens.
+
+    fn is_inout(self) -> bool { return self.mode == ParamMode::Inout; }
+    fn is_move(self)  -> bool { return self.mode == ParamMode::Move;  }
+
     static fn create(
         ctx:   *ASTContext,
         range: SourceRange,
@@ -305,6 +315,8 @@ class ParamDecl derives Decl {
         node->kind   = DeclKind::ParamDecl;
         node->range  = range;
         node->init_annotations(&(ctx->ast_alloc));;
+        node->mode       = ParamMode::Value;
+        node->mode_range = SourceRange::invalid();
         node->name   = name;
         node->type_  = type_;
         node->index  = index;
@@ -318,6 +330,8 @@ class ParamDecl derives Decl {
         node->kind    = DeclKind::ParamDecl;
         node->range   = range;
         node->init_annotations(&(ctx->ast_alloc));;
+        node->mode       = ParamMode::Value;
+        node->mode_range = SourceRange::invalid();
         node->name    = name;
         node->type_   = &null;
         node->is_self = true;
@@ -332,6 +346,8 @@ class ParamDecl derives Decl {
         node->range         = range;
         node->type_         = &null;
         node->init_annotations(&(ctx->ast_alloc));;
+        node->mode       = ParamMode::Value;
+        node->mode_range = SourceRange::invalid();
         return node;
     }
 

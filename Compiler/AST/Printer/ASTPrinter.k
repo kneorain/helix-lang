@@ -58,6 +58,7 @@ import AST::Kind::TypeKind::*;
 import AST::Kind::StmtKind::*;
 import AST::Kind::PatternKind::*;
 import Token::TokenKind::*;
+import AST::ParamMode::*;
 
 /// AstDumper derives RecursiveASTVisitor::<AstDumper> so its dispatch_*
 /// overrides are reached through the CRTP dyn() routing. The source-faithful
@@ -302,6 +303,9 @@ class AstDumper derives RecursiveASTVisitor::<AstDumper> {
         } else {
             for var i: usize = 0; i < ty->params.size(); ++i {
                 if i > 0 { self.p.paint(Color::Punct, ", "); }
+                if (i < ty->modes.size()) && (ty->modes[i] != ParamMode::Value) {
+                    self.p.paint(Color::Attr, param_mode_prefix(ty->modes[i]));
+                }
                 self.src_type(ty->params[i]);
             }
         }
@@ -1309,6 +1313,11 @@ class AstDumper derives RecursiveASTVisitor::<AstDumper> {
             self.p.paint(Color::Keyword, "self");
             return;
         }
+        // `[const] [@mode] name: T`. `const` is the binding's (ParamDecl::
+        // is_const), so it exists only on a named param; an unnamed param's
+        // const is on its type and prints there. Value prints no mode.
+        if pd->is_const && (!pd->unname) { self.p.paint(Color::Keyword, "const "); }
+        if pd->mode != ParamMode::Value { self.p.paint(Color::Attr, param_mode_prefix(pd->mode)); }
         // type-only forward-decl parameter: no name token to print.
         if pd->unname {
             if pd->type_ != &null { self.src_type(pd->type_); }

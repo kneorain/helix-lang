@@ -27,6 +27,8 @@
 ///     `is_const` on CXXLValueRefType is gone. Without this `pair<const K, T>`
 ///     imported as `pair<K, T>`, `g(const int*)` and `g(int*)` were one
 ///     overload, and `W<const int>` was `W<int>`.
+///     FunctionPointerType::modes is in the key too: `fn(@inout i32)` and
+///     `fn(i32)` are two canonicals (AST/ParamMode.k).
 ///
 ///     "Same type ignoring qualifiers" is canon_unqual(a) == canon_unqual(b)
 ///     (CanonicalNodes.k); that question is asked by shape queries and by
@@ -65,6 +67,7 @@ import AST::Node::Types::*;
 import AST::Node::CanonicalNodes::*;
 import AST::Node::Casting::*;
 import AST::ASTSupport::*;
+import AST::ParamMode::*;
 
 /// \brief 64-bit mixer (splitmix64 finalizer). Used to fold component pointers
 ///        into a bucket key. Only ever a HINT: every bucket hit is confirmed by
@@ -384,19 +387,28 @@ class CanonicalTypeStore {
         return ty;
     }
 
-    fn func(self, params: *vec::<*Type>, ret: *Type) -> *Type {
+    /// \p modes is parallel to \p params, or null for all-Value (every
+    /// caller that has no modes to offer -- an imported C++ function type,
+    /// which spells reference kinds as types, not modes -- passes null).
+    /// Modes are in the key: `fn(@inout i32)` and `fn(i32)` are two
+    /// entities, because a closure's type IS this canonical and the mode
+    /// must survive `apply(f: fn(i32) -> i32)`.
+    fn func(self, params: *vec::<*Type>, modes: *vec::<ParamMode>, ret: *Type) -> *Type {
         var n: usize = 0;
         if params != &null { n = params->size(); }
+        ICE_IF(((modes != &null) && (modes->size() != n)),
+               "CanonicalTypeStore::func: modes not parallel to params");
 
         var h = canon_hash_u64(0, static_cast::<u64>(static_cast::<u8>(TypeKind::FunctionPointerType)));
         h = canon_hash_ptr(h, reinterpret_cast::<*void>(ret));
         h = canon_hash_u64(h, static_cast::<u64>(n));
         for var i: usize = 0; i < n; ++i {
             h = canon_hash_ptr(h, reinterpret_cast::<*void>((*params)[i]));
+            h = canon_hash_u64(h, static_cast::<u64>(static_cast::<u8>(self._mode_at(modes, i))));
         }
 
         var lock = std::LockGuard(self._mu);
-        var hit = self._probe_func(h, params, n, ret);
+        var hit = self._probe_func(h, params, modes, n, ret);
         if hit != &null { return hit; }
 
         var ft = self._alloc::<FunctionPointerType>();
@@ -409,10 +421,16 @@ class CanonicalTypeStore {
 
         if n > 0 {
             var buf = self._alloc_array::<*Type>(n);
-            for var i: usize = 0; i < n; ++i { buf[i] = (*params)[i]; }
+            var mb  = self._alloc_array::<ParamMode>(n);
+            for var i: usize = 0; i < n; ++i {
+                buf[i] = (*params)[i];
+                mb[i]  = self._mode_at(modes, i);
+            }
             ft->params.from_raw(buf, n);
+            ft->modes.from_raw(mb, n);
         } else {
             ft->params.from_raw(static_cast::<*(*Type)>(&null), 0);
+            ft->modes.from_raw(static_cast::<*ParamMode>(&null), 0);
         }
 
         var ty = static_cast::<*Type>(ft);
@@ -423,6 +441,11 @@ class CanonicalTypeStore {
         for var i: usize = 0; i < n; ++i { self._absorb_flags(ty, (*params)[i]); }
         self._insert(h, ty);
         return ty;
+    }
+
+    priv fn _mode_at(self, modes: *vec::<ParamMode>, i: usize) -> ParamMode {
+        if modes == &null { return ParamMode::Value; }
+        return (*modes)[i];
     }
 
     /// The canonical stand-in for a generic parameter. Uniqued on
@@ -709,7 +732,8 @@ class CanonicalTypeStore {
         return &null;
     }
 
-    priv fn _probe_func(self, h: u64, params: *vec::<*Type>, n: usize, ret: *Type) -> *Type {
+    priv fn _probe_func(self, h: u64, params: *vec::<*Type>, modes: *vec::<ParamMode>,
+                        n: usize, ret: *Type) -> *Type {
         var b = self._bucket(h);
         if b == &null { return &null; }
         for var i: usize = 0; i < b->size(); ++i {
@@ -720,7 +744,8 @@ class CanonicalTypeStore {
             if f->params.size() != n { continue; }
             var same = true;
             for var j: usize = 0; j < n; ++j {
-                if f->params[j] != (*params)[j] { same = false; break; }
+                if f->params[j] != (*params)[j]          { same = false; break; }
+                if f->modes[j]  != self._mode_at(modes, j) { same = false; break; }
             }
             if same { return c; }
         }

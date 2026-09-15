@@ -36,6 +36,7 @@ import AST::Node::Base::*;
 import AST::Context::ASTContext::*;
 import AST::ASTSupport::*;
 import AST::Node::PrimaryExpressions::*;
+import AST::ParamMode::*;
 
 ///
 ///  Helper propagate type_flags from children into a parent node.
@@ -713,13 +714,19 @@ class SelfType derives Type {
 
 ///
 ///  FunctionPointerType
-///  fn(i32, str) -> bool
+///  fn(i32, str) -> bool | fn(@inout i32, @move Foo) -> void
 ///  is_unprototyped = true for C headers with no param info: int foo()
 ///
 class FunctionPointerType derives Type {
     pub var params:         FrozenList::<*Type>;
     pub var return_type:    *Type;
     pub var is_unprototyped: bool; ///< True for C-style no-proto fn imports.
+    /// Per-parameter passing mode, PARALLEL to `params` (same count, same
+    /// order). In the canonical key: `fn(@inout i32)` and `fn(i32)` are two
+    /// canonicals (CanonicalTypeStore::func). Populated by whoever populates
+    /// `params` -- the parser via from_buf (even when empty), the store via
+    /// from_raw. A count mismatch is an ICE in TypeResolution.
+    pub var modes: FrozenList::<ParamMode>;
 
     static fn create(
         ctx:         *ASTContext,

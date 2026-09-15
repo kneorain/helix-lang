@@ -58,6 +58,7 @@ import AST::ASTSupport::*;
 import Memory::ArenaList::*;
 import AST::Context::TranslationUnit::*;
 import AST::Node::Program::*;
+import AST::ParamMode::*;
 
 ///
 /// \class ListBuilder<T>
@@ -539,8 +540,25 @@ class <D> ASTWriter {
         return n;
     }
 
+    /// `params` and `modes` are parallel (FunctionPointerType::modes), and a
+    /// transform that returns null DROPS its param -- so the two rebuild in
+    /// one loop here, not through rebuild_type_list, or a dropped param would
+    /// shift every later mode onto the wrong parameter.
     fn transform_function_pointer_type(self, n: *FunctionPointerType) -> *Type {
-        self.dyn()->rebuild_type_list(&(n->params));
+        var ps = ArenaList::<*Type>();
+        var ms = ArenaList::<ParamMode>();
+        ps.set_allocator(&(self.ctx->ast_alloc));
+        ms.set_allocator(&(self.ctx->ast_alloc));
+        for var i: usize = 0; i < n->params.size(); i++ {
+            var m = (n->modes[i]) if (i < n->modes.size()) else (ParamMode::Value);
+            if self.stop { ps.push(n->params[i]); ms.push(m); continue; }
+            var r = self.dyn()->transform_type(n->params[i]);
+            if r != &null { ps.push(r); ms.push(m); }
+        }
+        n->params.from_list(&ps, &(self.ctx->ast_alloc));
+        n->modes.from_list(&ms, &(self.ctx->ast_alloc));
+        ICE_IF((n->modes.size() != n->params.size()),
+               "ASTWriter: FunctionPointerType::modes not parallel to params after rebuild");
         if n->return_type != &null {
             n->return_type = self.dyn()->transform_type(n->return_type);
         }
