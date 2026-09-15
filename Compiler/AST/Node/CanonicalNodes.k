@@ -409,23 +409,38 @@ eval fn BF_X86_ONLY()     -> u8 { return 16; }  ///< TypeResolution hard-errors 
 ///   Per-entry semantics stay on BuiltinKind's doc comments. A row holds data;
 ///   it does not hold the reasoning, and nothing here should be read as
 ///   replacing it.
-struct BuiltinInfo {
-    var kind:     BuiltinKind;
-    var tk:       TokenKind;    ///< TokenKind::COUNT for the rows with no type-position token.
-    var spelling: string;       ///< source spelling, for diagnostics and dumps.
-    var cxx:      string;       ///< C++ emission. "" is a codegen bug, never valid.
-    var bits:     usize;        ///< 0 for Void/Never and for the target-width pair.
-    var flags:    u8;
-    var fp:       FloatLayout;
+class BuiltinInfo {
+    pub var kind:     BuiltinKind;
+    pub var tk:       TokenKind;    ///< TokenKind::COUNT for the rows with no type-position token.
+    pub var spelling: string;       ///< source spelling, for diagnostics and dumps.
+    pub var cxx:      string;       ///< C++ emission. "" is a codegen bug, never valid.
+    pub var bits:     usize;        ///< 0 for Void/Never and for the target-width pair.
+    pub var flags:    u8;
+    pub var fp:       FloatLayout;
+
+    fn BuiltinInfo(self, kind: BuiltinKind, tk: TokenKind, spelling: string, cxx: string, bits: usize, flags: u8, fp: FloatLayout) {
+        self.kind     = kind;
+        self.tk       = tk;
+        self.spelling = spelling;
+        self.cxx      = cxx;
+        self.bits     = bits;
+        self.flags    = flags;
+        self.fp       = fp;
+    }
 
     fn is_integer(self)  -> bool { return (self.flags & BF_INTEGER())  != 0; }
     fn is_signed(self)   -> bool { return (self.flags & BF_SIGNED())   != 0; }
     fn is_float(self)    -> bool { return (self.flags & BF_FLOAT())    != 0; }
-
-    /// True when the type is legal only on x86. TypeResolution reads this
-    /// rather than naming F80 directly, so a second such entry costs a row.
     fn is_x86_only(self) -> bool { return (self.flags & BF_X86_ONLY()) != 0; }
 }
+
+// if i had stage1: PORT(non-trivial)
+// extend BuiltinInfo {
+//     fn is_integer(self)  -> bool { return (self.flags & BF_INTEGER())  != 0; }
+//     fn is_signed(self)   -> bool { return (self.flags & BF_SIGNED())   != 0; }
+//     fn is_float(self)    -> bool { return (self.flags & BF_FLOAT())    != 0; }
+//     fn is_x86_only(self) -> bool { return (self.flags & BF_X86_ONLY()) != 0; }
+// }
 
 /// \var BuiltinTable
 /// \brief Static description of every builtin, indexed by BuiltinKind. One row
@@ -674,6 +689,11 @@ class BuiltinType derives Type {
     }
 
     fn info(self) -> *BuiltinInfo { return builtin_info(self.builtin); }
+    fn spelling(self) -> string { return self.info()->spelling;  }
+    fn cxx_emission(self) -> string { return self.info()->cxx;  }
+    fn is_integer(self) -> bool { return self.info()->is_integer(); }
+    fn is_signed(self)  -> bool { return self.info()->is_signed();  }
+    fn is_float(self)   -> bool { return self.info()->is_float();   }
 }
 
 ///

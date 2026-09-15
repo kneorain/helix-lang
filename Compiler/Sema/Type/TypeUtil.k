@@ -485,6 +485,12 @@ class TypeUtil {
                 if (q->quals & QUAL_VOLATILE()) != 0 { s += "volatile "; }
                 return s + self.str(q->inner);
             }
+            case TypeKind::CXXLValueRefType {
+                return self.str(cast::<CXXLValueRefType>(t)->referee) + "&";
+            }
+            case TypeKind::CXXRValueRefType {
+                return self.str(cast::<CXXRValueRefType>(t)->referee) + "&&";
+            }
             case TypeKind::SelfType       { return (self.str(t->canonical)) if (t->canonical != &null) else ("Self"); }
             default {
                 if (t->canonical != &null) && (t->canonical != t) { return self.str(t->canonical); }
