@@ -2231,7 +2231,7 @@ class ASTParse
     
     fn <T> is_fatal(self, ptr: *T) -> bool {
         inline "c++" {
-            auto base = reinterpret_cast<asuint8_t*>(&this->_fatal_sentinels);
+            auto base = reinterpret_cast<uint8_t*>(&this->_fatal_sentinels);
             if constexpr (libcxx::is_same_v<T, Type>) {
                 return reinterpret_cast<T*>(base + 0) == ptr;
             } else if constexpr (libcxx::is_same_v<T, Expr>) {
